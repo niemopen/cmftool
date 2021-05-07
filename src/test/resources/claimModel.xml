@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model xmlns:mm="http://reference.niem.gov/specification/metamodel/5.0alpha1"
+       xmlns:s="http://release.niem.gov/niem/structures/4.0/"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://reference.niem.gov/specification/metamodel/5.0alpha1"
+       xmlns:structures="http://release.niem.gov/niem/structures/4.0/">
+   <ObjectProperty>
+      <Name>Claim</Name>
+      <Namespace structures:id="claim">
+         <NamespaceURI>http://example.org/claim/1/</NamespaceURI>
+         <NamespacePrefixName>claim</NamespacePrefixName>
+         <DefinitionText>A data model for an insurance claim.</DefinitionText>
+      </Namespace>
+      <DefinitionText>An insurance claim resulting from an auto crash.</DefinitionText>
+      <Class>
+         <Name>ClaimType</Name>
+         <Namespace structures:ref="claim" xsi:nil="true"/>
+         <DefinitionText>A data type for an insurance claim.</DefinitionText>
+         <ExtensionOf>
+            <Class>
+               <Name>ObjectType</Name>
+               <Namespace>
+                  <NamespaceURI>http://release.niem.gov/niem/structures/4.0/</NamespaceURI>
+                  <NamespacePrefixName>structures</NamespacePrefixName>
+               </Namespace>
+            </Class>
+            <HasObjectProperty mm:sequenceID="1" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
+               <ObjectProperty>
+                  <Name>DamagedVehicle</Name>
+                  <Namespace structures:ref="claim" xsi:nil="true"/>
+                  <DefinitionText>A vehicle that has sustained damage.</DefinitionText>
+                  <Class>
+                     <Name>VehicleType</Name>
+                     <Namespace structures:id="nc">
+                        <NamespaceURI>http://release.niem.gov/niem/niem-core/4.0/</NamespaceURI>
+                        <NamespacePrefixName>nc</NamespacePrefixName>
+                     </Namespace>
+                     <ContentStyleCode>HasObjectProperty</ContentStyleCode>
+                  </Class>
+               </ObjectProperty>
+            </HasObjectProperty>
+            <HasObjectProperty mm:sequenceID="2" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
+               <ObjectProperty>
+                  <Name>VehicleDamageAmount</Name>
+                  <Namespace structures:ref="claim" xsi:nil="true"/>
+                  <DefinitionText>An amount of money evaluating the cost of repair of damage to a vehicle.</DefinitionText>
+                  <Class>
+                     <Name>AmountType</Name>
+                     <Namespace structures:ref="nc" xsi:nil="true"/>
+                     <ContentStyleCode>HasObjectProperty</ContentStyleCode>
+                  </Class>
+               </ObjectProperty>
+            </HasObjectProperty>
+         </ExtensionOf>
+      </Class>
+   </ObjectProperty>
+</Model>

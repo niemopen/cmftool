@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'application'
+}
+
+mainClassName = 'org.mitre.niem.nmftool.Main'
+
+sourceSets.main.java.srcDirs += [ 'build/generated/sources/xjc' ]
+
+configurations {
+    xjc
+}
+
+tasks.register('xjcGenerate') {
+    def xsrcDir = fileTree("src/main/schema")
+    def destDir = file("$buildDir/generated/sources/xjc")
+    inputs.files(xsrcDir)
+    outputs.dir(destDir)
+    doLast {
+
+        if (!destDir.exists()) {
+            destDir.mkdirs()
+        }
+        ant.taskdef(name: 'xjc', classname: 'com.sun.tools.xjc.XJCTask', classpath: configurations.xjc.asPath)
+        ant.xjc(
+            destdir: "${destDir}",
+            schema: "${projectDir}/src/main/schema/metamodel/mm.xsd",
+            binding: "${projectDir}/src/main/schema/bind.xjb",
+            package: "org.mitre.niem.nmf",
+            //catalog: "${projectDir}/src/main/resources/catalog.xml",
+            removeOldOutput: 'yes', extension: 'true'
+        )
+        {
+            arg(line: '-nv -disableXmlSecurity')
+        }        
+    }
+}
+
+compileJava.dependsOn xjcGenerate
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    xjc group: 'jakarta.xml.bind', name: 'jakarta.xml.bind-api', version: '3.0.1'
+    xjc group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '3.0.1'
+    xjc group: 'org.glassfish.jaxb', name: 'jaxb-xjc', version: '3.0.1'
+    
+    implementation group: 'jakarta.xml.bind', name: 'jakarta.xml.bind-api', version: '3.0.1'
+    implementation group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '3.0.1'
+    
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+}
+
+test {
+    useJUnitPlatform()
+}
