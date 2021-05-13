@@ -30,6 +30,7 @@ import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
 import org.mitre.niem.nmf.impl.ModelTypeEx;
 import org.mitre.niem.nmf.impl.ObjectFactoryEx;
+import org.mitre.niem.nmf.impl.ObjectTypeEx;
 
 /**
  *
@@ -45,9 +46,16 @@ public class Model {
         JAXBContext jc = JAXBContext.newInstance("org.mitre.niem.nmf");
         Unmarshaller u = jc.createUnmarshaller();
         u.setProperty("org.glassfish.jaxb.core.ObjectFactory",new ObjectFactoryEx());
+        u.setEventHandler(new jakarta.xml.bind.helpers.DefaultValidationEventHandler());
         
         JAXBElement e = (JAXBElement) u.unmarshal(f);
         ModelTypeEx mdat = (ModelTypeEx) e.getValue();
+        
+        for (ObjectTypeEx o : ObjectTypeEx.all) {
+            o.dump();
+        }
+        
+        mdat.addComponents();
         return null;
     }
 }

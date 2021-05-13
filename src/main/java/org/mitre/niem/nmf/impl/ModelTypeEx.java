@@ -24,14 +24,36 @@
 
 package org.mitre.niem.nmf.impl;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.mitre.niem.nmf.ModelType;
 
 /**
- *
+ * A class for a NIEM model object.
+ * 
  * @author Scott Renner
  *  <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelTypeEx extends ModelType {
 
-
+    protected Map<String,ClassTypeEx> clas                    = new HashMap<>();     // uri->class
+    protected Map<String,DataPropertyTypeEx> dataProp         = new HashMap<>();
+    protected Map<String,DatatypeTypeEx> datatype             = new HashMap<>();
+    protected Map<String,NamespaceTypeEx> namespace           = new HashMap<>();
+    protected Map<String,ObjectPropertyTypeEx> objectProperty = new HashMap<>();
+    
+    public void addClass (String uri, ClassTypeEx c)                    { clas.put(uri, c); }
+    public void addDataProperty (String uri, DataPropertyTypeEx dp)     { dataProp.put(uri, dp); }
+    public void addDatatype (String uri, DatatypeTypeEx dt)            { datatype.put(uri, dt); }
+    public void addNamespace (String uri, NamespaceTypeEx ns)           { namespace.put(uri, ns); }
+    public void addObjectProperty (String uri, ObjectPropertyTypeEx op) { objectProperty.put(uri, op); }
+    
+    public void addComponents () {
+        Set<ObjectTypeEx> haveSeen = new HashSet<>();
+        for (ObjectTypeEx o : this.clazzOrDataPropertyOrDatatype) {
+            o.addToModel(this, haveSeen);
+        }
+    }
 }

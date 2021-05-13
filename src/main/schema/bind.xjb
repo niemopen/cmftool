@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bindings xmlns="https://jakarta.ee/xml/ns/jaxb"
+          xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
           xmlns:xs="http://www.w3.org/2001/XMLSchema"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="https://jakarta.ee/xml/ns/jaxb https://jakarta.ee/xml/ns/jaxb/bindingschema_3_0.xsd"
           version="3.0">
+    <globalBindings>
+        <xjc:javaType name="java.lang.String" xmlType="xs:IDREF"
+                  adapter="org.mitre.niem.nmf.impl.MyAdapter"/>
+    </globalBindings>
     <bindings schemaLocation="metamodel/mm.xsd" node="/xs:schema">
         <bindings node="//xs:complexType[@name='ComponentType']">
             <class implClass="org.mitre.niem.nmf.impl.ComponentTypeEx"/>
         </bindings>
+    </bindings>
+    <bindings schemaLocation="niem/utility/structures.xsd" node="/xs:schema">
+        <bindings node="//xs:complexType[@name='ObjectType']">
+            <class implClass="org.mitre.niem.nmf.impl.ObjectTypeEx"/>
+        </bindings>    
     </bindings> 
 </bindings>

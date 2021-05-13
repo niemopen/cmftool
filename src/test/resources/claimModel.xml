@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Model xmlns:mm="http://reference.niem.gov/specification/metamodel/5.0alpha1"
-       xmlns:s="http://release.niem.gov/niem/structures/4.0/"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns="http://reference.niem.gov/specification/metamodel/5.0alpha1"
-       xmlns:structures="http://release.niem.gov/niem/structures/4.0/">
-   <ObjectProperty>
+       xmlns:structures="http://release.niem.gov/niem/structures/5.0/">
+   <ObjectProperty structures:id="L01">
       <Name>Claim</Name>
       <Namespace structures:id="claim">
          <NamespaceURI>http://example.org/claim/1/</NamespaceURI>
@@ -20,7 +19,7 @@
             <Class>
                <Name>ObjectType</Name>
                <Namespace>
-                  <NamespaceURI>http://release.niem.gov/niem/structures/4.0/</NamespaceURI>
+                  <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
                   <NamespacePrefixName>structures</NamespacePrefixName>
                </Namespace>
             </Class>
@@ -32,7 +31,7 @@
                   <Class>
                      <Name>VehicleType</Name>
                      <Namespace structures:id="nc">
-                        <NamespaceURI>http://release.niem.gov/niem/niem-core/4.0/</NamespaceURI>
+                        <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
                         <NamespacePrefixName>nc</NamespacePrefixName>
                      </Namespace>
                      <ContentStyleCode>HasObjectProperty</ContentStyleCode>

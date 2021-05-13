@@ -5,12 +5,26 @@
  */
 package org.mitre.niem.nmf.impl;
 
+import java.util.Set;
 import org.mitre.niem.nmf.ComponentType;
 
 /**
  *
  * @author SAR
  */
-public class ComponentTypeEx extends ComponentType {
+public abstract class ComponentTypeEx extends ComponentType {
     
+    public String uri() {
+        String ncn   = this.getName();
+        String nsuri = this.getNamespace().getNamespaceURI();
+        String curi;
+        if (nsuri.endsWith("#")) {
+           curi = nsuri + ncn;
+        }
+        else {
+            curi = nsuri + "#" + ncn;
+        }
+        return curi;
+    }
+
 }
