@@ -1,7 +1,12 @@
 package org.mitre.niem.nmftool;
 
-import jakarta.xml.bind.JAXBException;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import javax.xml.parsers.ParserConfigurationException;
+import org.mitre.niem.xsd.ModelXMLReader;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -12,9 +17,11 @@ public class Main {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws JAXBException {
+    public static void main(String[] args) throws FileNotFoundException, ParserConfigurationException, SAXException, IOException {
         File f = new File("src/test/resources/ClaimModel.xml");
-        Model result = Model.readXML(f);
+        FileInputStream fis = new FileInputStream(f);
+        ModelXMLReader mr = new ModelXMLReader();
+        mr.readXML(fis);
     }
     
 }
