@@ -24,6 +24,7 @@
 package org.mitre.niem.nmf;
 
 import java.util.Map;
+import java.util.Set;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
 
@@ -43,31 +44,26 @@ public class HasValue extends ObjectType {
     }
     
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToHasValue(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToHasValue(this, index);
     }
     
     @Override
-    public int addToExtensionOf (ExtensionOf e, XMLDataRecord cdat) { 
-        if (cdat.index < 0) {
+    public int addToExtensionOf (ExtensionOf e, int index) { 
+        if (index < 0) {
             e.hasValueList().add(this);
             return e.hasValueList().size()-1;  
         }
         // Replace @ref placeholder with @id object
-        e.hasValueList().set(cdat.index, this);
+        e.hasValueList().set(index, this);
         return -1;
     }
 
-    
     @Override
-    public void countRefs (Map<ObjectType,Integer> rc) {
-        if (rc.containsKey(this)) {
-            int count = rc.get(this);
-            rc.put(this, count+1);
-        }
-        else {
-            rc.put(this, 1);
-            if (null != datatype) datatype.countRefs(rc);              
-        }
-    } 
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        if (null != datatype) datatype.traverse(seen, f);
+    }    
 }

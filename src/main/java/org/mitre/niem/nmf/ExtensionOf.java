@@ -26,6 +26,7 @@ package org.mitre.niem.nmf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
 
@@ -52,34 +53,24 @@ public class ExtensionOf extends ObjectType {
     }
     
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToExtensionOf(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToExtensionOf(this, index);
     }
     
     @Override
-    public int addToClass (ClassType c, XMLDataRecord cdat) {
+    public int addToClass (ClassType c,  int index) {
         c.setExtensionOf(this);
         return -1;
     }
-    
+
     @Override
-    public void countRefs (Map<ObjectType,Integer> rc) {
-        if (rc.containsKey(this)) {
-            int count = rc.get(this);
-            rc.put(this, count+1);
-        }
-        else {
-            rc.put(this, 1);
-            if (null != classType) classType.countRefs(rc);
-            if (null != hasValueList) {
-                for (var hv : hasValueList) { hv.countRefs(rc); }
-            }
-            if (null != hasDataPropertyList) {
-                for (var hv : hasDataPropertyList) { hv.countRefs(rc); }
-            }
-            if (null != hasObjectPropertyList) {
-                for (var hv : hasObjectPropertyList) { hv.countRefs(rc); }
-            }                
-        }
-    }    
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        if (null != classType) classType.traverse(seen, f);
+        if (null != hasValueList)          for (var x : hasValueList) x.traverse(seen, f);
+        if (null != hasDataPropertyList)   for (var x: hasDataPropertyList) x.traverse(seen, f);
+        if (null != hasObjectPropertyList) for (var x : hasObjectPropertyList) x.traverse(seen, f);
+    }     
 }

@@ -24,6 +24,7 @@
 package org.mitre.niem.nmf;
 
 import java.util.Map;
+import java.util.Set;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
 
@@ -34,6 +35,8 @@ import org.xml.sax.Attributes;
  */
 public class Datatype extends Component {
     
+    public static Datatype refObj = new Datatype();
+    
     protected RestrictionOf restrictionOf = null;
     protected UnionOf unionOf = null;
     
@@ -43,55 +46,49 @@ public class Datatype extends Component {
     public RestrictionOf getRestrictionOf() { return restrictionOf; }
     public UnionOf getUnionOf()             { return unionOf; }
     
+    public Datatype () { }
+    
     public Datatype (Model m, String ens, String eln, Attributes a) {
         super(m, ens, eln, a);
     }
-    
-    @Override
-    public void addToModelObjectList () {
-        super.addToModelObjectList();
-        this.getModel().datatypeList().add(this);        
-    }
         
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToDatatype(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToDatatype(this, index);
     }    
      
     @Override
-    public int addToDataProperty(DataProperty dp, XMLDataRecord cdat) {
+    public int addToDataProperty(DataProperty dp, int index) {
         dp.setDatatype(this);
         return -1;
     }  
     
     @Override
-    public int addToHasValue(HasValue h, XMLDataRecord cdat) {
+    public int addToHasValue(HasValue h, int index) {
         h.setDatatype(this);
         return -1;
     }  
 
-// Not needed -- Datatype objects are added to the Model object elsewhere
-//    @Override
-//    public int addToModel(Model m, XMLDataRecord cdat) {
-//    }
+    // Special handling for adding Datatype to Model; can't be a ref placeholder
+    @Override
+    public int addToModel(Model m, int index) {
+        m.datatypeList().add(this);
+        return -1;
+    }
     
     @Override
-    public int addToRestrictionOf(RestrictionOf r, XMLDataRecord cdat) {
+    public int addToRestrictionOf(RestrictionOf r, int index) {
         r.setDatatype(this);
         return -1;
     }  
-    
+
     @Override
-    public void countRefs (Map<ObjectType,Integer> rc) {
-        if (rc.containsKey(this)) {
-            int count = rc.get(this);
-            rc.put(this, count+1);
-        }
-        else {
-            rc.put(this, 1);
-            if (null != restrictionOf) restrictionOf.countRefs(rc);
-            if (null != unionOf) unionOf.countRefs(rc);
-        }
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        if (null != namespace)   namespace.traverse(seen, f);        
+        if (null != restrictionOf) restrictionOf.traverse(seen, f);
+        if (null != unionOf) unionOf.traverse(seen, f);
     } 
-    
 }

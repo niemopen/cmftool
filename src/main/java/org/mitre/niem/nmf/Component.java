@@ -31,7 +31,7 @@ import org.xml.sax.Attributes;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public abstract class Component extends ObjectType {
+public abstract class Component extends ObjectType implements Comparable<Component> {
     protected String name = null;
     protected Namespace namespace = null;
     protected String definition = null;
@@ -44,7 +44,18 @@ public abstract class Component extends ObjectType {
     public Namespace getNamespace () { return namespace; }
     public String getDefinition ()   { return definition; }
     
+    Component () {}
+    
     Component (Model m, String ens, String eln, Attributes a) {
         super(m, ens, eln, a);
     }      
+    
+    @Override
+    public int compareTo (Component o) {
+        int v = this.namespace.namespaceURI.compareTo(o.namespace.namespaceURI);
+        if (0 == v) {
+            v = this.name.compareTo(o.name);
+        }
+        return v;
+    }    
 }

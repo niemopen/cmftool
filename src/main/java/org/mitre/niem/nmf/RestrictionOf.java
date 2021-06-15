@@ -25,6 +25,8 @@ package org.mitre.niem.nmf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
 
@@ -46,13 +48,22 @@ public class RestrictionOf extends ObjectType {
     }
     
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToRestrictionOf(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToRestrictionOf(this, index);
     }    
     
     @Override
-    public int addToDatatype (Datatype dt, XMLDataRecord cdat) { 
+    public int addToDatatype (Datatype dt, int index) { 
         dt.setRestrictionOf(this);
         return -1; 
+    }    
+
+    @Override
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        if (null != datatype)  datatype.traverse(seen, f);
+        if (null != facetList) for (var x : facetList) x.traverse(seen, f);
     }    
 }

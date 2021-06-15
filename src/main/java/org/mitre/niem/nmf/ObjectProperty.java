@@ -23,6 +23,8 @@
  */
 package org.mitre.niem.nmf;
 
+import java.util.Map;
+import java.util.Set;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
 
@@ -32,6 +34,7 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ObjectProperty extends Component {
+    
     protected SubPropertyOf subPropertyOf = null;
     protected ClassType classType = null;
     protected String abstractIndicator = null;
@@ -44,40 +47,48 @@ public class ObjectProperty extends Component {
     public ClassType getClassType ()         { return classType; }
     public String getAbstractIndicator ()    { return abstractIndicator; }
     
+    public ObjectProperty () { }
+    
     public ObjectProperty (Model m, String ens, String eln, Attributes a) {
         super(m, ens, eln, a);
     }
-    
-    @Override
-    public void addToModelObjectList () {
-        super.addToModelObjectList();
-        this.getModel().objectPropertyList().add(this);        
-    }
         
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToObjectProperty(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToObjectProperty(this, index);
     } 
     
     @Override
-    public int addToHasObjectProperty (HasObjectProperty h, XMLDataRecord cdat) {
-        if (cdat.index < 0) {
+    public int addToHasObjectProperty (HasObjectProperty h, int index) {
+        if (index < 0) {
             h.objectPropertyList().add(this);
             return h.objectPropertyList().size()-1;  
         }
         // Replace @ref placeholder with @id object
-        h.objectPropertyList().set(cdat.index, this);
+        h.objectPropertyList().set(index, this);
         return -1;  
     }
+
+    // Special handling for adding ObjectProperty to Model -- can't be a ref placeholder
+    @Override
+    public int addToModel(Model m, int index) {
+        m.objectPropertyList().add(this);
+        return -1;
+    }
     
-    public int addToSubPropertyOf (SubPropertyOf p, XMLDataRecord cdat) {
+    public int addToSubPropertyOf (SubPropertyOf p, int index) {
         p.setObjectProperty(this);
         return -1;
     }
-  
-// Not needed -- ObjectProperty objects are added to the Model object elsewhere
-//    @Override
-//    public int addToModel(Model m, XMLDataRecord cdat) {
-//    }
+    
+    @Override
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        if (null != namespace)   namespace.traverse(seen, f);        
+        if (null != subPropertyOf) subPropertyOf.traverse(seen, f);
+        if (null != classType)     classType.traverse(seen,f);
+    }
     
 }

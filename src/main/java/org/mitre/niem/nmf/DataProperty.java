@@ -23,8 +23,7 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Map;
-import org.mitre.niem.xsd.XMLDataRecord;
+import java.util.Set;
 import org.xml.sax.Attributes;
 
 /**
@@ -37,48 +36,44 @@ public class DataProperty extends Component {
     protected Datatype datatype = null;
     
     public void setDatatype(Datatype dt) { datatype = dt; }
-    public Datatype getDatatype() { return datatype; }
+    public Datatype getDatatype()        { return datatype; }
+    
+    public DataProperty () { }
     
     public DataProperty (Model m, String ens, String eln, Attributes a) {
         super(m, ens, eln, a);       
     }
     
     @Override
-    public void addToModelObjectList () {
-        super.addToModelObjectList();
-        this.getModel().dataPropertyList().add(this);        
-    }
-    
-    @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToDataProperty(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToDataProperty(this, index);
     } 
     
     @Override
-    public int addToHasDataProperty(HasDataProperty h, XMLDataRecord cdat) {
-        if (cdat.index < 0) {
+    public int addToHasDataProperty(HasDataProperty h, int index) {
+        if (index < 0) {
             h.dataPropertyList().add(this);
             return h.dataPropertyList().size()-1;  
         }
         // Replace @ref placeholder with @id object
-        h.dataPropertyList().set(cdat.index, this);
+        h.dataPropertyList().set(index, this);
+        return -1;
+    }  
+
+    // Special handing for adding DataProperty to Model; can't be a ref placeholder
+    @Override
+    public int addToModel(Model m, int index) {
+        m.dataPropertyList().add(this);
         return -1;
     }
     
     @Override
-    public void countRefs (Map<ObjectType,Integer> rc) {
-        if (rc.containsKey(this)) {
-            int count = rc.get(this);
-            rc.put(this, count+1);
-        }
-        else {
-            rc.put(this, 1);
-            if (null != datatype) datatype.countRefs(rc);
-        }
-    }    
-    
-// Not needed -- DataProperty objects are added to the Model elsewhere
-//    @Override
-//    public int addToModel(Model m, XMLDataRecord cdat) {
-//    }
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        if (null != namespace)   namespace.traverse(seen, f);        
+        if (null != datatype) datatype.traverse(seen, f);
+    }     
+
 }

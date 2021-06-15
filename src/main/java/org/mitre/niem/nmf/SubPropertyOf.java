@@ -23,6 +23,8 @@
  */
 package org.mitre.niem.nmf;
 
+import java.util.Map;
+import java.util.Set;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
 
@@ -43,13 +45,21 @@ public class SubPropertyOf extends ObjectType {
     }
     
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToSubPropertyOf(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToSubPropertyOf(this, index);
     }
         
     @Override
-    public int addToObjectProperty (ObjectProperty op, XMLDataRecord cdat) {
+    public int addToObjectProperty (ObjectProperty op, int index) {
         op.setSubPropertyOf(this);
         return -1;
     }
+
+    @Override
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        if (null != objectProperty) objectProperty.traverse(seen, f);
+    }    
 }

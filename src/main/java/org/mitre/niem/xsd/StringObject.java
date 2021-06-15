@@ -30,7 +30,6 @@ import org.mitre.niem.nmf.Model;
 import org.mitre.niem.nmf.Namespace;
 import org.mitre.niem.nmf.ObjectProperty;
 import org.mitre.niem.nmf.ObjectType;
-import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
 /**
@@ -43,78 +42,68 @@ import org.xml.sax.Attributes;
  */
 public class StringObject extends ObjectType {
     
+    protected String stringVal = null;
+    
+    @Override
+    public void setStringVal (String s) { stringVal = s; }
+    
     StringObject(Model m, String ens, String eln, Attributes a) {
         super(m, ens, eln, a);
     }
-    
-    // Don't add StringObjects to the model object list
-    @Override
-    public void addToModelObjectList () {  
-    }
 
     @Override
-    public int addToClass(ClassType c, XMLDataRecord cdat) {
-        ObjectType child = cdat.obj;
-        switch (child.getComponentLname()) {
-        case "AbstractIndicator":   c.setAbstractIndicator(cdat.stringVal); break;
-        case "ContentStyleCode":    c.setContentStyleCode(cdat.stringVal);  break;
-        case "DefinitionText":      c.setDefinition(cdat.stringVal); break;
-        case "Name":                c.setName(cdat.stringVal); break;
+    public int addToClass(ClassType c, int index) {
+        switch (this.getComponentLname()) {
+        case "AbstractIndicator":   c.setAbstractIndicator(stringVal); break;
+        case "ContentStyleCode":    c.setContentStyleCode(stringVal);  break;
+        case "DefinitionText":      c.setDefinition(stringVal); break;
+        case "Name":                c.setName(stringVal); break;
         default:
-            LOG.warn("Unknown Class property {} at line {} (ignored)", child.getComponentLname(), cdat.lineNumber);
             break;
         }
         return -1;
     }
     
     @Override
-    public int addToDataProperty(DataProperty dp, XMLDataRecord cdat) {
-        ObjectType child = cdat.obj;
-        switch (child.getComponentLname()) {
-        case "DefinitionText":      dp.setDefinition(cdat.stringVal); break;
-        case "Name":                dp.setName(cdat.stringVal); break;
+    public int addToDataProperty(DataProperty dp, int index) {
+        switch (this.getComponentLname()) {
+        case "DefinitionText":      dp.setDefinition(stringVal); break;
+        case "Name":                dp.setName(stringVal); break;
         default:
-            LOG.warn("Unknown DataProperty property {} at line {} (ignored)", child.getComponentLname(), cdat.lineNumber);
             break;
         }
         return -1;
     }    
     
     @Override
-    public int addToDatatype(Datatype dt, XMLDataRecord cdat) {
-        ObjectType child = cdat.obj;
-        switch (child.getComponentLname()) {
-        case "DefinitionText":      dt.setDefinition(cdat.stringVal); break;
-        case "Name":                dt.setName(cdat.stringVal); break;
+    public int addToDatatype(Datatype dt, int index) {
+        switch (this.getComponentLname()) {
+        case "DefinitionText":      dt.setDefinition(stringVal); break;
+        case "Name":                dt.setName(stringVal); break;
         default:
-            LOG.warn("Unknown Datatype property {} at line {} (ignored)", child.getComponentLname(), cdat.lineNumber);
             break;
         }
         return -1;
     } 
     
     @Override
-    public int addToNamespace(Namespace ns, XMLDataRecord cdat) {
-        ObjectType child = cdat.obj;
-        switch (child.getComponentLname()) {
-        case "DefinitionText":       ns.setDefinition(cdat.stringVal) ; break;
-        case "NamespacePrefixName":  ns.setNamespacePrefix(cdat.stringVal); break;
-        case "NamespaceURI":         ns.setNamespaceURI(cdat.stringVal); break;
+    public int addToNamespace(Namespace ns, int index) {
+        switch (this.getComponentLname()) {
+        case "DefinitionText":       ns.setDefinition(stringVal) ; break;
+        case "NamespacePrefixName":  ns.setNamespacePrefix(stringVal); break;
+        case "NamespaceURI":         ns.setNamespaceURI(stringVal); break;
         default:
-            LOG.warn("Unknown Namespace property {} at line {} (ignored)", child.getComponentLname(), cdat.lineNumber);
             break;
         }
         return -1;
     } 
     @Override
-    public int addToObjectProperty (ObjectProperty op, XMLDataRecord cdat) {
-        ObjectType child = cdat.obj;
-        switch (child.getComponentLname()) {
-        case "AbstractIndicator":   op.setAbstractIndicator(cdat.stringVal); break;
-        case "DefinitionText":      op.setDefinition(cdat.stringVal); break;
-        case "Name":                op.setName(cdat.stringVal); break;
+    public int addToObjectProperty (ObjectProperty op, int index) {
+         switch (this.getComponentLname()) {
+        case "AbstractIndicator":   op.setAbstractIndicator(stringVal); break;
+        case "DefinitionText":      op.setDefinition(stringVal); break;
+        case "Name":                op.setName(stringVal); break;
         default:
-            LOG.warn("Unknown Class property {} at line {} (ignored)", child.getComponentLname(), cdat.lineNumber);
             break;
         }
         return -1;

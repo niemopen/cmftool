@@ -25,9 +25,7 @@ package org.mitre.niem.xsd;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,7 +35,6 @@ import static org.mitre.niem.NIEMConstants.NMF_NS_URI_PREFIX;
 import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
-import static org.mitre.niem.NIEMConstants.XSI_NS_URI;
 import org.mitre.niem.nmf.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -68,7 +65,8 @@ public class ModelXMLReader {
     class Handler extends DefaultHandler {      
         protected Map<String,ObjectType> idMap     = new HashMap<>();     // map @id value -> object
         protected Map<ObjectType,RefRecord> refMap = new HashMap<>();     // map placeholder object - > RefRecord
-        protected Stack<XMLDataRecord> objStack    = new Stack<>();
+        protected Stack<ObjectType> objStack       = new Stack<>();       // elements under construction
+        protected Stack<Integer> lineNumStack      = new Stack<>();       // line number of start of element
         protected StringBuilder chars              = new StringBuilder();
         protected Locator loc                      = new LocatorImpl();
         protected Model model = null;
@@ -81,66 +79,65 @@ public class ModelXMLReader {
         
         @Override
         public void startDocument () {
-            XMLDataRecord dummyRoot = new XMLDataRecord(new ObjectType(), 0);
+            ObjectType dummyRoot = new ObjectType();
             objStack.add(dummyRoot);
+            lineNumStack.add(0);
         }
         
         @Override
         public void startElement(String eNamespace, String eLocalName, String eQName, Attributes atts) {
             System.out.print(String.format("%"+depth+"s+ %s\n", "", eQName));
             depth++;
-            
-            // Create appropriate object and initialize from XML attributes
-            ObjectType child = newObject(model, eNamespace, eLocalName, atts, loc.getLineNumber());
-            ObjectType parent = objStack.peek().obj;
-            XMLDataRecord cdat = new XMLDataRecord(child, loc.getLineNumber());
            
-            // Get element reference data from XML attributes
-            String id  = child.getID();
+            // Get element IDREF from XML attributes
             String ref = null;
             for (int i = 0; i < atts.getLength(); i++) {
                 if ("ref".equals(atts.getLocalName(i)) && atts.getURI(i).startsWith(STRUCTURES_NS_URI_PREFIX)) {
                     ref = atts.getValue(i).trim();
-                    if (ref.isEmpty()) {
-                        LOG.error("Empty @ref attribute at line {} (@ref ignored)", loc.getLineNumber());
-                        ref = null;
-                    }
                     break;
                 }
-            }
+            } 
+            // Create appropriate object and initialize from XML attributes
+            ObjectType child = newObject(model, eNamespace, eLocalName, atts, (ref != null), loc.getLineNumber());
+            ObjectType parent = objStack.peek();
+            
+            // Element ID is part of child object; remember for ref placeholder replacement
+            String id = child.getID();
             if (null != id) {
                 idMap.put(id, child);
             }
+            // Remember reference placeholders so we can replace them later
             else if (null != ref) {
-                RefRecord rr = new RefRecord(cdat, parent, ref);
+                RefRecord rr = new RefRecord(parent, ref);
                 refMap.put(child, rr);
             }   
             // First object created is the Model object
             if (objStack.size() == 1) {
                 model = (Model)child;
             }
-            // Add objects (except reference placeholders) to the list of model objects
-            else if (null == ref) {
-                child.addToModelObjectList();
-            }
-            objStack.add(cdat); }
+            objStack.add(child);
+            lineNumStack.add(loc.getLineNumber());
+        }
         
         @Override
         public void endElement(String eNamespace, String eLocalName, String eQName) {
-            XMLDataRecord cdat = objStack.pop();
-            XMLDataRecord pdat = objStack.peek();
-            ObjectType child    = cdat.obj;
-            ObjectType parent   = pdat.obj;
+            ObjectType child    = objStack.pop();
+            ObjectType parent   = objStack.peek();
+            int lineNum         = lineNumStack.pop();
             if (chars.length() > 0) {
-                cdat.stringVal = chars.toString().trim();
+                child.setStringVal(chars.toString().trim());
                 chars = new StringBuilder();
             }
             // If this child is a @ref placeholder, remember index if child is added to a list
-            int index = parent.addChild(cdat);
+            int index = parent.addChild(child, -1);
             RefRecord rr = refMap.get(child);
             if (null != rr) {
                 rr.index = index;
-            }            
+            }
+            // If not a placeholder, add Model children to model object
+            else {
+                child.addToModel(model, -1);
+            }
             depth--;
             System.out.print(String.format("%"+depth+"s- %s\n", "", eQName));            
         }
@@ -148,17 +145,14 @@ public class ModelXMLReader {
         @Override
         public void endDocument () {
             for (var rr : refMap.values()) {
-                XMLDataRecord cdat = rr.pholdDat;       // data wrapper for the placeholder child
                 ObjectType parent = rr.parent;          // object with the @ref placeholder child
                 ObjectType idObj  = idMap.get(rr.ref);  // object with ID matching the REF
-                if (null == idObj) {
-                    LOG.error("no matching @id for reference \"{}\" at line {}", rr.ref, cdat.lineNumber);
+                int index         = rr.index;
+                if (null != idObj) {
+                    parent.addChild(idObj, index);
                 }
-                else {
-                    cdat.index = rr.index;
-                    parent.addChild(cdat);
-                }
-            }
+            }    
+            model.testTraverse();
         }
         
         @Override
@@ -166,7 +160,7 @@ public class ModelXMLReader {
             chars.append(ch, start, length);
         }
         
-        private ObjectType newObject (Model m, String ens, String eln, Attributes atts, int lineNum) {
+        private ObjectType newObject (Model m, String ens, String eln, Attributes atts, boolean isRef, int lineNum) {
             ObjectType o = null;
             if (ens.startsWith(NMF_NS_URI_PREFIX)) {
                 switch (eln) {
@@ -222,10 +216,6 @@ public class ModelXMLReader {
     public class UnknownObject extends ObjectType {
         UnknownObject (Model m, String ens, String eln, Attributes atts) {
         }
-        // Don't add unknown object placeholders to the model object list
-        @Override
-        public void addToModelObjectList () {
-        }
     }
     
     
@@ -236,13 +226,11 @@ public class ModelXMLReader {
      * replace each placeholder with the matching @id object.
      */
     class RefRecord {
-        XMLDataRecord pholdDat = null;  // data wrapper for the placeholder child
         ObjectType parent =  null;      // the model object with the ref placeholder child
         int index = -1;                 // index of the placeholder if in a list, otherwise -1
         String ref = null;              // the @ref (or @uri) value
         
-        RefRecord (XMLDataRecord pd, ObjectType o, String r) {
-            pholdDat = pd;
+        RefRecord (ObjectType o, String r) {
             parent = o;
             ref = r;                    
         }

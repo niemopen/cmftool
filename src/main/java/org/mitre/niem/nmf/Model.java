@@ -24,8 +24,11 @@
 package org.mitre.niem.nmf;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
@@ -37,8 +40,6 @@ import org.xml.sax.Attributes;
  */
 public class Model extends ObjectType {
     
-    protected int nextID                              = 0;
-    protected List<ObjectType> allModelObjects        = new ArrayList<>();
     protected List<ClassType> classList               = new ArrayList<>();
     protected List<DataProperty> dataPropertyList     = new ArrayList<>();
     protected List<Datatype> datatypeList             = new ArrayList<>();
@@ -49,36 +50,43 @@ public class Model extends ObjectType {
     public List<DataProperty> dataPropertyList()     { return dataPropertyList; }
     public List<Datatype> datatypeList()             { return datatypeList; }
     public List<Namespace> namespaceList()           { return namespaceList; }
-    public List<ObjectProperty> objectPropertyList() { return objectPropertyList; }
-    
-    public void addToObjectList (ObjectType o) { 
-        allModelObjects.add(o);
-        addObjectID(o.getID());
-    }
-    
+    public List<ObjectProperty> objectPropertyList() { return objectPropertyList; }   
     
     public Model (Model m, String ens, String eln, Attributes a) {
         super(null, ens, eln, a);
     }
     
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToModel(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToModel(this, index);
     }
     
-    public String generateID () {
-        return String.format("i%02d", nextID++);
-    }
-    
-    private void addObjectID (String id) {
-        if (null == id) return;
-        if (id.matches("i\\d+")) {
-            int inum = Integer.parseInt(id.substring(1));
-            if (inum >= nextID) {
-                nextID = inum + 1;
+    public void testTraverse() {
+        Set<ObjectType>seen = new HashSet<>();
+        Map<ObjectType,Integer> refct = new HashMap<>();
+        TraverseFunc func = (ObjectType o) -> {
+            int ct = 1;
+            if (refct.containsKey(o)) {
+                ct = refct.get(o);
+                refct.put(o, ct+1);
             }
-        }
+            else {
+                refct.put(o, 1);
+            }
+        };
+        this.traverse(seen, func);
     }
-   
-    public void dump () {}
+
+    @Override
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        Collections.sort(classList);          for (var x : classList)          x.traverse(seen, f);
+        Collections.sort(dataPropertyList);   for (var x : dataPropertyList)   x.traverse(seen, f);
+        Collections.sort(datatypeList);       for (var x : datatypeList)       x.traverse(seen, f);
+        Collections.sort(namespaceList);      for (var x : namespaceList)      x.traverse(seen, f);
+        Collections.sort(objectPropertyList); for (var x : objectPropertyList) x.traverse(seen, f);
+    }    
 }
+ 

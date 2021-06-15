@@ -26,6 +26,7 @@ package org.mitre.niem.nmf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import static org.mitre.niem.NIEMConstants.NMF_NS_URI_PREFIX;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
@@ -65,33 +66,26 @@ public class HasDataProperty extends ObjectType {
     }
     
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToHasDataProperty(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToHasDataProperty(this, index);
     }
 
     @Override
-    public int addToExtensionOf (ExtensionOf e, XMLDataRecord cdat) { 
-        if (cdat.index < 0) {
+    public int addToExtensionOf (ExtensionOf e, int index) { 
+        if (index < 0) {
             e.hasDataPropertyList().add(this);
             return e.hasDataPropertyList().size()-1;  
         }
         // Replace @ref placeholder with @id object
-        e.hasDataPropertyList().set(cdat.index, this);
+        e.hasDataPropertyList().set(index, this);
         return -1;
     }
     
-    
     @Override
-    public void countRefs (Map<ObjectType,Integer> rc) {
-        if (rc.containsKey(this)) {
-            int count = rc.get(this);
-            rc.put(this, count+1);
-        }
-        else {
-            rc.put(this, 1);
-            if (null != dataPropertyList) {
-                for (var hv : dataPropertyList) { hv.countRefs(rc); }
-            }          
-        }
-    }     
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        if (null != dataPropertyList) for (var x: dataPropertyList) x.traverse(seen, f);
+    }    
 }

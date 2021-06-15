@@ -24,6 +24,7 @@
 package org.mitre.niem.nmf;
 
 import java.util.Map;
+import java.util.Set;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
 
@@ -32,7 +33,7 @@ import org.xml.sax.Attributes;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class Namespace extends ObjectType {
+public class Namespace extends ObjectType implements Comparable<Namespace> {
     
     protected String namespaceURI = null;
     protected String namespacePrefix = null;
@@ -46,59 +47,56 @@ public class Namespace extends ObjectType {
     public String getNamespacePrefix ()       { return namespacePrefix; }
     public String getDefinition ()            { return definition; }
     
+    public Namespace () { }
+    
     public Namespace (Model m, String ens, String eln, Attributes a) {
         super(m, ens, eln, a);
     }
-    
-    @Override
-    public void addToModelObjectList () {
-        super.addToModelObjectList();
-        this.getModel().namespaceList().add(this);        
-    }
         
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToNamespace(this, cdat);
+    public int addChild (ObjectType child, int index) {
+        return child.addToNamespace(this, index);
     }    
 
-// Not needed -- Namespace objects are added to the Model object elsewhere
-//    @Override
-//    public int addToModel(Model m, XMLDataRecord cdat) {
-//    }
-    
     @Override
-    public int addToClass (ClassType c, XMLDataRecord cdat) {
+    public int addToClass (ClassType c, int index) {
         c.setNamespace(this);
         return -1;
     }
     
     @Override
-    public int addToDataProperty (DataProperty dp, XMLDataRecord cdat) {
+    public int addToDataProperty (DataProperty dp, int index) {
         dp.setNamespace(this);
         return -1;
     }
     
     @Override
-    public int addToDatatype (Datatype dt, XMLDataRecord cdat) {
+    public int addToDatatype (Datatype dt, int index) {
         dt.setNamespace(this);
+        return -1;
+    }
+
+    // Special handling for adding Namespace to Model -- can't be a ref placeholder
+    @Override
+    public int addToModel(Model m, int index) {
+        m.namespaceList().add(this);
         return -1;
     }
     
     @Override
-    public int addToObjectProperty (ObjectProperty op, XMLDataRecord cdat) {
+    public int addToObjectProperty (ObjectProperty op, int index) {
         op.setNamespace(this);
         return -1;
     }
 
     @Override
-    public void countRefs (Map<ObjectType,Integer> rc) {
-        if (rc.containsKey(this)) {
-            int count = rc.get(this);
-            rc.put(this, count+1);
-        }
-        else {
-            rc.put(this, 1);           
-        }
-    } 
-
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+    }    
+    
+    public int compareTo (Namespace o) {
+        return this.namespaceURI.compareTo(o.namespaceURI);
+    }    
 }

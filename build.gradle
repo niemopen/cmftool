@@ -9,6 +9,10 @@ repositories {
     mavenCentral()
 }
 
+compileJava {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
 dependencies {
     implementation group: 'xerces', name: 'xercesImpl', version: '2.12.1'
     

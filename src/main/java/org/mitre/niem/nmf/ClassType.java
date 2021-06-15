@@ -23,8 +23,7 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Map;
-import org.mitre.niem.xsd.XMLDataRecord;
+import java.util.Set;
 import org.xml.sax.Attributes;
 
 /**
@@ -46,48 +45,42 @@ public class ClassType extends Component {
     public String getContentStyleCode ()  { return contentStyleCode; }
     public ExtensionOf getExtensionOf ()  { return extensionOf; }
     
-    
+    public ClassType () { }
+       
     public ClassType (Model m, String ens, String eln, Attributes a) {
         super(m, ens, eln, a);
     }
     
     @Override
-    public void addToModelObjectList () {
-        super.addToModelObjectList();
-        this.getModel().classList().add(this);        
+    public int addChild (ObjectType child, int index) {
+        return child.addToClass(this, index);
     }
     
     @Override
-    public int addChild (XMLDataRecord cdat) {
-        return cdat.obj.addToClass(this, cdat);
-    }
-    
-    @Override
-    public int addToExtensionOf (ExtensionOf e, XMLDataRecord cdat) {
+    public int addToExtensionOf (ExtensionOf e, int index) {
         e.setClassType(this);
         return -1;
     }
     
-// Not needed -- ClassType objects are added to the Model object elsewhere
-//    @Override
-//    public int addToModel(Model m, XMLDataRecord cdat) { 
-//    }
-    
+    // Special handing for adding ClassType to Model; can't be a ref placeholder
     @Override
-    public int addToObjectProperty (ObjectProperty op, XMLDataRecord cdat) {
-        op.setClassType(this);
+    public int addToModel(Model m, int index) { 
+        m.classList().add(this);
         return -1;
     }
     
     @Override
-    public void countRefs (Map<ObjectType,Integer> rc) {
-        if (rc.containsKey(this)) {
-            int count = rc.get(this);
-            rc.put(this, count+1);
-        }
-        else {
-            rc.put(this, 1);
-            if (null != extensionOf) extensionOf.countRefs(rc);
-        }
+    public int addToObjectProperty (ObjectProperty op, int index) {
+        op.setClassType(this);
+        return -1;
+    }
+
+    @Override
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+        f.func(this);
+        if (seen.contains(this)) return;
+        seen.add(this);
+        if (null != namespace)   namespace.traverse(seen, f);
+        if (null != extensionOf) extensionOf.traverse(seen, f);
     }    
 }

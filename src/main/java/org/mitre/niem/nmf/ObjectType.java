@@ -24,6 +24,7 @@
 package org.mitre.niem.nmf;
 
 import java.util.Map;
+import java.util.Set;
 import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
 import org.mitre.niem.xsd.XMLDataRecord;
 import org.xml.sax.Attributes;
@@ -39,11 +40,12 @@ public class ObjectType {
     protected Model model = null;             // every object knows the model it is part of
     protected String id = null;               // needed for any object in graph more than once
     protected String sequenceID = null;       // any model component can have a sequence number
-    protected String componentNS = null;      // NIEM model component URI formed out of namespace
-    protected String componentLname = null;   // and local name
+    protected String componentNS = null;      // NIEM model component URI
+    protected String componentLname = null;   // NIEM model component local name
 
     public void setID (String s)         { id = s; }
     public void setSequenceID (String s) { sequenceID = s; }
+    public void setStringVal (String s)  { }                    // override this in objects with string value
 
     public Model getModel()            { return model; }
     public boolean hasID()             { return null != id; }
@@ -78,28 +80,27 @@ public class ObjectType {
         }
     }
     
-    public void addToModelObjectList () {
-        model.addToObjectList(this);
-    }
+    public int addChild  (ObjectType child, int index) { return -1; }
     
-    public int addChild  (XMLDataRecord cdat) { return -1; }
-    
-    public int addToClass (ClassType c, XMLDataRecord cdat) { return -1; }
-    public int addToDataProperty (DataProperty dp, XMLDataRecord cdat) { return -1; }
-    public int addToDatatype (Datatype dt, XMLDataRecord cdat) { return -1; }
-    public int addToExtensionOf (ExtensionOf e, XMLDataRecord cdat) { return -1; }
-    public int addToHasDataProperty (HasDataProperty h, XMLDataRecord cdat) { return -1; }
-    public int addToHasObjectProperty (HasObjectProperty h, XMLDataRecord cdat) { return -1; }
-    public int addToHasValue (HasValue h, XMLDataRecord cdat) { return -1; }
-    public int addToModel (Model m, XMLDataRecord cdat) { return -1; }
-    public int addToNamespace (Namespace ns, XMLDataRecord cdat) { return -1; }
-    public int addToObjectProperty (ObjectProperty op, XMLDataRecord cdat) { return -1; }
-    public int addToRestrictionOf (RestrictionOf r, XMLDataRecord cdat) { return -1; }
-    public int addToSubPropertyOf (SubPropertyOf s, XMLDataRecord cdat) { return -1; }
-    public int addToUnionOf (UnionOf u, XMLDataRecord cdat) { return -1; }
+    public int addToClass (ClassType c, int index) { return -1; }
+    public int addToDataProperty (DataProperty dp, int index) { return -1; }
+    public int addToDatatype (Datatype dt, int index) { return -1; }
+    public int addToExtensionOf (ExtensionOf e, int index) { return -1; }
+    public int addToHasDataProperty (HasDataProperty h, int index) { return -1; }
+    public int addToHasObjectProperty (HasObjectProperty h, int index) { return -1; }
+    public int addToHasValue (HasValue h, int index) { return -1; }
+    public int addToModel (Model m, int index) { return -1; }
+    public int addToNamespace (Namespace ns, int index) { return -1; }
+    public int addToObjectProperty (ObjectProperty op, int index) { return -1; }
+    public int addToRestrictionOf (RestrictionOf r, int index) { return -1; }
+    public int addToSubPropertyOf (SubPropertyOf s, int index) { return -1; }
+    public int addToUnionOf (UnionOf u, int index) { return -1; }
 
-    
-    public void countRefs (Map<ObjectType,Integer> rc) {
+    interface TraverseFunc {
+        void func (ObjectType o);
     }
-       
+    
+    void traverse (Set<ObjectType> seen, TraverseFunc f) {
+    }
+    
 }
