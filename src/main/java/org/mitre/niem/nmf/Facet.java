@@ -23,55 +23,28 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Map;
 import java.util.Set;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
 
 /**
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Facet extends ObjectType {
-    protected String definition = null;
-    protected String facetKind = null;
-    protected String stringVal = null;
+    private String definition = null;
+    private String facetKind = null;
+    private String stringVal = null;
     
     public void setDefinition (String s)  { definition = s; }
     public void setFacetKind (String s)   { facetKind = s; }
-    @Override
     public void setStringVal (String s)   { stringVal = s; }
     
     public String getDefinition ()  { return definition; }
     public String getFacetKind()    { return facetKind; }
     public String getStringVal()    { return stringVal; }
     
-    public Facet (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
-        facetKind = eln;
+    public Facet (Model m) {
+        super(m);
     }
-    
-    @Override
-    public int addToRestrictionOf (RestrictionOf r, int index) {
-        if (index < 0) {
-            r.facetList().add(this);
-            return r.facetList().size()-1;  
-        }
-        // Replace @ref placeholder with @id object
-        r.facetList().set(index, this);
-        return -1;
-    }    
-    
-    @Override
-    public int addToUnionOf (UnionOf u, int index) {
-        if (index < 0) {
-            u.facetList().add(this);
-            return u.facetList().size()-1;  
-        }
-        // Replace @ref placeholder with @id object
-        u.facetList().set(index, this);
-        return -1;
-    } 
 
     @Override
     void traverse (Set<ObjectType> seen, TraverseFunc f) {

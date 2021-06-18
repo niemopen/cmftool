@@ -25,10 +25,7 @@ package org.mitre.niem.nmf;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
 
 /**
  *
@@ -36,34 +33,35 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class UnionOf extends ObjectType {
-    protected Datatype datatype = null;
-    protected List<Facet> facetList = new ArrayList<>();
+    private final List<Datatype> datatypeList = new ArrayList<>();
     
-    public void setDatatype (Datatype dt) { datatype = dt; }
-    public Datatype getDatatype ()        { return datatype; }
-    public List<Facet> facetList()        { return facetList; } 
+    public List<Datatype> getDatatypeList()        { return datatypeList; } 
     
-    public UnionOf (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
+    public UnionOf (Model m) {
+        super(m);
     }    
     
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToUnionOf(this, index);
+    public void addDatatype (Datatype c) throws NMFException {
+        this.datatypeList.add(c);
     }
     
-    @Override
-    public int addToDatatype (Datatype dt, int index) { 
-        dt.setUnionOf(this);
-        return -1; 
+    public void removeDatatype (Datatype c) throws NMFException {
+        int index = this.datatypeList.indexOf(c);
+        if (index < 0) throw(new NMFException(String.format("Can't remove Datatype object; not in UnionOf object")));
+        this.datatypeList.remove(index);
     }
-
+    
+    public void replaceDatatype (Datatype oc, Datatype nc) throws NMFException {
+        int index = this.datatypeList.indexOf(oc);
+        if (index < 0) throw(new NMFException(String.format("Can't replace Datatype object; not in UnionOf object")));
+        this.datatypeList.set(index, nc);        
+    } 
+        
     @Override
     void traverse (Set<ObjectType> seen, TraverseFunc f) {
         f.func(this);
         if (seen.contains(this)) return;
         seen.add(this);
-        if (null != datatype)  datatype.traverse(seen, f);
-        if (null != facetList) for (var x : facetList) x.traverse(seen, f);
+        if (null != datatypeList) for (var x : datatypeList) x.traverse(seen, f);
     }
 }

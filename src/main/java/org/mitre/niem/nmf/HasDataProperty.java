@@ -25,12 +25,7 @@ package org.mitre.niem.nmf;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import static org.mitre.niem.NIEMConstants.NMF_NS_URI_PREFIX;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
-
 
 /**
  *
@@ -38,10 +33,9 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class HasDataProperty extends ObjectType {
-    
-    protected List<DataProperty> dataPropertyList = new ArrayList<>();
-    protected String minOccursQuantity = null;
-    protected String maxOccursQuantity = null;
+    private final List<DataProperty> dataPropertyList = new ArrayList<>();
+    private String minOccursQuantity = null;
+    private String maxOccursQuantity = null;
     
     public void setMinOccursQuantity (String s) { minOccursQuantity = s; }
     public void setMaxOccursQuantity (String s) { maxOccursQuantity = s; }
@@ -49,36 +43,26 @@ public class HasDataProperty extends ObjectType {
     public String minOccursQuantity() { return minOccursQuantity; }
     public String maxOccursQuantity() { return maxOccursQuantity; }
     
-    public List<DataProperty> dataPropertyList () { return dataPropertyList; }
-    
-    public HasDataProperty (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
-        for (int i = 0; i < a.getLength(); i++) {
-            if (a.getURI(i).startsWith(NMF_NS_URI_PREFIX)) {
-                if ("minOccursQuantity".equals(a.getLocalName(i))) {
-                    minOccursQuantity = a.getValue(i);
-                }
-                else if ("maxOccursQuantity".equals(a.getLocalName(i))) {
-                    maxOccursQuantity = a.getValue(i);
-                }
-            }
-        }
+    public List<DataProperty> getDataPropertyList () { return dataPropertyList; }
+     
+    public void addDataProperty (DataProperty c) throws NMFException {
+        this.dataPropertyList.add(c);
     }
     
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToHasDataProperty(this, index);
+    public void removeDataProperty (DataProperty c) throws NMFException {
+        int index = this.dataPropertyList.indexOf(c);
+        if (index < 0) throw(new NMFException(String.format("Can't remove DataProperty object; not in HasDataProperty object")));
+        this.dataPropertyList.remove(index);
     }
-
-    @Override
-    public int addToExtensionOf (ExtensionOf e, int index) { 
-        if (index < 0) {
-            e.hasDataPropertyList().add(this);
-            return e.hasDataPropertyList().size()-1;  
-        }
-        // Replace @ref placeholder with @id object
-        e.hasDataPropertyList().set(index, this);
-        return -1;
+    
+    public void replaceDataProperty (DataProperty oc, DataProperty nc) throws NMFException {
+        int index = this.dataPropertyList.indexOf(oc);
+        if (index < 0) throw(new NMFException(String.format("Can't replace DataProperty object; not in HasDataProperty object")));
+        this.dataPropertyList.set(index, nc);        
+    }    
+    
+    public HasDataProperty (Model m) {
+        super(m);
     }
     
     @Override

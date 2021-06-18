@@ -23,10 +23,9 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Map;
 import java.util.Set;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -34,10 +33,9 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ObjectProperty extends Component {
-    
-    protected SubPropertyOf subPropertyOf = null;
-    protected ClassType classType = null;
-    protected String abstractIndicator = null;
+    private SubPropertyOf subPropertyOf = null;
+    private ClassType classType = null;
+    private String abstractIndicator = null;
     
     public void setSubPropertyOf (SubPropertyOf s) { subPropertyOf = s; }
     public void setClassType (ClassType c)         { classType = c; }
@@ -49,36 +47,17 @@ public class ObjectProperty extends Component {
     
     public ObjectProperty () { }
     
-    public ObjectProperty (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
+    public ObjectProperty (Model m) {
+        super(m);
     }
-        
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToObjectProperty(this, index);
-    } 
     
     @Override
-    public int addToHasObjectProperty (HasObjectProperty h, int index) {
-        if (index < 0) {
-            h.objectPropertyList().add(this);
-            return h.objectPropertyList().size()-1;  
+    public void addToModelSet () {
+        try {
+            this.getModel().addObjectProperty(this);
+        } catch (NMFException ex) {
+            Logger.getLogger(ObjectProperty.class.getName()).log(Level.SEVERE, null, ex);
         }
-        // Replace @ref placeholder with @id object
-        h.objectPropertyList().set(index, this);
-        return -1;  
-    }
-
-    // Special handling for adding ObjectProperty to Model -- can't be a ref placeholder
-    @Override
-    public int addToModel(Model m, int index) {
-        m.objectPropertyList().add(this);
-        return -1;
-    }
-    
-    public int addToSubPropertyOf (SubPropertyOf p, int index) {
-        p.setObjectProperty(this);
-        return -1;
     }
     
     @Override
@@ -86,7 +65,7 @@ public class ObjectProperty extends Component {
         f.func(this);
         if (seen.contains(this)) return;
         seen.add(this);
-        if (null != namespace)   namespace.traverse(seen, f);        
+        if (null != this.getNamespace()) this.getNamespace().traverse(seen, f);        
         if (null != subPropertyOf) subPropertyOf.traverse(seen, f);
         if (null != classType)     classType.traverse(seen,f);
     }

@@ -25,10 +25,7 @@ package org.mitre.niem.nmf;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
 
 /**
  *
@@ -36,26 +33,32 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class RestrictionOf extends ObjectType {
-    protected Datatype datatype = null;
-    protected List<Facet> facetList = new ArrayList<>();
+    private Datatype datatype = null;
+    private final List<Facet> facetList = new ArrayList<>();
     
     public void setDatatype (Datatype dt) { datatype = dt; }
     public Datatype getDatatype ()        { return datatype; }
-    public List<Facet> facetList()        { return facetList; }
     
-    public RestrictionOf (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
+    public List<Facet> getFacetList()     { return facetList; }
+    
+    public RestrictionOf (Model m) {
+        super(m);
+    }
+      
+    public void addFacet (Facet c) throws NMFException {
+        this.facetList.add(c);
     }
     
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToRestrictionOf(this, index);
-    }    
+    public void removeFacet (Facet c) throws NMFException {
+        int index = this.facetList.indexOf(c);
+        if (index < 0) throw(new NMFException(String.format("Can't remove Facet object; not in RestrictionOf object")));
+        this.facetList.remove(index);
+    }
     
-    @Override
-    public int addToDatatype (Datatype dt, int index) { 
-        dt.setRestrictionOf(this);
-        return -1; 
+    public void replaceFacet (Facet oc, Facet nc) throws NMFException {
+        int index = this.facetList.indexOf(oc);
+        if (index < 0) throw(new NMFException(String.format("Can't replace Facet object; not in RestrictionOf object")));
+        this.facetList.set(index, nc);        
     }    
 
     @Override

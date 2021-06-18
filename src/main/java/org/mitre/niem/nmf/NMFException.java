@@ -21,27 +21,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.xsd;
-
-import org.mitre.niem.nmf.ObjectType;
+package org.mitre.niem.nmf;
 
 /**
- * A record for data from a model XML file that is not part of the wrapped
- * model object.  The data describes a child model object to be added to
- * some parent object.
- * 
+ *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class XMLDataRecord {
-    public ObjectType obj    = null;    // data in this record is for this model object
-    public String stringVal  = null;    // for a simple element, the element string contents
-    public int index         = -1;      // when replacing a reference placeholder in a list, this is its index
-    public int lineNumber    = 0;       // starting line # of XML element (for diagnostic messages)     
-        
-    XMLDataRecord () { }
-    XMLDataRecord (ObjectType o, int line) {
-        obj = o;
-        lineNumber = line;
+public class NMFException extends Exception {
+    NMFException (String msg) {
+        super(msg);
     }
 }

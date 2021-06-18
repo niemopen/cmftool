@@ -23,10 +23,7 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Map;
 import java.util.Set;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
 
 /**
  *
@@ -34,25 +31,13 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class SubPropertyOf extends ObjectType {
-    
-    protected ObjectProperty objectProperty = null;
+    private ObjectProperty objectProperty = null;
     
     public void setObjectProperty (ObjectProperty o) { objectProperty = o; }
     public ObjectProperty getObjectProperty ()       { return objectProperty; }
     
-    public SubPropertyOf (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
-    }
-    
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToSubPropertyOf(this, index);
-    }
-        
-    @Override
-    public int addToObjectProperty (ObjectProperty op, int index) {
-        op.setSubPropertyOf(this);
-        return -1;
+    public SubPropertyOf (Model m) {
+        super(m);
     }
 
     @Override

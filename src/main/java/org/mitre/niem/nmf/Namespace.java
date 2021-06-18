@@ -23,10 +23,9 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Map;
 import java.util.Set;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -34,10 +33,9 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Namespace extends ObjectType implements Comparable<Namespace> {
-    
-    protected String namespaceURI = null;
-    protected String namespacePrefix = null;
-    protected String definition = null;
+    private String namespaceURI = null;
+    private String namespacePrefix = null;
+    private String definition = null;
     
     public void setNamespaceURI (String s)    { namespaceURI = s; }
     public void setNamespacePrefix (String s) { namespacePrefix = s; }
@@ -49,44 +47,17 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     
     public Namespace () { }
     
-    public Namespace (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
-    }
-        
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToNamespace(this, index);
-    }    
-
-    @Override
-    public int addToClass (ClassType c, int index) {
-        c.setNamespace(this);
-        return -1;
+    public Namespace (Model m) {
+        super(m);
     }
     
     @Override
-    public int addToDataProperty (DataProperty dp, int index) {
-        dp.setNamespace(this);
-        return -1;
-    }
-    
-    @Override
-    public int addToDatatype (Datatype dt, int index) {
-        dt.setNamespace(this);
-        return -1;
-    }
-
-    // Special handling for adding Namespace to Model -- can't be a ref placeholder
-    @Override
-    public int addToModel(Model m, int index) {
-        m.namespaceList().add(this);
-        return -1;
-    }
-    
-    @Override
-    public int addToObjectProperty (ObjectProperty op, int index) {
-        op.setNamespace(this);
-        return -1;
+    public void addToModelSet () {
+        try {
+            this.getModel().addNamespace(this);
+        } catch (NMFException ex) {
+            Logger.getLogger(Namespace.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override

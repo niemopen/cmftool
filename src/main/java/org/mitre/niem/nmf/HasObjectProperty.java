@@ -25,11 +25,7 @@ package org.mitre.niem.nmf;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import static org.mitre.niem.NIEMConstants.NMF_NS_URI_PREFIX;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
 
 /**
  *
@@ -37,10 +33,9 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class HasObjectProperty extends ObjectType {
-    
-    protected List<ObjectProperty> objectPropertyList = new ArrayList<>();
-    protected String minOccursQuantity = null;
-    protected String maxOccursQuantity = null;
+    private final List<ObjectProperty> objectPropertyList = new ArrayList<>();
+    private String minOccursQuantity = null;
+    private String maxOccursQuantity = null;
     
     public void setMinOccursQuantity (String s) { minOccursQuantity = s; }
     public void setMaxOccursQuantity (String s) { maxOccursQuantity = s; }
@@ -48,38 +43,28 @@ public class HasObjectProperty extends ObjectType {
     public String minOccursQuantity() { return minOccursQuantity; }
     public String maxOccursQuantity() { return maxOccursQuantity; } 
     
-    public List<ObjectProperty> objectPropertyList () { return objectPropertyList; }
+    public List<ObjectProperty> getObjectPropertyList() { return objectPropertyList; }
     
-    public HasObjectProperty (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a); 
-        for (int i = 0; i < a.getLength(); i++) {
-            if (a.getURI(i).startsWith(NMF_NS_URI_PREFIX)) {
-                if ("minOccursQuantity".equals(a.getLocalName(i))) {
-                    minOccursQuantity = a.getValue(i);
-                }
-                else if ("maxOccursQuantity".equals(a.getLocalName(i))) {
-                    maxOccursQuantity = a.getValue(i);
-                }
-            }
-        }        
+    public HasObjectProperty (Model m) {
+        super(m);
+    }
+     
+    public void addObjectProperty (ObjectProperty c) throws NMFException {
+        this.objectPropertyList.add(c);
     }
     
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToHasObjectProperty(this, index);
+    public void removeObjectProperty (ObjectProperty c) throws NMFException {
+        int index = this.objectPropertyList.indexOf(c);
+        if (index < 0) throw(new NMFException(String.format("Can't remove ObjectProperty object; not in HasObjectProperty object")));
+        this.objectPropertyList.remove(index);
     }
-   
-    @Override
-    public int addToExtensionOf (ExtensionOf e, int index) { 
-        if (index < 0) {
-            e.hasObjectPropertyList().add(this);
-            return e.hasObjectPropertyList().size()-1;  
-        }
-        // Replace @ref placeholder with @id object
-        e.hasObjectPropertyList().set(index, this);
-        return -1;
-    }
-
+    
+    public void replaceObjectProperty (ObjectProperty oc, ObjectProperty nc) throws NMFException {
+        int index = this.objectPropertyList.indexOf(oc);
+        if (index < 0) throw(new NMFException(String.format("Can't replace ObjectProperty object; not in HasObjectProperty object")));
+        this.objectPropertyList.set(index, nc);        
+    }    
+           
     @Override
     void traverse (Set<ObjectType> seen, TraverseFunc f) {
         f.func(this);

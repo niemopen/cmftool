@@ -24,7 +24,8 @@
 package org.mitre.niem.nmf;
 
 import java.util.Set;
-import org.xml.sax.Attributes;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -32,10 +33,9 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ClassType extends Component {
-    
-    protected String abstractIndicator = null;
-    protected String contentStyleCode  = null;
-    protected ExtensionOf extensionOf  = null;
+    private String abstractIndicator = null;
+    private String contentStyleCode  = null;
+    private ExtensionOf extensionOf  = null;
     
     public void setAbstractIndicator (String s) { abstractIndicator = s; }
     public void setContentStyleCode  (String s) { contentStyleCode = s; }
@@ -47,32 +47,17 @@ public class ClassType extends Component {
     
     public ClassType () { }
        
-    public ClassType (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
+    public ClassType (Model m) {
+        super(m);
     }
     
     @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToClass(this, index);
-    }
-    
-    @Override
-    public int addToExtensionOf (ExtensionOf e, int index) {
-        e.setClassType(this);
-        return -1;
-    }
-    
-    // Special handing for adding ClassType to Model; can't be a ref placeholder
-    @Override
-    public int addToModel(Model m, int index) { 
-        m.classList().add(this);
-        return -1;
-    }
-    
-    @Override
-    public int addToObjectProperty (ObjectProperty op, int index) {
-        op.setClassType(this);
-        return -1;
+    public void addToModelSet () {
+        try {
+            this.getModel().addClassType(this);
+        } catch (NMFException ex) {
+            Logger.getLogger(Namespace.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -80,7 +65,7 @@ public class ClassType extends Component {
         f.func(this);
         if (seen.contains(this)) return;
         seen.add(this);
-        if (null != namespace)   namespace.traverse(seen, f);
-        if (null != extensionOf) extensionOf.traverse(seen, f);
+        if (null != this.getNamespace())   this.getNamespace().traverse(seen, f);
+        if (null != this.getExtensionOf()) this.getExtensionOf().traverse(seen, f);
     }    
 }

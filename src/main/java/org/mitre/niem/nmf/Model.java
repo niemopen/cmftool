@@ -23,15 +23,12 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  *
@@ -39,54 +36,117 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Model extends ObjectType {
+    private final Map<String,Component> modelComponents       = new HashMap<>();        // map component URI to object; for duplicate checking
+    private final SortedSet<ClassType> classTypeSet           = new TreeSet<>();
+    private final SortedSet<DataProperty> dataPropertySet     = new TreeSet<>();
+    private final SortedSet<Datatype> datatypeSet             = new TreeSet<>();
+    private final SortedSet<Namespace> namespaceSet           = new TreeSet<>();
+    private final SortedSet<ObjectProperty> objectPropertySet = new TreeSet<>();
+
+    public SortedSet<ClassType> classTypeSet()           { return classTypeSet; }
+    public SortedSet<DataProperty> dataPropertySet()     { return dataPropertySet; }
+    public SortedSet<Datatype> datatypeSet()             { return datatypeSet; }
+    public SortedSet<Namespace> namespaceSet()           { return namespaceSet; }
+    public SortedSet<ObjectProperty> objectPropertySet() { return objectPropertySet; }   
     
-    protected List<ClassType> classList               = new ArrayList<>();
-    protected List<DataProperty> dataPropertyList     = new ArrayList<>();
-    protected List<Datatype> datatypeList             = new ArrayList<>();
-    protected List<Namespace> namespaceList           = new ArrayList<>();
-    protected List<ObjectProperty> objectPropertyList = new ArrayList<>();
+    public Model (Model m) { }
     
-    public List<ClassType> classList()               { return classList; }
-    public List<DataProperty> dataPropertyList()     { return dataPropertyList; }
-    public List<Datatype> datatypeList()             { return datatypeList; }
-    public List<Namespace> namespaceList()           { return namespaceList; }
-    public List<ObjectProperty> objectPropertyList() { return objectPropertyList; }   
-    
-    public Model (Model m, String ens, String eln, Attributes a) {
-        super(null, ens, eln, a);
+    // These methods test arguments for duplicate components and such.
+    // Suitable for a user interface or when processing user-supplied data.
+    public void addComponent (Component c) throws NMFException {
+        String curi = c.getURI();
+        if (null == curi) return;
+        if (modelComponents.containsValue(c)) return;
+        if (modelComponents.containsKey(curi)) throw(new NMFException(String.format("Can't add component %s to model; already present", curi)));            
+        else modelComponents.put(curi, c);
+        
     }
     
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToModel(this, index);
+    public void removeComponent (Component c) throws NMFException {
+        String curi = c.getURI();
+        if (null == curi) return;
+        if (!modelComponents.containsKey(curi)) throw(new NMFException(String.format("Can't remove component %s from model; not present", curi)));
+        else modelComponents.remove(curi);
     }
     
-    public void testTraverse() {
+    public void addClassType (ClassType x) throws NMFException {
+        this.addComponent(x);
+        this.classTypeSet.add(x);
+    }
+    
+    public void removeClassType (ClassType x) throws NMFException {
+        if (!this.classTypeSet.contains(x)) 
+            throw(new NMFException(String.format("Can't remove class %s; not in model", x.getURI())));
+        removeComponent(x);
+        this.classTypeSet.remove(x);
+    }
+    
+    public void addDataProperty (DataProperty x) throws NMFException {
+        this.addComponent(x);
+        this.dataPropertySet.add(x);
+    }
+    
+    public void removeDataProperty (DataProperty x) throws NMFException {
+        if (!this.dataPropertySet.contains(x))
+            throw(new NMFException(String.format("Can't remove data property %s; not in model", x.getURI())));
+        removeComponent(x);
+        this.dataPropertySet.remove(x);
+    }
+    
+    public void addDatatype (Datatype x) throws NMFException {
+        this.addComponent(x);
+        this.datatypeSet.add(x);
+    }
+    
+    public void removeDatatype (Datatype x) throws NMFException {
+        if (!this.datatypeSet.contains(x))
+            throw(new NMFException(String.format("Can't remove data property %s; not in model", x.getURI())));
+        removeComponent(x);
+        this.datatypeSet.remove(x);
+    }
+
+    public void addObjectProperty (ObjectProperty x) throws NMFException {
+        this.addComponent(x);
+        this.objectPropertySet.add(x);
+    }
+    
+    public void removeObjectProperty (ObjectProperty x) throws NMFException {
+        if (!this.objectPropertySet.contains(x))
+            throw(new NMFException(String.format("Can't remove object property %s; not in model", x.getURI())));
+        removeComponent(x);
+        this.objectPropertySet.remove(x);
+    }
+    
+    public void addNamespace (Namespace x) throws NMFException {
+         for (var ns : namespaceSet) { 
+             if (x != ns && x.getNamespaceURI().equals(ns.getNamespaceURI()))
+                 throw(new NMFException(String.format("Can't add namespace %s; already in model", x.getNamespaceURI())));
+         }
+         this.namespaceSet.add(x); 
+    }
+    
+    public void removeNamespace (Namespace x) throws NMFException {
+        if (!this.namespaceSet.contains(x))
+            throw(new NMFException(String.format("Can't remove namespace %s; not in model", x.getNamespaceURI())));
+        this.namespaceSet.remove(x);
+    }
+    
+    
+    public void collectModelObjects() {
         Set<ObjectType>seen = new HashSet<>();
-        Map<ObjectType,Integer> refct = new HashMap<>();
         TraverseFunc func = (ObjectType o) -> {
-            int ct = 1;
-            if (refct.containsKey(o)) {
-                ct = refct.get(o);
-                refct.put(o, ct+1);
-            }
-            else {
-                refct.put(o, 1);
-            }
+            o.addToModelSet();
         };
         this.traverse(seen, func);
     }
 
     @Override
     void traverse (Set<ObjectType> seen, TraverseFunc f) {
-        f.func(this);
-        if (seen.contains(this)) return;
-        seen.add(this);
-        Collections.sort(classList);          for (var x : classList)          x.traverse(seen, f);
-        Collections.sort(dataPropertyList);   for (var x : dataPropertyList)   x.traverse(seen, f);
-        Collections.sort(datatypeList);       for (var x : datatypeList)       x.traverse(seen, f);
-        Collections.sort(namespaceList);      for (var x : namespaceList)      x.traverse(seen, f);
-        Collections.sort(objectPropertyList); for (var x : objectPropertyList) x.traverse(seen, f);
+        for (var x : classTypeSet)      { x.traverse(seen, f); }
+        for (var x : dataPropertySet)   { x.traverse(seen, f); }
+        for (var x : datatypeSet)       { x.traverse(seen, f); }
+        for (var x : objectPropertySet) { x.traverse(seen, f); }
+        for (var x : namespaceSet)      { x.traverse(seen, f); }        
     }    
 }
  

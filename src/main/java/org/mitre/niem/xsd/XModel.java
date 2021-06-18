@@ -21,45 +21,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmf;
+package org.mitre.niem.xsd;
 
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.mitre.niem.nmf.Model;
+import org.xml.sax.Attributes;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class DataProperty extends Component {
-    private Datatype datatype = null;
+public class XModel extends XObjectType {
     
-    public void setDatatype(Datatype dt) { datatype = dt; }
-    public Datatype getDatatype()        { return datatype; }
-    
-    public DataProperty () { }
-    
-    public DataProperty (Model m) {
-        super(m);       
-    }
+    private Model obj = null;
     
     @Override
-    public void addToModelSet () {
-        try {
-            this.getModel().addDataProperty(this);
-        } catch (NMFException ex) {
-            Logger.getLogger(Namespace.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public Model getObject() { return obj; }
+    
+    XModel (Model m) {
+        obj = m;
     }
- 
-    @Override
-    void traverse (Set<ObjectType> seen, TraverseFunc f) {
-        f.func(this);
-        if (seen.contains(this)) return;
-        seen.add(this);
-        if (null != this.getNamespace())   this.getNamespace().traverse(seen, f);        
-        if (null != datatype) datatype.traverse(seen, f);
-    }     
 
+    XModel (Model m, String ens, String eln, Attributes a, int line) {
+        super(m, ens, eln, a, line);
+        obj = new Model(m);
+    }    
+    
+    @Override
+    public void addChild (XObjectType child) {
+        child.addToModel(this);
+    }
+    
 }

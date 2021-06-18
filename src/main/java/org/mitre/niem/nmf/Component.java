@@ -23,18 +23,15 @@
  */
 package org.mitre.niem.nmf;
 
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
-
 /**
  * An abstract class for NIEM model components that have a name and namespace.
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public abstract class Component extends ObjectType implements Comparable<Component> {
-    protected String name = null;
-    protected Namespace namespace = null;
-    protected String definition = null;
+    private String name = null;
+    private Namespace namespace = null;
+    private String definition = null;
     
     public void setName (String s)          { name = s; }
     public void setNamespace (Namespace ns) { namespace = ns; }
@@ -43,16 +40,21 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public String getName ()         { return name; }
     public Namespace getNamespace () { return namespace; }
     public String getDefinition ()   { return definition; }
+    public String getURI () {
+        if (null == name || null == namespace) return null;
+        if (namespace.getNamespaceURI().endsWith("#")) return namespace.getNamespaceURI()+name;
+        return namespace.getNamespaceURI()+"#"+name;
+    }
     
     Component () {}
     
-    Component (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
+    Component (Model m) {
+        super(m);
     }      
-    
+       
     @Override
     public int compareTo (Component o) {
-        int v = this.namespace.namespaceURI.compareTo(o.namespace.namespaceURI);
+        int v = this.namespace.getNamespaceURI().compareTo(o.namespace.getNamespaceURI());
         if (0 == v) {
             v = this.name.compareTo(o.name);
         }

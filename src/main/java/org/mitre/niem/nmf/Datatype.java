@@ -23,22 +23,18 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Map;
 import java.util.Set;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class Datatype extends Component {
-    
-    public static Datatype refObj = new Datatype();
-    
-    protected RestrictionOf restrictionOf = null;
-    protected UnionOf unionOf = null;
+public class Datatype extends Component {   
+    private RestrictionOf restrictionOf = null;
+    private UnionOf unionOf = null;
     
     public void setRestrictionOf (RestrictionOf r) { restrictionOf = r; }
     public void setUnionOf (UnionOf u)             { unionOf = u; }
@@ -48,46 +44,25 @@ public class Datatype extends Component {
     
     public Datatype () { }
     
-    public Datatype (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);
-    }
-        
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToDatatype(this, index);
-    }    
-     
-    @Override
-    public int addToDataProperty(DataProperty dp, int index) {
-        dp.setDatatype(this);
-        return -1;
-    }  
-    
-    @Override
-    public int addToHasValue(HasValue h, int index) {
-        h.setDatatype(this);
-        return -1;
-    }  
-
-    // Special handling for adding Datatype to Model; can't be a ref placeholder
-    @Override
-    public int addToModel(Model m, int index) {
-        m.datatypeList().add(this);
-        return -1;
+    public Datatype (Model m) {
+        super(m);
     }
     
     @Override
-    public int addToRestrictionOf(RestrictionOf r, int index) {
-        r.setDatatype(this);
-        return -1;
-    }  
+    public void addToModelSet () {
+        try {
+            this.getModel().addDatatype(this);
+        } catch (NMFException ex) {
+            Logger.getLogger(Namespace.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     @Override
     void traverse (Set<ObjectType> seen, TraverseFunc f) {
         f.func(this);
         if (seen.contains(this)) return;
         seen.add(this);
-        if (null != namespace)   namespace.traverse(seen, f);        
+        if (null != this.getNamespace())   this.getNamespace().traverse(seen, f);        
         if (null != restrictionOf) restrictionOf.traverse(seen, f);
         if (null != unionOf) unionOf.traverse(seen, f);
     } 

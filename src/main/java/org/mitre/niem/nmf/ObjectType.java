@@ -23,11 +23,7 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Map;
 import java.util.Set;
-import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
 
 /**
  * A class to represent a NIEM model component.
@@ -35,70 +31,27 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ObjectType {
-    
-    // These are properties of the NIEM model object
-    protected Model model = null;             // every object knows the model it is part of
-    protected String id = null;               // needed for any object in graph more than once
-    protected String sequenceID = null;       // any model component can have a sequence number
-    protected String componentNS = null;      // NIEM model component URI
-    protected String componentLname = null;   // NIEM model component local name
+    private Model model = null;             // every object knows the model it is part of
+    private String sequenceID = null;       // any model component can have a sequence number
 
-    public void setID (String s)         { id = s; }
     public void setSequenceID (String s) { sequenceID = s; }
-    public void setStringVal (String s)  { }                    // override this in objects with string value
 
     public Model getModel()            { return model; }
-    public boolean hasID()             { return null != id; }
-    public String getID()              { return id; }
     public String getSequenceID ()     { return sequenceID; }
-    public String getComponentNS ()    { return componentNS; }
-    public String getComponentLname () { return componentLname; }
     
     public ObjectType () {
     }
-    
-    /**
-     * Construct a NIEM model component object from values supplied by SAX parser
-     * @param ens element namespace uri
-     * @param eln element local name
-     * @param a list of XML attributes from SAX parser
-     */
-    public ObjectType (Model m, String ens, String eln, Attributes a) {
+   
+    public ObjectType (Model m) {
         model = m;
-        componentNS = ens;
-        componentLname = eln;
-        for (int i = 0; i < a.getLength(); i++) {
-            if (a.getURI(i).startsWith(STRUCTURES_NS_URI_PREFIX)) {
-                if ("sequenceId".equals(a.getLocalName(i))) {
-                    sequenceID = a.getValue(i);
-                }
-                // Remember @id to avoid needless diffs between model file versions
-                else if ("id".equals(a.getLocalName(i))) {
-                    id = a.getValue(i);
-                }
-            }
-        }
     }
-    
-    public int addChild  (ObjectType child, int index) { return -1; }
-    
-    public int addToClass (ClassType c, int index) { return -1; }
-    public int addToDataProperty (DataProperty dp, int index) { return -1; }
-    public int addToDatatype (Datatype dt, int index) { return -1; }
-    public int addToExtensionOf (ExtensionOf e, int index) { return -1; }
-    public int addToHasDataProperty (HasDataProperty h, int index) { return -1; }
-    public int addToHasObjectProperty (HasObjectProperty h, int index) { return -1; }
-    public int addToHasValue (HasValue h, int index) { return -1; }
-    public int addToModel (Model m, int index) { return -1; }
-    public int addToNamespace (Namespace ns, int index) { return -1; }
-    public int addToObjectProperty (ObjectProperty op, int index) { return -1; }
-    public int addToRestrictionOf (RestrictionOf r, int index) { return -1; }
-    public int addToSubPropertyOf (SubPropertyOf s, int index) { return -1; }
-    public int addToUnionOf (UnionOf u, int index) { return -1; }
 
     interface TraverseFunc {
         void func (ObjectType o);
     }
+    
+    // Override for components and namespaces
+    public void addToModelSet () { }
     
     void traverse (Set<ObjectType> seen, TraverseFunc f) {
     }

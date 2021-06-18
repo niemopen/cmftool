@@ -23,10 +23,7 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Map;
 import java.util.Set;
-import org.mitre.niem.xsd.XMLDataRecord;
-import org.xml.sax.Attributes;
 
 /**
  *
@@ -34,29 +31,13 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class HasValue extends ObjectType {
-    protected Datatype datatype = null;
+    private Datatype datatype = null;
     
     public void setDatatype (Datatype dt) { datatype = dt; }
     public Datatype getDatatype ()        { return datatype; }
     
-    public HasValue (Model m, String ens, String eln, Attributes a) {
-        super(m, ens, eln, a);   
-    }
-    
-    @Override
-    public int addChild (ObjectType child, int index) {
-        return child.addToHasValue(this, index);
-    }
-    
-    @Override
-    public int addToExtensionOf (ExtensionOf e, int index) { 
-        if (index < 0) {
-            e.hasValueList().add(this);
-            return e.hasValueList().size()-1;  
-        }
-        // Replace @ref placeholder with @id object
-        e.hasValueList().set(index, this);
-        return -1;
+    public HasValue (Model m) {
+        super(m);   
     }
 
     @Override
