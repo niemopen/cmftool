@@ -45,7 +45,7 @@ public class ObjectProperty extends Component {
     public ClassType getClassType ()         { return classType; }
     public String getAbstractIndicator ()    { return abstractIndicator; }
     
-    public ObjectProperty () { }
+    public ObjectProperty () { type = C_OBJECTPROPERTY; }
     
     public ObjectProperty (Model m) {
         super(m);

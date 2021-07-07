@@ -38,7 +38,7 @@ public class DataProperty extends Component {
     public void setDatatype(Datatype dt) { datatype = dt; }
     public Datatype getDatatype()        { return datatype; }
     
-    public DataProperty () { }
+    public DataProperty () { type = C_DATAPROPERTY; }
     
     public DataProperty (Model m) {
         super(m);       

@@ -45,7 +45,7 @@ public class ClassType extends Component {
     public String getContentStyleCode ()  { return contentStyleCode; }
     public ExtensionOf getExtensionOf ()  { return extensionOf; }
     
-    public ClassType () { }
+    public ClassType () { type = C_CLASSTYPE; }
        
     public ClassType (Model m) {
         super(m);

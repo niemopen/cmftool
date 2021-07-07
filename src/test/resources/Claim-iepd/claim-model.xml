@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Model xmlns:mm="http://reference.niem.gov/specification/metamodel/5.0alpha1"
-       xmlns:s="http://release.niem.gov/niem/structures/4.0/"
+       xmlns:s="http://release.niem.gov/niem/structures/5.0/"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns="http://reference.niem.gov/specification/metamodel/5.0alpha1"
-       xmlns:structures="http://release.niem.gov/niem/structures/4.0/">
+       xmlns:structures="http://release.niem.gov/niem/structures/5.0/">
    <ObjectProperty>
       <Name>Claim</Name>
       <Namespace structures:id="claim">
@@ -13,18 +13,18 @@
       </Namespace>
       <DefinitionText>An insurance claim resulting from an auto crash.</DefinitionText>
       <Class>
-         <NameXXX>ClaimType</NameXXX>
+         <Name>ClaimType</Name>
          <Namespace structures:ref="claim" xsi:nil="true"/>
          <DefinitionText>A data type for an insurance claim.</DefinitionText>
          <ExtensionOf>
             <Class>
                <Name>ObjectType</Name>
                <Namespace>
-                  <NamespaceURI>http://release.niem.gov/niem/structures/4.0/</NamespaceURI>
+                  <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
                   <NamespacePrefixName>structures</NamespacePrefixName>
                </Namespace>
             </Class>
-            <HasObjectProperty mm:sequenceID="1" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
+            <HasObjectProperty structures:sequenceID="1" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
                <ObjectProperty>
                   <Name>DamagedVehicle</Name>
                   <Namespace structures:ref="claim" xsi:nil="true"/>
@@ -32,14 +32,14 @@
                   <Class>
                      <Name>VehicleType</Name>
                      <Namespace structures:id="nc">
-                        <NamespaceURI>http://release.niem.gov/niem/niem-core/4.0/</NamespaceURI>
+                        <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
                         <NamespacePrefixName>nc</NamespacePrefixName>
                      </Namespace>
                      <ContentStyleCode>HasObjectProperty</ContentStyleCode>
                   </Class>
                </ObjectProperty>
             </HasObjectProperty>
-            <HasObjectProperty mm:sequenceID="2" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
+            <HasObjectProperty structures:sequenceID="2" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
                <ObjectProperty>
                   <Name>VehicleDamageAmount</Name>
                   <Namespace structures:ref="claim" xsi:nil="true"/>

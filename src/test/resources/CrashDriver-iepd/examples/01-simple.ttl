@@ -1,0 +1,90 @@
+@prefix message:    <http://example.com/msg/1/> .
+@prefix aamva_d20:  <http://release.niem.gov/niem/codes/aamva_d20/4.0/#> .
+@prefix exch:       <http://example.com/CrashDriver/1.0/#> .
+@prefix geo:        <http://release.niem.gov/niem/adapters/geospatial/4.0/#> .
+@prefix gml:        <http://www.opengis.net/gml/3.2#> .
+@prefix hs:         <http://release.niem.gov/niem/domains/humanServices/4.0/#> .
+@prefix j:          <http://release.niem.gov/niem/domains/jxdm/6.0/#> .
+@prefix nc:         <http://release.niem.gov/niem/niem-core/4.0/#> .
+@prefix priv:       <http://example.com/PrivacyMetadata/1.0/#> .
+@prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sch:        <http://purl.oclc.org/dsdl/schematron#> .
+@prefix structures: <http://release.niem.gov/niem/structures/4.0/#> .
+@prefix unece:      <http://release.niem.gov/niem/codes/unece_rec20/4.0/#> .
+@prefix xlink:      <http://www.w3.org/1999/xlink#> .
+
+message: exch:CrashDriverInfo _:n02 .
+
+_:n02 j:Crash _:n03 ;
+    j:Charge message:#CH01 ;
+    j:PersonChargeAssociation _:n21 ;
+    j:JusticeMetadata message:#JMD01 .
+
+_:n03 nc:ActivityDate _:n04 ;
+    nc:IncidentLocation _:n05 ;
+    j:CrashVehicle _:n09 ;
+    j:CrashPerson _:n19 .
+
+_:n04 nc:Date "1900-05-04" .
+
+_:n05 nc:Location2DGeospatialCoordinate _:n06 .
+
+_:n06 nc:GeographicCoordinateLatitude _:n07 ;
+    nc:GeographicCoordinateLongitude _:n08 .
+
+_:n07 nc:LatitudeDegreeValue "51" ;
+    nc:LatitudeMinuteValue "52" .
+
+_:n08 nc:LongitudeDegreeValue "-1" ;
+    nc:LongitudeMinuteValue "17" .
+
+_:n09 j:CrashDriver _:n10 .
+
+_:n10 nc:RoleOfPerson message:#P01 ;
+    j:DriverLicense _:n16 .
+
+message:#P01 nc:PersonBirthDate _:n11 ;
+    nc:PersonName _:n12 ;
+    exch:PersonFictionalCharacterIndicator "true" .
+
+_:n11 nc:Date "1890-05-04" .
+
+_:n12 nc:personNameCommentText "copied" ;
+    nc:PersonGivenName _:n13 ;
+    nc:PersonMiddleName
+         _:n14 ,
+         _:n15 ;
+    nc:PersonSurName "Wimsey" .
+
+_:n13 nc:sequenceID "1" ;
+    rdf:value "Peter" .
+
+_:n14 nc:sequenceID "2" ;
+    rdf:value "Death" .
+
+_:n15 nc:sequenceID "3" ;
+    rdf:value "Bredon" .
+
+_:n16 j:DriverLicenseCardIdentification _:n17 ;
+    nc:ItemLengthMeasure _:n18 .
+
+_:n17 nc:IdentificationID "A1234567" .
+
+_:n18 nc:MeasureDecimalValue "9.7" ;
+    nc:LengthUnitCode "CMT" .
+
+_:n19 nc:RoleOfPerson message:#P01 ;
+    j:CrashPersonInjury _:n20 .
+
+_:n20 nc:InjuryDescriptionText "Broken Arm" ;
+    j:InjurySeverityCode "3" .
+
+message:#CH01 structures:metadata "#JMD01" ;
+    j:ChargeDescriptionText "Furious Driving" ;
+    j:ChargeFelonyIndicator "false" .
+
+_:n21 nc:Person message:#P01 ;
+    j:Charge message:#CH01 ;
+    j:JuvenileAsAdultIndicator "true" .
+
+message:#JMD01 j:CriminalInformationIndicator "true" .

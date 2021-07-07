@@ -26,6 +26,7 @@ package org.mitre.niem.xsd;
 import org.mitre.niem.nmf.ClassType;
 import org.mitre.niem.nmf.Model;
 import org.mitre.niem.nmf.NMFException;
+import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
 /**

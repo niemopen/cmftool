@@ -67,7 +67,8 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
         seen.add(this);
     }    
     
+    @Override
     public int compareTo (Namespace o) {
-        return this.namespaceURI.compareTo(o.namespaceURI);
+        return this.namespacePrefix.compareTo(o.namespacePrefix);
     }    
 }

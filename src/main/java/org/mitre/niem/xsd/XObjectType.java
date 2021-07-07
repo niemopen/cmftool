@@ -23,9 +23,8 @@
  */
 package org.mitre.niem.xsd;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
+import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.mitre.niem.nmf.Model;
 import org.mitre.niem.nmf.ObjectType;
 import org.xml.sax.Attributes;
@@ -36,7 +35,7 @@ import org.xml.sax.Attributes;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class XObjectType {
-    static final Logger LOG = LogManager.getLogger(XObjectType.class);  
+ 
     private String id             = null;
     private String ref            = null;
     private String uri            = null;
@@ -56,9 +55,6 @@ public class XObjectType {
     
     public ObjectType getObject ()          { return null; }        // override in subclass
 
-    public String getID ()                  { return id; }
-    public String getRef ()                 { return ref; }
-    public String getURI ()                 { return uri; }
     public String getStringVal ()           { return stringVal; }
     public XObjectType getParent ()         { return parent; }
     public XObjectType getIDRepl ()         { return idRepl; }

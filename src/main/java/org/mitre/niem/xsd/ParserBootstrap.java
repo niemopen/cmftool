@@ -23,9 +23,13 @@
  */
 package org.mitre.niem.xsd;
 
+import java.io.InputStream;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
 import org.apache.xerces.xs.XSImplementation;
 import org.apache.xerces.xs.XSLoader;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
@@ -44,10 +48,12 @@ import org.xml.sax.SAXException;
 public class ParserBootstrap {
     public static final int BOOTSTRAP_XERCES_XS = 1;
     public static final int BOOTSTRAP_SAX2 = 2;
-    public static final int BOOTSTRAP_ALL = 3;
+    public static final int BOOTSTRAP_STAX = 4;
+    public static final int BOOTSTRAP_ALL = 7;
     
-    private SAXParserFactory sfact = null;
     private XSImplementation xsimpl = null;          // Xerces XSImplementation, for creating XSLoader object
+    private SAXParserFactory sax2Fact = null;
+    private XMLInputFactory staxFact = null;
     
     private static class Holder {
         private static final ParserBootstrap instance = new ParserBootstrap();
@@ -59,17 +65,7 @@ public class ParserBootstrap {
     
     public synchronized static void init (int which) throws ParserConfigurationException {
  
-        if (0 != (which | BOOTSTRAP_SAX2) && Holder.instance.sfact == null) {
-            try {
-                Holder.instance.sfact = SAXParserFactory.newInstance();
-                Holder.instance.sfact.setNamespaceAware(true);
-                Holder.instance.sfact.setValidating(false);
-                SAXParser saxp = Holder.instance.sfact.newSAXParser();
-            } catch (ParserConfigurationException | SAXException ex) {
-                throw (new ParserConfigurationException("Can't initialize suitable SAX2 parser" + ex.getMessage()));
-            }
-        }
-        if (0 != (which | BOOTSTRAP_XERCES_XS) && Holder.instance.xsimpl == null) {
+        if (0 != (which | BOOTSTRAP_XERCES_XS) && null == Holder.instance.xsimpl) {
             System.setProperty(DOMImplementationRegistry.PROPERTY, "org.apache.xerces.dom.DOMXSImplementationSourceImpl");
             DOMImplementationRegistry direg;
             try {
@@ -79,14 +75,18 @@ public class ParserBootstrap {
                 throw (new ParserConfigurationException("Can't initializte Xerces XML Schema parser implementation" + ex.getMessage()));
             }
         }
-    }
-    
-    /**
-     * Returns a SAXParser object.  OK to reuse these.
-     */
-    public static SAXParser sax2Parser () throws ParserConfigurationException, SAXException {
-        init(BOOTSTRAP_SAX2);
-        return Holder.instance.sfact.newSAXParser();
+        if (0 != (which | BOOTSTRAP_SAX2) && null == Holder.instance.sax2Fact) {
+            try {
+                Holder.instance.sax2Fact = SAXParserFactory.newInstance();
+                Holder.instance.sax2Fact.setNamespaceAware(true);
+                Holder.instance.sax2Fact.setValidating(false);
+                SAXParser saxp = Holder.instance.sax2Fact.newSAXParser();
+            } catch (ParserConfigurationException | SAXException ex) {
+                throw (new ParserConfigurationException("Can't initialize suitable SAX2 parser" + ex.getMessage()));
+            }
+        }       
+        if (0 != (which | BOOTSTRAP_STAX) && null == Holder.instance.staxFact)
+            Holder.instance.staxFact = XMLInputFactory.newInstance();
     }
     
     /**
@@ -98,4 +98,23 @@ public class ParserBootstrap {
         init(BOOTSTRAP_XERCES_XS);
         return Holder.instance.xsimpl.createXSLoader(null);
     }
+    
+    /**
+     * Returns a SAXParser object.  OK to reuse these.
+     */
+    public static SAXParser sax2Parser () throws ParserConfigurationException, SAXException {
+        init(BOOTSTRAP_SAX2);
+        return Holder.instance.sax2Fact.newSAXParser();
+    }
+    
+    /**
+     * Creates a StAX reader object from an InputStream.
+     * @param is
+     * @return 
+     */
+    public static XMLEventReader staxReader (InputStream is) throws XMLStreamException, ParserConfigurationException {
+        init(BOOTSTRAP_STAX);
+        return Holder.instance.staxFact.createXMLEventReader(is);
+    }
+
 }

@@ -42,7 +42,7 @@ public class Datatype extends Component {
     public RestrictionOf getRestrictionOf() { return restrictionOf; }
     public UnionOf getUnionOf()             { return unionOf; }
     
-    public Datatype () { }
+    public Datatype () { type = C_DATATYPE; }
     
     public Datatype (Model m) {
         super(m);

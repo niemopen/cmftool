@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import static org.mitre.niem.nmf.Component.C_CLASSTYPE;
 
 /**
  *
@@ -42,6 +43,8 @@ public class Model extends ObjectType {
     private final SortedSet<Datatype> datatypeSet             = new TreeSet<>();
     private final SortedSet<Namespace> namespaceSet           = new TreeSet<>();
     private final SortedSet<ObjectProperty> objectPropertySet = new TreeSet<>();
+    
+    private final Map<String,Namespace> namespaceMap          = new HashMap<>();
 
     public SortedSet<ClassType> classTypeSet()           { return classTypeSet; }
     public SortedSet<DataProperty> dataPropertySet()     { return dataPropertySet; }
@@ -49,7 +52,21 @@ public class Model extends ObjectType {
     public SortedSet<Namespace> namespaceSet()           { return namespaceSet; }
     public SortedSet<ObjectProperty> objectPropertySet() { return objectPropertySet; }   
     
+    public Model () { }
     public Model (Model m) { }
+    
+    public Namespace getNamespace (String nsuri) { return namespaceMap.get(nsuri); }
+    
+    public Component getComponent (String nsuri, String lname) {
+        String curi = nsuri.endsWith("#") ? nsuri + lname : nsuri + "#" + lname;
+        return modelComponents.get(curi);
+    }
+    
+    public ClassType getClassType (String nsuri, String lname) {
+        Component com = getComponent(nsuri, lname);
+        if (null == com) return null;
+        return (C_CLASSTYPE == com.getType() ? (ClassType)com : null);
+    }
     
     // These methods test arguments for duplicate components and such.
     // Suitable for a user interface or when processing user-supplied data.
@@ -123,12 +140,14 @@ public class Model extends ObjectType {
                  throw(new NMFException(String.format("Can't add namespace %s; already in model", x.getNamespaceURI())));
          }
          this.namespaceSet.add(x); 
+         this.namespaceMap.put(x.getNamespaceURI(), x);
     }
     
     public void removeNamespace (Namespace x) throws NMFException {
         if (!this.namespaceSet.contains(x))
             throw(new NMFException(String.format("Can't remove namespace %s; not in model", x.getNamespaceURI())));
         this.namespaceSet.remove(x);
+        this.namespaceMap.remove(x.getNamespaceURI());
     }
     
     

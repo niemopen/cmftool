@@ -94,7 +94,7 @@ public class ModelXMLWriter {
     public void addClassType (Document dom, Element p, ClassType x) {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, "Class");
-        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getURI());
+        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         addComponentChildren(dom, e, x);
         addSimpleChild(dom, e, "AbstractIndicator", x.getAbstractIndicator());
         addExtensionOf(dom, e, x.getExtensionOf());
@@ -105,7 +105,7 @@ public class ModelXMLWriter {
     public void addDataProperty (Document dom, Element p, DataProperty x) {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, "DataProperty");
-        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getURI());
+        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         addComponentChildren(dom, e, x);        
         addComponentRef(dom, e, "Datatype", x.getDatatype());
         p.appendChild(e);
@@ -114,7 +114,7 @@ public class ModelXMLWriter {
     public void addDatatype (Document dom, Element p, Datatype x) {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, "Datatype");
-        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getURI());
+        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         addComponentChildren(dom, e, x);        
         addRestrictionOf(dom, e, x.getRestrictionOf());
         addUnionOf(dom, e, x.getUnionOf());
@@ -187,7 +187,7 @@ public class ModelXMLWriter {
     public void addNamespace (Document dom, Element p, Namespace x) {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, "Namespace");
-        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getNamespaceURI());
+        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getNamespacePrefix());
         addSimpleChild(dom, e, "NamespaceURI", x.getNamespaceURI());
         addSimpleChild(dom, e, "NamespacePrefixName", x.getNamespacePrefix());
         addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
@@ -197,7 +197,7 @@ public class ModelXMLWriter {
     public void addNamespaceRef (Document dom, Element p, Namespace x) {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, "Namespace");
-        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getNamespaceURI());
+        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getNamespacePrefix());
         e.setAttributeNS(XSI_NS_URI, "xsi:nil", "true");
         p.appendChild(e);
     }
@@ -205,7 +205,7 @@ public class ModelXMLWriter {
     public void addObjectProperty (Document dom, Element p, ObjectProperty x) {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, "ObjectProperty");
-        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getURI());
+        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         addSubPropertyOf(dom, e, x.getSubPropertyOf());
         addComponentRef(dom, e, "Class", x.getClassType());
         addSimpleChild(dom, e, "AbstractIndicator", x.getAbstractIndicator());
@@ -239,7 +239,7 @@ public class ModelXMLWriter {
     public void addComponentRef (Document dom, Element p, String lname, Component x) {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, lname);
-        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getURI());
+        e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         e.setAttributeNS(XSI_NS_URI, "xsi:nil", "true");
         p.appendChild(e);
     }
@@ -256,5 +256,13 @@ public class ModelXMLWriter {
         Element c = dom.createElementNS(NMF_NS_URI, eln);
         c.setTextContent(value);
         p.appendChild(c);
+    }
+    
+    private static String componentIDString (Component x) {
+        Namespace ns  = x.getNamespace();
+        String prefix = ns.getNamespacePrefix();
+        String lname  = x.getName();
+        String id = prefix + "-" + lname;
+        return id;
     }
 }

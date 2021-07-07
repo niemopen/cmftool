@@ -33,10 +33,10 @@ import java.util.Stack;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.NIEMConstants.NMF_NS_URI_PREFIX;
-import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
 import org.mitre.niem.nmf.*;
-import static org.mitre.niem.xsd.XObjectType.LOG;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -49,7 +49,8 @@ import org.xml.sax.helpers.LocatorImpl;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ModelXMLReader {  
+public class ModelXMLReader { 
+    static final Logger LOG = LogManager.getLogger(ModelXMLReader.class);
     
     public Model readXML(InputStream is) throws ParserConfigurationException, SAXException, IOException {
         SAXParserFactory sf = SAXParserFactory.newInstance();

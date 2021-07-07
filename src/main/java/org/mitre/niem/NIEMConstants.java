@@ -40,6 +40,8 @@ public class NIEMConstants {
     public static final String RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";    
     public static final String STRUCTURES_NS_URI_PREFIX = "http://release.niem.gov/niem/structures/";
     public static final String STRUCTURES_NS_URI = "http://release.niem.gov/niem/structures/5.0/";
+    public static final String XML_CATALOG_NS_URI = "urn:oasis:names:tc:entity:xmlns:xml:catalog";
     public static final String XML_NS_URI = "http://www.w3.org/2000/xmlns/";
+    public static final String XSD_NS_URI = "http://www.w3.org/2001/XMLSchema";
     public static final String XSI_NS_URI = "http://www.w3.org/2001/XMLSchema-instance";
 }

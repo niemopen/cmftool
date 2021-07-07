@@ -27,7 +27,7 @@ import org.mitre.niem.nmf.ExtensionOf;
 import org.mitre.niem.nmf.HasValue;
 import org.mitre.niem.nmf.Model;
 import org.mitre.niem.nmf.NMFException;
-import static org.mitre.niem.xsd.XObjectType.LOG;
+import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
 /**

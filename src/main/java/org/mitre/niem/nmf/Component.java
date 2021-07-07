@@ -29,6 +29,12 @@ package org.mitre.niem.nmf;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public abstract class Component extends ObjectType implements Comparable<Component> {
+    public static final short C_CLASSTYPE = 0;
+    public static final short C_DATAPROPERTY = 1;
+    public static final short C_DATATYPE = 2;
+    public static final short C_OBJECTPROPERTY = 3;
+    
+    protected short type;
     private String name = null;
     private Namespace namespace = null;
     private String definition = null;
@@ -37,6 +43,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public void setNamespace (Namespace ns) { namespace = ns; }
     public void setDefinition (String s)    { definition = s; }
     
+    public short getType()           { return type; }
     public String getName ()         { return name; }
     public Namespace getNamespace () { return namespace; }
     public String getDefinition ()   { return definition; }
