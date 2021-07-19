@@ -29,7 +29,7 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws FileNotFoundException, ParserConfigurationException, SAXException, IOException, URISyntaxException, SchemaException {
-//        File f = new File("src/test/resources/ClaimModel.xml");
+//        File f = new File("src/test/resources/Claim-iepd/claim-model.xml");
 //        FileInputStream fis = new FileInputStream(f);
 //        ModelXMLReader mr = new ModelXMLReader();
 //        Model m = mr.readXML(fis);
@@ -41,8 +41,10 @@ public class Main {
 //                "src/test/resources/CrashDriver-iepd/extension/CrashDriver.xsd", 
 //                "http://example.com/PrivacyMetadata/1.0/",
 //                "src/test/resources/CrashDriver-iepd/xml-catalog.xml"
-                "http://example.org/claim/1/", 
-                "src/test/resources/Claim-iepd/xml-catalog.xml"                
+//                "http://example.org/claim/1/", 
+//                "src/test/resources/Claim-iepd/xml-catalog.xml"    
+//                "src/test/resources/Test/Code.xsd"
+                "src/test/resources/Test/PersonName.xsd"
         );
         try {
             Model m = new ModelFromXSD().createModel(s);

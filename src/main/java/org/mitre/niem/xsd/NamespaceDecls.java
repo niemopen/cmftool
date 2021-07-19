@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
+import org.apache.logging.log4j.LogManager;
 import static org.mitre.niem.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
 import static org.mitre.niem.NIEMConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
 import static org.mitre.niem.NIEMConstants.NDR_CT_URI_PREFIX;
@@ -60,6 +61,8 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 
 public class NamespaceDecls {   
+    
+    static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(ModelFromXSD.class);    
     
     public final static int SK_EXTENSION  = 0;
     public final static int SK_NIEM_MODEL = 1;
@@ -141,11 +144,16 @@ public class NamespaceDecls {
      * @param nsuri target namespace URI of schema document
      * @param furi  file URI of schema document location
      */
-    public void processNamespace (String nsuri, String furi) throws ParserConfigurationException, SAXException, IOException {
-        SAXParser saxp = ParserBootstrap.sax2Parser();
-        XSDHandler h = new XSDHandler(this, nsuri);
-        saxp.parse(furi, h); 
-        nsPrefix = null;
+    public void processNamespace (String nsuri, String furi) {
+        if (null == furi) return;
+        try {
+            SAXParser saxp = ParserBootstrap.sax2Parser();
+            XSDHandler h = new XSDHandler(this, nsuri);
+            saxp.parse(furi, h);
+            nsPrefix = null;        // invalidate all old mappings
+        } catch (SAXException | IOException | ParserConfigurationException ex) {
+            LOG.error("Processing namespace {} ({}: {}", nsuri, furi, ex.getMessage());
+        }
     }
 
     private class XSDHandler extends DefaultHandler {
@@ -168,7 +176,6 @@ public class NamespaceDecls {
         @Override
         public void startPrefixMapping (String prefix, String uri) {
             if (prefix.isEmpty()) return;
-            if (XSD_NS_URI.equals(uri)) return;     // skip XSD namespace
             String fn = loc.getSystemId();
             int ln = loc.getLineNumber();
             maps.add(new NSDeclRec(prefix, uri, nsuri, fn, ln, depth, declCt));      

@@ -49,7 +49,7 @@ public class HasObjectProperty extends ObjectType {
         super(m);
     }
      
-    public void addObjectProperty (ObjectProperty c) throws NMFException {
+    public void addObjectProperty (ObjectProperty c) {
         this.objectPropertyList.add(c);
     }
     

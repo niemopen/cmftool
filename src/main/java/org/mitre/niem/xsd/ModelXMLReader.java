@@ -157,7 +157,7 @@ public class ModelXMLReader {
                 case "Datatype":            o = new XDatatype(m, ens, eln, atts, lineNum); break;
                 case "DefinitionText":      o = new XStringObject(m, ens, eln, atts, lineNum); break;
                 case "Enumeration":         o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "ExtensionOf":         o = new XExtensionOf(m, ens, eln, atts, lineNum); break;
+                case "ExtensionOfClass":    o = new XClassType(m, ens, eln, atts, lineNum); break;
                 case "FractionDigits":      o = new XFacet(m, ens, eln, atts, lineNum); break;
                 case "HasDataProperty":     o = new XHasDataProperty(m, ens, eln, atts, lineNum); break;
                 case "HasObjectProperty":   o = new XHasObjectProperty(m, ens, eln, atts, lineNum); break;

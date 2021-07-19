@@ -46,6 +46,7 @@ public class Datatype extends Component {
     
     public Datatype (Model m) {
         super(m);
+        type = C_DATATYPE; 
     }
     
     @Override

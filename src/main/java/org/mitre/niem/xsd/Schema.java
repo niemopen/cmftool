@@ -179,8 +179,8 @@ public class Schema {
         Handler handler = new Handler();
         DOMConfiguration config = loader.getConfig();
         config.setParameter("validate", true);
-        config.setParameter("resource-resolver", resolver);
         config.setParameter("error-handler",handler);
+        if (null != resolver) config.setParameter("resource-resolver", resolver);
         StringList slist = new StringListImpl(
                 schemaURIs.toArray(new String[0]),
                 schemaURIs.size());

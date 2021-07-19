@@ -34,7 +34,7 @@ public class NIEMConstants {
     public static final String CONFORMANCE_TARGET_NS_URI_PREFIX = "http://release.niem.gov/niem/conformanceTargets/";
     public static final String NDR_CT_URI_PREFIX = "http://reference.niem.gov/niem/specification/naming-and-design-rules/";    
     public static final String NIEM_RELEASE_PREFIX = "http://release.niem.gov/niem/";
-    public static final String NIEM_XS_PREFIX = "http://release.niem.gov/niem/proxy/xsd/";
+    public static final String NIEM_XS_PREFIX = "http://release.niem.gov/niem/proxy/";
     public static final String NMF_NS_URI_PREFIX = "http://reference.niem.gov/specification/metamodel/";    
     public static final String NMF_NS_URI = "http://reference.niem.gov/specification/metamodel/1.0/";
     public static final String RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";    

@@ -60,8 +60,11 @@
          <xs:extension base="mm:ComponentType">
             <xs:sequence>
                <xs:element ref="mm:AbstractIndicator" minOccurs="0" maxOccurs="1"/>
-               <xs:element ref="mm:ExtensionOf" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="mm:ExtensionOfClass" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:ContentStyleCode" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="mm:HasValue" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element ref="mm:HasDataProperty" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element ref="mm:HasObjectProperty" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element ref="mm:ClassAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
          </xs:extension>
@@ -198,32 +201,9 @@
          <xs:documentation>A restriction of the length of a data type.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="ExtensionOf" type="mm:ExtensionOfType" nillable="true">
+   <xs:element name="ExtensionOfClass" type="mm:ClassType" nillable="true">
       <xs:annotation>
          <xs:documentation>A extension of a class.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
-   <xs:complexType name="ExtensionOfType">
-      <xs:annotation>
-         <xs:documentation>A data type for an extension of a class.</xs:documentation>
-      </xs:annotation>
-      <xs:complexContent>
-         <xs:extension base="structures:ObjectType">
-            <xs:sequence>
-               <xs:element ref="mm:Class" minOccurs="1" maxOccurs="1"/>
-               <xs:element ref="mm:HasValue" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element ref="mm:HasDataProperty" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element ref="mm:HasObjectProperty" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element ref="mm:ExtensionOfAugmentationPoint"
-                           minOccurs="0"
-                           maxOccurs="unbounded"/>
-            </xs:sequence>
-         </xs:extension>
-      </xs:complexContent>
-   </xs:complexType>
-   <xs:element name="ExtensionOfAugmentationPoint" abstract="true">
-      <xs:annotation>
-         <xs:documentation>An augmentation point for mm:ExtensionOfType.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="FacetAbstract" abstract="true" nillable="true">

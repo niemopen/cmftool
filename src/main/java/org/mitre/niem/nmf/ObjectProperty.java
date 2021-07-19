@@ -49,6 +49,7 @@ public class ObjectProperty extends Component {
     
     public ObjectProperty (Model m) {
         super(m);
+        type = C_OBJECTPROPERTY;
     }
     
     @Override

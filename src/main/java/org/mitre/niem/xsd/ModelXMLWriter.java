@@ -41,6 +41,7 @@ import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI;
 import static org.mitre.niem.NIEMConstants.XML_NS_URI;
 import static org.mitre.niem.NIEMConstants.XSI_NS_URI;
 import org.mitre.niem.nmf.*;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -81,6 +82,7 @@ public class ModelXMLWriter {
     
     public Element genModel (Document dom, Model m) {
         Element e = dom.createElementNS(NMF_NS_URI, "Model");
+        e.setAttributeNS(XML_NS_URI, "xmlns:mm", NMF_NS_URI);
         e.setAttributeNS(XML_NS_URI, "xmlns:xsi", XSI_NS_URI);
         e.setAttributeNS(XML_NS_URI, "xmlns:structures", STRUCTURES_NS_URI); 
         for (Namespace z : m.namespaceSet())           { addNamespace(dom, e, z); }
@@ -97,8 +99,14 @@ public class ModelXMLWriter {
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         addComponentChildren(dom, e, x);
         addSimpleChild(dom, e, "AbstractIndicator", x.getAbstractIndicator());
-        addExtensionOf(dom, e, x.getExtensionOf());
+        addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
         addSimpleChild(dom, e, "ContentStyleCode", x.getContentStyleCode());
+        if (null != x.getHasValueList()) 
+            for (HasValue z : x.getHasValueList()) { addHasValue(dom, e, z); }
+        if (null != x.getHasDataPropertyList()) 
+            for (HasDataProperty z : x.getHasDataPropertyList()) { addHasDataProperty(dom, e, z); }
+        if (null != x.getHasObjectPropertyList()) 
+            for (HasObjectProperty z : x.getHasObjectPropertyList()) { addHasObjectProperty(dom, e, z); }        
         p.appendChild(e);
     }
     
@@ -118,19 +126,6 @@ public class ModelXMLWriter {
         addComponentChildren(dom, e, x);        
         addRestrictionOf(dom, e, x.getRestrictionOf());
         addUnionOf(dom, e, x.getUnionOf());
-        p.appendChild(e);
-    }
-        
-    public void addExtensionOf (Document dom, Element p, ExtensionOf x) {
-        if (null == x) return;
-        Element e = dom.createElementNS(NMF_NS_URI, "ExtensionOf");
-        addComponentRef(dom, e, "Class", x.getClassType());
-        if (null != x.getHasValueList()) 
-            for (HasValue z : x.getHasValueList()) { addHasValue(dom, e, z); }
-        if (null != x.getHasDataPropertyList()) 
-            for (HasDataProperty z : x.getHasDataPropertyList()) { addHasDataProperty(dom, e, z); }
-        if (null != x.getHasObjectPropertyList()) 
-            for (HasObjectProperty z : x.getHasObjectPropertyList()) { addHasObjectProperty(dom, e, z); }
         p.appendChild(e);
     }
         
@@ -163,6 +158,8 @@ public class ModelXMLWriter {
     public void addHasDataProperty (Document dom, Element p, HasDataProperty x) {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, "HasDataProperty");
+        addAttribute(dom, e, "mm:minOccursQuantity", x.minOccursQuantity());
+        addAttribute(dom, e, "mm:maxOccursQuantity", x.maxOccursQuantity());
         if (null != x.getDataPropertyList())
             for (DataProperty z : x.getDataPropertyList()) { addComponentRef(dom, e, "DataProperty", z); }
         p.appendChild(e);
@@ -171,6 +168,8 @@ public class ModelXMLWriter {
     public void addHasObjectProperty (Document dom, Element p, HasObjectProperty x) {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, "HasObjectProperty");
+        addAttribute(dom, e, "mm:minOccursQuantity", x.minOccursQuantity());
+        addAttribute(dom, e, "mm:maxOccursQuantity", x.maxOccursQuantity());        
         if (null != x.getSequenceID()) e.setAttributeNS(STRUCTURES_NS_URI, "structures:sequenceID", x.getSequenceID());
         if (null != x.getObjectPropertyList())
             for (ObjectProperty z : x.getObjectPropertyList()) { addComponentRef(dom, e, "ObjectProperty", z); }
@@ -206,6 +205,7 @@ public class ModelXMLWriter {
         if (null == x) return;
         Element e = dom.createElementNS(NMF_NS_URI, "ObjectProperty");
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
+        addComponentChildren(dom, e, x);
         addSubPropertyOf(dom, e, x.getSubPropertyOf());
         addComponentRef(dom, e, "Class", x.getClassType());
         addSimpleChild(dom, e, "AbstractIndicator", x.getAbstractIndicator());
@@ -258,11 +258,16 @@ public class ModelXMLWriter {
         p.appendChild(c);
     }
     
+    public void addAttribute (Document dom, Element p, String an, String value) {
+        if (null == value) return;
+        p.setAttributeNS(NMF_NS_URI, an, value);
+    }
+    
     private static String componentIDString (Component x) {
         Namespace ns  = x.getNamespace();
         String prefix = ns.getNamespacePrefix();
         String lname  = x.getName();
-        String id = prefix + "-" + lname;
+        String id = prefix + "." + lname;
         return id;
     }
 }

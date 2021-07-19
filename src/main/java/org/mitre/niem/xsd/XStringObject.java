@@ -41,7 +41,7 @@ public class XStringObject extends XObjectType {
     }
 
     @Override
-    public void addToClass(XClassType c) {
+    public void addToClassType(XClassType c) {
         String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
         switch (this.getComponentLname()) {
         case "AbstractIndicator":   c.getObject().setAbstractIndicator(val); break;

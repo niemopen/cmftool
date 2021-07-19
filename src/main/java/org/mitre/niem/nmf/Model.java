@@ -30,6 +30,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import static org.mitre.niem.nmf.Component.C_CLASSTYPE;
+import static org.mitre.niem.nmf.Component.C_DATAPROPERTY;
+import static org.mitre.niem.nmf.Component.C_DATATYPE;
+import static org.mitre.niem.nmf.Component.C_OBJECTPROPERTY;
 
 /**
  *
@@ -54,9 +57,7 @@ public class Model extends ObjectType {
     
     public Model () { }
     public Model (Model m) { }
-    
-    public Namespace getNamespace (String nsuri) { return namespaceMap.get(nsuri); }
-    
+ 
     public Component getComponent (String nsuri, String lname) {
         String curi = nsuri.endsWith("#") ? nsuri + lname : nsuri + "#" + lname;
         return modelComponents.get(curi);
@@ -67,7 +68,26 @@ public class Model extends ObjectType {
         if (null == com) return null;
         return (C_CLASSTYPE == com.getType() ? (ClassType)com : null);
     }
+    public DataProperty getDataProperty (String nsuri, String lname) {
+        Component com = getComponent(nsuri, lname);
+        if (null == com) return null;
+        return (C_DATAPROPERTY == com.getType() ? (DataProperty)com : null);
+    }
     
+    public Datatype getDatatype (String nsuri, String lname) {
+        Component com = getComponent(nsuri, lname);
+        if (null == com) return null;
+        return (C_DATATYPE == com.getType() ? (Datatype)com : null);
+    }
+
+    public ObjectProperty getObjectProperty (String nsuri, String lname) {
+        Component com = getComponent(nsuri, lname);
+        if (null == com) return null;
+        return (C_OBJECTPROPERTY == com.getType() ? (ObjectProperty)com : null);
+    }
+
+    public Namespace getNamespace (String nsuri) { return namespaceMap.get(nsuri); }
+           
     // These methods test arguments for duplicate components and such.
     // Suitable for a user interface or when processing user-supplied data.
     public void addComponent (Component c) throws NMFException {

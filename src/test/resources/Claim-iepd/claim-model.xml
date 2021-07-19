@@ -16,42 +16,33 @@
          <Name>ClaimType</Name>
          <Namespace structures:ref="claim" xsi:nil="true"/>
          <DefinitionText>A data type for an insurance claim.</DefinitionText>
-         <ExtensionOf>
-            <Class>
-               <Name>ObjectType</Name>
-               <Namespace>
-                  <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
-                  <NamespacePrefixName>structures</NamespacePrefixName>
-               </Namespace>
-            </Class>
-            <HasObjectProperty structures:sequenceID="1" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
-               <ObjectProperty>
-                  <Name>DamagedVehicle</Name>
-                  <Namespace structures:ref="claim" xsi:nil="true"/>
-                  <DefinitionText>A vehicle that has sustained damage.</DefinitionText>
-                  <Class>
-                     <Name>VehicleType</Name>
-                     <Namespace structures:id="nc">
-                        <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
-                        <NamespacePrefixName>nc</NamespacePrefixName>
-                     </Namespace>
-                     <ContentStyleCode>HasObjectProperty</ContentStyleCode>
-                  </Class>
-               </ObjectProperty>
-            </HasObjectProperty>
-            <HasObjectProperty structures:sequenceID="2" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
-               <ObjectProperty>
-                  <Name>VehicleDamageAmount</Name>
-                  <Namespace structures:ref="claim" xsi:nil="true"/>
-                  <DefinitionText>An amount of money evaluating the cost of repair of damage to a vehicle.</DefinitionText>
-                  <Class>
-                     <Name>AmountType</Name>
-                     <Namespace structures:ref="nc" xsi:nil="true"/>
-                     <ContentStyleCode>HasObjectProperty</ContentStyleCode>
-                  </Class>
-               </ObjectProperty>
-            </HasObjectProperty>
-         </ExtensionOf>
+         <HasObjectProperty structures:sequenceID="1" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
+            <ObjectProperty>
+               <Name>DamagedVehicle</Name>
+               <Namespace structures:ref="claim" xsi:nil="true"/>
+               <DefinitionText>A vehicle that has sustained damage.</DefinitionText>
+               <Class>
+                  <Name>VehicleType</Name>
+                  <Namespace structures:id="nc">
+                     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+                     <NamespacePrefixName>nc</NamespacePrefixName>
+                  </Namespace>
+                  <ContentStyleCode>HasObjectProperty</ContentStyleCode>
+               </Class>
+            </ObjectProperty>
+         </HasObjectProperty>
+         <HasObjectProperty structures:sequenceID="2" mm:minOccursQuantity="1" mm:maxOccursQuantity="1">
+            <ObjectProperty>
+               <Name>VehicleDamageAmount</Name>
+               <Namespace structures:ref="claim" xsi:nil="true"/>
+               <DefinitionText>An amount of money evaluating the cost of repair of damage to a vehicle.</DefinitionText>
+               <Class>
+                  <Name>AmountType</Name>
+                  <Namespace structures:ref="nc" xsi:nil="true"/>
+                  <ContentStyleCode>HasObjectProperty</ContentStyleCode>
+               </Class>
+            </ObjectProperty>
+         </HasObjectProperty>
       </Class>
    </ObjectProperty>
 </Model>

@@ -45,7 +45,7 @@ public class HasDataProperty extends ObjectType {
     
     public List<DataProperty> getDataPropertyList () { return dataPropertyList; }
      
-    public void addDataProperty (DataProperty c) throws NMFException {
+    public void addDataProperty (DataProperty c) {
         this.dataPropertyList.add(c);
     }
     

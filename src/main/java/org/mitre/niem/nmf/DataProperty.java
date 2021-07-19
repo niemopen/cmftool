@@ -42,6 +42,7 @@ public class DataProperty extends Component {
     
     public DataProperty (Model m) {
         super(m);       
+        type = C_DATAPROPERTY;
     }
     
     @Override

@@ -68,7 +68,7 @@ public class XNamespace extends XObjectType {
     }    
 
     @Override
-    public void addToClass (XClassType c) {
+    public void addToClassType (XClassType c) {
         c.getObject().setNamespace(this.getObjectToSet());
     }
     

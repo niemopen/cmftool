@@ -23,7 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
-import org.mitre.niem.nmf.ExtensionOf;
+import org.mitre.niem.nmf.ClassType;
 import org.mitre.niem.nmf.HasValue;
 import org.mitre.niem.nmf.Model;
 import org.mitre.niem.nmf.NMFException;
@@ -52,9 +52,9 @@ public class XHasValue extends XObjectType {
     }
     
     @Override
-    public void addToExtensionOf (XExtensionOf x) { 
+    public void addToClassType (XClassType x) { 
         XObjectType r  = x.getIDRepl();      // null unless replacing IDREF/URI placeholder
-        ExtensionOf po = x.getObject();      // parent object
+        ClassType po = x.getObject();      // parent object
         HasValue co    = this.getObject();   // child object, perhaps an IDREF/URI placeholder
         try {
             if (null != r) {
@@ -64,7 +64,7 @@ public class XHasValue extends XObjectType {
                 po.addHasValue(co);
             }
         } catch (NMFException e) {
-            LOG.error("line {}: {}", r.getLineNumber(), e.getMessage());
+            LOG.error("line {}: {}", (null == r ? "??" : r.getLineNumber()), e.getMessage());
         } catch (ClassCastException e) {
             LOG.error("line {}: ID/REF type mismatch", r.getLineNumber());
         }

@@ -63,13 +63,15 @@ public class XClassType extends XObjectType {
     
     @Override
     public void addChild (XObjectType child) {
-        child.addToClass(this);
+        child.addToClassType(this);
         super.addChild(child);        
     }
     
+    // A classtype object added to a parent classtype object must be an extension
+    // of the parent classtype.
     @Override
-    public void addToExtensionOf (XExtensionOf e) {
-        e.getObject().setClassType(this.getObjectToSet());
+    public void addToClassType (XClassType c) {
+        c.getObject().setExtensionOfClass(this.getObjectToSet());
     }
 
     // Ignore reference placeholders. All namespace objects will be collected after parsing.    

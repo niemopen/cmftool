@@ -24,10 +24,10 @@
 package org.mitre.niem.xsd;
 
 import static org.mitre.niem.NIEMConstants.NMF_NS_URI_PREFIX;
+import org.mitre.niem.nmf.ClassType;
 import org.mitre.niem.nmf.HasDataProperty;
 import org.mitre.niem.nmf.Model;
 import org.mitre.niem.nmf.NMFException;
-import org.mitre.niem.nmf.ExtensionOf;
 import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
@@ -63,9 +63,9 @@ public class XHasDataProperty extends XObjectType {
     }
 
     @Override
-    public void addToExtensionOf (XExtensionOf x) { 
+    public void addToClassType (XClassType x) { 
         XObjectType r      = x.getIDRepl();      // null unless replacing IDREF/URI placeholder
-        ExtensionOf po     = x.getObject();      // parent object
+        ClassType po     = x.getObject();        // parent object
         HasDataProperty co = this.getObject();   // child object, perhaps an IDREF/URI placeholder
         try {
             if (null != r) {
@@ -75,7 +75,7 @@ public class XHasDataProperty extends XObjectType {
                 po.addHasDataProperty(co);
             }
         } catch (NMFException e) {
-            LOG.error("line {}: {}", r.getLineNumber(), e.getMessage());
+            LOG.error("line {}: {}", (null == r ? "??" : r.getLineNumber()), e.getMessage());
         } catch (ClassCastException e) {
             LOG.error("line {}: ID/REF type mismatch", r.getLineNumber());
         }

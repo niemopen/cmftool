@@ -106,10 +106,9 @@ public class XObjectType {
         this.isEmpty = false; 
     }
   
-    public void addToClass (XClassType c) { }
+    public void addToClassType (XClassType c) { }
     public void addToDataProperty (XDataProperty dp) { }
     public void addToDatatype (XDatatype dt) { }
-    public void addToExtensionOf (XExtensionOf e) { }
     public void addToFacet (XFacet f) { }
     public void addToHasDataProperty (XHasDataProperty h) { }
     public void addToHasObjectProperty (XHasObjectProperty h) { }
