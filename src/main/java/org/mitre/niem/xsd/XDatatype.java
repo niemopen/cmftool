@@ -23,9 +23,9 @@
  */
 package org.mitre.niem.xsd;
 
+import org.mitre.niem.nmf.ClassType;
 import org.mitre.niem.nmf.Datatype;
 import org.mitre.niem.nmf.Model;
-import org.mitre.niem.nmf.NMFException;
 import org.mitre.niem.nmf.UnionOf;
 import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
@@ -41,15 +41,15 @@ public class XDatatype extends XObjectType {
     @Override
     public Datatype getObject () { return obj; }
     
-    XDatatype (Model m, String ens, String eln, Attributes a, int line) {
-        super(m, ens, eln, a, line);
+    XDatatype (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+        super(m, p, ens, eln, a, line);
         obj = new Datatype(m);
     }
     
     // Replacing a placeholder? Use idRepl to replace obj
     // Otherwise obj is the object to use
     @Override
-    public Datatype getObjectToSet () {
+    public Datatype getObjectToAdd () {
         Datatype r = this.obj;
         if (null != this.idRepl) {
             try {
@@ -63,43 +63,40 @@ public class XDatatype extends XObjectType {
     }
         
     @Override
-    public void addChild (XObjectType child) {
+    public void addAsChild (XObjectType child) {
         child.addToDatatype(this);
-    }    
-     
-    @Override
-    public void addToDataProperty(XDataProperty dp) {
-        dp.getObject().setDatatype(this.getObjectToSet());
-    }  
+        super.addAsChild(child);  
+    }   
     
+    // A datatype object added to a parent classtype object must be the result
+    // of a HasValue element
     @Override
-    public void addToHasValue(XHasValue h) {
-        h.getObject().setDatatype(this.getObjectToSet());
-    }  
+    public void addToClassType (XClassType x) {
+        x.getObject().setHasValue(this.getObjectToAdd());        
+    }
     
-    // Ignore reference placeholders. All namespace objects will be collected after parsing.
+    // A datatype object added to a parent datatype object must be the result
+    // of a ListOf element
     @Override
-    public void addToModel(XModel x) {
-        if (null != x.getRefKey()) return;  // ignore placeholder child of Model
-        if (null != x.getIDRepl()) return;  // no placeholder children to replace
-        try {
-            x.getObject().addDatatype(this.getObject());
-        } catch (NMFException e) {
-            LOG.error("line {}: {}", x.getLineNumber(), e.getMessage());
-        }
+    public void addToDatatype (XDatatype x) {
+        x.getObject().setListOf(this.getObjectToAdd());        
+    }
+        
+    @Override
+    public void addToProperty (XProperty x) {
+        x.getObject().setDatatype(this.getObjectToAdd());
     }
     
     @Override
-    public void addToRestrictionOf(XRestrictionOf r) {
-        r.getObject().setDatatype(this.getObjectToSet());
+    public void addToRestrictionOf (XRestrictionOf x) {
+        x.getObject().setDatatype(this.getObjectToAdd());
     }     
     
-
     @Override
     public void addToUnionOf (XUnionOf x) { 
-        XObjectType r      = x.getIDRepl();      // null unless replacing IDREF/URI placeholder
-        UnionOf po         = x.getObject();      // parent object
-        Datatype co = this.getObject();          // child object, perhaps an IDREF/URI placeholder
+        XObjectType r = this.getIDRepl();       // null unless replacing IDREF/URI placeholder
+        UnionOf po    = x.getObject();          // parent object
+        Datatype co   = this.getObject();       // child object, null or an IDREF/URI placeholder
         try {
             if (null != r) {
                 Datatype ro = (Datatype)r.getObject();    // object with desired ID
@@ -107,8 +104,6 @@ public class XDatatype extends XObjectType {
             } else {
                 po.addDatatype(co);
             }
-        } catch (NMFException e) {
-            LOG.error("line {}: {}", r.getLineNumber(), e.getMessage());
         } catch (ClassCastException e) {
             LOG.error("line {}: ID/REF type mismatch", r.getLineNumber());
         }

@@ -25,7 +25,6 @@ package org.mitre.niem.nmf;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  *
@@ -45,28 +44,20 @@ public class RestrictionOf extends ObjectType {
         super(m);
     }
       
-    public void addFacet (Facet c) throws NMFException {
+    public void addFacet (Facet c) {
         this.facetList.add(c);
     }
     
-    public void removeFacet (Facet c) throws NMFException {
+    public void removeFacet (Facet c) {
         int index = this.facetList.indexOf(c);
-        if (index < 0) throw(new NMFException(String.format("Can't remove Facet object; not in RestrictionOf object")));
+        if (index < 0) return;
         this.facetList.remove(index);
     }
     
-    public void replaceFacet (Facet oc, Facet nc) throws NMFException {
+    public void replaceFacet (Facet oc, Facet nc) {
         int index = this.facetList.indexOf(oc);
-        if (index < 0) throw(new NMFException(String.format("Can't replace Facet object; not in RestrictionOf object")));
+        if (index < 0) return;
         this.facetList.set(index, nc);        
     }    
-
-    @Override
-    void traverse (Set<ObjectType> seen, TraverseFunc f) {
-        f.func(this);
-        if (seen.contains(this)) return;
-        seen.add(this);
-        if (null != datatype)  datatype.traverse(seen, f);
-        if (null != facetList) for (var x : facetList) x.traverse(seen, f);
-    }    
+   
 }

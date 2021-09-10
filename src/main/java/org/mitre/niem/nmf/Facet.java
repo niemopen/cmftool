@@ -23,8 +23,6 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Set;
-
 /**
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -46,10 +44,4 @@ public class Facet extends ObjectType {
         super(m);
     }
 
-    @Override
-    void traverse (Set<ObjectType> seen, TraverseFunc f) {
-        f.func(this);
-        if (seen.contains(this)) return;
-        seen.add(this);
-    }    
 }

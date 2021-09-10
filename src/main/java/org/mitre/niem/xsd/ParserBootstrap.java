@@ -24,6 +24,8 @@
 package org.mitre.niem.xsd;
 
 import java.io.InputStream;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -49,11 +51,13 @@ public class ParserBootstrap {
     public static final int BOOTSTRAP_XERCES_XS = 1;
     public static final int BOOTSTRAP_SAX2 = 2;
     public static final int BOOTSTRAP_STAX = 4;
-    public static final int BOOTSTRAP_ALL = 7;
+    public static final int BOOTSTRAP_DOCUMENTBUILDER = 8;
+    public static final int BOOTSTRAP_ALL = 15;
     
     private XSImplementation xsimpl = null;          // Xerces XSImplementation, for creating XSLoader object
     private SAXParserFactory sax2Fact = null;
     private XMLInputFactory staxFact = null;
+    private DocumentBuilder db = null;
     
     private static class Holder {
         private static final ParserBootstrap instance = new ParserBootstrap();
@@ -72,7 +76,7 @@ public class ParserBootstrap {
                 direg = DOMImplementationRegistry.newInstance();
                 Holder.instance.xsimpl = (XSImplementation) direg.getDOMImplementation("XS-Loader");
             } catch (ClassCastException | ClassNotFoundException | IllegalAccessException | InstantiationException ex) {
-                throw (new ParserConfigurationException("Can't initializte Xerces XML Schema parser implementation" + ex.getMessage()));
+                throw new ParserConfigurationException("Can't initializte Xerces XML Schema parser implementation: " + ex.getMessage());
             }
         }
         if (0 != (which | BOOTSTRAP_SAX2) && null == Holder.instance.sax2Fact) {
@@ -82,11 +86,20 @@ public class ParserBootstrap {
                 Holder.instance.sax2Fact.setValidating(false);
                 SAXParser saxp = Holder.instance.sax2Fact.newSAXParser();
             } catch (ParserConfigurationException | SAXException ex) {
-                throw (new ParserConfigurationException("Can't initialize suitable SAX2 parser" + ex.getMessage()));
+                throw new ParserConfigurationException("Can't initialize suitable SAX2 parser: " + ex.getMessage());
             }
         }       
         if (0 != (which | BOOTSTRAP_STAX) && null == Holder.instance.staxFact)
             Holder.instance.staxFact = XMLInputFactory.newInstance();
+        if (0 != (which | BOOTSTRAP_DOCUMENTBUILDER)) {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            try {
+                Holder.instance.db = dbf.newDocumentBuilder();
+            }
+            catch (ParserConfigurationException ex) {
+                throw new ParserConfigurationException("Can't initialize DocumentBuilder: " + ex.getMessage());
+            }
+        }
     }
     
     /**
@@ -112,9 +125,14 @@ public class ParserBootstrap {
      * @param is
      * @return 
      */
-    public static XMLEventReader staxReader (InputStream is) throws XMLStreamException, ParserConfigurationException {
+    public static XMLEventReader staxReader (InputStream is) throws XMLStreamException, ParserConfigurationException  {
         init(BOOTSTRAP_STAX);
         return Holder.instance.staxFact.createXMLEventReader(is);
+    }
+    
+    public static DocumentBuilder docBuilder () throws ParserConfigurationException {
+        init(BOOTSTRAP_DOCUMENTBUILDER);
+        return Holder.instance.db;
     }
 
 }

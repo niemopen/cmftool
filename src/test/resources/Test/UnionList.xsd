@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema 
+    ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/4.0/#ExtensionSchemaDocument"
+    targetNamespace="http://example.com/codes/"
+    xmlns:ns="http://example.com/codes/" 
+    xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:ct="http://release.niem.gov/niem/conformanceTargets/4.0/" 
+    elementFormDefault="qualified">
+
+    <xs:import namespace="http://release.niem.gov/niem/structures/5.0/"
+        schemaLocation="niem/utility/structures.xsd"/>
+
+    <xs:simpleType name="DegreeSimpleType">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+            <xs:maxExclusive value="360"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:complexType name="DegreeType">
+        <xs:simpleContent>
+            <xs:extension base="ns:DegreeSimpleType">
+                <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:simpleType name="DegreeListSimpleType">
+        <xs:list itemType="ns:DegreeSimpleType"/>
+    </xs:simpleType>
+    
+    <xs:complexType name="DegreeListType">
+        <xs:simpleContent>
+            <xs:extension base="ns:DegreeListSimpleType">
+                <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:element name="Degrees" type="ns:DegreeListType"/>
+    
+    <xs:simpleType name="UnionSimpleType">
+        <xs:union memberTypes="xs:decimal xs:float"/>
+    </xs:simpleType>
+    
+    <xs:complexType name="UnionType">
+        <xs:simpleContent>
+            <xs:extension base="ns:UnionSimpleType">
+                <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:element name="Numbers" type="ns:UnionType"/>
+    
+
+</xs:schema>

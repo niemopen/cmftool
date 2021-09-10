@@ -25,7 +25,6 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.nmf.Facet;
 import org.mitre.niem.nmf.Model;
-import org.mitre.niem.nmf.NMFException;
 import org.mitre.niem.nmf.RestrictionOf;
 import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
@@ -41,23 +40,23 @@ public class XFacet extends XObjectType {
     @Override
     public Facet getObject() { return obj; }
     
-    XFacet (Model m, String ens, String eln, Attributes a, int line) {
-        super(m, ens, eln, a, line);
+    XFacet (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+        super(m, p, ens, eln, a, line);
         obj = new Facet(m);
         obj.setFacetKind(eln);
     }   
-    
-    // Facet object needs to remember the string value
+
     @Override
-    public void setStringVal (String s) { 
-        obj.setStringVal(s);
+    public void addAsChild (XObjectType child) {
+        child.addToFacet(this);
+        super.addAsChild(child);        
     }
     
     @Override
     public void addToRestrictionOf (XRestrictionOf x) {
-        XObjectType r    = x.getIDRepl();      // null unless replacing IDREF/URI placeholder
+        XObjectType r    = this.getIDRepl();   // null unless replacing IDREF/URI placeholder
         RestrictionOf po = x.getObject();      // parent object
-        Facet co         = this.getObject();   // child object, perhaps an IDREF/URI placeholder
+        Facet co         = this.getObject();   // child object, null or an IDREF/URI placeholder
         try {
             if (null != r) {
                 Facet ro = (Facet)r.getObject();    // object with desired ID
@@ -65,8 +64,6 @@ public class XFacet extends XObjectType {
             } else {
                 po.addFacet(co);
             }
-        } catch (NMFException e) {
-            LOG.error("line {}: {}", r.getLineNumber(), e.getMessage());
         } catch (ClassCastException e) {
             LOG.error("line {}: ID/REF type mismatch", r.getLineNumber());
         }

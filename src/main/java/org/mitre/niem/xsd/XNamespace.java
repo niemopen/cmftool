@@ -24,7 +24,6 @@
 package org.mitre.niem.xsd;
 
 import org.mitre.niem.nmf.Model;
-import org.mitre.niem.nmf.NMFException;
 import org.mitre.niem.nmf.Namespace;
 import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
@@ -41,15 +40,15 @@ public class XNamespace extends XObjectType {
     @Override
     public Namespace getObject () { return obj; }
     
-    XNamespace (Model m, String ens, String eln, Attributes a, int line) {
-        super(m, ens, eln, a, line);
+    XNamespace (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+        super(m, p, ens, eln, a, line);
         obj = new Namespace(m);
     }    
     
     // Replacing a placeholder? Use idRepl to replace obj
     // Otherwise obj is the object to use
     @Override
-    public Namespace getObjectToSet () {
+    public Namespace getObjectToAdd () {
         Namespace r = this.obj;
         if (null != this.idRepl) {
             try {
@@ -63,39 +62,23 @@ public class XNamespace extends XObjectType {
     }
     
     @Override
-    public void addChild (XObjectType child) {
+    public void addAsChild (XObjectType child) {
         child.addToNamespace(this);
+        super.addAsChild(child);
     }    
 
     @Override
     public void addToClassType (XClassType c) {
-        c.getObject().setNamespace(this.getObjectToSet());
-    }
-    
-    @Override
-    public void addToDataProperty (XDataProperty dp) {
-        dp.getObject().setNamespace(this.getObjectToSet());
+        c.getObject().setNamespace(this.getObjectToAdd());
     }
     
     @Override
     public void addToDatatype (XDatatype dt) {
-        dt.getObject().setNamespace(this.getObjectToSet());
-    }
-
-    // Ignore reference placeholders. All namespace objects will be collected after parsing.
-    @Override
-    public void addToModel(XModel x) {
-        if (null != x.getRefKey()) return;  // ignore placeholder child of Model
-        if (null != x.getIDRepl()) return;  // no placeholder children to replace
-        try {
-            x.getObject().addNamespace(this.getObject());
-        } catch (NMFException e) {
-            LOG.error("line {}: {}", x.getLineNumber(), e.getMessage());
-        }
+        dt.getObject().setNamespace(this.getObjectToAdd());
     }
     
     @Override
-    public void addToObjectProperty (XObjectProperty op) {
-        op.getObject().setNamespace(this.getObjectToSet());
+    public void addToProperty (XProperty op) {
+        op.getObject().setNamespace(this.getObjectToAdd());
     }    
 }

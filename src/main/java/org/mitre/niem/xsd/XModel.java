@@ -42,14 +42,9 @@ public class XModel extends XObjectType {
         obj = m;
     }
 
-    XModel (Model m, String ens, String eln, Attributes a, int line) {
-        super(m, ens, eln, a, line);
+    XModel (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+        super(m, p, ens, eln, a, line);
         obj = new Model(m);
     }    
-    
-    @Override
-    public void addChild (XObjectType child) {
-        child.addToModel(this);
-    }
     
 }

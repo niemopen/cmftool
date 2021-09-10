@@ -25,7 +25,6 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.nmf.ClassType;
 import org.mitre.niem.nmf.Model;
-import org.mitre.niem.nmf.NMFException;
 import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
@@ -40,15 +39,15 @@ public class XClassType extends XObjectType {
     @Override
     public ClassType getObject() { return obj; }
     
-    XClassType (Model m, String ens, String eln, Attributes a, int line) {
-        super(m, ens, eln, a, line);
+    XClassType (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+        super(m, p, ens, eln, a, line);
         obj = new ClassType(m);
     }
     
     // Replacing a placeholder? Use idRepl to replace obj
     // Otherwise obj is the object to use
     @Override
-    public ClassType getObjectToSet () {
+    public ClassType getObjectToAdd () {
         ClassType r = this.obj;
         if (null != this.idRepl) {
             try {
@@ -62,32 +61,20 @@ public class XClassType extends XObjectType {
     }    
     
     @Override
-    public void addChild (XObjectType child) {
+    public void addAsChild (XObjectType child) {
         child.addToClassType(this);
-        super.addChild(child);        
+        super.addAsChild(child);        
     }
     
     // A classtype object added to a parent classtype object must be an extension
     // of the parent classtype.
     @Override
     public void addToClassType (XClassType c) {
-        c.getObject().setExtensionOfClass(this.getObjectToSet());
-    }
-
-    // Ignore reference placeholders. All namespace objects will be collected after parsing.    
-    @Override
-    public void addToModel(XModel x) { 
-        if (null != x.getRefKey()) return;  // ignore placeholder child of Model
-        if (null != x.getIDRepl()) return;  // no placeholder children to replace
-        try {
-            x.getObject().addClassType(this.getObject());
-        } catch (NMFException e) {
-            LOG.error("line {}: {}", x.getLineNumber(), e.getMessage());
-        }
-    }    
+        c.getObject().setExtensionOfClass(this.getObjectToAdd());
+    } 
     
     @Override
-    public void addToObjectProperty (XObjectProperty op) {
-        op.getObject().setClassType(this.getObjectToSet());
+    public void addToProperty (XProperty op) {
+        op.getObject().setClassType(this.getObjectToAdd());
     }    
 }

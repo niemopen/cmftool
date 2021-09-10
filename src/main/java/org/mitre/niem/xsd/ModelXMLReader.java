@@ -27,8 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -63,20 +65,23 @@ public class ModelXMLReader {
     }
     
     class Handler extends DefaultHandler {      
+        private final Set<ObjectType> realObjs      = new HashSet<>();     // set of non-placeholder model objects
         private final Map<String,XObjectType> idMap = new HashMap<>();     // map @id value -> object
         private final List<XObjectType> refPHolders = new ArrayList<>();   // list of IDREF/URI placeholder objects to be replaced
         private final Stack<XObjectType> objStack   = new Stack<>();       // elements under construction
-        private StringBuilder chars                 = new StringBuilder();
-        private Locator loc                         = new LocatorImpl();
-        private XModel xmodel = null;
-        private Model model = null;
-        private int depth = 1;
+        private StringBuilder chars                 = new StringBuilder(); // character content of current element
+        private Locator loc                         = new LocatorImpl();   // for error msg line numbers
+        private XModel xmodel = null;                                      // the model document element
+        private Model model = null;                                        // the model object
         
         @Override
         public void setDocumentLocator (Locator l) {
             this.loc = l;
         }
         
+        // Put a dummy element on the stack instead of coding for the empty
+        // stack condition.  When we reach the end of the document element, 
+        // we'll try to add it to this dummy element... and nothing will happen.
         @Override
         public void startDocument () {
             XObjectType dummyRoot = new XObjectType();
@@ -85,43 +90,42 @@ public class ModelXMLReader {
         
         @Override
         public void startElement(String eNamespace, String eLocalName, String eQName, Attributes atts) {
-            System.out.print(String.format("%"+depth+"s+ %s\n", "", eQName));
-            depth++;
-
             // Create appropriate object and initialize from XML attributes
-            XObjectType child = newObject(model, eNamespace, eLocalName, atts, loc.getLineNumber());
             XObjectType parent = objStack.peek();
-            
+            XObjectType child = newObject(model, parent, eNamespace, eLocalName, atts, loc.getLineNumber());
             // First object created is the Model object
-            if (objStack.size() == 1) {
+            if (objStack.size() == 1) {             // element #0 is the dummy
                 xmodel = (XModel)child;
                 model = (Model)child.getObject();
             }
             objStack.add(child);
+            chars = new StringBuilder();
         }
         
         @Override
         public void endElement(String eNamespace, String eLocalName, String eQName) {
             XObjectType child    = objStack.pop();
-            XObjectType parent   = objStack.peek();
+            XObjectType parent   = objStack.peek();          
             if (chars.length() > 0) {
                 child.setStringVal(chars.toString().trim());
                 chars = new StringBuilder();
-            }
+            }            
             // Remember objects with @id, or non-empty objects with @uri
-            // Use these to replace reference placeholders after parsing
+            // Use these to replace reference placeholder objects upon endDocument
             if (null != child.getIDKey()) {
                 idMap.put(child.getIDKey(), child);
             }
-            // Remember reference placeholders for endDocument replacement
+            // Remember reference placeholder objects to be replaced upon endDocument
             if (null != child.getRefKey()) {
                 refPHolders.add(child);             // remember IDREF/URI placeholder for later replacement
-                child.setParent(parent);            // remember parent of placeholder object for later replacement
             }
-            // Add child even if a placeholder so we can maintain order of children
-            parent.addChild(child);
-            depth--;
-            System.out.print(String.format("%"+depth+"s- %s\n", "", eQName));            
+            // Not a placeholder? Remember object to be added to model at endDocument.
+            else {
+                ObjectType obj = child.getObject();
+                if (null != obj && obj.isModelChild()) realObjs.add(obj);
+            }
+            // Add child to parent even if child is a placeholder
+            parent.addAsChild(child);      
         }
         
         @Override
@@ -134,11 +138,14 @@ public class ModelXMLReader {
                 }
                 else {
                     ro.setIDRepl(idObj);            // set so that addChild executes a replacement
-                    ro.getParent().addChild(ro);    // replace the placeholder with the referenced object
+                    ro.getParent().addAsChild(ro);  // replace the placeholder with the referenced object
                 }
             }
-            // Placeholders replaced, now collect real objects for Model
-            model.collectModelObjects();
+            // Placeholders replaced, now collect real component objects for Model
+            for (ObjectType obj : realObjs) {
+                if (null == obj) continue;
+                obj.addToModelSet(model);
+            }
         }
         
         @Override
@@ -146,60 +153,59 @@ public class ModelXMLReader {
             chars.append(ch, start, length);
         }
         
-        private XObjectType newObject (Model m, String ens, String eln, Attributes atts, int lineNum) {
+        private XObjectType newObject (Model m, XObjectType p, String ens, String eln, Attributes atts, int lineNum) {
             XObjectType o = null;
             if (ens.startsWith(NMF_NS_URI_PREFIX)) {
                 switch (eln) {
-                case "AbstractIndicator":   o = new XStringObject(m, ens, eln, atts, lineNum); break;
-                case "Class":               o = new XClassType(m, ens, eln, atts, lineNum); break;
-                case "ContentStyleCode":    o = new XStringObject(m, ens, eln, atts, lineNum); break;
-                case "DataProperty":        o = new XDataProperty(m, ens, eln, atts, lineNum); break;
-                case "Datatype":            o = new XDatatype(m, ens, eln, atts, lineNum); break;
-                case "DefinitionText":      o = new XStringObject(m, ens, eln, atts, lineNum); break;
-                case "Enumeration":         o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "ExtensionOfClass":    o = new XClassType(m, ens, eln, atts, lineNum); break;
-                case "FractionDigits":      o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "HasDataProperty":     o = new XHasDataProperty(m, ens, eln, atts, lineNum); break;
-                case "HasObjectProperty":   o = new XHasObjectProperty(m, ens, eln, atts, lineNum); break;
-                case "HasValue":            o = new XHasValue(m, ens, eln, atts, lineNum); break;
-                case "Length":              o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "MaxExclusive":        o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "MaxInclusive":        o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "MaxLength":           o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "MinExclusive":        o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "MinInclusive":        o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "MinLength":           o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "Model":               o = new XModel(m, ens, eln, atts, lineNum); break;
-                case "Name":                o = new XStringObject(m, ens, eln, atts, lineNum); break;
-                case "Namespace":           o = new XNamespace(m, ens, eln, atts, lineNum); break;
-                case "NamespacePrefixName": o = new XStringObject(m, ens, eln, atts, lineNum); break;
-                case "NamespaceURI":        o = new XStringObject(m, ens, eln, atts, lineNum); break;
-//                case "NonNegativeValue":    o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "ObjectProperty":      o = new XObjectProperty(m, ens, eln, atts, lineNum); break;
-                case "Pattern":             o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "PositiveValue":       o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "RestrictionOf":       o = new XRestrictionOf(m, ens, eln, atts, lineNum); break;
-                case "StringValue":         o = new XStringObject(m, ens, eln, atts, lineNum); break;
-                case "SubPropertyOf":       o = new XSubPropertyOf(m, ens, eln, atts, lineNum); break;
-                case "TotalDigits":         o = new XFacet(m, ens, eln, atts, lineNum); break;
-                case "UnionOf":             o = new XUnionOf(m, ens, eln, atts, lineNum); break;
-                case "WhiteSpace":          o = new XFacet(m, ens, eln, atts, lineNum); break;
+                case "AbstractIndicator":   o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+                case "Class":               o = new XClassType(m, p, ens, eln, atts, lineNum); break;
+                case "Datatype":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "DefinitionText":      o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+                case "Enumeration":         o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "ExtensionOfClass":    o = new XClassType(m, p, ens, eln, atts, lineNum); break;
+                case "FractionDigits":      o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "HasProperty":         o = new XHasProperty(m, p, ens, eln, atts, lineNum); break;
+                case "HasValue":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "Length":              o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "ListOf":              o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "MaxExclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "MaxInclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "MaxLength":           o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "MinExclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "MinInclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "MinLength":           o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "Model":               o = new XModel(m, p, ens, eln, atts, lineNum); break;
+                case "Name":                o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+                case "Namespace":           o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
+                case "NamespacePrefixName": o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+                case "NamespaceURI":        o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+                case "NonNegativeValue":    o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+                case "Property":            o = new XProperty(m, p, ens, eln, atts, lineNum); break;
+                case "Pattern":             o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "PositiveValue":       o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "RestrictionOf":       o = new XRestrictionOf(m, p, ens, eln, atts, lineNum); break;
+                case "StringValue":         o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+                case "SubPropertyOf":       o = new XProperty(m, p, ens, eln, atts, lineNum); break;
+                case "TotalDigits":         o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "UnionOf":             o = new XUnionOf(m, p, ens, eln, atts, lineNum); break;
+                case "WhiteSpace":          o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "WhiteSpaceValueCode": o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 default:
                     LOG.error("unknown element '{'{}'}'{} at line {}", ens, eln, lineNum);
-                    o = new XUnknownObject(m, ens, eln, atts, lineNum);
+                    o = new XUnknownObject(m, p, ens, eln, atts, lineNum);
                     break;
                 }
             }
             else {
                 LOG.error("unknown element '{'{}'}'{} at line {}", ens, eln, lineNum);
-                o = new XUnknownObject(m, ens, eln, atts, lineNum);
+                o = new XUnknownObject(m, p, ens, eln, atts, lineNum);
             }
             return o;
         }
     }
     
     public class XUnknownObject extends XObjectType {
-        XUnknownObject (Model m, String ens, String eln, Attributes atts, int lineNum) {
+        XUnknownObject (Model m, XObjectType p, String ens, String eln, Attributes atts, int lineNum) {
         }
     }
 

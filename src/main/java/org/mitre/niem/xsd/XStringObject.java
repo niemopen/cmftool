@@ -36,8 +36,8 @@ import org.xml.sax.Attributes;
  */
 public class XStringObject extends XObjectType {
     
-    XStringObject(Model m, String ens, String eln, Attributes a, int line) {
-        super(m, ens, eln, a, line);
+    XStringObject(Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+        super(m, p, ens, eln, a, line);
     }
 
     @Override
@@ -45,24 +45,12 @@ public class XStringObject extends XObjectType {
         String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
         switch (this.getComponentLname()) {
         case "AbstractIndicator":   c.getObject().setAbstractIndicator(val); break;
-        case "ContentStyleCode":    c.getObject().setContentStyleCode(val);  break;
         case "DefinitionText":      c.getObject().setDefinition(val); break;
         case "Name":                c.getObject().setName(val); break;
         default:
             break;
         }
     }
-    
-    @Override
-    public void addToDataProperty(XDataProperty dp) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
-        switch (this.getComponentLname()) {
-        case "DefinitionText":      dp.getObject().setDefinition(val); break;
-        case "Name":                dp.getObject().setName(val); break;
-        default:
-            break;
-        }
-    }    
     
     @Override
     public void addToDatatype(XDatatype dt) {
@@ -80,6 +68,10 @@ public class XStringObject extends XObjectType {
         String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
         switch (this.getComponentLname()) {
         case "DefinitionText":      dt.getObject().setDefinition(val); break;
+        case "NonNegativeValue":
+        case "PositiveValue":
+        case "StringValue":
+        case "WhiteSpaceValueCode": dt.getObject().setStringVal(val); break;
         default:
             break;
         }
@@ -97,7 +89,7 @@ public class XStringObject extends XObjectType {
         }
      } 
     @Override
-    public void addToObjectProperty (XObjectProperty op) {
+    public void addToProperty (XProperty op) {
         String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
         switch (this.getComponentLname()) {
         case "AbstractIndicator":   op.getObject().setAbstractIndicator(val); break;

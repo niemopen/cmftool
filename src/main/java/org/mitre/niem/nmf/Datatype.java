@@ -23,10 +23,6 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 /**
  *
  * @author Scott Renner
@@ -35,12 +31,15 @@ import java.util.logging.Logger;
 public class Datatype extends Component {   
     private RestrictionOf restrictionOf = null;
     private UnionOf unionOf = null;
+    private Datatype listOf = null;
     
     public void setRestrictionOf (RestrictionOf r) { restrictionOf = r; }
     public void setUnionOf (UnionOf u)             { unionOf = u; }
+    public void setListOf (Datatype d)             { listOf = d; }
     
     public RestrictionOf getRestrictionOf() { return restrictionOf; }
     public UnionOf getUnionOf()             { return unionOf; }
+    public Datatype getListOf()             { return listOf; }
     
     public Datatype () { type = C_DATATYPE; }
     
@@ -50,21 +49,8 @@ public class Datatype extends Component {
     }
     
     @Override
-    public void addToModelSet () {
-        try {
-            this.getModel().addDatatype(this);
-        } catch (NMFException ex) {
-            Logger.getLogger(Namespace.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public void addToModelSet (Model m) {
+        m.addDatatype(this);
     }
-
-    @Override
-    void traverse (Set<ObjectType> seen, TraverseFunc f) {
-        f.func(this);
-        if (seen.contains(this)) return;
-        seen.add(this);
-        if (null != this.getNamespace())   this.getNamespace().traverse(seen, f);        
-        if (null != restrictionOf) restrictionOf.traverse(seen, f);
-        if (null != unionOf) unionOf.traverse(seen, f);
-    } 
+ 
 }

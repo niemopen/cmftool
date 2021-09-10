@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:mm="http://reference.niem.gov/specification/metamodel/5.0alpha1"
+           xmlns:mm="http://reference.niem.gov/specification/metamodel/1.0/"
            xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
            xmlns:xs-proxy="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
-           targetNamespace="http://reference.niem.gov/specification/metamodel/5.0alpha1"
+           targetNamespace="http://reference.niem.gov/specification/metamodel/1.0/"
            ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
            version="1">
    <xs:annotation>
@@ -31,7 +31,7 @@
          <xs:extension base="structures:ObjectType">
             <xs:sequence>
                <xs:element ref="mm:AnyValueAbstract" minOccurs="1" maxOccurs="1"/>
-               <xs:element ref="mm:DefinitionText" minOccurs="1" maxOccurs="1"/>
+               <xs:element ref="mm:DefinitionText" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:AnyValueFacetAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
@@ -61,10 +61,8 @@
             <xs:sequence>
                <xs:element ref="mm:AbstractIndicator" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:ExtensionOfClass" minOccurs="0" maxOccurs="1"/>
-               <xs:element ref="mm:ContentStyleCode" minOccurs="0" maxOccurs="1"/>
-               <xs:element ref="mm:HasValue" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element ref="mm:HasDataProperty" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element ref="mm:HasObjectProperty" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element ref="mm:HasValue" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="mm:HasProperty" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element ref="mm:ClassAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
          </xs:extension>
@@ -97,68 +95,6 @@
          <xs:documentation>An augmentation point for mm:ComponentType.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="ContentStyleCode"
-               type="mm:ContentStyleCodeType"
-               nillable="true">
-      <xs:annotation>
-         <xs:documentation>An indication of whether a referenced class has simple content or complex content.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
-   <xs:simpleType name="ContentStyleCodeSimpleType">
-      <xs:annotation>
-         <xs:documentation>A data type for an indication of whether a referenced class has simple content or complex content.</xs:documentation>
-      </xs:annotation>
-      <xs:restriction base="xs:string">
-         <xs:enumeration value="HasObjectProperty">
-            <xs:annotation>
-               <xs:documentation>A class contains object properties.</xs:documentation>
-            </xs:annotation>
-         </xs:enumeration>
-         <xs:enumeration value="HasValue">
-            <xs:annotation>
-               <xs:documentation>A class contains a datatype value.</xs:documentation>
-            </xs:annotation>
-         </xs:enumeration>
-      </xs:restriction>
-   </xs:simpleType>
-   <xs:complexType name="ContentStyleCodeType">
-      <xs:annotation>
-         <xs:documentation>A data type for an indication of whether a referenced class has simple content or complex content.</xs:documentation>
-      </xs:annotation>
-      <xs:simpleContent>
-         <xs:extension base="mm:ContentStyleCodeSimpleType">
-            <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
-         </xs:extension>
-      </xs:simpleContent>
-   </xs:complexType>
-   <xs:element name="DataProperty"
-               type="mm:DataPropertyType"
-               substitutionGroup="mm:ModelItemAbstract"
-               nillable="true">
-      <xs:annotation>
-         <xs:documentation>A data property.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
-   <xs:complexType name="DataPropertyType">
-      <xs:annotation>
-         <xs:documentation>A data type for a data property.</xs:documentation>
-      </xs:annotation>
-      <xs:complexContent>
-         <xs:extension base="mm:ComponentType">
-            <xs:sequence>
-               <xs:element ref="mm:Datatype" minOccurs="0" maxOccurs="1"/>
-               <xs:element ref="mm:DataPropertyAugmentationPoint"
-                           minOccurs="0"
-                           maxOccurs="unbounded"/>
-            </xs:sequence>
-         </xs:extension>
-      </xs:complexContent>
-   </xs:complexType>
-   <xs:element name="DataPropertyAugmentationPoint" abstract="true">
-      <xs:annotation>
-         <xs:documentation>An augmentation point for mm:DataPropertyType.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
    <xs:element name="Datatype"
                type="mm:DatatypeType"
                substitutionGroup="mm:ModelItemAbstract"
@@ -176,6 +112,7 @@
             <xs:sequence>
                <xs:element ref="mm:RestrictionOf" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:UnionOf" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="mm:ListOf" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:DatatypeAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
@@ -219,22 +156,22 @@
          <xs:documentation>A restriction on the precision of a decimal data type, via a restriction on the number of digits allowed to the right of the decimal point of its decimal representation.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="HasDataProperty"
-               type="mm:HasDataPropertyType"
+   <xs:element name="HasProperty"
+               type="mm:HasPropertyType"
                nillable="true">
       <xs:annotation>
-         <xs:documentation>An occurrence of a data property as content of a class.</xs:documentation>
+         <xs:documentation>An occurrence of a property as content of a class.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:complexType name="HasDataPropertyType">
+   <xs:complexType name="HasPropertyType">
       <xs:annotation>
-         <xs:documentation>A data type for an occurrence of a data property as content of a class.</xs:documentation>
+         <xs:documentation>A data type for an occurrence of a property as content of a class.</xs:documentation>
       </xs:annotation>
       <xs:complexContent>
          <xs:extension base="structures:ObjectType">
             <xs:sequence>
-               <xs:element ref="mm:DataProperty" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element ref="mm:HasDataPropertyAugmentationPoint"
+               <xs:element ref="mm:Property" minOccurs="1" maxOccurs="1"/>
+               <xs:element ref="mm:HasPropertyAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
             </xs:sequence>
@@ -243,63 +180,16 @@
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
-   <xs:element name="HasDataPropertyAugmentationPoint" abstract="true">
+   <xs:element name="HasPropertyAugmentationPoint" abstract="true">
       <xs:annotation>
-         <xs:documentation>An augmentation point for mm:HasDataPropertyType.</xs:documentation>
+         <xs:documentation>An augmentation point for mm:HasPropertyType.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="HasObjectProperty"
-               type="mm:HasObjectPropertyType"
+   <xs:element name="HasValue" 
+               type="mm:DatatypeType"
                nillable="true">
       <xs:annotation>
-         <xs:documentation>An occurrence of an object property as content of a class.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
-   <xs:complexType name="HasObjectPropertyType">
-      <xs:annotation>
-         <xs:documentation>A data type for an occurrence of an object property as content of a class.</xs:documentation>
-      </xs:annotation>
-      <xs:complexContent>
-         <xs:extension base="structures:ObjectType">
-            <xs:sequence>
-               <xs:element ref="mm:ObjectProperty" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element ref="mm:HasObjectPropertyAugmentationPoint"
-                           minOccurs="0"
-                           maxOccurs="unbounded"/>
-            </xs:sequence>
-            <xs:attribute ref="mm:minOccursQuantity"/>
-            <xs:attribute ref="mm:maxOccursQuantity"/>
-         </xs:extension>
-      </xs:complexContent>
-   </xs:complexType>
-   <xs:element name="HasObjectPropertyAugmentationPoint" abstract="true">
-      <xs:annotation>
-         <xs:documentation>An augmentation point for mm:HasObjectPropertyType.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
-   <xs:element name="HasValue" type="mm:HasValueType" nillable="true">
-      <xs:annotation>
-         <xs:documentation>An occurrence of a data value as content of a class.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
-   <xs:complexType name="HasValueType">
-      <xs:annotation>
-         <xs:documentation>A data type for an occurrence of a data value as content of a class.</xs:documentation>
-      </xs:annotation>
-      <xs:complexContent>
-         <xs:extension base="structures:ObjectType">
-            <xs:sequence>
-               <xs:element ref="mm:Datatype" minOccurs="1" maxOccurs="1"/>
-               <xs:element ref="mm:HasValueAugmentationPoint"
-                           minOccurs="0"
-                           maxOccurs="unbounded"/>
-            </xs:sequence>
-         </xs:extension>
-      </xs:complexContent>
-   </xs:complexType>
-   <xs:element name="HasValueAugmentationPoint" abstract="true">
-      <xs:annotation>
-         <xs:documentation>An augmentation point for mm:HasValueType.</xs:documentation>
+         <xs:documentation>A data type for a property as the value of a class. </xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="Length"
@@ -308,6 +198,13 @@
                nillable="true">
       <xs:annotation>
          <xs:documentation>A restriction of the length of a data type. Unit of length varies depending on the type that is being derived from.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <xs:element name="ListOf"
+               type="mm:DatatypeType"
+               nillable="true">
+      <xs:annotation>
+         <xs:documentation>A data type for a list of values.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="MaxExclusive"
@@ -485,7 +382,7 @@
          <xs:extension base="structures:ObjectType">
             <xs:sequence>
                <xs:element ref="mm:NonNegativeValue" minOccurs="1" maxOccurs="1"/>
-               <xs:element ref="mm:DefinitionText" minOccurs="1" maxOccurs="1"/>
+               <xs:element ref="mm:DefinitionText" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:NonNegativeValueFacetAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
@@ -498,15 +395,15 @@
          <xs:documentation>An augmentation point for mm:NonNegativeValueFacetType.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="ObjectProperty"
-               type="mm:ObjectPropertyType"
+   <xs:element name="Property"
+               type="mm:PropertyType"
                substitutionGroup="mm:ModelItemAbstract"
                nillable="true">
       <xs:annotation>
          <xs:documentation>An object property.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:complexType name="ObjectPropertyType">
+   <xs:complexType name="PropertyType">
       <xs:annotation>
          <xs:documentation>A data type for an object property</xs:documentation>
       </xs:annotation>
@@ -515,15 +412,16 @@
             <xs:sequence>
                <xs:element ref="mm:SubPropertyOf" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:Class" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="mm:Datatype" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:AbstractIndicator" minOccurs="0" maxOccurs="1"/>
-               <xs:element ref="mm:ObjectPropertyAugmentationPoint"
+               <xs:element ref="mm:PropertyAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
             </xs:sequence>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
-   <xs:element name="ObjectPropertyAugmentationPoint" abstract="true">
+   <xs:element name="PropertyAugmentationPoint" abstract="true">
       <xs:annotation>
          <xs:documentation>An augmentation point for mm:ObjectPropertyType.</xs:documentation>
       </xs:annotation>
@@ -544,7 +442,7 @@
          <xs:extension base="structures:ObjectType">
             <xs:sequence>
                <xs:element ref="mm:StringValue" minOccurs="1" maxOccurs="1"/>
-               <xs:element ref="mm:DefinitionText" minOccurs="1" maxOccurs="1"/>
+               <xs:element ref="mm:DefinitionText" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:PatternFacetAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
@@ -573,7 +471,7 @@
          <xs:extension base="structures:ObjectType">
             <xs:sequence>
                <xs:element ref="mm:PositiveValue" minOccurs="1" maxOccurs="1"/>
-               <xs:element ref="mm:DefinitionText" minOccurs="1" maxOccurs="1"/>
+               <xs:element ref="mm:DefinitionText" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:PositiveValueFacetAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
@@ -620,29 +518,9 @@
          <xs:documentation>A value of a facet, with a string value.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="SubPropertyOf" type="mm:SubPropertyOfType" nillable="true">
+   <xs:element name="SubPropertyOf" type="mm:PropertyType" nillable="true">
       <xs:annotation>
          <xs:documentation>An object property of which an object property is a subproperty.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
-   <xs:complexType name="SubPropertyOfType">
-      <xs:annotation>
-         <xs:documentation>A data type for a subproperty.</xs:documentation>
-      </xs:annotation>
-      <xs:complexContent>
-         <xs:extension base="structures:ObjectType">
-            <xs:sequence>
-               <xs:element ref="mm:ObjectProperty" minOccurs="1" maxOccurs="1"/>
-               <xs:element ref="mm:SubPropertyOfAugmentationPoint"
-                           minOccurs="0"
-                           maxOccurs="unbounded"/>
-            </xs:sequence>
-         </xs:extension>
-      </xs:complexContent>
-   </xs:complexType>
-   <xs:element name="SubPropertyOfAugmentationPoint" abstract="true">
-      <xs:annotation>
-         <xs:documentation>An augmentation point for mm:SubPropertyOfType.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="TotalDigits"
@@ -716,7 +594,7 @@
          <xs:extension base="structures:ObjectType">
             <xs:sequence>
                <xs:element ref="mm:WhiteSpaceValueCode" minOccurs="1" maxOccurs="1"/>
-               <xs:element ref="mm:DefinitionText" minOccurs="1" maxOccurs="1"/>
+               <xs:element ref="mm:DefinitionText" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="mm:WhiteSpaceFacetAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>

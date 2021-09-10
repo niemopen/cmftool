@@ -41,27 +41,20 @@ public class UnionOf extends ObjectType {
         super(m);
     }    
     
-    public void addDatatype (Datatype c) throws NMFException {
+    public void addDatatype (Datatype c) {
         this.datatypeList.add(c);
     }
     
-    public void removeDatatype (Datatype c) throws NMFException {
+    public void removeDatatype (Datatype c) {
         int index = this.datatypeList.indexOf(c);
-        if (index < 0) throw(new NMFException(String.format("Can't remove Datatype object; not in UnionOf object")));
+        if (index < 0) return;
         this.datatypeList.remove(index);
     }
     
-    public void replaceDatatype (Datatype oc, Datatype nc) throws NMFException {
+    public void replaceDatatype (Datatype oc, Datatype nc) {
         int index = this.datatypeList.indexOf(oc);
-        if (index < 0) throw(new NMFException(String.format("Can't replace Datatype object; not in UnionOf object")));
+        if (index < 0) return;
         this.datatypeList.set(index, nc);        
     } 
-        
-    @Override
-    void traverse (Set<ObjectType> seen, TraverseFunc f) {
-        f.func(this);
-        if (seen.contains(this)) return;
-        seen.add(this);
-        if (null != datatypeList) for (var x : datatypeList) x.traverse(seen, f);
-    }
+
 }

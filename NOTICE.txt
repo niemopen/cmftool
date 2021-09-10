@@ -1,0 +1,84 @@
+NMFTool:  A project for creating and using data models in the NIEM Model Format.
+
+Copyright 2021 The MITRE Corporation. All rights reserved.
+
+Approved for Limited External Release: Joint Staff J6 and contractors.
+Public release comes later.
+
+This project contains content developed by The MITRE Corporation. If
+this code is used in a deployment or embedded within another project,
+it is requested that you send an email to opensource@mitre.org in order
+to let us know where this software is being used.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+NMFTool uses the following packages:
+
+* Apache Xerces Java
+* Apache XML Commons Resolver
+* JCommander
+* Log4J
+
+All of those packages are released under the Apache 2.0 licence.
+Package notices follow.
+
+=========================================================================
+Apache Xerces Java
+Copyright 1999-2020 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+Portions of this software were originally based on the following:
+  - software copyright (c) 1999, IBM Corporation., http://www.ibm.com.
+  - software copyright (c) 1999, Sun Microsystems., http://www.sun.com.
+  - voluntary contributions made by Paul Eng on behalf of the 
+    Apache Software Foundation that were originally developed at iClick, Inc.,
+    software copyright (c) 1999.
+
+=========================================================================
+Apache XML Commons Resolver
+Copyright 2006 The Apache Software Foundation.
+
+This product includes software developed at
+The Apache Software Foundation http://www.apache.org/
+
+Portions of this code are derived from classes placed in the
+public domain by Arbortext on 10 Apr 2000. See:
+http://www.arbortext.com/customer_support/updates_and_technical_notes/catalogs/docs/README.htm
+
+=========================================================================
+JCommander Copyright Notices
+Copyright 2010 Cedric Beust cedric@beust.com
+
+=========================================================================
+Apache Log4j
+Copyright 1999-2019 Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+ResolverUtil.java
+Copyright 2005-2006 Tim Fennell
+
+Dumbster SMTP test server
+Copyright 2004 Jason Paul Kitchen
+
+TypeUtil.java
+Copyright 2002-2012 Ramnivas Laddad, Juergen Hoeller, Chris Beams
+
+picocli (http://picocli.info)
+Copyright 2017 Remko Popma
+
+=========================================================================

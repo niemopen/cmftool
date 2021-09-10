@@ -66,8 +66,9 @@ public class NamespaceDecls {
     
     public final static int SK_EXTENSION  = 0;
     public final static int SK_NIEM_MODEL = 1;
-    public final static int SK_EXTERNAL   = 2;
-    public final static int SK_STRUCTURES = 3;
+    public final static int SK_UTILITY    = 2;
+    public final static int SK_EXTERNAL   = 3;
+
     
     static List<NSDeclRec> emptyList = new ArrayList<>();
     
@@ -76,7 +77,6 @@ public class NamespaceDecls {
     private Map<String,List<NSDeclRec>> urimap = null;  // urimap.get(U)= list of decls with URI U
     private List<String> warnMsgs = null;
     
-    /////////////////
     private final List<NSDeclRec> maps         = new ArrayList<>();   // array of namespace declaration records
     private final Map<String,Integer> nsType   = new HashMap<>();     // nsURI -> type (extension, niem model, ...)
     private final Map<String,String> nsVersion = new HashMap<>();     // nsURI -> NIEM version string
@@ -93,13 +93,14 @@ public class NamespaceDecls {
     
     /**
      * Returns the preferred prefix for this namespace, guaranteed to be unique
-     * for all namespaces in the schema document set. This is complicated. Each
-     * namespace defined in the schema pile is assigned a unique prefix. But
-     * there's nothing to keep the schema documents from mapping the same prefix
+     * for all namespaces in the schema document set. This is complicated. This
+     * code assignes a unique prefix to each namespace defined in the schema pile.
+     * But there's nothing to keep the schema documents from mapping the same prefix
      * to multiple namespace URIs. So we can't assign the prefixes until all of
      * the namespaces have been processed. Conflicts are resolved in the following
      * priority order: <ol>
      * 
+     * <li> "rdf" is mapped to "http://www.w3.org/1999/02/22-rdf-syntax-ns#", period.</li>
      * <li> We assume the guy writing an extension schema knows what prefix he 
      *      wants to use, so these mappings are chosen first.</li>
      * <li> For namespaces in the NIEM model, we prefer the prefix mapped to
@@ -108,8 +109,8 @@ public class NamespaceDecls {
      * 
      * Within those categories, ties go first to the namespace declaration at the
      * highest level (or lowest depth) in the schema document.  If that's a tie,
-     * the first declaration in document order wins.  The loser gets a munged
-     * prefix; eg. "nc1:" instead of "nc:"
+     * the first declaration in document order wins.  In all cases, the loser 
+     * gets a munged prefix; eg. "nc1:" instead of "nc:"
      * @param nsuri
      * @return 
      */
@@ -117,6 +118,9 @@ public class NamespaceDecls {
         if (null != nsPrefix) return nsPrefix.get(nsuri);
         nsPrefix  = new HashMap<>();
         prefixURI = new HashMap<>();
+        // Cursed be he who mappeth "rdf" to anything other than "http://www.w3.org/1999/02/22-rdf-syntax-ns#" :-)
+        nsPrefix.put(RDF_NS_URI, "rdf");
+        prefixURI.put("rdf", RDF_NS_URI);
         Collections.sort(maps);       
         for (NSDeclRec nr : maps) {
             if (!nsPrefix.containsKey(nr.uri)) {
@@ -226,7 +230,7 @@ public class NamespaceDecls {
             nsd.nsDoc.put(nsuri, docStr);
             nsd.nsVersion.put(nsuri, niemVersion);
             int msize = maps.size();
-            if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) skind = SK_STRUCTURES;
+            if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) skind = SK_UTILITY;
             nsType.put(nsuri, skind);
             for (int i = msize - declCt; i < msize; i++) nsd.maps.get(i).schemaKind = skind;
         }
@@ -329,12 +333,6 @@ public class NamespaceDecls {
             pfmap.get(m.prefix).add(m);
             urimap.get(m.uri).add(m);
         });
-        // Sort the namespace declarations into priority order for prefix mapping
-        // First, declarations in extension schemas (assume designers know what they want)
-        // Second, declarations in NIEM reference schemas (prefer well-known prefixes)
-        // Last, declarations in external schemas.
-        // For declarations in the same namespace, those from outer elements before inner.
-        // Break ties by retaining the order in which declarations were found.
         Collections.sort(maps);
     }
        
@@ -361,18 +359,19 @@ public class NamespaceDecls {
             decNum = ct;
         }
         
-        // Schema document type comes first: extension, reference, external
+        // Schema document type comes first: extension, reference, utility, external
         // Within a namespace, declarations in outer schema elements come before inner
         // For namespaces of sort priority, sort in order of parsing
         @Override
         public int compareTo (NSDeclRec o) {
-            if (schemaKind < o.schemaKind) { return -1; }
-            else if (schemaKind > o.schemaKind) { return 1; }
+            if (schemaKind < o.schemaKind) return -1; 
+            else if (schemaKind > o.schemaKind) return 1; 
             else if (targetNS.equals(o.targetNS)) {
-                if (nestLevel < o.nestLevel) { return -1; }
+                if (nestLevel < o.nestLevel) return -1; 
                 else { return 1; }
             }
-            else if (decNum < o.decNum) { return -1; }
+            else if (decNum < o.decNum) return -1; 
+            else if (decNum == o.decNum) return 0;
             return 1;
         }
         

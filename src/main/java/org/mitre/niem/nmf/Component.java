@@ -35,9 +35,12 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public static final short C_OBJECTPROPERTY = 3;
     
     protected short type;
-    private String name = null;
-    private Namespace namespace = null;
-    private String definition = null;
+    private String name = null;             // local name
+    private Namespace namespace = null;     // namespace object
+    private String definition = null;       // xs:documentation string
+    
+    @Override
+    public boolean isModelChild ()          { return true; }    // Components are model children
     
     public void setName (String s)          { name = s; }
     public void setNamespace (Namespace ns) { namespace = ns; }
@@ -47,10 +50,9 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public String getName ()         { return name; }
     public Namespace getNamespace () { return namespace; }
     public String getDefinition ()   { return definition; }
-    public String getURI () {
-        if (null == name || null == namespace) return null;
-        if (namespace.getNamespaceURI().endsWith("#")) return namespace.getNamespaceURI()+name;
-        return namespace.getNamespaceURI()+"#"+name;
+    
+    public String getURI () {  
+        return genURI(this.getNamespace().getNamespaceURI(), this.getName());
     }
     
     Component () {}
@@ -61,10 +63,10 @@ public abstract class Component extends ObjectType implements Comparable<Compone
        
     @Override
     public int compareTo (Component o) {
-        int v = this.namespace.getNamespaceURI().compareTo(o.namespace.getNamespaceURI());
-        if (0 == v) {
-            v = this.name.compareTo(o.name);
-        }
-        return v;
+        return this.getURI().compareTo(o.getURI());
     }    
+    
+    public static String genURI (String nsuri, String lname) {
+        return nsuri.concat("#").concat(lname);
+    }
 }

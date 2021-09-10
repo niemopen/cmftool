@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model xmlns:mm="http://reference.niem.gov/specification/metamodel/1.0/" xmlns:structures="http://release.niem.gov/niem/structures/5.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://reference.niem.gov/specification/metamodel/1.0/">
+  <Namespace structures:uri="ns">
+    <NamespaceURI>http://example.com/codes/</NamespaceURI>
+    <NamespacePrefixName>ns</NamespacePrefixName>
+  </Namespace>
+  <Namespace structures:uri="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixName>xs</NamespacePrefixName>
+  </Namespace>
+  <Class structures:uri="ns:TestCodeType">
+    <Name>TestCodeType</Name>
+    <Namespace structures:uri="ns" xsi:nil="true"/>
+    <HasValue structures:uri="ns:TestCodeSimpleType" xsi:nil="true"/>
+  </Class>
+  <Datatype structures:uri="ns:TestCodeSimpleType">
+    <Name>TestCodeSimpleType</Name>
+    <Namespace structures:uri="ns" xsi:nil="true"/>
+    <RestrictionOf>
+      <Datatype structures:uri="xs:token" xsi:nil="true"/>
+      <Enumeration>
+        <StringValue>1</StringValue>
+        <DefinitionText>Fatal Accident</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>2</StringValue>
+        <DefinitionText>Incapacitating Injury Accident</DefinitionText>
+      </Enumeration>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:uri="xs:token">
+    <Name>token</Name>
+    <Namespace structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

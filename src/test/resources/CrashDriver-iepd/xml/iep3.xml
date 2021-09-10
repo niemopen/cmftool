@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<exch:CrashDriverInfo 
+    xmlns:exch="http://example.com/CrashDriver/1.1/"
+    xmlns:j="http://release.niem.gov/niem/domains/jxdm/7.0/"
+    xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
+    xmlns:priv="http://example.com/PrivacyMetadata/2.0/"
+    xmlns:unece="http://release.niem.gov/niem/codes/unece_rec20/5.0/"
+    xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+    xmlns:ism="urn:us:gov:ic:ism"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <j:Crash>
+        <nc:ActivityDate>
+            <nc:Date>1934-06-05</nc:Date>
+        </nc:ActivityDate>
+        <nc:ActivityLocation>
+            <nc:Location2DGeospatialCoordinate>
+                <nc:GeographicCoordinateLatitude>
+                    <nc:LatitudeDegreeValue>51</nc:LatitudeDegreeValue>
+                    <nc:LatitudeMinuteValue>52</nc:LatitudeMinuteValue>
+                </nc:GeographicCoordinateLatitude>
+                <nc:GeographicCoordinateLongitude>
+                    <nc:LongitudeDegreeValue>-1</nc:LongitudeDegreeValue>
+                    <nc:LongitudeMinuteValue>17</nc:LongitudeMinuteValue>
+                </nc:GeographicCoordinateLongitude>
+            </nc:Location2DGeospatialCoordinate>
+        </nc:ActivityLocation>
+        <j:CrashVehicle>
+            <j:CrashDriver>
+                <nc:RoleOfPerson structures:id="P01">
+                    <nc:PersonBirthDate structures:metadata="PMD01">
+                        <nc:Date>1890-05-04</nc:Date>
+                    </nc:PersonBirthDate>
+                    <nc:PersonName nc:personNameCommentText="copied">
+                        <nc:PersonGivenName structures:sequenceID="1">Peter</nc:PersonGivenName>
+                        <nc:PersonMiddleName structures:sequenceID="2">Death</nc:PersonMiddleName>
+                        <nc:PersonMiddleName structures:sequenceID="3">Bredon</nc:PersonMiddleName>
+                        <nc:PersonSurName>Wimsey</nc:PersonSurName>
+                    </nc:PersonName>              
+                </nc:RoleOfPerson>
+                <j:DriverLicense>
+                    <j:DriverLicenseCardIdentification>
+                        <nc:IdentificationID>A1234567</nc:IdentificationID>
+                    </j:DriverLicenseCardIdentification>
+                </j:DriverLicense>
+            </j:CrashDriver>
+        </j:CrashVehicle>
+        <j:CrashPerson>
+            <nc:RoleOfPerson structures:ref="P01" xsi:nil="true"/>
+            <j:CrashPersonInjury structures:metadata="PMD01 PMD02">
+                <nc:InjuryDescriptionText>Broken Arm</nc:InjuryDescriptionText>
+                <j:InjurySeverityCode>3</j:InjurySeverityCode>
+            </j:CrashPersonInjury>
+        </j:CrashPerson>
+    </j:Crash>
+    <j:Charge structures:id="CH01" structures:metadata="JMD01">
+        <j:ChargeDescriptionText>Furious Driving</j:ChargeDescriptionText>
+        <j:ChargeFelonyIndicator>false</j:ChargeFelonyIndicator>
+    </j:Charge>
+    <j:PersonChargeAssociation structures:metadata="JMD01">
+        <nc:Person structures:ref="P01" xsi:nil="true"/>
+        <j:Charge structures:ref="CH01" xsi:nil="true"/>
+        <j:JuvenileAsAdultIndicator>false</j:JuvenileAsAdultIndicator>
+    </j:PersonChargeAssociation>
+    <j:Metadata structures:id="JMD01">
+        <j:CriminalInformationIndicator>true</j:CriminalInformationIndicator>
+    </j:Metadata>
+    <priv:PrivacyMetadata structures:id="PMD01">
+        <priv:PrivacyCode>PII</priv:PrivacyCode>
+    </priv:PrivacyMetadata>
+    <priv:PrivacyMetadata structures:id="PMD02">
+        <priv:PrivacyCode>MEDICAL</priv:PrivacyCode>
+    </priv:PrivacyMetadata>
+</exch:CrashDriverInfo>

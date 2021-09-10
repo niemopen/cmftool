@@ -3,10 +3,15 @@ plugins {
     id 'application'
 }
 
-mainClassName = 'org.mitre.niem.nmftool.Main'
+//mainClassName = 'org.mitre.niem.nmftool.NMFTool'
 
 repositories {
     mavenCentral()
+}
+
+application {
+    mainClass = 'org.mitre.niem.nmftool.NMFTool'
+    applicationName = 'nmftool'
 }
 
 compileJava {
@@ -18,6 +23,8 @@ dependencies {
     implementation group: 'xerces', name: 'xercesImpl', version: '2.12.1'
     implementation group: 'xml-apis', name: 'xml-apis', version: '1.4.01'
     implementation group: 'xml-resolver', name: 'xml-resolver', version: '1.2'
+    
+    implementation group: 'com.beust', name: 'jcommander', version: '1.81'
     
     implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.14.1'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.14.1'    

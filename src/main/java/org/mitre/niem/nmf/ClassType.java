@@ -25,9 +25,6 @@ package org.mitre.niem.nmf;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -36,76 +33,35 @@ import java.util.logging.Logger;
  */
 public class ClassType extends Component {
     private String abstractIndicator = null;
-    private String contentStyleCode  = null;
     private ClassType extensionOfClass  = null;
-    private final List<HasValue> hasValueList = new ArrayList<>();
-    private final List<HasDataProperty> hasDataPropertyList = new ArrayList<>();
-    private final List<HasObjectProperty> hasObjectPropertyList = new ArrayList<>();    
+    private Datatype hasValue = null;
+    private final List<HasProperty> hasPropertyList = new ArrayList<>();
     
     public void setAbstractIndicator (String s)   { abstractIndicator = s; }
-    public void setContentStyleCode  (String s)   { contentStyleCode = s; }
     public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
+    public void setHasValue (Datatype v)          { hasValue = v; }
     
     public String getAbstractIndicator ()   { return abstractIndicator; }
-    public String getContentStyleCode ()    { return contentStyleCode; }
     public ClassType getExtensionOfClass () { return extensionOfClass; }
-    
-    public List<HasValue> getHasValueList()                   { return hasValueList; }
-    public List<HasDataProperty> getHasDataPropertyList()     { return hasDataPropertyList; }
-    public List<HasObjectProperty> getHasObjectPropertyList() { return hasObjectPropertyList; }
-          
-    public List<HasValue> hasValueList ()                     { return hasValueList; }
-    public List<HasDataProperty> hasDataPropertyList ()       { return hasDataPropertyList; }
-    public List<HasObjectProperty> hasObjectPropertyList ()   { return hasObjectPropertyList; }
-    
-    public void addHasValue (HasValue c) {
-        this.hasValueList.add(c);
-    }
-    
-    public void removeHasValue (HasValue c) throws NMFException {
-        int index = this.hasValueList.indexOf(c);
-        if (index < 0) throw(new NMFException(String.format("Can't remove HasValue object; not in ExtensionOf object")));
-        this.hasValueList.remove(index);
-    }
-    
-    public void replaceHasValue (HasValue oc, HasValue nc) throws NMFException {
-        int index = this.hasValueList.indexOf(oc);
-        if (index < 0) throw(new NMFException(String.format("Can't replace HasValue object; not in ExtensionOf object")));
-        this.hasValueList.set(index, nc);        
-    }    
+    public Datatype getHasValue()           { return hasValue; }
+            
+    public List<HasProperty> hasPropertyList ()       { return hasPropertyList; }
 
-    public void addHasDataProperty (HasDataProperty c) {
-        this.hasDataPropertyList.add(c);
+    public void addHasProperty (HasProperty c) {
+        this.hasPropertyList.add(c);
     }
     
-    public void removeHasDataProperty (HasDataProperty c) throws NMFException {
-        int index = this.hasDataPropertyList.indexOf(c);
-        if (index < 0) throw(new NMFException(String.format("Can't remove HasDataProperty object; not in ExtensionOf object")));
-        this.hasDataPropertyList.remove(index);
+    public void removeHasProperty (HasProperty c) {
+        this.hasPropertyList.remove(c);
     }
     
-    public void replaceHasDataProperty (HasDataProperty oc, HasDataProperty nc) throws NMFException {
-        int index = this.hasDataPropertyList.indexOf(oc);
-        if (index < 0) throw(new NMFException(String.format("Can't replace HasDataProperty object; not in ExtensionOf object")));
-        this.hasDataPropertyList.set(index, nc);        
-    }    
-
-    public void addHasObjectProperty (HasObjectProperty c) {
-        this.hasObjectPropertyList.add(c);
+    public void replaceHasProperty (HasProperty op, HasProperty np) {
+        int index = this.hasPropertyList.indexOf(op);
+        if (index < 0) return;
+        this.hasPropertyList.set(index, np);
+        
     }
-    
-    public void removeHasObjectProperty (HasObjectProperty c) throws NMFException {
-        int index = this.hasObjectPropertyList.indexOf(c);
-        if (index < 0) throw(new NMFException(String.format("Can't remove HasObjectProperty object; not in ExtensionOf object")));
-        this.hasObjectPropertyList.remove(index);
-    }
-    
-    public void replaceHasObjectProperty (HasObjectProperty oc, HasObjectProperty nc) throws NMFException {
-        int index = this.hasObjectPropertyList.indexOf(oc);
-        if (index < 0) throw(new NMFException(String.format("Can't replace HasObjectProperty object; not in ExtensionOf object")));
-        this.hasObjectPropertyList.set(index, nc);        
-    }
-    
+      
     public ClassType () { type = C_CLASSTYPE; }
        
     public ClassType (Model m) {
@@ -114,23 +70,8 @@ public class ClassType extends Component {
     }
     
     @Override
-    public void addToModelSet () {
-        try {
-            this.getModel().addClassType(this);
-        } catch (NMFException ex) {
-            Logger.getLogger(Namespace.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public void addToModelSet (Model m) {
+        m.addClassType(this);
     }
-
-    @Override
-    void traverse (Set<ObjectType> seen, TraverseFunc f) {
-        f.func(this);
-        if (seen.contains(this)) return;
-        seen.add(this);
-        if (null != this.getNamespace())   this.getNamespace().traverse(seen, f);
-        if (null != this.getExtensionOfClass()) this.getExtensionOfClass().traverse(seen, f);
-        if (null != hasDataPropertyList)   for (var x : hasValueList) x.traverse(seen, f);
-        if (null != hasDataPropertyList)   for (var x: hasDataPropertyList) x.traverse(seen, f);
-        if (null != hasObjectPropertyList) for (var x : hasObjectPropertyList) x.traverse(seen, f);        
-    }    
+ 
 }

@@ -39,15 +39,15 @@ public class XRestrictionOf extends XObjectType {
     @Override
     public RestrictionOf getObject () { return obj; }
     
-    XRestrictionOf (Model m, String ens, String eln, Attributes a, int line) {
-        super(m, ens, eln, a, line);
+    XRestrictionOf (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+        super(m, p, ens, eln, a, line);
         obj = new RestrictionOf(m);
     }
     
     // Replacing a placeholder? Use idRepl to replace obj
     // Otherwise obj is the object to use
     @Override
-    public RestrictionOf getObjectToSet () {
+    public RestrictionOf getObjectToAdd () {
         RestrictionOf r = this.obj;
         if (null != this.idRepl) {
             try {
@@ -61,12 +61,13 @@ public class XRestrictionOf extends XObjectType {
     }
         
     @Override
-    public void addChild (XObjectType child) {
+    public void addAsChild (XObjectType child) {
         child.addToRestrictionOf(this);
+        super.addAsChild(child);
     }    
     
     @Override
     public void addToDatatype (XDatatype dt) { 
-        dt.getObject().setRestrictionOf(this.getObjectToSet());
+        dt.getObject().setRestrictionOf(this.getObjectToAdd());
     }      
 }

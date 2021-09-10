@@ -25,11 +25,3 @@ Not exercised yet:
 * `xml:lang`
 * `xml:space`
 * `xsi:type`
-
-`CrashDriver.no` is a "NIEM object" file compiled by:
-`niemtool compile xml-catalog.xml extension/CrashDriver.xsd`
-
-The JSON files in the `json` directory were translated from the sample IEPs by:
-`niemtool translate CrashDriver.no iep-sample/iep1.xml > json/iep1.json`
-
-

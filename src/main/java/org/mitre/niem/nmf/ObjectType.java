@@ -23,8 +23,6 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Set;
-
 /**
  * A class to represent a NIEM model component.
  * @author Scott Renner
@@ -38,6 +36,7 @@ public class ObjectType {
 
     public Model getModel()            { return model; }
     public String getSequenceID ()     { return sequenceID; }
+    public boolean isModelChild ()     { return false; }        // override in Component and Namespace class
     
     public ObjectType () {
     }
@@ -45,15 +44,8 @@ public class ObjectType {
     public ObjectType (Model m) {
         model = m;
     }
-
-    interface TraverseFunc {
-        void func (ObjectType o);
-    }
-    
+   
     // Override for components and namespaces
-    public void addToModelSet () { }
-    
-    void traverse (Set<ObjectType> seen, TraverseFunc f) {
-    }
-    
+    public void addToModelSet (Model m) { }
+
 }

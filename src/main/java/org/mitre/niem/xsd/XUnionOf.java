@@ -39,15 +39,15 @@ public class XUnionOf extends XObjectType {
     @Override
     public UnionOf getObject () { return obj; }
     
-    public XUnionOf (Model m, String ens, String eln, Attributes a, int line) {
-        super(m, ens, eln, a, line);
+    public XUnionOf (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+        super(m, p, ens, eln, a, line);
         obj = new UnionOf(m);
     }    
     
     // Replacing a placeholder? Use idRepl to replace obj
     // Otherwise obj is the object to use
     @Override
-    public UnionOf getObjectToSet () {
+    public UnionOf getObjectToAdd () {
         UnionOf r = this.obj;
         if (null != this.idRepl) {
             try {
@@ -61,13 +61,14 @@ public class XUnionOf extends XObjectType {
     }
         
     @Override
-    public void addChild (XObjectType child) {
+    public void addAsChild (XObjectType child) {
         child.addToUnionOf(this);
+        super.addAsChild(child);
     }
     
     @Override
     public void addToDatatype (XDatatype dt) { 
-        dt.getObject().setUnionOf(this.getObjectToSet());
+        dt.getObject().setUnionOf(this.getObjectToAdd());
     }
     
     

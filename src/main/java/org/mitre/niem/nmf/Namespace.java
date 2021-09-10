@@ -23,10 +23,6 @@
  */
 package org.mitre.niem.nmf;
 
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 /**
  *
  * @author Scott Renner
@@ -36,6 +32,9 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     private String namespaceURI = null;
     private String namespacePrefix = null;
     private String definition = null;
+    
+    @Override
+    public boolean isModelChild ()            { return true; }      // Namespace objects are model children
     
     public void setNamespaceURI (String s)    { namespaceURI = s; }
     public void setNamespacePrefix (String s) { namespacePrefix = s; }
@@ -52,20 +51,9 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     }
     
     @Override
-    public void addToModelSet () {
-        try {
-            this.getModel().addNamespace(this);
-        } catch (NMFException ex) {
-            Logger.getLogger(Namespace.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    @Override
-    void traverse (Set<ObjectType> seen, TraverseFunc f) {
-        f.func(this);
-        if (seen.contains(this)) return;
-        seen.add(this);
-    }    
+    public void addToModelSet (Model m) {
+        m.addNamespace(this);
+    }   
     
     @Override
     public int compareTo (Namespace o) {

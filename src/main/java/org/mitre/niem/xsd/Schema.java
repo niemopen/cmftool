@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -59,19 +60,23 @@ import org.w3c.dom.DOMLocator;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Schema {
+
+    private static Schema genSchema(List<String> al) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     private final List<String> catalogs    = new ArrayList<>(); 
     private final List<String> schemaDocs  = new ArrayList<>();
     private final List<String> initialNS   = new ArrayList<>();
     private final List<String> schemaURIs  = new ArrayList<>();
-    private XMLCatalogResolver resolver       = null;
+    private XMLCatalogResolver resolver    = null;
     private XSModel xsmodel                = null;
     
     // Use the static genSchema method to create a Schema object
-    private Schema () { }
+    private Schema () { } 
     
     // Creates a Schema object from a list of XML Catalog files, XML Schema documents,
     // and namespace URIs.  Figures out which is which.  Order is preserved.
-    public static Schema newInstance (String ... args) throws IOException, FileNotFoundException, ParserConfigurationException, SchemaException {
+    public static Schema genSchema (String ... args) throws IOException, FileNotFoundException, ParserConfigurationException, SchemaException {
         Schema s = new Schema();
         for (String arg : args) {
             // Argument in URI syntax (but not a file://) is a namespace URI

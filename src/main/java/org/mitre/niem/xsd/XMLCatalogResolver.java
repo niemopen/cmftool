@@ -58,6 +58,7 @@ public class XMLCatalogResolver implements XMLEntityResolver, EntityResolver2, L
     
     public final synchronized String resolveURI (String uri) throws IOException {
         String res = del.resolveURI(uri);
+//        res.replace('\\', '/');
 //        System.out.println(String.format("resolveURI(%s)->%s", uri, res));
         return res;
     }
@@ -118,8 +119,12 @@ public class XMLCatalogResolver implements XMLEntityResolver, EntityResolver2, L
         catch (IOException ex) {}
         
         if (resolvedId != null) {
+//            System.out.println(String.format("resolveResource(%s,%s,%s,%s,%s)-> %s", 
+//                    type, namespaceURI, publicId, systemId, baseURI, resolvedId));
             return new DOMInputImpl(publicId, resolvedId, baseURI);
         }  
+//        System.out.println(String.format("resolveResource(%s,%s,%s,%s,%s)-> null", 
+//                type, namespaceURI, publicId, systemId, baseURI));
         return null;        
     }
 }
