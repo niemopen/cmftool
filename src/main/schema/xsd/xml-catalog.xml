@@ -3,6 +3,6 @@
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:c="urn:oasis:names:tc:entity:xmlns:xml:catalog"
            prefer="public">
-   <c:uri name="http://reference.niem.gov/specification/metamodel/5.0alpha1"
-          uri="mm.xsd"/>
+   <c:uri name="http://reference.niem.gov/specification/metamodel/5.0alpha1" uri="metamodel.xsd"/>
+   <c:nextCatalog catalog="niem/xml-catalog.xml"/>   
 </c:catalog>

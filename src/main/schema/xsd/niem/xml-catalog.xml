@@ -3,9 +3,7 @@
 <catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
   <uri name="http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/" uri="utility/code-lists-instance.xsd"/>
   <uri name="http://release.niem.gov/niem/conformanceTargets/3.0/" uri="utility/conformanceTargets.xsd"/>
-  <system systemID="http://release.niem.gov/niem/proxy/niem-xs/5.0/" uri="adapters/niem-xs.xsd"/>
   <uri name="http://release.niem.gov/niem/proxy/niem-xs/5.0/" uri="adapters/niem-xs.xsd"/>
-  <system systemID="http://release.niem.gov/niem/structures/5.0/" uri="utility/structures.xsd"/>
   <uri name="http://release.niem.gov/niem/structures/5.0/" uri="utility/structures.xsd"/>
-  <nextCatalog catalog="codes/genc/xml-catalog.xml"/>
+  <!--<nextCatalog catalog="codes/genc/xml-catalog.xml"/>-->
 </catalog>
