@@ -34,7 +34,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public static final short C_DATATYPE = 2;
     public static final short C_OBJECTPROPERTY = 3;
     
-    protected short type;
+    protected short type;                   // component type (ClassType, Property, etc.)
     private String name = null;             // local name
     private Namespace namespace = null;     // namespace object
     private String definition = null;       // xs:documentation string
@@ -50,6 +50,10 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public String getName ()         { return name; }
     public Namespace getNamespace () { return namespace; }
     public String getDefinition ()   { return definition; }
+    
+    public String getQName () {
+        return namespace.getNamespacePrefix()+":"+name;
+    }
     
     public String getURI () {  
         return genURI(this.getNamespace().getNamespaceURI(), this.getName());

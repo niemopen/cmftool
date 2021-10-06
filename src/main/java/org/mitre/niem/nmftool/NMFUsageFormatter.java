@@ -41,7 +41,7 @@ import java.util.Map;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-public class NMFUsageFormatter extends UnixStyleUsageFormatter {
+class NMFUsageFormatter extends UnixStyleUsageFormatter {
     
     private JCommander commander = null;
     
@@ -158,6 +158,7 @@ public class NMFUsageFormatter extends UnixStyleUsageFormatter {
             Class<?> type = pd.getParameterized().getType();
 
             if (type.isEnum()) {
+                @SuppressWarnings("unchecked")
                 String valueList = EnumSet.allOf((Class<? extends Enum>) type).toString();
 
                 // Prevent duplicate values list, since it is set as 'Options: [values]' if the description

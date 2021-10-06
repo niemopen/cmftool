@@ -45,27 +45,23 @@ public class NMFTool {
     
     private void run (String[] args) {
          
-//        args = new String[]{"x2m", 
-//            "src/test/resources/legaxml/policyrequest.xsd",
-//            "src/test/resources/legaxml/xml-catalog.xml"};
- 
+//        args = new String[]{"m2x",  "-o", "/tmp/cmf", "src/test/resources/Test/NumericType.cmf"};
+
+//        args = new String[]{"x2m", "src/test/resources/Test/NumericType.xsd"};
+        
         JCommander jc = new JCommander();
         NMFUsageFormatter uf = new NMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
         jc.setProgramName("nmftool");
         
-        CmdXSDtoNMI xsdToXsdCmd = new CmdXSDtoNMI(jc);
         CmdNMItoNMI nmiToNmiCmd = new CmdNMItoNMI(jc);
-//        CommandCheck checkCmd         = new CommandCheck(jc);
-//        CommandCompile compileCmd     = new CommandCompile(jc);
-//        CommandTranslate translateCmd = new CommandTranslate(jc);
-        CommandHelp helpCmd           = new CommandHelp(jc);    
-        jc.addCommand("x2m", xsdToXsdCmd);
+        CmdNMItoXSD nmiToXsdCmd = new CmdNMItoXSD(jc);
+        CmdXSDtoNMI xsdToNmiCmd = new CmdXSDtoNMI(jc);        
+        CommandHelp helpCmd     = new CommandHelp(jc);    
+        jc.addCommand("m2x", nmiToXsdCmd);
         jc.addCommand("m2m", nmiToNmiCmd);
-//        jc.addCommand("check", checkCmd);
-//        jc.addCommand("compile", compileCmd);
-//        jc.addCommand("translate", translateCmd);
-//        jc.addCommand("help", helpCmd, "usage");
+        jc.addCommand("x2m", xsdToNmiCmd);        
+        jc.addCommand("help", helpCmd, "usage");
         
         if (args.length < 1) {
             jc.usage();

@@ -87,7 +87,7 @@ public class NamespaceDecls {
     NamespaceDecls () {
     }
     
-    public int getNSType (String nsuri)           { return nsType.get(nsuri); }
+    public int getNSType (String nsuri)           { return nsType.getOrDefault(nsuri,-1); }
     public String getNSVersion (String nsuri)     { return nsVersion.get(nsuri); }
     public String getDocumentation (String nsuri) { return nsDoc.get(nsuri); }
     

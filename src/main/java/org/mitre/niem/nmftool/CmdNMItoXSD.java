@@ -25,18 +25,20 @@ package org.mitre.niem.nmftool;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import org.apache.commons.io.FileUtils;
 import org.mitre.niem.nmf.Model;
+import org.mitre.niem.xsd.ModelExtension;
+import org.mitre.niem.xsd.ModelToXSD;
 import org.mitre.niem.xsd.ModelXMLReader;
-import org.mitre.niem.xsd.ModelXMLWriter;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
 import org.xml.sax.SAXException;
@@ -46,13 +48,10 @@ import org.xml.sax.SAXException;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-
-@Parameters(commandDescription = "canonicalize a NIEM model instance")
-
-class CmdNMItoNMI implements JCCommand {
+class CmdNMItoXSD implements JCCommand {
     
-    @Parameter(names = "-o", description = "file for converter output")
-    private String objFile = "";
+    @Parameter(names = "-o", description = "output directory for schema pile")
+    private String outputDir = "";
      
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
@@ -60,10 +59,10 @@ class CmdNMItoNMI implements JCCommand {
     @Parameter(description = "modelFile.nmi")
     private List<String> mainArgs;
     
-    CmdNMItoNMI () {
+    CmdNMItoXSD () {
     }
   
-    CmdNMItoNMI (JCommander jc) {
+    CmdNMItoXSD (JCommander jc) {
     }
 
     public static void main (String[] args) {       
@@ -76,14 +75,14 @@ class CmdNMItoNMI implements JCCommand {
         JCommander jc = new JCommander(this);
         NMFUsageFormatter uf = new NMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("canonicalize");
+        jc.setProgramName("generateXSD");
         jc.parse(args);
         run(jc);
     }
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("nmftool m2m");
+        cob.setProgramName("nmftool m2x");
         run(cob);
     }    
     
@@ -108,17 +107,16 @@ class CmdNMItoNMI implements JCCommand {
                 System.exit(1);
             }
         }       
-        // Make sure output file is writable
-        PrintWriter ow = new PrintWriter(System.out);
-        if (!"".equals(objFile)) {
-            try {
-                File of = new File(objFile);
-                ow = new PrintWriter(of);
-            } catch (FileNotFoundException ex) {
-                System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
-                System.exit(1);
-            }
-        }
+        // If output directory exists, make sure it's empty
+        File od = new File(outputDir);
+//        try {
+//            if (od.exists() && (!FileUtils.isDirectory(od) || !FileUtils.isEmptyDirectory(od))) {
+//                System.err.println("Output directory is not empty");
+//                System.exit(1);
+//            }
+//        } catch (IOException ex) {
+//            System.err.println(String.format("Error checking output directory: %s", ex.getMessage()));
+//        }
         // Make sure the Xerces parser can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
@@ -141,17 +139,29 @@ class CmdNMItoNMI implements JCCommand {
             System.err.println(String.format("Error reading model file: %s", ex.getMessage()));
             System.exit(1);
         }
+        // Create the output directory if necessary
+        if (!od.exists()) {
+            try {
+                FileUtils.forceMkdir(od);
+            } catch (IOException ex) {
+                System.err.println(String.format("Can't create output directory: %s", ex.getMessage()));
+                System.exit(1);
+            }
+        }
         // Write the NIEM model instance to the output stream
-        ModelXMLWriter mw = new ModelXMLWriter();
-        try {            
-            mw.writeXML(m, ow);
-            ow.close();
-        } catch (TransformerException ex) {
-            System.err.println(String.format("Output error: %s", ex.getMessage()));
-            System.exit(1);
+        ModelExtension me = new ModelExtension();
+        ModelToXSD mw = new ModelToXSD(m, me);
+        try {
+            mw.writeXSD(od);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(CmdNMItoXSD.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParserConfigurationException ex) {
-            // CAN'T HAPPEN
+            Logger.getLogger(CmdNMItoXSD.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (TransformerException ex) {
+            Logger.getLogger(CmdNMItoXSD.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(CmdNMItoXSD.class.getName()).log(Level.SEVERE, null, ex);           
         }
         System.exit(0);
-    }
+    }    
 }

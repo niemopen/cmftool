@@ -39,7 +39,9 @@ import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
+import static org.apache.xerces.xs.XSConstants.FACET;
 import static org.apache.xerces.xs.XSConstants.MODEL_GROUP;
+import static org.apache.xerces.xs.XSConstants.MULTIVALUE_FACET;
 import static org.apache.xerces.xs.XSConstants.TYPE_DEFINITION;
 import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSFacet;
@@ -58,7 +60,6 @@ import org.apache.xerces.xs.XSTerm;
 import org.apache.xerces.xs.XSTypeDefinition;
 import static org.apache.xerces.xs.XSTypeDefinition.COMPLEX_TYPE;
 import static org.apache.xerces.xs.XSTypeDefinition.SIMPLE_TYPE;
-import static org.mitre.niem.NIEMConstants.NIEM_XS_PREFIX;
 import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
 import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
 import org.mitre.niem.nmf.ClassType;
@@ -78,6 +79,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+import static org.mitre.niem.NIEMConstants.PROXY_NS_URI_PREFIX;
 
 /**
  *
@@ -87,20 +89,20 @@ import org.xml.sax.helpers.DefaultHandler;
 public class ModelFromXSD {
     static final Logger LOG = LogManager.getLogger(ModelFromXSD.class);
     
-    private List<String> simpleTypes = null;
-    private NamespaceDecls nsDecls = null;
+    private List<String> omitSimpleTypes = null;        // list of FooSimpleType to omit from model
+    private NamespaceDecls nsDecls = null;          // namespace declaration manager
     private Model m = null;
     private XSModel xs = null;
     
     public Model createModel (Schema s) throws ParserConfigurationException, SAXException, IOException {
-        simpleTypes = new ArrayList<>();
+        omitSimpleTypes = new ArrayList<>();
         nsDecls = new NamespaceDecls();        
         m = new Model();
         xs = s.xsmodel();
         generateNamespaces();
         generateClassesAndDatatypes();
         generateProperties();
-        removeSimpleTypes();
+        omitSimpleTypes();
         return m;
     }
        
@@ -125,7 +127,8 @@ public class ModelFromXSD {
         // Create namespace objects and add to model
         for (String nsuri : nsList) {
             if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) continue;   // skip structures namespace
-            if (nsuri.startsWith(NIEM_XS_PREFIX)) continue;             // skip the proxy namespace
+            if (nsuri.startsWith(PROXY_NS_URI_PREFIX)) continue;        // skip the proxy namespace
+            if (SK_EXTERNAL == nsDecls.getNSType(nsuri)) continue;      // skip external namespaces
             Namespace nsobj = new Namespace(m);
             nsobj.setNamespacePrefix(nsDecls.getPrefix(nsuri));
             nsobj.setNamespaceURI(nsuri);
@@ -138,33 +141,41 @@ public class ModelFromXSD {
         XSNamedMap xmap = xs.getComponents(XSTypeDefinition.COMPLEX_TYPE);
         for (int i = 0; i < xmap.getLength(); i++) {
             XSComplexTypeDefinition ct = (XSComplexTypeDefinition)xmap.item(i); 
+            if (ct.getNamespace().startsWith(PROXY_NS_URI_PREFIX)) continue;    // don't generate unused built-in datatypes         
+            if (ct.getNamespace().equals(XSD_NS_URI)) continue;                 // don't generate unused built-in datatypes
             createClassOrDatatype(ct);
         }
     }
     
+    // Recursively process base types depth-first.
+    // 1. Complex content becomes a ClassType object
+    // 2. Simple content with a ClassType base becomes a ClassType
+    // 2. Simple content with attributes becomes a ClassType object with HasValue
+    // 3. Simple content w/o attributes
+    //    A. Base is a ClassType object:  becomes a ClassType object
+    //    B. Base is FooSimpleType: create FooType Datatype from FooSimpleType
     private Component createClassOrDatatype (XSTypeDefinition t) {
         String nsuri = t.getNamespace();
         String cname = t.getName();        
         Component c  = m.getComponent(nsuri, cname);
-        if (null != c) return c;
+        if (null != c) return c;                                                // already processed this complex type def
+        if (XSD_NS_URI.equals(nsuri) && "anyType".equals(cname)) return null;   // recursion ends here
+        if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) return null;            // skip types in structures namespace
+        if (SK_EXTERNAL == nsDecls.getNSType(nsuri)) return null;               // skip types in external namespaces
+        
         // Simple type is always a Datatype
         if (SIMPLE_TYPE == t.getTypeCategory()) {
             return createDatatype((XSSimpleTypeDefinition)t);
         }
-        if (XSD_NS_URI.equals(nsuri) && "anyType".equals(cname)) return null;   // recursion ends here
-        if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) return null;            // skip types in structures namespace
-        if (SK_EXTERNAL == nsDecls.getNSType(nsuri)) return null;               // skip types in external namespaces
-        // Collect element and attribute properties
+        // Recursive call: complete base type before finishing with this type
         XSComplexTypeDefinition ct = (XSComplexTypeDefinition)t;
-        List<XSParticle> elist     = collectClassElements(ct);
-        Set<XSAttributeUse> aset   = collectClassAttributes(ct);
-        // Create component for base type
         XSTypeDefinition bt = ct.getBaseType();
         Component base = null;
         if (null != bt) base = createClassOrDatatype(bt);
-        
         // Create a ClassType object if there are element or attribute properties,
         // or if the base is a ClassType
+        List<XSParticle> elist   = collectClassElements(ct);
+        Set<XSAttributeUse> aset = collectClassAttributes(ct);
         if (!elist.isEmpty() 
                 || !aset.isEmpty() 
                 || (null != base && C_CLASSTYPE == base.getType())) {
@@ -197,67 +208,45 @@ public class ModelFromXSD {
                 if (null != dp) {
                     HasProperty hdp = new HasProperty(m);
                     hdp.setProperty(dp);
-                    if (au.getRequired()) {
-                        hdp.setMinOccursQuantity("1");
-                    } else {
-                        hdp.setMinOccursQuantity("0");
-                    }
+                    hdp.setMaxOccursQuantity("1");
+                    if (au.getRequired()) hdp.setMinOccursQuantity("1");
+                    else hdp.setMinOccursQuantity("0");
                     clobj.addHasProperty(hdp);
                 }              
             }
             m.addClassType(clobj);
             return clobj;
-        }
-        // At this point there are no properties, and there is no base, or the 
-        // base is a datatype.
-        //
-        // If no element or attribute properties, and the declared base is a schema 
-        // built-in, then just return the base datatype.  All of the proxy types 
-        // are handled here.  For example, niem-xs:string is omitted; we just have 
-        // xs:string in the model.
-        if (XSD_NS_URI.equals(bt.getNamespace())) {
-            return base;
-        }
-        // When FooCodeType extends FooCodeSimpleType, create a ClassType object
-        // for FooCodeType, and set its HasValue to the Datatype object for 
-        // FooCodeSimpleType.
-        if (null != base && bt.getName().endsWith("CodeSimpleType")) {
-            Datatype bdt = (Datatype)base;
-            ClassType clobj = new ClassType(m);
-            initComponent(clobj, ct);
-            if (ct.getAbstract()) clobj.setAbstractIndicator("true");            
-            clobj.setHasValue(bdt);
-            m.addClassType(clobj);
-            return clobj;
-        }
-        // Apart from code lists, when FooType extends FooSimpleType, rename
-        // the FooSimpleType object as FooType and return that.
+        }  
+        // For a proxy niem-xs:foo type, just return the base xs:foo type
+        if (ct.getNamespace().startsWith(PROXY_NS_URI_PREFIX)) return base;
+        
+        // When FooType extends FooSimpleType, rename the FooSimpleType object 
+        // as FooType and return that.
         if (null != base && bt.getName().endsWith("SimpleType")) {
             Datatype bdt = (Datatype) base;
-            simpleTypes.add(bdt.getURI());      // remember we don't need this simple type
+            omitSimpleTypes.add(bdt.getURI());      // remember we already handled this simple type
             m.removeDatatype(bdt);
             initComponent(bdt, ct);
             m.addDatatype(bdt);
             return base;
         }
-        // If there is a base Datatype that is not a FooSimpleType, then create
-        // a ClassType object and set its HasValue to that base Datatype.
+        // For an empty extension of a simple type, create a Datatype with an
+        // empty restriction of the base
         if (null != base) {
             Datatype bdt = (Datatype)base;
-            ClassType clobj = new ClassType(m);
-            initComponent(clobj, ct);
-            clobj.setHasValue(bdt);
-            m.addClassType(clobj);
-            return clobj;
+            Datatype dt = new Datatype(m);
+            RestrictionOf r = new RestrictionOf(m);
+            initComponent(dt, ct);
+            r.setDatatype(bdt);
+            dt.setRestrictionOf(r);
+            m.addDatatype(dt);
+            return dt;
         }
-        // At this point we have a complex type with no base type, no child 
-        // elements, and no semantic attributes.  Give them what they asked for,
-        // I guess... an empty ClassType.
-        ClassType clobj = new ClassType(m);
-        initComponent(clobj, ct);
-        if (ct.getAbstract()) clobj.setAbstractIndicator("true");        
-        m.addClassType(clobj);
-        return clobj;        
+        // At this point we have a complex type with no child elements 
+        // and no semantic attributes.  There is either no base type, or the
+        // base type is in an external namespace or the structures namespace.
+        // That doesn't go into the model.
+        return null;
     }
     
     private List<XSParticle> collectClassElements (XSComplexTypeDefinition ct) {
@@ -308,6 +297,7 @@ public class ModelFromXSD {
         return aset;
     }
     
+    // Recursively descend through model groups, collecting element declarations
     private void collectElements (XSParticle par, List<XSParticle> epars) {
         if (null == par) return;
         XSTerm pt = par.getTerm();
@@ -363,31 +353,7 @@ public class ModelFromXSD {
         }
         return op;
     }
-    
-//    // A complex type turns into an ClassType object... except for the types
-//    // in the proxy namespace.  Those turn into the Datatype for the proxy
-//    // base; eg. xs-proxy:string becomes the Datatype xs:string.
-//    private Component createClassOrDatatype (XSTypeDefinition t) {
-//        if (SIMPLE_TYPE == t.getTypeCategory()) {
-//            return createDatatype((XSSimpleTypeDefinition)t);
-//        }
-//        XSComplexTypeDefinition ct = (XSComplexTypeDefinition)t;
-//        if (ct.getNamespace().startsWith(NIEM_XS_PREFIX)) {
-//            XSTypeDefinition base = ct.getBaseType();
-//            return createClassOrDatatype(base);
-//        }
-//        return createClass(ct);
-//    }
-    
-    private void generateDatatypes () {
-        XSNamedMap xmap = xs.getComponents(XSTypeDefinition.SIMPLE_TYPE);
-        for (int i = 0; i < xmap.getLength(); i++) {
-            XSSimpleTypeDefinition st = (XSSimpleTypeDefinition)xmap.item(i);
-            if (XSD_NS_URI.equals(st.getNamespace())) continue;     // don't generate unused built-in datatypes
-            createDatatype(st);
-        }
-    }
-
+       
     private Datatype createDatatype (XSSimpleTypeDefinition st) {
         String cname = st.getName();
         String nsuri = st.getNamespace();
@@ -414,8 +380,8 @@ public class ModelFromXSD {
     
     // Remove all the FooSimpleType datatype objects that were renamed to
     // FooType.
-    private void removeSimpleTypes () {
-        for (String curi : simpleTypes) {
+    private void omitSimpleTypes () {
+        for (String curi : omitSimpleTypes) {
             Component c = m.getComponent(curi);
             if (null != c && C_DATATYPE == c.getType()) {
                 Datatype d = (Datatype)c;
@@ -449,7 +415,7 @@ public class ModelFromXSD {
         int facetCt = 0;
         for (int i = 0; i < flist.getLength(); i++) {
             XSFacet f = (XSFacet)flist.item(i);
-            if (XSD_NS_URI.equals(st.getNamespace()) && FACET_WHITESPACE == f.getFacetKind()) continue;
+            if (XSD_NS_URI.equals(st.getNamespace()) && FACET_WHITESPACE == f.getFacetKind()) continue; // FIXME
             if (XSD_NS_URI.equals(base.getNamespace()) && "token".equals(base.getName()) && FACET_WHITESPACE == f.getFacetKind()) continue;
             Facet fo  = new Facet(m);
             fo.setFacetKind(facetKind(f));
@@ -511,26 +477,31 @@ public class ModelFromXSD {
     // provided as XML text.  Parse these text strings and return the content of
     // the first xs:documentation element encountered.
     private String getDefinition (XSObject o) {
-        XSObjectList anl = null;
-        switch (o.getType()) {
-            case TYPE_DEFINITION:
-                if (SIMPLE_TYPE == ((XSTypeDefinition)o).getTypeCategory())
-                    anl = ((XSSimpleTypeDefinition)o).getAnnotations();
-                else anl = ((XSComplexTypeDefinition)o).getAnnotations();                
-                break;
-            case ELEMENT_DECLARATION:
-                anl = ((XSElementDeclaration)o).getAnnotations();
-                break;
-            default:
-                return null;
-        }
-        for (int i = 0; i < anl.getLength(); i++) {           
-            XSAnnotation a = (XSAnnotation)anl.item(i);
+        XSObjectList alist = getAnnotations(o);
+        if (null == alist) return null;
+        for (int i = 0; i < alist.getLength(); i++) {           
+            XSAnnotation a = (XSAnnotation)alist.item(i);
             String ds = parseDefinition(a);
             if (null != ds) return ds.trim();
         }
         return null;
     }
+    
+    private XSObjectList getAnnotations (XSObject o) {
+        XSObjectList alist = null;
+        short otype = o.getType();
+        switch (otype) {
+            case TYPE_DEFINITION:
+                if (SIMPLE_TYPE == ((XSTypeDefinition)o).getTypeCategory())
+                    alist = ((XSSimpleTypeDefinition)o).getAnnotations();
+                else alist = ((XSComplexTypeDefinition)o).getAnnotations();                
+                break;
+            case ELEMENT_DECLARATION: alist = ((XSElementDeclaration)o).getAnnotations(); break;
+            case FACET:               alist = ((XSFacet)o).getAnnotations(); break;
+            case MULTIVALUE_FACET:    alist = ((XSMultiValueFacet)o).getAnnotations(); break;
+        }
+        return alist;
+    }    
     
     private String parseDefinition (XSAnnotation a) {
         String ds = null;

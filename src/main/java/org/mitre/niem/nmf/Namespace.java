@@ -46,6 +46,12 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     
     public Namespace () { }
     
+    // A constructor for Namespace objects not part of a model (structures, etc.)
+    public Namespace (String p, String nsuri) {
+        namespacePrefix = p ;
+        namespaceURI = nsuri;
+    }
+    
     public Namespace (Model m) {
         super(m);
     }

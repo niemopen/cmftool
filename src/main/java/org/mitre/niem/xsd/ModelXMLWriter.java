@@ -23,9 +23,9 @@
  */
 package org.mitre.niem.xsd;
 
-import java.io.OutputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Scanner;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -51,7 +51,7 @@ import org.w3c.dom.Element;
  */
 public class ModelXMLWriter {
     
-    public void writeXML (Model m, OutputStream os) throws TransformerConfigurationException, TransformerException, ParserConfigurationException {
+    public void writeXML (Model m, PrintWriter ow) throws TransformerConfigurationException, TransformerException, ParserConfigurationException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document dom = db.newDocument();
@@ -64,8 +64,21 @@ public class ModelXMLWriter {
         tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
         tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 
-        // send DOM to file
-        tr.transform(new DOMSource(dom), new StreamResult(os));
+        // send DOM to string, then format the namespace decls
+        StringWriter ostr = new StringWriter();
+        tr.transform(new DOMSource(dom), new StreamResult(ostr));
+        Scanner scn = new Scanner(ostr.toString());
+        while (scn.hasNextLine()) {
+            String line = scn.nextLine();
+            if (line.startsWith("<Model ")) {
+                String[] tok = line.split("\\s+");
+                ow.println("<Model");
+                for (int i = 1; i < tok.length; i++) {
+                    ow.println("  " + tok[i]);
+                }
+            }
+            else ow.println(line);
+        }
     }
     
     public Element genModel (Document dom, Model m) {

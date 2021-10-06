@@ -51,7 +51,7 @@ public class Model extends ObjectType {
     public SortedSet<Property> propertySet()             { return propertySet; }   
        
     public Model () { }
-    public Model (Model m) { }
+    public Model (Model m) { }  // FIXME -- useless? expect copy, but doesn't
     
     public Component getComponent (String curi) {
         return modelComponents.get(curi);
@@ -130,6 +130,7 @@ public class Model extends ObjectType {
         this.propertySet.remove(x);
     }
     
+    // FIXME -- should enforce unique namespace prefix
     public void addNamespace (Namespace x) {
          for (var ns : namespaceSet) { 
              if (x != ns && x.getNamespaceURI().equals(ns.getNamespaceURI())) return;

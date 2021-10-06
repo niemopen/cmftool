@@ -31,6 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -51,7 +52,7 @@ import org.xml.sax.SAXException;
 
 @Parameters(commandDescription = "convert a NIEM schema into a NIEM model instance")
 
-public class CmdXSDtoNMI implements JCCommand {
+class CmdXSDtoNMI implements JCCommand {
     
     @Parameter(names = "-o", description = "file for converter output")
     private String objFile = "";
@@ -111,11 +112,11 @@ public class CmdXSDtoNMI implements JCCommand {
             }
         }       
         // Make sure output file is writable
-        OutputStream os = System.out;
+        PrintWriter ow = new PrintWriter(System.out);
         if (!"".equals(objFile)) {
             try {
                 File of = new File(objFile);
-                os = new FileOutputStream(of);
+                ow = new PrintWriter(of);
             } catch (FileNotFoundException ex) {
                 System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
                 System.exit(1);
@@ -153,7 +154,8 @@ public class CmdXSDtoNMI implements JCCommand {
         // Write the NIEM model instance to the output stream
         ModelXMLWriter mw = new ModelXMLWriter();
         try {            
-            mw.writeXML(m, os);
+            mw.writeXML(m, ow);
+            ow.close();
         } catch (TransformerException ex) {
             System.err.println(String.format("Output error: %s", ex.getMessage()));
             System.exit(1);

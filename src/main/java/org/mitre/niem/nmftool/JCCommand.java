@@ -31,7 +31,7 @@ import com.beust.jcommander.JCommander;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public interface JCCommand {
+interface JCCommand {
        
     public void runMain (String[] args);
     public void runCommand (JCommander cob);

@@ -29,17 +29,19 @@ package org.mitre.niem;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class NIEMConstants {
+    public static final String APPINFO_NS_URI = "http://release.niem.gov/niem/appinfo/5.0/";    
     public static final String APPINFO_NS_URI_PREFIX = "http://release.niem.gov/niem/appinfo/";
     public static final String CONFORMANCE_ATTRIBUTE_NAME = "conformanceTargets";
     public static final String CONFORMANCE_TARGET_NS_URI_PREFIX = "http://release.niem.gov/niem/conformanceTargets/";
     public static final String NDR_CT_URI_PREFIX = "http://reference.niem.gov/niem/specification/naming-and-design-rules/";    
     public static final String NIEM_RELEASE_PREFIX = "http://release.niem.gov/niem/";
-    public static final String NIEM_XS_PREFIX = "http://release.niem.gov/niem/proxy/";
     public static final String NMF_NS_URI_PREFIX = "http://reference.niem.gov/specification/metamodel/";    
     public static final String NMF_NS_URI = "http://reference.niem.gov/specification/metamodel/1.0/";
+    public static final String PROXY_NS_URI = "http://release.niem.gov/niem/proxy/5.0/";     
+    public static final String PROXY_NS_URI_PREFIX = "http://release.niem.gov/niem/proxy/";    
     public static final String RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";    
-    public static final String STRUCTURES_NS_URI_PREFIX = "http://release.niem.gov/niem/structures/";
     public static final String STRUCTURES_NS_URI = "http://release.niem.gov/niem/structures/5.0/";
+    public static final String STRUCTURES_NS_URI_PREFIX = "http://release.niem.gov/niem/structures/";
     public static final String XML_CATALOG_NS_URI = "urn:oasis:names:tc:entity:xmlns:xml:catalog";
     public static final String XML_NS_URI = "http://www.w3.org/2000/xmlns/";
     public static final String XSD_NS_URI = "http://www.w3.org/2001/XMLSchema";
