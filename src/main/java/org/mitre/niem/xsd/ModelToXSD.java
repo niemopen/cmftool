@@ -85,6 +85,7 @@ public class ModelToXSD {
     }
     
     public void writeXSD (File od) throws FileNotFoundException, ParserConfigurationException, TransformerException, IOException {
+        // Write a schema document for each namespace
         for (Namespace ns : m.namespaceSet()) {
             if (XSD_NS_URI.equals(ns.getNamespaceURI())) continue;
             String fn = ns.getNamespacePrefix() + ".xsd";
@@ -114,8 +115,12 @@ public class ModelToXSD {
         // Remember external namespaces when encountered
         TreeMap<String,Element> typedefs = new TreeMap<>();
         Set<Namespace> nsdep = new HashSet<>();
-        for (ClassType cl : m.classTypeSet()) createTypeFromClass(dom, typedefs, nsdep, ns, cl);
-        for (Datatype dt : m.datatypeSet())   createTypeFromDatatype(dom, typedefs, nsdep, ns, dt);  
+        for (ClassType cl : m.classTypeSet()) createTypeFromClass(dom, typedefs, nsdep, cl);
+        for (Datatype dt : m.datatypeSet())   createTypeFromDatatype(dom, typedefs, nsdep, dt);  
+        
+        // Create elements and attributes for Property objects
+        TreeMap<String,Element> propdecls = new TreeMap<>();
+        for (Property p : m.propertySet()) createElementOrAttribute(dom, propdecls, nsdep, p);
 
         // Add a namespace declaration and import element for each namespace dependency
         for (Namespace dns : nsdep) {
@@ -126,17 +131,19 @@ public class ModelToXSD {
             ie.setAttribute("namespace", dnsuri);
             root.appendChild(ie);
         }
-        // Now add the type definitions to the document
+        // Now add the type definitions and element/attribute declarations to the document
         typedefs.forEach((name,element) -> {
+            root.appendChild(element);
+        });
+        propdecls.forEach((name,element) -> {
             root.appendChild(element);
         });
         writeToXSD(dom, ofw);
     }
-
     
     // Create types from ClassType objects first, so that attributes are handled.
     // Some Datatype objects will be handled along the way and skipped later.
-    private void createTypeFromClass (Document dom, Map<String,Element> typedefs, Set<Namespace>nsdep, Namespace ns, ClassType ct) { 
+    private void createTypeFromClass (Document dom, Map<String,Element> typedefs, Set<Namespace>nsdep, ClassType ct) { 
         String cname = ct.getName();
         if (typedefs.containsKey(cname)) return;
         Element cte = dom.createElementNS(XSD_NS_URI, "xs:complexType");
@@ -299,7 +306,7 @@ public class ModelToXSD {
         ste.appendChild(rse);
     }
         
-    private void createTypeFromDatatype (Document dom, Map<String,Element> typedefs, Set<Namespace>nsdep, Namespace ns, Datatype dt) {
+    private void createTypeFromDatatype (Document dom, Map<String,Element> typedefs, Set<Namespace>nsdep, Datatype dt) {
         String cname = dt.getName();
         if (typedefs.containsKey(cname)) return;
         if (XSD_NS_URI.equals(dt.getNamespace().getNamespaceURI())) return;
@@ -309,6 +316,30 @@ public class ModelToXSD {
         typedefs.put(cname, cte);
         createSimpleContent(dom, cte, typedefs, nsdep, dt);
     }   
+    
+    private void createElementOrAttribute(Document dom, Map<String,Element>propdecls, Set<Namespace>nsdep, Property p) {
+        ClassType pt = p.getClassType();
+        Datatype dt  = p.getDatatype();
+        Element pe;
+        if (isLowerCase(p.getName().charAt(0))) pe = dom.createElementNS(XSD_NS_URI, "xs:attribute");   // FIXME
+        else pe = dom.createElementNS(XSD_NS_URI, "xs:element");
+        addDefinition(dom, pe, p.getDefinition());
+        pe.setAttribute("name", p.getName());
+        if ("true".equals(p.getAbstractIndicator())) pe.setAttribute("abstract", "true");
+        if (null != pt) {
+            pe.setAttribute("type", pt.getQName());
+            nsdep.add(pt.getNamespace());
+        }
+        else {
+            pe.setAttribute("type", dt.getQName());
+            nsdep.add(dt.getNamespace());
+        }
+        if (null != p.getSubPropertyOf()) {
+            pe.setAttribute("substitutionGroup", p.getSubPropertyOf().getQName());
+            nsdep.add(p.getSubPropertyOf().getNamespace());
+        }
+        propdecls.put(p.getName(), pe);
+    }
     
     private void addDefinition (Document dom, Element e, String def) {
         if (null == def || def.isBlank()) return;

@@ -45,7 +45,7 @@ public class NMFTool {
     
     private void run (String[] args) {
          
-//        args = new String[]{"m2x",  "-o", "/tmp/cmf", "src/test/resources/Test/NumericType.cmf"};
+//        args = new String[]{"m2x",  "-o", "/tmp/cmf", "src/test/resources/Test/PercentType.cmf"};
 
 //        args = new String[]{"x2m", "src/test/resources/Test/NumericType.xsd"};
         

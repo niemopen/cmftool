@@ -38,6 +38,7 @@ import org.apache.xerces.xs.XSAnnotation;
 import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
+import static org.apache.xerces.xs.XSConstants.ATTRIBUTE_DECLARATION;
 import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
 import static org.apache.xerces.xs.XSConstants.FACET;
 import static org.apache.xerces.xs.XSConstants.MODEL_GROUP;
@@ -496,9 +497,10 @@ public class ModelFromXSD {
                     alist = ((XSSimpleTypeDefinition)o).getAnnotations();
                 else alist = ((XSComplexTypeDefinition)o).getAnnotations();                
                 break;
-            case ELEMENT_DECLARATION: alist = ((XSElementDeclaration)o).getAnnotations(); break;
-            case FACET:               alist = ((XSFacet)o).getAnnotations(); break;
-            case MULTIVALUE_FACET:    alist = ((XSMultiValueFacet)o).getAnnotations(); break;
+            case ATTRIBUTE_DECLARATION: alist = ((XSAttributeDeclaration)o).getAnnotations(); break;
+            case ELEMENT_DECLARATION:   alist = ((XSElementDeclaration)o).getAnnotations(); break;
+            case FACET:                 alist = ((XSFacet)o).getAnnotations(); break;
+            case MULTIVALUE_FACET:      alist = ((XSMultiValueFacet)o).getAnnotations(); break;
         }
         return alist;
     }    

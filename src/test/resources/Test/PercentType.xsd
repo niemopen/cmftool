@@ -12,6 +12,10 @@
   xsi:schemaLocation="http://release.niem.gov/niem/appinfo/5.0/ utility/appinfo.xsd http://release.niem.gov/niem/conformanceTargets/3.0/ utility/conformanceTargets.xsd" 
   ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument">
   
+  <xs:annotation>
+    <xs:documentation>NIEM Core</xs:documentation>
+  </xs:annotation>
+  
   <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
   <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
 
@@ -32,4 +36,10 @@
       <xs:extension base="niem-xs:decimal"/>
     </xs:simpleContent>
   </xs:complexType>
+  
+  <xs:element name="ConfidencePercent" type="nc:PercentType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A value that indicates belief that content is accurate or trustworthy.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
 </xs:schema>
