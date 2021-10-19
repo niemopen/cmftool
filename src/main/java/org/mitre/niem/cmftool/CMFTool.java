@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class CMFTool {
     
-    public static String VERSION_ID = "cmftool 0.1 (6 August 2021)";
+    public static String VERSION_ID = "cmftool 0.2 (19 October 2021)";
     
     public static void main (String[] args) {
         CMFTool obj = new CMFTool();

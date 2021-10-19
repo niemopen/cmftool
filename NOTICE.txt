@@ -1,4 +1,4 @@
-NMFTool:  A project for creating and using data models in the NIEM Model Format.
+CMFTool:  A project for creating and using data models in the NIEM Model Format.
 
 Copyright 2021 The MITRE Corporation. All rights reserved.
 
@@ -23,7 +23,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-NMFTool uses the following packages:
+CMFTool uses the following packages:
 
 * Apache Xerces Java
 * Apache XML Commons Resolver

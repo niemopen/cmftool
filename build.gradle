@@ -3,8 +3,6 @@ plugins {
     id 'application'
 }
 
-//mainClassName = 'org.mitre.niem.nmftool.NMFTool'
-
 repositories {
     mavenCentral()
 }

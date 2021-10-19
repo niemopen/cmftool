@@ -1,14 +1,19 @@
+# What's working
+
+- NIEM XML schema pile to Common Model Format
+- Common Model Format to NIEM XML schema pile (no catalog file yet)
+
 # Quick start
 
-The directory "build/install/nmftool" contains a working installation.
-Put "build/install/nmftool/bin" in your PATH and nmftool will run from 
+The directory "build/install/cmftool" contains a working installation.
+Put "build/install/cmftool/bin" in your PATH and cmftool will run from 
 the command line.
 
 # Testing
 
 The directory "src/test/resources/Test" contains a number of XSD examples.
-Run "nmftool x2m Foo.xsd > Foo.cmf" to generate CMF model from XSD.
-Run "nmftool m2x -o /tmp/cmf Foo.cmf" to generate XSD from CMF.
+Run "cmftool x2m Foo.xsd > Foo.cmf" to generate CMF model from XSD.
+Run "cmftool m2x -o /tmp/cmf Foo.cmf" to generate XSD from CMF.
 
 # Building
 
