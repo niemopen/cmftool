@@ -29,20 +29,23 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import org.apache.logging.log4j.LogManager;
-import static org.mitre.niem.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
-import static org.mitre.niem.NIEMConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
-import static org.mitre.niem.NIEMConstants.NDR_CT_URI_PREFIX;
-import static org.mitre.niem.NIEMConstants.NIEM_RELEASE_PREFIX;
-import static org.mitre.niem.NIEMConstants.RDF_NS_URI;
-import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
-import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
+import static org.mitre.niem.NIEMConstants.*;
+import static org.mitre.niem.cmf.Namespace.mungedPrefix;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_APPINFO;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_STRUCTURES;
+import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinNamespaceVersion;
+import static org.mitre.niem.xsd.NIEMBuiltins.isBuiltinNamespace;
+import static org.mitre.niem.xsd.NIEMBuiltins.orderedBuiltinURIs;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinNamespaceKind;
 
 /**
  * A class for information about namespaces derived from parsing a schema 
@@ -50,7 +53,10 @@ import org.xml.sax.helpers.DefaultHandler;
  * 
  * <li> The documentation string for each namespace </li>
  * <li> The NIEM version of each namespace </li>
+ * <li> The @version attribute value from each namespace </li>
  * <li> The preferred, unique prefix for each namespace </li>
+ * <li> The conformance target assertions for each namespace </li>
+ * <li> The type of schema (extension, NIEM model, builtin, external) </li>
  * <li> A list of warning messages about namespace declarations: </li><ul>
  *      <li> One prefix defined for multiple namespace URIs </li>
  *      <li> One namespace URI with multiple prefixes defined </li>
@@ -63,13 +69,13 @@ import org.xml.sax.helpers.DefaultHandler;
 public class NamespaceDecls {   
     
     static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(ModelFromXSD.class);    
-    
-    public final static int SK_EXTENSION  = 0;
-    public final static int SK_NIEM_MODEL = 1;
-    public final static int SK_UTILITY    = 2;
-    public final static int SK_EXTERNAL   = 3;
+       
+    public final static int NSK_EXTENSION  = 0;     // these are in sorting order
+    public final static int NSK_NIEM_MODEL = 1;
+    public final static int NSK_BUILTIN    = 2;
+    public final static int NSK_EXTERNAL   = 3;
+    public final static int NSK_NUMKINDS   = 4;
 
-    
     static List<NSDeclRec> emptyList = new ArrayList<>();
     
 
@@ -77,19 +83,26 @@ public class NamespaceDecls {
     private Map<String,List<NSDeclRec>> urimap = null;  // urimap.get(U)= list of decls with URI U
     private List<String> warnMsgs = null;
     
-    private final List<NSDeclRec> maps         = new ArrayList<>();   // array of namespace declaration records
-    private final Map<String,Integer> nsType   = new HashMap<>();     // nsURI -> type (extension, niem model, ...)
-    private final Map<String,String> nsVersion = new HashMap<>();     // nsURI -> NIEM version string
-    private final Map<String,String> nsDoc     = new HashMap<>();     // nsURI -> schema documentation string
-    private Map<String,String> nsPrefix        = null;                // nsURI -> unique preferred prefix string
-    private Map<String,String> prefixURI       = null;                // ns prefix -> nsURI
+    private final List<NSDeclRec> maps             = new ArrayList<>();     // array of namespace declaration records
+    private final Map<String,String> nsCtargs      = new HashMap<>();       // nsURI -> conformance targets
+    private final Map<String,String> nsDoc         = new HashMap<>();       // nsURI -> schema documentation string
+    private final Map<String,String> nsNIEMVersion = new HashMap<>();       // nsURI -> NIEM version string
+    private final Map<String,Integer> nsType       = new HashMap<>();       // nsURI -> type (extension, niem model, ...)
+    private final Map<String,String> nsVersion     = new HashMap<>();       // nsURI -> schema version attribute
+    
+    private Map<String,String> nsPrefix            = null;                  // nsURI -> unique preferred prefix string
+    private Map<String,String> prefixURI           = null;                  // ns prefix -> nsURI
     
     NamespaceDecls () {
     }
     
-    public int getNSType (String nsuri)           { return nsType.get(nsuri); }
-    public String getNSVersion (String nsuri)     { return nsVersion.get(nsuri); }
-    public String getDocumentation (String nsuri) { return nsDoc.get(nsuri); }
+    public String getConformanceTargets (String nsuri)  { return nsCtargs.get(nsuri); }
+    public String getDocumentation (String nsuri)       { return nsDoc.get(nsuri); }
+    public String getNIEMVersion (String nsuri)         { return nsNIEMVersion.get(nsuri); }
+    public int getNSType (String nsuri)                 { return nsType.getOrDefault(nsuri,-1); }
+    public String getNSVersion (String nsuri)           { return nsVersion.get(nsuri); }
+
+
     
     /**
      * Returns the preferred prefix for this namespace, guaranteed to be unique
@@ -115,28 +128,84 @@ public class NamespaceDecls {
      * @return 
      */
     public String getPrefix (String nsuri)  {
-        if (null != nsPrefix) return nsPrefix.get(nsuri);
+        buildPrefixMaps();
+        return nsPrefix.get(nsuri);
+    }
+    
+    public String getNamespaceFromPrefix (String prefix) {
+        buildPrefixMaps();
+        return prefixURI.get(prefix);
+    }
+    
+    public Set<String> getAllNamespaceURIs () {
+        buildPrefixMaps();
+        return nsPrefix.keySet();
+    }
+    
+    // Iterate through all the namespace mappings and assign a prefix to exactly
+    // one namespace, in namespace priority order.  An amazing amount of complexity
+    // to assign the unmunged prefix to the builtin with the highest version.
+    private void buildPrefixMaps () {
+        if (null != nsPrefix) return;
         nsPrefix  = new HashMap<>();
         prefixURI = new HashMap<>();
         // Cursed be he who mappeth "rdf" to anything other than "http://www.w3.org/1999/02/22-rdf-syntax-ns#" :-)
         nsPrefix.put(RDF_NS_URI, "rdf");
         prefixURI.put("rdf", RDF_NS_URI);
-        Collections.sort(maps);       
-        for (NSDeclRec nr : maps) {
-            if (!nsPrefix.containsKey(nr.uri)) {
-                String oprefix = nr.prefix;
-                String prefix = oprefix;
-                int ctr = 1;
-                // if the preferred prefix is already claimed, mung until we find an unclaimed prefix
-                while (prefixURI.containsKey(prefix)) {
-                    prefix = String.format("%s%d", oprefix, ctr++);
+        
+        // Sort by namespace kind, and within namespaces
+        // Then process namespaces by kind order: extension, model, builtin, external
+        Collections.sort(maps);
+        for (int nskind = 0; nskind < NSK_NUMKINDS; nskind++) {
+            HashMap<String,String> builtinMap = new HashMap<>();    // ns -> prefix
+            for (NSDeclRec nr : maps) {
+                if (nskind != nr.schemaKind) continue;
+                String p = nr.prefix;
+                String u = nr.uri;
+                if (nsPrefix.containsKey(u)) continue;
+                if (isBuiltinNamespace(u)) builtinMap.put(u,p);     // pull out the builtin namespaces
+                else {
+                    p =  mungedPrefix(prefixURI, p);
+                    nsPrefix.put(u, p);
+                    prefixURI.put(p,u);
                 }
-                nsPrefix.put(nr.uri, prefix);
-                prefixURI.put(prefix, nr.uri);
+            }
+            // Sort builtins by version (highest first), assign prefixes
+            List<String>buris = orderedBuiltinURIs(builtinMap.keySet());
+            for (String u : buris) {
+                if (nsPrefix.containsKey(u)) continue;
+                String p = mungedPrefix(prefixURI, builtinMap.get(u));
+                nsPrefix.put(u, p);
+                prefixURI.put(p, u);
             }
         }
-        return nsPrefix.get(nsuri);
     }  
+    
+    // Returns a list of all the URIs from all the namespace declarations
+    // found in the schema document for the specified namespace
+    public List<String> getAllNamespacesDeclared (String nsuri) {
+        List<String>res = new ArrayList<>();
+        for (NSDeclRec rec : maps) {
+            if (rec.targetNS.equals(nsuri))
+                res.add(rec.uri);
+        }
+        return res;
+    }
+    
+    // Look through the prefix mappings and return the prefix for the latest
+    // (that is, last in sort order) namespace that begins with uriPrefix.
+    public String getLatestVersionPrefix (String uriPrefix) {
+        String p = getPrefix(uriPrefix);
+        if (null != p) return p;        // exact match
+        String last = "";
+        for (String ns : nsPrefix.keySet()) {
+            if (ns.startsWith(uriPrefix) && ns.compareTo(last) > 0) {
+                last = ns;
+                p = nsPrefix.get(ns);
+            }
+        }
+        return p;
+    }
     
     /**
      * Adds all of the namespace declarations in the specified namespace.
@@ -164,9 +233,10 @@ public class NamespaceDecls {
         private final NamespaceDecls nsd;       // object for tracking ns decls
         private final String nsuri;             // target namespace URI of document being parsed
 
-        private String niemVersion = "";        // NIEM version of schema document
+        private String ctargs = null;           // conformance targets
+        private String nsVersion = null;        // schema element version attribute
         private String docStr = null;           // value of first documentation element in first annotation element
-        private int skind = SK_EXTERNAL;        // is this an extension, niem model, or external schema ns?
+        private int nskind = NSK_EXTERNAL;      // is this an extension, niem model, builtin, or external schema ns?
         private int declCt = 0;                 // number of declarations in schema document
         private int depth = 0;
         private StringBuilder chars = new StringBuilder();
@@ -182,29 +252,23 @@ public class NamespaceDecls {
             if (prefix.isEmpty()) return;
             String fn = loc.getSystemId();
             int ln = loc.getLineNumber();
-            maps.add(new NSDeclRec(prefix, uri, nsuri, fn, ln, depth, declCt));      
+            maps.add(new NSDeclRec(prefix, uri, nsuri, fn, ln, depth));      
             declCt++;
         }
         
         @Override
         public void startElement(String ns, String ln, String qn, Attributes atts) {
             if (0 == depth) {   // <schema>          
-                // Get NIEM version from conformance assertion
+                // Get schema version attribute; distinguish extension schema
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (atts.getURI(i).startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX)) {
+                    String aln = atts.getLocalName(i);
+                    String auri = atts.getURI(i);
+                    if ("version".equals(atts.getLocalName(i))) nsVersion = atts.getValue(i);                    
+                    else if (atts.getURI(i).startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX)) {
                         if (CONFORMANCE_ATTRIBUTE_NAME.equals(atts.getLocalName(i))) {
-                            if (nsuri.startsWith(NIEM_RELEASE_PREFIX)) skind = SK_NIEM_MODEL;
-                            else skind = SK_EXTENSION;
-                            for (String ctv : atts.getValue(i).split("\\s+")) {
-                                if (ctv.startsWith(NDR_CT_URI_PREFIX)) {
-                                    ctv = ctv.substring(NDR_CT_URI_PREFIX.length());
-                                    int sp = ctv.indexOf('/');
-                                    if (sp >= 0) {
-                                        niemVersion = ctv.substring(0, sp);
-                                        break;
-                                    }
-                                }
-                            }
+                            ctargs = atts.getValue(i);
+                            if (nsuri.startsWith(NIEM_RELEASE_PREFIX)) nskind = NSK_NIEM_MODEL;
+                            else nskind = NSK_EXTENSION;
                         }
                     }
                 }
@@ -227,12 +291,34 @@ public class NamespaceDecls {
         
         @Override
         public void endDocument () {
-            nsd.nsDoc.put(nsuri, docStr);
-            nsd.nsVersion.put(nsuri, niemVersion);
+            // Get the version for a builtin namespace from the namespace URI
             int msize = maps.size();
-            if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) skind = SK_UTILITY;
-            nsType.put(nsuri, skind);
-            for (int i = msize - declCt; i < msize; i++) nsd.maps.get(i).schemaKind = skind;
+            String nvers = null;
+            int whichBuiltin = getBuiltinNamespaceKind(nsuri);
+            if (whichBuiltin >= 0) {
+                nskind = NSK_BUILTIN;
+                nvers = getBuiltinNamespaceVersion(nsuri);
+            }
+            // For other namespaces, look through all of their namespace declarations
+            // to find one for proxy or structures.  The version of proxy or structures
+            // declared is the NIEM version of the namespace.
+            if (NSK_BUILTIN != nskind) {
+                for (int i = msize - declCt; i < msize; i++) {
+                    String uri = nsd.maps.get(i).uri;
+                    whichBuiltin = getBuiltinNamespaceKind(uri);
+                    if (NIEM_APPINFO == whichBuiltin || NIEM_STRUCTURES == whichBuiltin) {
+                        nvers = getBuiltinNamespaceVersion(uri);
+                    }
+                }
+            }
+            if (null != nvers)  nsd.nsNIEMVersion.put(nsuri, nvers);
+            if (null != ctargs) nsd.nsCtargs.put(nsuri, ctargs);
+            if (null != docStr) nsd.nsDoc.put(nsuri, docStr);
+            if (null != nsVersion) nsd.nsVersion.put(nsuri, nsVersion);
+            nsType.put(nsuri, nskind);
+            for (int i = msize - declCt; i < msize; i++) {
+                nsd.maps.get(i).schemaKind = nskind;
+             }
         }
         
         @Override
@@ -257,7 +343,7 @@ public class NamespaceDecls {
             return warnMsgs; 
         }
         warnMsgs = new ArrayList<>();
-        createIndex();
+        buildPrefixMaps();
         pfmap.keySet().stream().sorted().forEach((p) -> {
             List<NSDeclRec> ml = pfmap.get(p);
             long mapct = ml.stream().map(m -> m.uri).distinct().count();
@@ -312,29 +398,6 @@ public class NamespaceDecls {
         }
         return warnMsgs;
     }
-    
-    public Map<String,List<NSDeclRec>> prefixDecls () {
-        createIndex();
-        return pfmap;
-    }
-    
-    public List<NSDeclRec> nsDecls () {
-        createIndex();
-        return maps;
-    }
-
-    private void createIndex () {
-        if (pfmap != null) { return; }
-        pfmap  = new HashMap<>();
-        urimap = new HashMap<>();
-        maps.forEach((m) -> {
-            if (pfmap.get(m.prefix) == null) { pfmap.put(m.prefix, new ArrayList<>()); }
-            if (urimap.get(m.uri) == null)   { urimap.put(m.uri, new ArrayList<>()); }
-            pfmap.get(m.prefix).add(m);
-            urimap.get(m.uri).add(m);
-        });
-        Collections.sort(maps);
-    }
        
     //
     // A structure for recording a namespace declaration
@@ -346,40 +409,39 @@ public class NamespaceDecls {
         String fp;              // path of schema document containing this declaration
         int linenum;            // line number
         int nestLevel;          // depth of this element in schema document
-        int decNum;             // nth declaration found in schema document
         int schemaKind = 0;
         
-        NSDeclRec (String p, String u, String pns, String f, int n, int lvl, int ct) {
+        NSDeclRec (String p, String u, String pns, String f, int n, int lvl) {
             prefix = p;
             uri = u;
             targetNS = pns;
             fp = f;
             linenum =  n;
             nestLevel = lvl;
-            decNum = ct;
         }
         
-        // Schema document type comes first: extension, reference, utility, external
-        // Within a namespace, declarations in outer schema elements come before inner
-        // For namespaces of sort priority, sort in order of parsing
+        // This sort order determines the priority of namespace prefix assignment.
+        // Schema document type comes first: extension, reference, builtin, external
+        // Within a namespace, declarations in outer schema elements come before inner,
+        // and then prefer earlier declarations before later.
         @Override
         public int compareTo (NSDeclRec o) {
             if (schemaKind < o.schemaKind) return -1; 
             else if (schemaKind > o.schemaKind) return 1; 
             else if (targetNS.equals(o.targetNS)) {
                 if (nestLevel < o.nestLevel) return -1; 
-                else { return 1; }
+                else if (nestLevel > o.nestLevel) return 1;
+                if (linenum < o.linenum) return -1;
+                else if (linenum > o.linenum) return 1;
             }
-            else if (decNum < o.decNum) return -1; 
-            else if (decNum == o.decNum) return 0;
-            return 1;
+            return 0;
         }
         
         @Override
         public String toString () {
             return String.format(
-                    "%-8.8s %-40.40s %4d %4d %4d %4d",
-                    prefix, uri, linenum, nestLevel, decNum, schemaKind
+                    "%-10.10s %-50.50s %4d %4d %4d in %s",
+                    prefix, uri, linenum, nestLevel, schemaKind, targetNS
             );
         }
     }

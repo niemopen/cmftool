@@ -23,7 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
-import org.mitre.niem.nmf.Model;
+import org.mitre.niem.cmf.Model;
 import org.xml.sax.Attributes;
 
 /**

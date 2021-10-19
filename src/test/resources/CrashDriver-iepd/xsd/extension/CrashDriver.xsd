@@ -7,14 +7,12 @@
     xmlns:j="http://release.niem.gov/niem/domains/jxdm/7.0/"
     xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
     xmlns:unece="http://release.niem.gov/niem/codes/unece_rec20/5.0/"
-    xmlns:geo="http://release.niem.gov/niem/adapters/geospatial/5.0/"
-    xmlns:gml="http://www.opengis.net/gml/3.2"
     xmlns:priv="http://example.com/PrivacyMetadata/2.0/"
     xmlns:xs-proxy="http://release.niem.gov/niem/proxy/niem-xs/5.0/" 
     xmlns:structures="http://release.niem.gov/niem/structures/5.0/" 
     xmlns:xs="http://www.w3.org/2001/XMLSchema" 
     xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/" 
-    xmlns:ct="http://release.niem.gov/niem/conformanceTargets/5.0/" 
+    xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/" 
     elementFormDefault="qualified"> 
 
     <xs:annotation>
@@ -30,7 +28,6 @@
     <xs:import namespace="http://release.niem.gov/niem/domains/jxdm/7.0/"/>
     <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/"/>
     <xs:import namespace="http://release.niem.gov/niem/codes/unece_rec20/5.0/"/>
-    <xs:import namespace="http://release.niem.gov/niem/adapters/geospatial/5.0/"/>
     <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/"/>
     <xs:import namespace="http://release.niem.gov/niem/structures/5.0/"/>
 

@@ -13,12 +13,10 @@
         <nc:ActivityLocation>
             <nc:Location2DGeospatialCoordinate>
                 <nc:GeographicCoordinateLatitude>
-                    <nc:LatitudeDegreeValue>51</nc:LatitudeDegreeValue>
-                    <nc:LatitudeMinuteValue>52</nc:LatitudeMinuteValue>
+                    <nc:LatitudeDegreeValue>51.87</nc:LatitudeDegreeValue>
                 </nc:GeographicCoordinateLatitude>
                 <nc:GeographicCoordinateLongitude>
-                    <nc:LongitudeDegreeValue>-1</nc:LongitudeDegreeValue>
-                    <nc:LongitudeMinuteValue>17</nc:LongitudeMinuteValue>
+                    <nc:LongitudeDegreeValue>-1.28</nc:LongitudeDegreeValue>
                 </nc:GeographicCoordinateLongitude>
             </nc:Location2DGeospatialCoordinate>
         </nc:ActivityLocation>

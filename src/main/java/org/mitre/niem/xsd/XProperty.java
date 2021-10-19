@@ -23,9 +23,9 @@
  */
 package org.mitre.niem.xsd;
 
-import org.mitre.niem.nmf.Property;
-import org.mitre.niem.nmf.HasProperty;
-import org.mitre.niem.nmf.Model;
+import org.mitre.niem.cmf.Property;
+import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.Model;
 import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 

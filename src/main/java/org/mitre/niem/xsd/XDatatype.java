@@ -23,10 +23,10 @@
  */
 package org.mitre.niem.xsd;
 
-import org.mitre.niem.nmf.ClassType;
-import org.mitre.niem.nmf.Datatype;
-import org.mitre.niem.nmf.Model;
-import org.mitre.niem.nmf.UnionOf;
+import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.Datatype;
+import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.UnionOf;
 import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 

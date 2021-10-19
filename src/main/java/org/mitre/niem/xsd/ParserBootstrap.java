@@ -89,8 +89,9 @@ public class ParserBootstrap {
                 throw new ParserConfigurationException("Can't initialize suitable SAX2 parser: " + ex.getMessage());
             }
         }       
-        if (0 != (which | BOOTSTRAP_STAX) && null == Holder.instance.staxFact)
+        if (0 != (which | BOOTSTRAP_STAX) && null == Holder.instance.staxFact) {
             Holder.instance.staxFact = XMLInputFactory.newInstance();
+        }
         if (0 != (which | BOOTSTRAP_DOCUMENTBUILDER)) {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             try {

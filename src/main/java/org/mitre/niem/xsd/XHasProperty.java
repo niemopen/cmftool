@@ -23,12 +23,12 @@
  */
 package org.mitre.niem.xsd;
 
-import static org.mitre.niem.NIEMConstants.NMF_NS_URI_PREFIX;
-import org.mitre.niem.nmf.ClassType;
-import org.mitre.niem.nmf.HasProperty;
-import org.mitre.niem.nmf.Model;
+import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.Model;
 import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
+import static org.mitre.niem.NIEMConstants.CMF_NS_URI_PREFIX;
 
 /**
  *
@@ -46,7 +46,7 @@ public class XHasProperty extends XObjectType {
         obj = new HasProperty(m);
         obj.setSequenceID(this.getSequenceID());
         for (int i = 0; i < a.getLength(); i++) {
-            if (a.getURI(i).startsWith(NMF_NS_URI_PREFIX)) {
+            if (a.getURI(i).startsWith(CMF_NS_URI_PREFIX)) {
                 if ("minOccursQuantity".equals(a.getLocalName(i))) {
                     obj.setMinOccursQuantity(a.getValue(i));
                 }

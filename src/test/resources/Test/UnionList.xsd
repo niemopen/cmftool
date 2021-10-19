@@ -10,36 +10,7 @@
 
     <xs:import namespace="http://release.niem.gov/niem/structures/5.0/"
         schemaLocation="niem/utility/structures.xsd"/>
-
-    <xs:simpleType name="DegreeSimpleType">
-        <xs:restriction base="xs:decimal">
-            <xs:minInclusive value="0"/>
-            <xs:maxExclusive value="360"/>
-        </xs:restriction>
-    </xs:simpleType>
-    
-    <xs:complexType name="DegreeType">
-        <xs:simpleContent>
-            <xs:extension base="ns:DegreeSimpleType">
-                <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
-            </xs:extension>
-        </xs:simpleContent>
-    </xs:complexType>
-
-    <xs:simpleType name="DegreeListSimpleType">
-        <xs:list itemType="ns:DegreeSimpleType"/>
-    </xs:simpleType>
-    
-    <xs:complexType name="DegreeListType">
-        <xs:simpleContent>
-            <xs:extension base="ns:DegreeListSimpleType">
-                <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
-            </xs:extension>
-        </xs:simpleContent>
-    </xs:complexType>
-    
-    <xs:element name="Degrees" type="ns:DegreeListType"/>
-    
+   
     <xs:simpleType name="UnionSimpleType">
         <xs:union memberTypes="xs:decimal xs:float"/>
     </xs:simpleType>

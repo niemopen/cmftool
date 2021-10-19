@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,8 +52,8 @@ import org.w3c.dom.DOMLocator;
 
 /**
  * A class to construct a Xerces XSModel object for an XML schema specified 
- * by a list of initial XML Schema documents (or namespace URIs), plus an
- * optional XML Catalog document.
+ * by a list of initial XML Schema documents (or namespace URIs), plus zero
+ * or more XML Catalog documents.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>

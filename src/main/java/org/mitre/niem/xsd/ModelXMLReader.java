@@ -23,6 +23,8 @@
  */
 package org.mitre.niem.xsd;
 
+import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.ObjectType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -37,13 +39,12 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import static org.mitre.niem.NIEMConstants.NMF_NS_URI_PREFIX;
-import org.mitre.niem.nmf.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.LocatorImpl;
+import static org.mitre.niem.NIEMConstants.CMF_NS_URI_PREFIX;
 
 /**
  * A class for constructing a NIEM Model object from an XML model file
@@ -155,7 +156,7 @@ public class ModelXMLReader {
         
         private XObjectType newObject (Model m, XObjectType p, String ens, String eln, Attributes atts, int lineNum) {
             XObjectType o = null;
-            if (ens.startsWith(NMF_NS_URI_PREFIX)) {
+            if (ens.startsWith(CMF_NS_URI_PREFIX)) {
                 switch (eln) {
                 case "AbstractIndicator":   o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "Class":               o = new XClassType(m, p, ens, eln, atts, lineNum); break;

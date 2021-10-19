@@ -24,8 +24,8 @@
 package org.mitre.niem.xsd;
 
 import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
-import org.mitre.niem.nmf.Model;
-import org.mitre.niem.nmf.ObjectType;
+import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.ObjectType;
 import org.xml.sax.Attributes;
 
 /**
