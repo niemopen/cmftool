@@ -21,7 +21,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmftool;
+package org.mitre.niem.cmftool;
 
 import static com.beust.jcommander.DefaultUsageFormatter.s;
 import com.beust.jcommander.JCommander;
@@ -41,11 +41,11 @@ import java.util.Map;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-class NMFUsageFormatter extends UnixStyleUsageFormatter {
+class CMFUsageFormatter extends UnixStyleUsageFormatter {
     
     private JCommander commander = null;
     
-    public NMFUsageFormatter(JCommander commander) {
+    public CMFUsageFormatter(JCommander commander) {
         super(commander);
         this.commander = commander;
     }

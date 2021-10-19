@@ -10,8 +10,8 @@ repositories {
 }
 
 application {
-    mainClass = 'org.mitre.niem.nmftool.NMFTool'
-    applicationName = 'nmftool'
+    mainClass = 'org.mitre.niem.cmftool.CMFTool'
+    applicationName = 'cmftool'
 }
 
 compileJava {

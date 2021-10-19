@@ -21,19 +21,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmftool;
-
-import com.beust.jcommander.JCommander;
+package org.mitre.niem.cmf;
 
 /**
- * An interface for a command-line sub-program using JCommander to parse its
- * arguments. Implemented by CommandXSD2NMI, etc.
+ *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-interface JCCommand {
-       
-    public void runMain (String[] args);
-    public void runCommand (JCommander cob);
-
+public class Datatype extends Component {   
+    private RestrictionOf restrictionOf = null;
+    private UnionOf unionOf = null;
+    private Datatype listOf = null;
+    
+    public void setRestrictionOf (RestrictionOf r) { restrictionOf = r; }
+    public void setUnionOf (UnionOf u)             { unionOf = u; }
+    public void setListOf (Datatype d)             { listOf = d; }
+    
+    public RestrictionOf getRestrictionOf() { return restrictionOf; }
+    public UnionOf getUnionOf()             { return unionOf; }
+    public Datatype getListOf()             { return listOf; }
+    
+    public Datatype () { type = C_DATATYPE; }
+    
+    public Datatype (Model m) {
+        super(m);
+        type = C_DATATYPE; 
+    }
+    
+    @Override
+    public void addToModelSet (Model m) {
+        m.addDatatype(this);
+    }
+ 
 }

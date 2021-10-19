@@ -21,27 +21,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmf;
+package org.mitre.niem.cmf;
 
 /**
+ *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class Facet extends ObjectType {
-    private String definition = null;
-    private String facetKind = null;
-    private String stringVal = null;
+public class HasProperty extends ObjectType {
+    private Property property = null;
+    private String minOccursQuantity = null;
+    private String maxOccursQuantity = null;
     
-    public void setDefinition (String s)  { definition = s; }
-    public void setFacetKind (String s)   { facetKind = s; }
-    public void setStringVal (String s)   { stringVal = s; }
+    public void setProperty (Property p)        { property = p; }
+    public void setMinOccursQuantity (String s) { minOccursQuantity = s; }
+    public void setMaxOccursQuantity (String s) { maxOccursQuantity = s; }
     
-    public String getDefinition ()  { return definition; }
-    public String getFacetKind()    { return facetKind; }
-    public String getStringVal()    { return stringVal; }
+    public Property getProperty()     { return property; }
+    public String minOccursQuantity() { return minOccursQuantity; }
+    public String maxOccursQuantity() { return maxOccursQuantity; } 
     
-    public Facet (Model m) {
+  
+    public HasProperty (Model m) {
         super(m);
-    }
-
+    }    
+  
 }

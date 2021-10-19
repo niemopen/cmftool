@@ -21,7 +21,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmf;
+package org.mitre.niem.cmf;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,10 +29,10 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import static org.mitre.niem.nmf.Component.C_CLASSTYPE;
-import static org.mitre.niem.nmf.Component.C_DATATYPE;
-import static org.mitre.niem.nmf.Component.C_OBJECTPROPERTY;
-import static org.mitre.niem.nmf.Namespace.mungedPrefix;
+import static org.mitre.niem.cmf.Component.C_CLASSTYPE;
+import static org.mitre.niem.cmf.Component.C_DATATYPE;
+import static org.mitre.niem.cmf.Component.C_OBJECTPROPERTY;
+import static org.mitre.niem.cmf.Namespace.mungedPrefix;
 
 /**
  *

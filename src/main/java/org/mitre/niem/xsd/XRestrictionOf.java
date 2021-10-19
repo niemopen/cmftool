@@ -23,8 +23,8 @@
  */
 package org.mitre.niem.xsd;
 
-import org.mitre.niem.nmf.Model;
-import org.mitre.niem.nmf.RestrictionOf;
+import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.RestrictionOf;
 import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 

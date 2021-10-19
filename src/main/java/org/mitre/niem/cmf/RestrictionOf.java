@@ -21,29 +21,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmf;
+package org.mitre.niem.cmf;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class HasProperty extends ObjectType {
-    private Property property = null;
-    private String minOccursQuantity = null;
-    private String maxOccursQuantity = null;
+public class RestrictionOf extends ObjectType {
+    private Datatype datatype = null;
+    private final List<Facet> facetList = new ArrayList<>();
     
-    public void setProperty (Property p)        { property = p; }
-    public void setMinOccursQuantity (String s) { minOccursQuantity = s; }
-    public void setMaxOccursQuantity (String s) { maxOccursQuantity = s; }
+    public void setDatatype (Datatype dt) { datatype = dt; }
+    public Datatype getDatatype ()        { return datatype; }
     
-    public Property getProperty()     { return property; }
-    public String minOccursQuantity() { return minOccursQuantity; }
-    public String maxOccursQuantity() { return maxOccursQuantity; } 
+    public List<Facet> getFacetList()     { return facetList; }
     
-  
-    public HasProperty (Model m) {
+    public RestrictionOf (Model m) {
         super(m);
+    }
+      
+    public void addFacet (Facet c) {
+        this.facetList.add(c);
+    }
+    
+    public void removeFacet (Facet c) {
+        int index = this.facetList.indexOf(c);
+        if (index < 0) return;
+        this.facetList.remove(index);
+    }
+    
+    public void replaceFacet (Facet oc, Facet nc) {
+        int index = this.facetList.indexOf(oc);
+        if (index < 0) return;
+        this.facetList.set(index, nc);        
     }    
-  
+   
 }

@@ -21,7 +21,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmf;
+package org.mitre.niem.cmf;
 
 /**
  * An abstract class for NIEM model components that have a name and namespace.

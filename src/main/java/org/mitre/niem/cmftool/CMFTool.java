@@ -21,7 +21,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmftool;
+package org.mitre.niem.cmftool;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -30,16 +30,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The "nmftool" command line program
+ * The "cmftool" command line program
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class NMFTool {
+public class CMFTool {
     
-    public static String VERSION_ID = "nmftool 0.1 (6 August 2021)";
+    public static String VERSION_ID = "cmftool 0.1 (6 August 2021)";
     
     public static void main (String[] args) {
-        NMFTool obj = new NMFTool();
+        CMFTool obj = new CMFTool();
         obj.run(args);
     }    
     
@@ -74,13 +74,13 @@ public class NMFTool {
 //        args = new String[]{"m2x", "-d", "-o", "/Tmp/cmf/xsd", "/Tmp/cmf/jxdm.cmf", "/Tmp/cmf/jxdm.cmx" };
 
         JCommander jc = new JCommander();
-        NMFUsageFormatter uf = new NMFUsageFormatter(jc); 
+        CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("nmftool");
+        jc.setProgramName("cmftool");
         
-        CmdNMItoNMI nmiToNmiCmd = new CmdNMItoNMI(jc);
-        CmdNMItoXSD nmiToXsdCmd = new CmdNMItoXSD(jc);
-        CmdXSDtoNMI xsdToNmiCmd = new CmdXSDtoNMI(jc);        
+        CmdCMFtoCMF nmiToNmiCmd = new CmdCMFtoCMF(jc);
+        CmdCMFtoXSD nmiToXsdCmd = new CmdCMFtoXSD(jc);
+        CmdXSDtoCMF xsdToNmiCmd = new CmdXSDtoCMF(jc);        
         CommandHelp helpCmd     = new CommandHelp(jc);    
         jc.addCommand("m2x", nmiToXsdCmd);
         jc.addCommand("m2m", nmiToNmiCmd);
@@ -103,7 +103,7 @@ public class NMFTool {
         JCommander cob = cmdMap.get(command);
         List<Object> objs = cob.getObjects();
         JCCommand cmd = (JCCommand)objs.get(0);
-        NMFUsageFormatter cobuf = new NMFUsageFormatter(cob);        
+        CMFUsageFormatter cobuf = new CMFUsageFormatter(cob);        
         cob.setUsageFormatter(cobuf);
         cmd.runCommand(cob);               
     }    
@@ -133,7 +133,7 @@ public class NMFTool {
                 JCommander cob = cmdMap.get(cmdName);
                 List<Object> objs = cob.getObjects();
                 JCCommand cmd = (JCCommand) objs.get(0);  
-                NMFUsageFormatter cobuf = new NMFUsageFormatter(cob);        
+                CMFUsageFormatter cobuf = new CMFUsageFormatter(cob);        
                 cob.setUsageFormatter(cobuf);    
                 String[] ha = {"--help"};
                 cmd.runMain(ha);

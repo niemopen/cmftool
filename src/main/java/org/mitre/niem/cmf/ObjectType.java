@@ -21,40 +21,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmf;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+package org.mitre.niem.cmf;
 
 /**
- *
+ * A class to represent a NIEM model component.
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class UnionOf extends ObjectType {
-    private final List<Datatype> datatypeList = new ArrayList<>();
+public class ObjectType {
+    private Model model = null;             // every object knows the model it is part of
+    private String sequenceID = null;       // any model component can have a sequence number
+
+    public void setSequenceID (String s) { sequenceID = s; }
+
+    public Model getModel()            { return model; }
+    public String getSequenceID ()     { return sequenceID; }
+    public boolean isModelChild ()     { return false; }        // override in Component and Namespace class
     
-    public List<Datatype> getDatatypeList()        { return datatypeList; } 
-    
-    public UnionOf (Model m) {
-        super(m);
-    }    
-    
-    public void addDatatype (Datatype c) {
-        this.datatypeList.add(c);
+    public ObjectType () {
     }
-    
-    public void removeDatatype (Datatype c) {
-        int index = this.datatypeList.indexOf(c);
-        if (index < 0) return;
-        this.datatypeList.remove(index);
+   
+    public ObjectType (Model m) {
+        model = m;
     }
-    
-    public void replaceDatatype (Datatype oc, Datatype nc) {
-        int index = this.datatypeList.indexOf(oc);
-        if (index < 0) return;
-        this.datatypeList.set(index, nc);        
-    } 
+   
+    // Override for components and namespaces
+    public void addToModelSet (Model m) { }
 
 }

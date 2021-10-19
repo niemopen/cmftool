@@ -35,7 +35,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import org.apache.logging.log4j.LogManager;
 import static org.mitre.niem.NIEMConstants.*;
-import static org.mitre.niem.nmf.Namespace.mungedPrefix;
+import static org.mitre.niem.cmf.Namespace.mungedPrefix;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_APPINFO;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_STRUCTURES;
 import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinNamespaceVersion;

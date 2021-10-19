@@ -21,43 +21,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmf;
+package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class RestrictionOf extends ObjectType {
-    private Datatype datatype = null;
-    private final List<Facet> facetList = new ArrayList<>();
+public class UnionOf extends ObjectType {
+    private final List<Datatype> datatypeList = new ArrayList<>();
     
-    public void setDatatype (Datatype dt) { datatype = dt; }
-    public Datatype getDatatype ()        { return datatype; }
+    public List<Datatype> getDatatypeList()        { return datatypeList; } 
     
-    public List<Facet> getFacetList()     { return facetList; }
-    
-    public RestrictionOf (Model m) {
+    public UnionOf (Model m) {
         super(m);
-    }
-      
-    public void addFacet (Facet c) {
-        this.facetList.add(c);
-    }
-    
-    public void removeFacet (Facet c) {
-        int index = this.facetList.indexOf(c);
-        if (index < 0) return;
-        this.facetList.remove(index);
-    }
-    
-    public void replaceFacet (Facet oc, Facet nc) {
-        int index = this.facetList.indexOf(oc);
-        if (index < 0) return;
-        this.facetList.set(index, nc);        
     }    
-   
+    
+    public void addDatatype (Datatype c) {
+        this.datatypeList.add(c);
+    }
+    
+    public void removeDatatype (Datatype c) {
+        int index = this.datatypeList.indexOf(c);
+        if (index < 0) return;
+        this.datatypeList.remove(index);
+    }
+    
+    public void replaceDatatype (Datatype oc, Datatype nc) {
+        int index = this.datatypeList.indexOf(oc);
+        if (index < 0) return;
+        this.datatypeList.set(index, nc);        
+    } 
+
 }

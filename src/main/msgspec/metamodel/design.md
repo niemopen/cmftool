@@ -1,10 +1,10 @@
 ---
-title Design notes for NIEM Model Format Tool (NMFTool)
+title Design notes for NIEM Common Model Format Tool (CMFTool)
 ---
 
-# What NMFTool does
+# What CMFTool does
 
-The first capability for NMFTool is a converter that builds a NIEM model
+The first capability for CMFTool is a converter that builds a NIEM model
 instance (that is, an instance of the NIEM model format) from a NIEM XML schema.
 
 The input schema is defined by a pile of conforming XML Schema documents.  

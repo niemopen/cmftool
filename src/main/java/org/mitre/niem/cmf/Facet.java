@@ -21,36 +21,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmf;
+package org.mitre.niem.cmf;
 
 /**
- *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class Datatype extends Component {   
-    private RestrictionOf restrictionOf = null;
-    private UnionOf unionOf = null;
-    private Datatype listOf = null;
+public class Facet extends ObjectType {
+    private String definition = null;
+    private String facetKind = null;
+    private String stringVal = null;
     
-    public void setRestrictionOf (RestrictionOf r) { restrictionOf = r; }
-    public void setUnionOf (UnionOf u)             { unionOf = u; }
-    public void setListOf (Datatype d)             { listOf = d; }
+    public void setDefinition (String s)  { definition = s; }
+    public void setFacetKind (String s)   { facetKind = s; }
+    public void setStringVal (String s)   { stringVal = s; }
     
-    public RestrictionOf getRestrictionOf() { return restrictionOf; }
-    public UnionOf getUnionOf()             { return unionOf; }
-    public Datatype getListOf()             { return listOf; }
+    public String getDefinition ()  { return definition; }
+    public String getFacetKind()    { return facetKind; }
+    public String getStringVal()    { return stringVal; }
     
-    public Datatype () { type = C_DATATYPE; }
-    
-    public Datatype (Model m) {
+    public Facet (Model m) {
         super(m);
-        type = C_DATATYPE; 
     }
-    
-    @Override
-    public void addToModelSet (Model m) {
-        m.addDatatype(this);
-    }
- 
+
 }

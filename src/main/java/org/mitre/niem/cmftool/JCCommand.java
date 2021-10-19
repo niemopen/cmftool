@@ -21,31 +21,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmf;
+package org.mitre.niem.cmftool;
+
+import com.beust.jcommander.JCommander;
 
 /**
- * A class to represent a NIEM model component.
+ * An interface for a command-line sub-program using JCommander to parse its
+ * arguments. Implemented by CommandXSD2NMI, etc.
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ObjectType {
-    private Model model = null;             // every object knows the model it is part of
-    private String sequenceID = null;       // any model component can have a sequence number
-
-    public void setSequenceID (String s) { sequenceID = s; }
-
-    public Model getModel()            { return model; }
-    public String getSequenceID ()     { return sequenceID; }
-    public boolean isModelChild ()     { return false; }        // override in Component and Namespace class
-    
-    public ObjectType () {
-    }
-   
-    public ObjectType (Model m) {
-        model = m;
-    }
-   
-    // Override for components and namespaces
-    public void addToModelSet (Model m) { }
+interface JCCommand {
+       
+    public void runMain (String[] args);
+    public void runCommand (JCommander cob);
 
 }

@@ -21,7 +21,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.nmftool;
+package org.mitre.niem.cmftool;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -36,7 +36,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.mitre.niem.nmf.Model;
+import org.mitre.niem.cmf.Model;
 import org.mitre.niem.xsd.ModelExtension;
 import org.mitre.niem.xsd.ModelFromXSD;
 import org.mitre.niem.xsd.ModelXMLWriter;
@@ -54,7 +54,7 @@ import org.xml.sax.SAXException;
 
 @Parameters(commandDescription = "convert a NIEM schema into a NIEM model instance")
 
-class CmdXSDtoNMI implements JCCommand {
+class CmdXSDtoCMF implements JCCommand {
 
     @Parameter(names = "-o", description = "output directory for model files")
     private String outputDir = ".";
@@ -77,21 +77,21 @@ class CmdXSDtoNMI implements JCCommand {
     @Parameter(description = "{schema, namespace URI, XML catalog}...")
     private List<String> mainArgs;
     
-    CmdXSDtoNMI () {
+    CmdXSDtoCMF () {
     }
   
-    CmdXSDtoNMI (JCommander jc) {
+    CmdXSDtoCMF (JCommander jc) {
     }
 
     public static void main (String[] args) {       
-        CmdXSDtoNMI obj = new CmdXSDtoNMI();
+        CmdXSDtoCMF obj = new CmdXSDtoCMF();
         obj.runMain(args);
     }
     
     @Override
     public void runMain (String[] args) {
         JCommander jc = new JCommander(this);
-        NMFUsageFormatter uf = new NMFUsageFormatter(jc); 
+        CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
         jc.setProgramName("compile");
         jc.parse(args);
@@ -100,7 +100,7 @@ class CmdXSDtoNMI implements JCCommand {
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("nmftool x2m");
+        cob.setProgramName("cmftool x2m");
         run(cob);
     }    
     
