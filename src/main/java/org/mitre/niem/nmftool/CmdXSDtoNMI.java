@@ -26,16 +26,18 @@ package org.mitre.niem.nmftool;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.nmf.Model;
+import org.mitre.niem.xsd.ModelExtension;
 import org.mitre.niem.xsd.ModelFromXSD;
 import org.mitre.niem.xsd.ModelXMLWriter;
 import org.mitre.niem.xsd.ParserBootstrap;
@@ -53,9 +55,21 @@ import org.xml.sax.SAXException;
 @Parameters(commandDescription = "convert a NIEM schema into a NIEM model instance")
 
 class CmdXSDtoNMI implements JCCommand {
+
+    @Parameter(names = "-o", description = "output directory for model files")
+    private String outputDir = ".";
     
-    @Parameter(names = "-o", description = "file for converter output")
-    private String objFile = "";
+    @Parameter(names = "-m", description = "base name for model files")
+    private String obase = null;
+    
+    @Parameter(names = "--cmf", description = "output model file")
+    private String modelFN = null;
+    
+    @Parameter(names = "--cmx", description = "output model extension file")
+    private String mextFN = null;
+    
+    @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
+    private boolean debugFlag = false;
      
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
@@ -91,7 +105,6 @@ class CmdXSDtoNMI implements JCCommand {
     }    
     
     private void run (JCommander cob) {
-
         if (help) {
             cob.usage();
             System.exit(0);
@@ -99,6 +112,10 @@ class CmdXSDtoNMI implements JCCommand {
         if (mainArgs == null || mainArgs.isEmpty()) {
             cob.usage();
             System.exit(1);
+        }
+        // Set debug logging
+        if (debugFlag) {
+            Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.DEBUG);
         }
         // Argument of "-" signals end of arguments, allows "-foo" filenames
         String na = mainArgs.get(0);
@@ -111,22 +128,39 @@ class CmdXSDtoNMI implements JCCommand {
                 System.exit(1);
             }
         }       
-        // Make sure output file is writable
-        PrintWriter ow = new PrintWriter(System.out);
-        if (!"".equals(objFile)) {
-            try {
-                File of = new File(objFile);
-                ow = new PrintWriter(of);
-            } catch (FileNotFoundException ex) {
-                System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
-                System.exit(1);
+        // Figure out file names for model and extension
+        if (null == modelFN || null == mextFN) {
+            if (null == obase) {
+                obase = "Model";
+                for (String a : mainArgs) {
+                    if (a.endsWith(".xsd")) { obase = FilenameUtils.getBaseName(a); break; }
+                }
             }
+            if (null == modelFN) modelFN = obase + ".cmf";
+            if (null == mextFN)  mextFN  = obase + ".cmx";
         }
+        // Make sure output files are writable
+        String modelFP = String.format("%s/%s", outputDir, modelFN);
+        String mextFP  = String.format("%s/%s", outputDir, mextFN);        
+        PrintWriter modelPW = null;
+        PrintWriter mextPW = null;
+        try {
+            modelPW = new PrintWriter(modelFP);
+        } catch (FileNotFoundException ex) {
+            System.err.println(String.format("Can't write output file %s: %s", modelFP, ex.getMessage()));
+            System.exit(1);
+        }
+        try {
+            mextPW =  new PrintWriter(mextFP);
+        } catch (FileNotFoundException ex) {
+            System.err.println(String.format("Can't write output file %s: %s", mextFP, ex.getMessage()));
+            System.exit(1);
+        }        
         // Make sure the Xerces parser can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
         } catch (ParserConfigurationException ex) {
-            System.err.println(ex.getMessage());
+            System.err.println("Parser configuration error: " + ex.getMessage());
             System.exit(1);
         }
         // Construct the schema object from arguments
@@ -137,16 +171,16 @@ class CmdXSDtoNMI implements JCCommand {
         } catch (IOException ex) {
             System.err.println(String.format("IO error reading schema documents: %s", ex.getMessage()));
             System.exit(1);
-        } catch (SchemaException ex) {
+        } catch (SchemaException | ParserConfigurationException ex) {
             System.err.println(ex.getMessage());
             System.exit(1);
-        } catch (ParserConfigurationException ex) {
-            // CAN'T HAPPEN
         }
         // Build the NIEM model object from the schema
-        Model m = null;
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = new Model();
+        ModelExtension me = new ModelExtension(m);
         try {
-            m = new ModelFromXSD().createModel(s);
+            mfact.createModel(m, me, s);
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             System.err.println(ex.getMessage());
             System.exit(1);
@@ -154,8 +188,8 @@ class CmdXSDtoNMI implements JCCommand {
         // Write the NIEM model instance to the output stream
         ModelXMLWriter mw = new ModelXMLWriter();
         try {            
-            mw.writeXML(m, ow);
-            ow.close();
+            mw.writeXML(m, modelPW); modelPW.close();
+            me.writeXML(mextPW);   mextPW.close();
         } catch (TransformerException ex) {
             System.err.println(String.format("Output error: %s", ex.getMessage()));
             System.exit(1);

@@ -23,6 +23,8 @@
  */
 package org.mitre.niem.nmf;
 
+import java.util.Map;
+
 /**
  *
  * @author Scott Renner
@@ -60,6 +62,24 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public void addToModelSet (Model m) {
         m.addNamespace(this);
     }   
+        
+    /**
+     * Returns a munged namespace prefix that does not exist in the supplied prefix map
+     * For example, "nc" might turn into "nc_1" 
+     * @param pm map claimed prefix -> ??
+     * @param op desired prefix
+     * @return munged prefix not in prefix map
+     */
+    public static String mungedPrefix (Map<String,String>pm, String op) {
+        if (!pm.containsKey(op)) return op;
+        int count = 0;
+        String pat = op.replaceFirst("_\\d+$", "");    // remove existing suffix if any
+        pat = pat + "_%d";
+        while (pm.containsKey(op)) {
+            op = String.format(pat, ++count);
+        }
+        return op;
+    }
     
     @Override
     public int compareTo (Namespace o) {

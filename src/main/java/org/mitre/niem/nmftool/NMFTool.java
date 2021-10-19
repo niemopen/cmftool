@@ -44,11 +44,35 @@ public class NMFTool {
     }    
     
     private void run (String[] args) {
-         
-//        args = new String[]{"m2x",  "-o", "/tmp/cmf", "src/test/resources/Test/PercentType.cmf"};
-
-//        args = new String[]{"x2m", "src/test/resources/Test/NumericType.xsd"};
         
+// Uncomment arguments for debugging:
+
+
+
+//        args = new String[]{"x2m", "-o", "src/test/resources/CrashDriver-iepd", "src/test/resources/CrashDriver-iepd/xsd/extension/CrashDriver.xsd",
+//             "src/test/resources/CrashDriver-iepd/xsd/xml-catalog.xml"};
+
+//        args = new String[]{"x2m", "-o", "src/test/resources/TwoVersions", "src/test/resources/TwoVersions/PersonName.xsd",
+//             "src/test/resources/TwoVersions/PercentType.xsd"};      
+
+//        args = new String[]{"x2m", "-d", "-o", "src/test/resources/Test", "src/test/resources/Test/CodeType.xsd" };
+
+//        args = new String[]{"x2m", "-d", "-o", "src/test/resources/Test", "src/test/resources/Test/Degree90Type.xsd" };
+
+//        args = new String[]{"x2m", "-o", "/tmp/cmf", "/Work/Stuff/NIEM/Releases/niem-5.0/xsd/niem-core.xsd",
+//            "/Work/Stuff/NIEM/Releases/niem-5.0/xsd/xml-catalog.xml" };
+         
+//        args = new String[]{"m2x",  "-o", "/tmp/cmf", 
+//          "src/test/resources/CrashDriver-iepd/CrashDriver.cmf", "src/test/resources/CrashDriver-iepd/CrashDriver.cmx"};
+
+//        args = new String[]{"m2x", "-o", "/tmp/cmf",
+//            "src/test/resources/TwoVersions/PersonName.cmf", "src/test/resources/TwoVersions/PersonName.cmx"};
+
+//        args = new String[]{"m2x", "-o", "/tmp/cmf",
+//            "src/test/resources/Test/CodeType.cmf", "src/test/resources/Test/CodeType.cmx"};
+
+//        args = new String[]{"m2x", "-d", "-o", "/Tmp/cmf/xsd", "/Tmp/cmf/jxdm.cmf", "/Tmp/cmf/jxdm.cmx" };
+
         JCommander jc = new JCommander();
         NMFUsageFormatter uf = new NMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);

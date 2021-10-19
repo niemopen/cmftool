@@ -29,15 +29,18 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import static java.lang.Character.isLowerCase;
 import static java.lang.Character.toLowerCase;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
@@ -50,6 +53,13 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import static org.apache.commons.io.FileUtils.copyFile;
+import static org.apache.commons.io.FileUtils.createParentDirectories;
+import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import static org.mitre.niem.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
+import static org.mitre.niem.NIEMConstants.CONFORMANCE_TARGET_NS_URI;
 import static org.mitre.niem.NIEMConstants.PROXY_NS_URI;
 import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI;
 import static org.mitre.niem.NIEMConstants.XML_NS_URI;
@@ -64,7 +74,11 @@ import org.mitre.niem.nmf.Model;
 import org.mitre.niem.nmf.Namespace;
 import org.mitre.niem.nmf.Property;
 import org.mitre.niem.nmf.RestrictionOf;
-import org.w3c.dom.Attr;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_CONFORMANCE_TARGETS;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_PROXY;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_STRUCTURES;
+import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinDocumentFile;
+import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinNamespaceURI;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -74,10 +88,11 @@ import org.w3c.dom.Element;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelToXSD {
-    private static final Namespace PROXY_NS = new Namespace("niem-xs", PROXY_NS_URI);
-    private static final Namespace STRUCTURES_NS = new Namespace("structures", STRUCTURES_NS_URI);
+    static final Logger LOG = LogManager.getLogger(ModelFromXSD.class);
+        
     private final Model m;
     private final ModelExtension me;
+    private final Map<String,Namespace> builtinNSmap = new HashMap<>();
     
     public ModelToXSD (Model m, ModelExtension me) {
         this.m = m;
@@ -88,25 +103,49 @@ public class ModelToXSD {
         // Write a schema document for each namespace
         for (Namespace ns : m.namespaceSet()) {
             if (XSD_NS_URI.equals(ns.getNamespaceURI())) continue;
-            String fn = ns.getNamespacePrefix() + ".xsd";
+            String fn = me.getDocumentFilepath(ns.getNamespaceURI());
             File of = new File(od, fn);
+            createParentDirectories(of);
             FileWriter ofw = new FileWriter(of);
             writeDocument(ns.getNamespaceURI(), ofw);
             ofw.close();
         }
+        // Copy builtin schema documents to the destination
+        for (String uri : builtinNSmap.keySet()) {
+            String dfp = me.getDocumentFilepath(uri);
+            File df = new File(od, dfp);
+            File sf = getBuiltinDocumentFile(uri);
+            createParentDirectories(df);
+            copyFile(sf, df);
+        }
     }
     
     // Write the schema document for the specified namespace
-    private void writeDocument (String nsURI, Writer ofw) throws ParserConfigurationException, TransformerConfigurationException, TransformerException, IOException {
+    private void writeDocument (String nsuri, Writer ofw) throws ParserConfigurationException, TransformerConfigurationException, TransformerException, IOException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document dom = db.newDocument();
         Element root = dom.createElementNS(XSD_NS_URI, "xs:schema");
-        root.setAttribute("targetNamespace", nsURI);
+        root.setAttribute("targetNamespace", nsuri);
         dom.appendChild(root);
         
+        LOG.debug("Writing schema document for {}", nsuri);
+        
+        // Add namespace version number, if specified
+        String nsv = me.getNSVersion(nsuri);
+        if (null != nsv && !nsv.isBlank()) root.setAttribute("version", nsv);
+        
+        // Add conformance target assertions, if any
+        String niemVersion = me.getNIEMVersion(nsuri);
+        String cta = me.getConformanceTargets(nsuri);
+        if (null != cta) {
+            String ctns = getBuiltinNamespaceURI(NIEM_CONFORMANCE_TARGETS, niemVersion);
+            String ctprefix = me.getBuiltinPrefix(ctns);
+            root.setAttributeNS(XML_NS_URI, "xmlns:"+ctprefix, ctns);
+            root.setAttributeNS(ctns, ctprefix+":"+CONFORMANCE_ATTRIBUTE_NAME, cta);
+        }
         // Add the <xs:annotation> element with namespace definition
-        Namespace ns = m.getNamespace(nsURI);
+        Namespace ns = m.getNamespace(nsuri);
         addDefinition(dom, root, ns.getDefinition());
         Element annot = (Element)root.getFirstChild();
         
@@ -114,21 +153,30 @@ public class ModelToXSD {
         // Then create typedefs for Datatype objects (when not already created)
         // Remember external namespaces when encountered
         TreeMap<String,Element> typedefs = new TreeMap<>();
-        Set<Namespace> nsdep = new HashSet<>();
-        for (ClassType cl : m.classTypeSet()) createTypeFromClass(dom, typedefs, nsdep, cl);
-        for (Datatype dt : m.datatypeSet())   createTypeFromDatatype(dom, typedefs, nsdep, dt);  
+        TreeSet<Namespace> nsdep = new TreeSet<>();
+        for (ClassType cl : m.classTypeSet()) createTypeFromClass(dom, typedefs, nsdep, nsuri, cl);
+        for (Datatype dt : m.datatypeSet())   createTypeFromDatatype(dom, typedefs, nsdep, nsuri, dt);  
         
         // Create elements and attributes for Property objects
         TreeMap<String,Element> propdecls = new TreeMap<>();
-        for (Property p : m.propertySet()) createElementOrAttribute(dom, propdecls, nsdep, p);
+        for (Property p : m.propertySet()) createElementOrAttribute(dom, propdecls, nsdep, nsuri, p);
 
         // Add a namespace declaration and import element for each namespace dependency
         for (Namespace dns : nsdep) {
             String dnspre = dns.getNamespacePrefix();
             String dnsuri = dns.getNamespaceURI();
             root.setAttributeNS(XML_NS_URI, "xmlns:"+dns.getNamespacePrefix(), dns.getNamespaceURI());
+            if (XSD_NS_URI.equals(dns.getNamespaceURI())) continue;   // don't import XSD
+            if (nsuri.equals(dns.getNamespaceURI())) continue;        // don't import current namespace
+            Path thisDoc = Paths.get(me.getDocumentFilepath(nsuri));
+            Path importDoc = Paths.get(me.getDocumentFilepath(dns.getNamespaceURI()));
+            Path toImportDoc;
+            if (null != thisDoc.getParent()) toImportDoc = thisDoc.getParent().relativize(importDoc);
+            else toImportDoc = importDoc;
+            String sloc = separatorsToUnix(toImportDoc.toString());
             Element ie = dom.createElementNS(XSD_NS_URI, "xs:import");
             ie.setAttribute("namespace", dnsuri);
+            ie.setAttribute("schemaLocation", sloc);
             root.appendChild(ie);
         }
         // Now add the type definitions and element/attribute declarations to the document
@@ -138,23 +186,28 @@ public class ModelToXSD {
         propdecls.forEach((name,element) -> {
             root.appendChild(element);
         });
-        writeToXSD(dom, ofw);
+        writeDom(dom, ofw);
     }
     
     // Create types from ClassType objects first, so that attributes are handled.
     // Some Datatype objects will be handled along the way and skipped later.
-    private void createTypeFromClass (Document dom, Map<String,Element> typedefs, Set<Namespace>nsdep, ClassType ct) { 
+    private void createTypeFromClass (Document dom, Map<String,Element> typedefs, Set<Namespace>nsdep, String nsuri, ClassType ct) { 
+        LOG.debug("Creating type for {}", ct.getQName());
         String cname = ct.getName();
         if (typedefs.containsKey(cname)) return;
+        if (!nsuri.equals(ct.getNamespace().getNamespaceURI())) return;
         Element cte = dom.createElementNS(XSD_NS_URI, "xs:complexType");
         cte.setAttribute("name", cname);
         addDefinition(dom, cte, ct.getDefinition());
         typedefs.put(cname, cte);
         
-        // ClassType with no HasValue has complex content
-        // ClassType with a HasValue has simple content
-        if (null == ct.getHasValue()) createComplexContent(dom, cte, nsdep, ct);
-        else createSimpleContent(dom, cte, typedefs, nsdep, ct);
+        // ClassType with properties has complex content
+        // ClassType without properties and no HasValue has complex content
+        // ClassType without properties and with a HasValue has simple content
+        if (ct.hasPropertyList().isEmpty() && null != ct.getHasValue())
+            createSimpleContent(dom, cte, typedefs, nsdep, ct);
+        else
+            createComplexContent(dom, cte, nsdep, ct);
     }
     
     // Create <xs:complexContent> for Class with HasProperty (and no HasValue)
@@ -163,13 +216,16 @@ public class ModelToXSD {
             Element exe = dom.createElementNS(XSD_NS_URI, "xs:extension");
             Element sqe = dom.createElementNS(XSD_NS_URI, "xs:sequence");  
             String cname = ct.getName();
-            String spr = me.getStructuresPrefix();
+ 
             if (null == ct.getExtensionOfClass()) {
+                String nver = me.getNIEMVersion(ct.getURI());
+                Namespace structuresNS = getBuiltinNamespace(NIEM_STRUCTURES, nver);
+                String spr = structuresNS.getNamespacePrefix();
                 if (cname.endsWith("AssociationType"))       exe.setAttribute("base", spr+":AssociationType");
                 else if (cname.endsWith("MetadataType"))     exe.setAttribute("base", spr+":MetadataType");
                 else if (cname.endsWith("AugmentationType")) exe.setAttribute("base", spr+":AugmentationType");
                 else exe.setAttribute("base", spr+":ObjectType");
-                nsdep.add(STRUCTURES_NS);   // static namespace object, not the URI
+                nsdep.add(structuresNS);   // static namespace object, not the URI
             } 
             else {
                 exe.setAttribute("base", ct.getExtensionOfClass().getQName());
@@ -177,7 +233,7 @@ public class ModelToXSD {
             }
             for (HasProperty hp : ct.hasPropertyList()) {
                 Property p = hp.getProperty();
-                if (isLowerCase(p.getName().charAt(0))) {   // FIXME
+                if (me.isAttribute(p.getQName())) { 
                     Element hpe = dom.createElementNS(XSD_NS_URI, "xs:attribute");
                     hpe.setAttribute("ref", p.getQName());
                     if ("1".equals(hp.minOccursQuantity())) hpe.setAttribute("use", "required");
@@ -203,6 +259,8 @@ public class ModelToXSD {
     private void createSimpleContent(Document dom, Element cte, Map<String, Element> typedefs, Set<Namespace> nsdep, Component c) {
         Element sce = dom.createElementNS(XSD_NS_URI, "xs:simpleContent");
         Element exe = dom.createElementNS(XSD_NS_URI, "xs:extension");
+        String niemVer = me.getNIEMVersion(c.getNamespace().getNamespaceURI());
+        Namespace proxyNS = getBuiltinNamespace(NIEM_PROXY, niemVer);
         List<HasProperty> hplist = new ArrayList<>();
         Datatype bdt = null;                            // base type for xs:extension element
 
@@ -218,8 +276,8 @@ public class ModelToXSD {
         
         // Base type is xs:foo w/o restriction -> xs:extension base="niem-xs:foo"
         if (null == r && XSD_NS_URI.equals(bdt.getNamespace().getNamespaceURI())) {
-            baseQN = me.getProxyPrefix() + ":" + bdt.getName();
-            nsdep.add(PROXY_NS);
+            baseQN = proxyNS.getNamespacePrefix() + ":" + bdt.getName();
+            nsdep.add(proxyNS);
         }
         // Base type has empty Restriction -> xs:extension base="FooType"
         else if (null != r && r.getFacetList().isEmpty()) {
@@ -228,8 +286,8 @@ public class ModelToXSD {
             String rns = rb.getNamespace().getNamespaceURI();
             // Replace xs:foo with proxy niem-xs:foo
             if (XSD_NS_URI.equals(rns)) {
-                baseQN = me.getProxyPrefix() + ":" + rbn;
-                nsdep.add(PROXY_NS);
+                baseQN = proxyNS.getNamespacePrefix() + ":" + rbn;
+                nsdep.add(proxyNS);
             } else {
                 baseQN = rb.getQName();
                 nsdep.add(rb.getNamespace());
@@ -239,7 +297,8 @@ public class ModelToXSD {
         // Create a simpleType, use that for xs:extension base
         else {
             Element age = dom.createElementNS(XSD_NS_URI, "xs:attributeGroup");
-            age.setAttribute("ref", me.getStructuresPrefix() + ":" + "SimpleObjectAttributeGroup");
+//            age.setAttribute("ref", me.getStructuresPrefix() + ":" + "SimpleObjectAttributeGroup");
+            age.setAttribute("ref", "structures" + ":" + "SimpleObjectAttributeGroup");
             exe.appendChild(age);
             baseQN = createSimpleType(dom, typedefs, nsdep, bdt);
         }
@@ -306,9 +365,10 @@ public class ModelToXSD {
         ste.appendChild(rse);
     }
         
-    private void createTypeFromDatatype (Document dom, Map<String,Element> typedefs, Set<Namespace>nsdep, Datatype dt) {
+    private void createTypeFromDatatype (Document dom, Map<String,Element> typedefs, Set<Namespace>nsdep, String nsuri, Datatype dt) {
         String cname = dt.getName();
         if (typedefs.containsKey(cname)) return;
+        if (!nsuri.equals(dt.getNamespace().getNamespaceURI())) return;        
         if (XSD_NS_URI.equals(dt.getNamespace().getNamespaceURI())) return;
         Element cte = dom.createElementNS(XSD_NS_URI, "xs:complexType");
         cte.setAttribute("name", cname);
@@ -317,11 +377,13 @@ public class ModelToXSD {
         createSimpleContent(dom, cte, typedefs, nsdep, dt);
     }   
     
-    private void createElementOrAttribute(Document dom, Map<String,Element>propdecls, Set<Namespace>nsdep, Property p) {
+    private void createElementOrAttribute(Document dom, Map<String,Element>propdecls, Set<Namespace>nsdep, String nsuri, Property p) {
         ClassType pt = p.getClassType();
         Datatype dt  = p.getDatatype();
         Element pe;
-        if (isLowerCase(p.getName().charAt(0))) pe = dom.createElementNS(XSD_NS_URI, "xs:attribute");   // FIXME
+        if (!nsuri.equals(p.getNamespace().getNamespaceURI())) return;   
+        LOG.debug("Creating {} for {}", (me.isAttribute(p.getQName()) ? "attribute" : "element"), p.getQName());
+        if (me.isAttribute(p.getQName())) pe = dom.createElementNS(XSD_NS_URI, "xs:attribute");
         else pe = dom.createElementNS(XSD_NS_URI, "xs:element");
         addDefinition(dom, pe, p.getDefinition());
         pe.setAttribute("name", p.getName());
@@ -330,7 +392,7 @@ public class ModelToXSD {
             pe.setAttribute("type", pt.getQName());
             nsdep.add(pt.getNamespace());
         }
-        else {
+        else if (null != dt) {
             pe.setAttribute("type", dt.getQName());
             nsdep.add(dt.getNamespace());
         }
@@ -353,7 +415,7 @@ public class ModelToXSD {
     // Writes the XSD document model.  Post-processing of XSLT output to do
     // what XSLT should do, but doesn't.  You can't process arbitrary XML in
     // this way, but we know what the XSLT output is going to be, so it works.
-    private void writeToXSD (Document dom, Writer w) throws TransformerConfigurationException, TransformerException, IOException {
+    private void writeDom (Document dom, Writer w) throws TransformerConfigurationException, TransformerException, IOException {
         Transformer tr = TransformerFactory.newInstance().newTransformer();
         tr.setOutputProperty(OutputKeys.INDENT, "yes");
         tr.setOutputProperty(OutputKeys.METHOD, "xml");
@@ -363,8 +425,8 @@ public class ModelToXSD {
         tr.transform(new DOMSource(dom), new StreamResult(ostr));        
         
         // process string by lines to do what XSLT won't do :-(
-        // For <xs:schema>: namespace decls and attributes on separate indented lines.
-        // For element references: order as @ref, @minOccurs, @maxOccurs.
+        // For <xs:schema>, namespace decls and attributes on separate indented lines.
+        // For <xs:element>, order as @ref, @minOccurs, @maxOccurs, @name, @type, @substitutionGroup, then others
         Pattern elm = Pattern.compile("^(\\s+<xs:element)\\s+([^/]*)(/?>)");    // match <xs:element ...>
         Scanner scn = new Scanner(ostr.toString());
         while (scn.hasNextLine()) {
@@ -384,13 +446,19 @@ public class ModelToXSD {
                 }                 
                 w.write(">");
             }
-            // For element refs: write @ref, @minOccurs, @maxOccurs, then other attributes
+            // For xs:element, write attributes in specified order
             else if (em.matches()) {
+                String[] order;
                 Map<String,String> tmap = keyValMap(em.group(2));
                 w.write(em.group(1));
-                if (null!=tmap.get("ref")) { w.write(" "+tmap.get("ref")); tmap.remove("ref"); }
-                if (null!=tmap.get("minOccurs")) { w.write(" "+tmap.get("minOccurs")); tmap.remove("minOccurs"); }
-                if (null!=tmap.get("maxOccurs")) { w.write(" "+tmap.get("maxOccurs")); tmap.remove("maxOccurs"); }                
+                if (null != tmap.get("ref")) order = new String[]{ "ref", "minOccurs", "maxOccurs" };
+                else order = new String[]{ "name", "type", "substitutionGroup" };
+                for (String key : order) {
+                    if (null != tmap.get(key)) {
+                        w.write(" " + tmap.get(key));
+                        tmap.remove(key);
+                    }
+                }              
                 for (String str : tmap.values()) { w.write(" "+str); }
                 w.write(em.group(3));
             }
@@ -399,7 +467,7 @@ public class ModelToXSD {
         }        
     }
     
-    // 
+    // Breaks a string of key="value" pairs into a sorted map
     private TreeMap<String,String> keyValMap (String s) {
         TreeMap<String,String> kvm = new TreeMap<>();
         String[] tok = s.split("\\s+");
@@ -412,5 +480,18 @@ public class ModelToXSD {
         }
         return kvm;
     }
+    
+    // Returns a Namespace object with the right prefix and URI for the
+    // specified builtin and NIEM version.
+    private Namespace getBuiltinNamespace (int kind, String niemVersion) {
+        String bnsuri = getBuiltinNamespaceURI(kind, niemVersion);
+        Namespace bns = builtinNSmap.get(bnsuri);
+        if (null != bns) return bns;
+        String bpr = me.getBuiltinPrefix(bnsuri);
+        bns = new Namespace(bpr, bnsuri);
+        builtinNSmap.put(bnsuri, bns);
+        return bns;       
+    }
+
 }
 

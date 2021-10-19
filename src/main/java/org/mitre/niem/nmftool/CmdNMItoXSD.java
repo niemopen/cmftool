@@ -35,6 +35,8 @@ import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.nmf.Model;
 import org.mitre.niem.xsd.ModelExtension;
 import org.mitre.niem.xsd.ModelToXSD;
@@ -52,11 +54,14 @@ class CmdNMItoXSD implements JCCommand {
     
     @Parameter(names = "-o", description = "output directory for schema pile")
     private String outputDir = "";
-     
+    
+    @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
+    private boolean debugFlag = false;
+    
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "modelFile.nmi")
+    @Parameter(description = "model.cmf [modelExt.cmx]")
     private List<String> mainArgs;
     
     CmdNMItoXSD () {
@@ -87,7 +92,6 @@ class CmdNMItoXSD implements JCCommand {
     }    
     
     private void run (JCommander cob) {
-
         if (help) {
             cob.usage();
             System.exit(0);
@@ -96,6 +100,10 @@ class CmdNMItoXSD implements JCCommand {
             cob.usage();
             System.exit(1);
         }
+        // Set debug logging
+        if (debugFlag) {
+            Configurator.setAllLevels(LogManager.getRootLogger().getName(), org.apache.logging.log4j.Level.DEBUG);
+        }        
         // Argument of "-" signals end of arguments, allows "-foo" filenames
         String na = mainArgs.get(0);
         if (na.startsWith("-")) {
@@ -109,14 +117,14 @@ class CmdNMItoXSD implements JCCommand {
         }       
         // If output directory exists, make sure it's empty
         File od = new File(outputDir);
-//        try {
-//            if (od.exists() && (!FileUtils.isDirectory(od) || !FileUtils.isEmptyDirectory(od))) {
-//                System.err.println("Output directory is not empty");
-//                System.exit(1);
-//            }
-//        } catch (IOException ex) {
-//            System.err.println(String.format("Error checking output directory: %s", ex.getMessage()));
-//        }
+        try {
+            if (od.exists() && (!FileUtils.isDirectory(od) || !FileUtils.isEmptyDirectory(od))) {
+                System.err.println(String.format("Output directory %s is not empty", outputDir));
+                System.exit(1);
+            }
+        } catch (IOException ex) {
+            System.err.println(String.format("Error checking output directory: %s", ex.getMessage()));
+        }
         // Make sure the Xerces parser can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
@@ -124,20 +132,35 @@ class CmdNMItoXSD implements JCCommand {
             System.err.println(ex.getMessage());
             System.exit(1);
         }
-        // Single argument should be the model instance file
-        if (mainArgs.size() != 1) {
+        // One or two arguments: cmf, maybe cmx
+        if (mainArgs.size() < 1 || mainArgs.size() > 2) {
             cob.usage();
         }
-        // Read the model object from the model instance file
+        // Read the model object from the model file
         Model m = null;
+        String mfp = mainArgs.get(0);
         try {
-            File ifile = new File(mainArgs.get(0));
+            File ifile = new File(mfp);
             FileInputStream is = new FileInputStream(ifile);
             ModelXMLReader mr = new ModelXMLReader();
             m = mr.readXML(is);
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             System.err.println(String.format("Error reading model file: %s", ex.getMessage()));
             System.exit(1);
+        }
+        // Read the model extension object from the extension file, if provided
+        ModelExtension me = null;
+        if (mainArgs.size() == 2) {
+            me = new ModelExtension(m);
+            String extfp = mainArgs.get(1);
+            try {
+                File ifile = new File(extfp);
+                FileInputStream is = new FileInputStream(ifile);
+                me.readXML(is);
+            } catch (ParserConfigurationException | SAXException | IOException ex) {
+                System.err.println(String.format("Error reading extension file: %s", ex.getMessage()));
+                Logger.getLogger(CmdNMItoXSD.class.getName()).log(Level.SEVERE, null, ex);
+            } 
         }
         // Create the output directory if necessary
         if (!od.exists()) {
@@ -149,7 +172,6 @@ class CmdNMItoXSD implements JCCommand {
             }
         }
         // Write the NIEM model instance to the output stream
-        ModelExtension me = new ModelExtension();
         ModelToXSD mw = new ModelToXSD(m, me);
         try {
             mw.writeXSD(od);

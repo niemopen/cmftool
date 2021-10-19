@@ -36,6 +36,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     
     protected short type;                   // component type (ClassType, Property, etc.)
     private String name = null;             // local name
+    private String prefix = null;           // namespace prefix; from setNamespace
     private Namespace namespace = null;     // namespace object
     private String definition = null;       // xs:documentation string
     
@@ -43,7 +44,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public boolean isModelChild ()          { return true; }    // Components are model children
     
     public void setName (String s)          { name = s; }
-    public void setNamespace (Namespace ns) { namespace = ns; }
+    public void setNamespace (Namespace ns) { namespace = ns; prefix = namespace.getNamespacePrefix(); }
     public void setDefinition (String s)    { definition = s; }
     
     public short getType()           { return type; }
@@ -67,7 +68,9 @@ public abstract class Component extends ObjectType implements Comparable<Compone
        
     @Override
     public int compareTo (Component o) {
-        return this.getURI().compareTo(o.getURI());
+        int rv = this.prefix.compareTo(o.prefix);
+        if (rv != 0) return rv;
+        return this.name.compareTo(o.name);
     }    
     
     public static String genURI (String nsuri, String lname) {

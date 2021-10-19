@@ -1,0 +1,47 @@
+niem-3.0  http://release.niem.gov/niem/proxy/xsd/3.0/
+niem-3.1  http://release.niem.gov/niem/proxy/xsd/3.0/
+niem-3.2  http://release.niem.gov/niem/proxy/xsd/3.0/
+niem-4.0  http://release.niem.gov/niem/proxy/xsd/4.0/
+niem-4.1  http://release.niem.gov/niem/proxy/xsd/4.0/
+niem-4.2  http://release.niem.gov/niem/proxy/xsd/4.0/
+niem-5.0  http://release.niem.gov/niem/proxy/niem-xs/5.0/
+
+niem-3.0  http://release.niem.gov/niem/appinfo/3.0/
+niem-3.1  http://release.niem.gov/niem/appinfo/3.0/
+niem-3.2  http://release.niem.gov/niem/appinfo/3.0/
+niem-4.0  http://release.niem.gov/niem/appinfo/4.0/
+niem-4.1  http://release.niem.gov/niem/appinfo/4.0/
+niem-4.2  http://release.niem.gov/niem/appinfo/4.0/
+niem-5.0  http://release.niem.gov/niem/appinfo/5.0/
+
+niem-3.0
+niem-3.1
+niem-3.2
+niem-4.0  http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/
+niem-4.1  http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/
+niem-4.2  http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/
+niem-5.0  http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/
+
+niem-3.0
+niem-3.1
+niem-3.2
+niem-4.0  http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/
+niem-4.1  http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/
+niem-4.2  http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/
+niem-5.0  http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/
+
+niem-3.0  http://release.niem.gov/niem/conformanceTargets/3.0/
+niem-3.1  http://release.niem.gov/niem/conformanceTargets/3.0/
+niem-3.2  http://release.niem.gov/niem/conformanceTargets/3.0/
+niem-4.0  http://release.niem.gov/niem/conformanceTargets/3.0/
+niem-4.1  http://release.niem.gov/niem/conformanceTargets/3.0/
+niem-4.2  http://release.niem.gov/niem/conformanceTargets/3.0/
+niem-5.0  http://release.niem.gov/niem/conformanceTargets/3.0/
+
+niem-3.0  http://release.niem.gov/niem/structures/3.0/
+niem-3.1  http://release.niem.gov/niem/structures/3.0/
+niem-3.2  http://release.niem.gov/niem/structures/3.0/
+niem-4.0  http://release.niem.gov/niem/structures/4.0/
+niem-4.1  http://release.niem.gov/niem/structures/4.0/
+niem-4.2  http://release.niem.gov/niem/structures/4.0/
+niem-5.0  http://release.niem.gov/niem/structures/5.0/

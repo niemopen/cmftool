@@ -27,9 +27,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.nmf.Component.C_CLASSTYPE;
 import static org.mitre.niem.nmf.Component.C_DATATYPE;
 import static org.mitre.niem.nmf.Component.C_OBJECTPROPERTY;
+import static org.mitre.niem.nmf.Namespace.mungedPrefix;
 
 /**
  *
@@ -37,13 +40,15 @@ import static org.mitre.niem.nmf.Component.C_OBJECTPROPERTY;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Model extends ObjectType {
-    private final Map<String,Component> modelComponents = new HashMap<>();        // map component URI to object; for duplicate checking
+    static final Logger LOG = LogManager.getLogger(Model.class);   
+    
+    private final Map<String,Component> modelComponents = new HashMap<>();      // map component URI to object; for duplicate checking
     private final SortedSet<ClassType> classTypeSet     = new TreeSet<>();
     private final SortedSet<Datatype> datatypeSet       = new TreeSet<>();
     private final SortedSet<Namespace> namespaceSet     = new TreeSet<>();
     private final SortedSet<Property> propertySet       = new TreeSet<>();
-    
-    private final Map<String,Namespace> namespaceMap    = new HashMap<>();
+    private final Map<String,String> prefixMap          = new HashMap<>();      // prefix -> nsURI
+    private final Map<String,Namespace> namespaceMap    = new HashMap<>();      // nsURI -> Namespace
 
     public SortedSet<ClassType> classTypeSet()           { return classTypeSet; }
     public SortedSet<Datatype> datatypeSet()             { return datatypeSet; }
@@ -52,6 +57,16 @@ public class Model extends ObjectType {
        
     public Model () { }
     public Model (Model m) { }  // FIXME -- useless? expect copy, but doesn't
+    
+    /**
+     * Returns a copy of the map from namespace prefix to namespace URI.
+     * @return namespace prefix map
+     */
+    public Map<String,String> getPrefixMap () { 
+        Map<String,String> rv = new HashMap<>();
+        prefixMap.forEach((p,n) -> { rv.put(p, n); });
+        return rv; 
+    }
     
     public Component getComponent (String curi) {
         return modelComponents.get(curi);
@@ -98,45 +113,59 @@ public class Model extends ObjectType {
     }
     
     public void addClassType (ClassType x) {
-        this.addComponent(x);
-        this.classTypeSet.add(x);
+        addComponent(x);
+        classTypeSet.add(x);
     }
     
     public void removeClassType (ClassType x) {
-        if (!this.classTypeSet.contains(x)) return;
+        if (!classTypeSet.contains(x)) return;
         removeComponent(x);
-        this.classTypeSet.remove(x);
+        classTypeSet.remove(x);
     }
     
     public void addDatatype (Datatype x) {
-        this.addComponent(x);
-        this.datatypeSet.add(x);
+        addComponent(x);
+        datatypeSet.add(x);
     }
     
     public void removeDatatype (Datatype x) {
-        if (!this.datatypeSet.contains(x)) return;
+        if (!datatypeSet.contains(x)) return;
         removeComponent(x);
-        this.datatypeSet.remove(x);
+        datatypeSet.remove(x);
     }
 
     public void addProperty (Property x) {
-        this.addComponent(x);
-        this.propertySet.add(x);
+        addComponent(x);
+        propertySet.add(x);
     }
     
     public void removeProperty (Property x) {
-        if (!this.propertySet.contains(x)) return;
+        if (!propertySet.contains(x)) return;
         removeComponent(x);
-        this.propertySet.remove(x);
+        propertySet.remove(x);
     }
     
-    // FIXME -- should enforce unique namespace prefix
+    // Enforces guarantee that each namespace prefix is mapped to exactly
+    // one namespace URI.
     public void addNamespace (Namespace x) {
+        // See if Namespace object is already in the model
          for (var ns : namespaceSet) { 
-             if (x != ns && x.getNamespaceURI().equals(ns.getNamespaceURI())) return;
+             if (x != ns && x.getNamespaceURI().equals(ns.getNamespaceURI())) {
+                 LOG.warn("Namespace {} already in model", x.getNamespaceURI());
+                 return;
+             }         
          }
-         this.namespaceSet.add(x); 
-         this.namespaceMap.put(x.getNamespaceURI(), x);
+         String prefix = x.getNamespacePrefix();
+         String nsuri  = x.getNamespaceURI();
+         if (prefixMap.containsKey(prefix)) {
+             String nprefix = mungedPrefix(prefixMap, prefix);
+             LOG.warn("Namespace prefix {} already assigned to {}", prefix, prefixMap.get(prefix));
+             LOG.warn("Mapped prefix {} to {} instead", nprefix, nsuri);
+             x.setNamespacePrefix(nprefix);
+         }
+         namespaceSet.add(x); 
+         namespaceMap.put(x.getNamespaceURI(), x);
+         prefixMap.put(x.getNamespacePrefix(), x.getNamespaceURI());
     }
     
     public void removeNamespace (Namespace x) {

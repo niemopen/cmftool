@@ -165,8 +165,6 @@
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
           <xs:element ref="nc:LatitudeDegreeValue" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element ref="nc:LatitudeMinuteValue" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element ref="nc:LatitudeSecondValue" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -243,8 +241,6 @@
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
           <xs:element ref="nc:LongitudeDegreeValue" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element ref="nc:LongitudeMinuteValue" minOccurs="0" maxOccurs="unbounded"/>
-          <xs:element ref="nc:LongitudeSecondValue" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -429,16 +425,6 @@
       <xs:documentation>A value that specifies the degree of a latitude. The value comes from a restricted range between -90 (inclusive) and +90 (inclusive).</xs:documentation>
     </xs:annotation>
   </xs:element>
-  <xs:element name="LatitudeMinuteValue" type="nc:AngularMinuteType" nillable="true">
-    <xs:annotation>
-      <xs:documentation>A latitude value that specifies a minute of a degree. The value comes from a restricted range of 0 (inclusive) to 60 (exclusive).</xs:documentation>
-    </xs:annotation>
-  </xs:element>
-  <xs:element name="LatitudeSecondValue" type="nc:AngularSecondType" nillable="true">
-    <xs:annotation>
-      <xs:documentation>A latitude value that specifies a second of a minute. The value comes from a restricted range of 0 (inclusive) to 60 (exclusive).</xs:documentation>
-    </xs:annotation>
-  </xs:element>
   <xs:element name="LengthUnitAbstract" abstract="true">
     <xs:annotation>
       <xs:documentation>A data concept for a unit of measure for length.</xs:documentation>
@@ -457,16 +443,6 @@
   <xs:element name="LongitudeDegreeValue" type="nc:LongitudeDegreeType" nillable="true">
     <xs:annotation>
       <xs:documentation>A value that specifies the degree of a longitude. The value comes from a restricted range between -180 (inclusive) and +180 (inclusive).</xs:documentation>
-    </xs:annotation>
-  </xs:element>
-  <xs:element name="LongitudeMinuteValue" type="nc:AngularMinuteType" nillable="true">
-    <xs:annotation>
-      <xs:documentation>A longitude value that specifies a minute of a degree. The value comes from a restricted range of 0 (inclusive) to 60 (exclusive).</xs:documentation>
-    </xs:annotation>
-  </xs:element>
-  <xs:element name="LongitudeSecondValue" type="nc:AngularSecondType" nillable="true">
-    <xs:annotation>
-      <xs:documentation>A longitude value that specifies a second of a minute. The value comes from a restricted range of 0 (inclusive) to 60 (exclusive).</xs:documentation>
     </xs:annotation>
   </xs:element>
   <xs:element name="MeasureDecimalValue" type="niem-xs:decimal" substitutionGroup="nc:MeasurePointAbstract">
