@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class CMFTool {
     
-    public static String VERSION_ID = "cmftool 0.2 (19 October 2021)";
+    public static String VERSION_ID = "cmftool 0.2.1 (10 November 2021)";
     
     public static void main (String[] args) {
         CMFTool obj = new CMFTool();
@@ -47,7 +47,10 @@ public class CMFTool {
         
 // Uncomment arguments for debugging:
 
+        args = new String[]{"m2r", "src/test/resources/CrashDriver-iepd/CrashDriver.cmf"};
 
+//        args = new String[]{"x2m", "-d", "C:\\Work\\im22\\uc2\\sos-iepd\\extension\\uc2Msg.xsd"};
+//        args = new String[]{"m2x", "-d", "-o", "/tmp/cmf", "C:\\Work\\im22\\uc2\\sos-iepd\\uc2Msg.cmf", "C:\\Work\\im22\\uc2\\sos-iepd\\uc2Msg.cmx"};
 
 //        args = new String[]{"x2m", "-o", "src/test/resources/CrashDriver-iepd", "src/test/resources/CrashDriver-iepd/xsd/extension/CrashDriver.xsd",
 //             "src/test/resources/CrashDriver-iepd/xsd/xml-catalog.xml"};
@@ -79,11 +82,13 @@ public class CMFTool {
         jc.setProgramName("cmftool");
         
         CmdCMFtoCMF nmiToNmiCmd = new CmdCMFtoCMF(jc);
+        CmdCMFtoRDF nmiToRdfCmd = new CmdCMFtoRDF(jc);
         CmdCMFtoXSD nmiToXsdCmd = new CmdCMFtoXSD(jc);
         CmdXSDtoCMF xsdToNmiCmd = new CmdXSDtoCMF(jc);        
         CommandHelp helpCmd     = new CommandHelp(jc);    
-        jc.addCommand("m2x", nmiToXsdCmd);
         jc.addCommand("m2m", nmiToNmiCmd);
+        jc.addCommand("m2r", nmiToRdfCmd);
+        jc.addCommand("m2x", nmiToXsdCmd);
         jc.addCommand("x2m", xsdToNmiCmd);        
         jc.addCommand("help", helpCmd, "usage");
         

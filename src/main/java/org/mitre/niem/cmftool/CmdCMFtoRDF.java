@@ -25,7 +25,6 @@ package org.mitre.niem.cmftool;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -35,6 +34,7 @@ import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.rdf.ModelToRDF;
 import org.mitre.niem.xsd.ModelXMLReader;
 import org.mitre.niem.xsd.ModelXMLWriter;
 import org.mitre.niem.xsd.ParserBootstrap;
@@ -46,10 +46,7 @@ import org.xml.sax.SAXException;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-
-@Parameters(commandDescription = "canonicalize a NIEM model instance")
-
-class CmdCMFtoCMF implements JCCommand {
+class CmdCMFtoRDF implements JCCommand {
     
     @Parameter(names = "-o", description = "file for converter output")
     private String objFile = "";
@@ -58,16 +55,16 @@ class CmdCMFtoCMF implements JCCommand {
     boolean help = false;
         
     @Parameter(description = "modelFile.cmf")
-    private List<String> mainArgs;
+    private List<String> mainArgs;    
     
-    CmdCMFtoCMF () {
+    CmdCMFtoRDF () {
     }
   
-    CmdCMFtoCMF (JCommander jc) {
+    CmdCMFtoRDF (JCommander jc) {
     }
 
     public static void main (String[] args) {       
-        CmdCMFtoCMF obj = new CmdCMFtoCMF();
+        CmdCMFtoRDF obj = new CmdCMFtoRDF();
         obj.runMain(args);
     }
     
@@ -76,14 +73,14 @@ class CmdCMFtoCMF implements JCCommand {
         JCommander jc = new JCommander(this);
         CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("canonicalize");
+        jc.setProgramName("generateRDF");
         jc.parse(args);
         run(jc);
     }
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool m2m");
+        cob.setProgramName("cmftool m2r");
         run(cob);
     }    
     
@@ -142,16 +139,9 @@ class CmdCMFtoCMF implements JCCommand {
             System.exit(1);
         }
         // Write the NIEM model instance to the output stream
-        ModelXMLWriter mw = new ModelXMLWriter();
-        try {            
-            mw.writeXML(m, ow);
-            ow.close();
-        } catch (TransformerException ex) {
-            System.err.println(String.format("Output error: %s", ex.getMessage()));
-            System.exit(1);
-        } catch (ParserConfigurationException ex) {
-            // CAN'T HAPPEN
-        }
+        ModelToRDF rdfw = new ModelToRDF(m);
+        rdfw.writeRDF(ow);
+        ow.close();
         System.exit(0);
-    }
+    }    
 }

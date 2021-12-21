@@ -41,6 +41,13 @@ public class Datatype extends Component {
     public UnionOf getUnionOf()             { return unionOf; }
     public Datatype getListOf()             { return listOf; }
     
+    public Datatype getBaseType () {
+        if (null != restrictionOf) return restrictionOf.getDatatype().getBaseType();
+        else if (null != listOf)   return listOf.getBaseType();
+        else if (null != unionOf)  return null; // FIXME
+        else return this;
+    }
+    
     public Datatype () { type = C_DATATYPE; }
     
     public Datatype (Model m) {

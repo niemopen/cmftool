@@ -218,7 +218,7 @@ public class ModelToXSD {
             String cname = ct.getName();
  
             if (null == ct.getExtensionOfClass()) {
-                String nver = me.getNIEMVersion(ct.getURI());
+                String nver = me.getNIEMVersion(ct.getNamespace().getNamespaceURI());
                 Namespace structuresNS = getBuiltinNamespace(NIEM_STRUCTURES, nver);
                 String spr = structuresNS.getNamespacePrefix();
                 if (cname.endsWith("AssociationType"))       exe.setAttribute("base", spr+":AssociationType");

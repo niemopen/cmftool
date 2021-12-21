@@ -38,11 +38,14 @@ public class NIEMConstants {
     public static final String CMF_NS_URI_PREFIX = "http://reference.niem.gov/specification/metamodel/";    
     public static final String CMF_NS_URI = "http://reference.niem.gov/specification/metamodel/1.0/";
     public static final String DEFAULT_NIEM_VERSION = "5.0";
-    public static final String NDR_CT_URI_PREFIX = "http://reference.niem.gov/niem/specification/naming-and-design-rules/";    
+    public static final String NDR_CT_URI_PREFIX = "http://reference.niem.gov/niem/specification/naming-and-design-rules/";   
+    public static final String NIEM_PUBLICATION_PREFIX = "http://publication.niem.gov/niem/";
     public static final String NIEM_RELEASE_PREFIX = "http://release.niem.gov/niem/";
     public static final String PROXY_NS_URI = "http://release.niem.gov/niem/proxy/niem-xs/5.0/";     
-    public static final String PROXY_NS_URI_PREFIX = "http://release.niem.gov/niem/proxy/";    
+    public static final String PROXY_NS_URI_PREFIX = "http://release.niem.gov/niem/proxy/"; 
+    public static final String OWL_NS_URI = "http://www.w3.org/2002/07/owl#";
     public static final String RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";    
+    public static final String RDFS_NS_URI = "http://www.w3.org/2000/01/rdf-schema#";
     public static final String STRUCTURES_NS_URI = "http://release.niem.gov/niem/structures/5.0/";
     public static final String STRUCTURES_NS_URI_PREFIX = "http://release.niem.gov/niem/structures/";
     public static final String XML_CATALOG_NS_URI = "urn:oasis:names:tc:entity:xmlns:xml:catalog";

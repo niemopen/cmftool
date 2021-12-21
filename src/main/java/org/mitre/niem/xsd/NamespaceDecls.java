@@ -267,7 +267,8 @@ public class NamespaceDecls {
                     else if (atts.getURI(i).startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX)) {
                         if (CONFORMANCE_ATTRIBUTE_NAME.equals(atts.getLocalName(i))) {
                             ctargs = atts.getValue(i);
-                            if (nsuri.startsWith(NIEM_RELEASE_PREFIX)) nskind = NSK_NIEM_MODEL;
+                            if (nsuri.startsWith(NIEM_RELEASE_PREFIX) 
+                                    || nsuri.startsWith(NIEM_PUBLICATION_PREFIX)) nskind = NSK_NIEM_MODEL;
                             else nskind = NSK_EXTENSION;
                         }
                     }

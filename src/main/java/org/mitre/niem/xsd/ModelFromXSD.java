@@ -145,25 +145,22 @@ public class ModelFromXSD {
         // All namespaces now processed, with preferred prefix assigned
         // Remember relative path to schema documents
         // Create namespace objects and add to model
-        nsFile.forEach(new BiConsumer<String, String>() {
-            @Override
-            public void accept(String nsuri, String furi) {
-                me.setDocumentFilepath(nsuri, furi.substring(rlen));
-                me.setPrefix(nsuri, nsDecls.getPrefix(nsuri));
+        nsFile.forEach((String nsuri, String furi) -> {
+            me.setDocumentFilepath(nsuri, furi.substring(rlen));
+            me.setPrefix(nsuri, nsDecls.getPrefix(nsuri));
+            me.setNIEMVersion(nsuri, nsDecls.getNIEMVersion(nsuri));
+            int nsk = nsDecls.getNSType(nsuri);
+            int bik = getBuiltinNamespaceKind(nsuri);
+            // Don't create Namespace for builtins (except code-lists-instance) or externals
+            if ((NIEM_CODE_LISTS_INSTANCE == bik || 0 > bik) && NSK_EXTERNAL != nsk) {
+                Namespace nsobj = new Namespace(m);
+                nsobj.setNamespacePrefix(nsDecls.getPrefix(nsuri));
+                nsobj.setNamespaceURI(nsuri);
+                nsobj.setDefinition(nsDecls.getDocumentation(nsuri));
+                m.addNamespace(nsobj);
+                me.setConformanceTargets(nsuri, nsDecls.getConformanceTargets(nsuri));
                 me.setNIEMVersion(nsuri, nsDecls.getNIEMVersion(nsuri));
-                int nsk = nsDecls.getNSType(nsuri);                
-                int bik = getBuiltinNamespaceKind(nsuri);
-                // Don't create Namespace for builtins (except code-lists-instance) or externals
-                if ((NIEM_CODE_LISTS_INSTANCE == bik || 0 > bik) && NSK_EXTERNAL != nsk) {
-                    Namespace nsobj = new Namespace(m);
-                    nsobj.setNamespacePrefix(nsDecls.getPrefix(nsuri));
-                    nsobj.setNamespaceURI(nsuri);
-                    nsobj.setDefinition(nsDecls.getDocumentation(nsuri));
-                    m.addNamespace(nsobj);
-                    me.setConformanceTargets(nsuri, nsDecls.getConformanceTargets(nsuri));
-                    me.setNIEMVersion(nsuri, nsDecls.getNIEMVersion(nsuri));
-                    me.setNSVersion(nsuri, nsDecls.getNSVersion(nsuri));
-                }
+                me.setNSVersion(nsuri, nsDecls.getNSVersion(nsuri));
             }
         });
         // ModelExtension values set for structures, proxy, code list instance namespaces
