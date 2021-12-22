@@ -44,17 +44,7 @@ public class XHasProperty extends XObjectType {
     XHasProperty (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
         obj = new HasProperty(m);
-        obj.setSequenceID(this.getSequenceID());
-        for (int i = 0; i < a.getLength(); i++) {
-            if (a.getURI(i).startsWith(CMF_NS_URI_PREFIX)) {
-                if ("minOccursQuantity".equals(a.getLocalName(i))) {
-                    obj.setMinOccursQuantity(a.getValue(i));
-                }
-                else if ("maxOccursQuantity".equals(a.getLocalName(i))) {
-                    obj.setMaxOccursQuantity(a.getValue(i));
-                }
-            }
-        }        
+        obj.setSequenceID(this.getSequenceID());       
     }      
     
     @Override

@@ -76,6 +76,17 @@ public class XStringObject extends XObjectType {
             break;
         }
     } 
+    
+    @Override
+    public void addToHasProperty (XHasProperty hp) {
+        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+        switch (this.getComponentLname()) {
+        case "MaxOccursQuantity":    hp.getObject().setMaxOccursQuantity(val); break;
+        case "MinOccursQuantity":    hp.getObject().setMinOccursQuantity(val); break;
+        default:
+            break;
+        }        
+    }
         
     @Override
     public void addToNamespace(XNamespace ns) {

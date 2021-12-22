@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:cmfx="http://reference.niem.gov/specification/cmf/XSD/0.1/"
+           xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
+           xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+           xmlns:xs-proxy="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
+           targetNamespace="http://reference.niem.gov/specification/cmf/XSD/0.1/"
+           ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ExtensionSchemaDocument"
+           version="1">
+   <xs:annotation>
+      <xs:documentation>A data model for XSD extensions to the NIEM Common Model Format (CMF).</xs:documentation>
+      <xs:appinfo>
+         <appinfo:LocalTerm term="XSD" literal="XML Schema Document"/>
+      </xs:appinfo>
+   </xs:annotation>
+   <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
+   <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+   
+   <xs:element name="ModelExtension" type="cmfx:ModelExtensionType">
+      <xs:annotation>
+         <xs:documentation>A collection of XSD-specific extensions to a CMF model.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <xs:complexType name="ModelExtensionType">
+      <xs:annotation>
+         <xs:documentation>A data type for a collection of XSD-specific extensions to a CMF model.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension base="structures:ObjectType">
+            <xs:sequence>
+               <xs:element ref="cmfx:SchemaDocument" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element ref="cmfx:AttributeName" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+   
+   <xs:element name="SchemaDocument" type="cmfx:SchemaDocumentType">
+      <xs:annotation>
+         <xs:documentation>An XML schema document.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <xs:complexType name="SchemaDocumentType">
+      <xs:annotation>
+         <xs:documentation>A data type for an XML schema document.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension base="structures:ObjectType">
+            <xs:sequence>
+               <xs:element ref="cmfx:NamespaceURI" minOccurs="1" maxOccurs="1"/>
+               <xs:element ref="cmfx:ConformanceTargetURIList" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="cmfx:DocumentFilePathText" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="cmfx:NIEMVersionText" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="cmfx:SchemaVersionText" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="cmfx:NamespacePrefixText" minOccurs="0" maxOccurs="1"/>               
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>   
+   
+   <xs:element name="NamespaceURI" type="xs-proxy:anyURI">
+      <xs:annotation>
+         <xs:documentation>A namespace identifier.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   
+   <xs:element name="ConformanceTargetURIList" type="cmfx:URIListType">
+      <xs:annotation>
+         <xs:documentation>A list of conformance target identifiers.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <xs:simpleType name="URIListSimpleType">
+      <xs:annotation>
+         <xs:documentation>A data type for a white space-delimited list of URIs.</xs:documentation>
+      </xs:annotation>
+      <xs:list itemType="xs:anyURI"/>
+   </xs:simpleType>
+   <xs:complexType name="URIListType">
+      <xs:annotation>
+         <xs:documentation>A data type for a white space-delimited list of URIs.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleContent>
+         <xs:extension base="cmfx:URIListSimpleType">
+            <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+         </xs:extension>
+      </xs:simpleContent>
+   </xs:complexType>
+   
+   <xs:element name="DocumentFilePathText" type="xs-proxy:string">
+      <xs:annotation>
+         <xs:documentation>A relative file path to a document.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   
+   <xs:element name="NIEMVersionText" type="xs-proxy:token">
+      <xs:annotation>
+         <xs:documentation>A NIEM version number.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   
+   <xs:element name="SchemaVersionText" type="xs-proxy:token">
+      <xs:annotation>
+         <xs:documentation>A version attribute of an XML schema document.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   
+   <xs:element name="NamespacePrefixText" type="xs-proxy:token">
+      <xs:annotation>
+         <xs:documentation>A namespace declaration prefix.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   
+   <xs:element name="AttributeName" type="xs-proxy:token">
+      <xs:annotation>
+         <xs:documentation>A qualified name of an XML attribute.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   
+</xs:schema>

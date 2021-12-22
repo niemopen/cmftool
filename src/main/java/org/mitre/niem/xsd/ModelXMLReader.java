@@ -172,9 +172,11 @@ public class ModelXMLReader {
                 case "MaxExclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "MaxInclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "MaxLength":           o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "MaxOccursQuantity":   o = new XStringObject(m, p, ens, eln, atts, lineNum); break;                
                 case "MinExclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "MinInclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "MinLength":           o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "MinOccursQuantity":   o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "Model":               o = new XModel(m, p, ens, eln, atts, lineNum); break;
                 case "Name":                o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "Namespace":           o = new XNamespace(m, p, ens, eln, atts, lineNum); break;

@@ -5,5 +5,4 @@
   <uri name="http://release.niem.gov/niem/conformanceTargets/3.0/" uri="utility/conformanceTargets.xsd"/>
   <uri name="http://release.niem.gov/niem/proxy/niem-xs/5.0/" uri="adapters/niem-xs.xsd"/>
   <uri name="http://release.niem.gov/niem/structures/5.0/" uri="utility/structures.xsd"/>
-  <!--<nextCatalog catalog="codes/genc/xml-catalog.xml"/>-->
 </catalog>
