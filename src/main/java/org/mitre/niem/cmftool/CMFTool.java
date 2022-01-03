@@ -47,36 +47,33 @@ public class CMFTool {
         
 // Uncomment arguments for debugging:
 
-//        args = new String[]{"m2r", "src/test/resources/CrashDriver-iepd/CrashDriver.cmf"};
-
-        args = new String[]{"m2m", "-o", "/tmp/cmf/CrashDriver.cmf", "src/test/resources/CrashDriver-iepd/CrashDriver.cmf"};
+//        args = new String[]{"m2r", "examples/CrashDriver-iepd/CrashDriver.cmf"};
 
 //        args = new String[]{"x2m", "-d", "C:\\Work\\im22\\uc2\\sos-iepd\\extension\\uc2Msg.xsd"};
 //        args = new String[]{"m2x", "-d", "-o", "/tmp/cmf", "C:\\Work\\im22\\uc2\\sos-iepd\\uc2Msg.cmf", "C:\\Work\\im22\\uc2\\sos-iepd\\uc2Msg.cmx"};
 
-//        args = new String[]{"x2m", "-o", "src/test/resources/CrashDriver-iepd", "src/test/resources/CrashDriver-iepd/xsd/extension/CrashDriver.xsd",
-//             "src/test/resources/CrashDriver-iepd/xsd/xml-catalog.xml"};
+//        args = new String[]{"x2m", "-o", "examples/CrashDriver-iepd", "examples/CrashDriver-iepd/xsd/extension/CrashDriver.xsd",
+//             "examples/CrashDriver-iepd/xsd/xml-catalog.xml"};
 
-//        args = new String[]{"x2m", "-o", "src/test/resources/TwoVersions", "src/test/resources/TwoVersions/PersonName.xsd",
-//             "src/test/resources/TwoVersions/PercentType.xsd"};      
+//        args = new String[]{"x2m", "-o", "examples/TwoVersions", "examples/TwoVersions/PersonName.xsd",
+//             "examples/TwoVersions/PercentType.xsd"};      
 
-//        args = new String[]{"x2m", "-d", "-o", "src/test/resources/Test", "src/test/resources/Test/CodeType.xsd" };
+//        args = new String[]{"x2m", "-d", "-o", "examples/Test", "examples/Test/CodeType.xsd" };
 
-//        args = new String[]{"x2m", "-d", "-o", "src/test/resources/Test", "src/test/resources/Test/Degree90Type.xsd" };
+//        args = new String[]{"x2m", "-d", "-o", "examples/Test", "examples/Test/Degree90Type.xsd" };
 
 //        args = new String[]{"x2m", "-o", "/tmp/cmf", "/Work/Stuff/NIEM/Releases/niem-5.0/xsd/niem-core.xsd",
 //            "/Work/Stuff/NIEM/Releases/niem-5.0/xsd/xml-catalog.xml" };
          
 //        args = new String[]{"m2x",  "-o", "/tmp/cmf", 
-//          "src/test/resources/CrashDriver-iepd/CrashDriver.cmf", "src/test/resources/CrashDriver-iepd/CrashDriver.cmx"};
+//          "examples/CrashDriver-iepd/CrashDriver.cmf", "examples/CrashDriver-iepd/CrashDriver.cmx"};
 
 //        args = new String[]{"m2x", "-o", "/tmp/cmf",
-//            "src/test/resources/TwoVersions/PersonName.cmf", "src/test/resources/TwoVersions/PersonName.cmx"};
+//            "examples/TwoVersions/PersonName.cmf", "examples/TwoVersions/PersonName.cmx"};
 
 //        args = new String[]{"m2x", "-o", "/tmp/cmf",
-//            "src/test/resources/Test/CodeType.cmf", "src/test/resources/Test/CodeType.cmx"};
+//            "examples/Test/CodeType.cmf", "examples/Test/CodeType.cmx"};
 
-//        args = new String[]{"m2x", "-d", "-o", "/Tmp/cmf/xsd", "/Tmp/cmf/jxdm.cmf", "/Tmp/cmf/jxdm.cmx" };
 
         JCommander jc = new JCommander();
         CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
