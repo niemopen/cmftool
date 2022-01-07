@@ -2,7 +2,7 @@
 <Model
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.2/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.3/">
   <Namespace structures:uri="aamva_d20">
     <NamespaceURI>http://release.niem.gov/niem/codes/aamva_d20/5.0/</NamespaceURI>
     <NamespacePrefixName>aamva_d20</NamespacePrefixName>
@@ -306,8 +306,8 @@
     <Name>MeasurePointAbstract</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>A data concept for a measurement value.</DefinitionText>
-    <SubPropertyOf structures:uri="nc:MeasureValueAbstract" xsi:nil="true"/>
     <AbstractIndicator>true</AbstractIndicator>
+    <SubPropertyOf structures:uri="nc:MeasureValueAbstract" xsi:nil="true"/>
   </Property>
   <Property structures:uri="nc:MeasureValueAbstract">
     <Name>MeasureValueAbstract</Name>

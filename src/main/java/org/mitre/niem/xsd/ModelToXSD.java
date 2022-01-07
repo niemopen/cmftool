@@ -34,7 +34,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -59,9 +58,6 @@ import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
-import static org.mitre.niem.NIEMConstants.CONFORMANCE_TARGET_NS_URI;
-import static org.mitre.niem.NIEMConstants.PROXY_NS_URI;
-import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI;
 import static org.mitre.niem.NIEMConstants.XML_NS_URI;
 import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
 import org.mitre.niem.cmf.ClassType;
@@ -74,6 +70,7 @@ import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_APPINFO;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_CONFORMANCE_TARGETS;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_PROXY;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_STRUCTURES;
@@ -88,7 +85,7 @@ import org.w3c.dom.Element;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelToXSD {
-    static final Logger LOG = LogManager.getLogger(ModelFromXSD.class);
+    static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
         
     private final Model m;
     private final ModelExtension me;
@@ -103,6 +100,7 @@ public class ModelToXSD {
         // Write a schema document for each namespace
         for (Namespace ns : m.namespaceSet()) {
             if (XSD_NS_URI.equals(ns.getNamespaceURI())) continue;
+            if (ns.getIsExternal()) continue;
             String fn = me.getDocumentFilepath(ns.getNamespaceURI());
             File of = new File(od, fn);
             createParentDirectories(of);
@@ -177,6 +175,7 @@ public class ModelToXSD {
             Element ie = dom.createElementNS(XSD_NS_URI, "xs:import");
             ie.setAttribute("namespace", dnsuri);
             ie.setAttribute("schemaLocation", sloc);
+            if (dns.getIsExternal()) addAppinfo(dom, ie, nsuri, "externalImportIndicator", "true");
             root.appendChild(ie);
         }
         // Now add the type definitions and element/attribute declarations to the document
@@ -187,6 +186,16 @@ public class ModelToXSD {
             root.appendChild(element);
         });
         writeDom(dom, ofw);
+    }
+    
+    private void addAppinfo (Document dom, Element e, String nsuri, String appatt, String value) {
+        String niemVersion = me.getNIEMVersion(nsuri);
+        String appinfoNS = getBuiltinNamespaceURI(NIEM_APPINFO, niemVersion);
+        String appinfoPR = me.getBuiltinPrefix(appinfoNS);
+        String appinfoQName = appinfoPR + ":" + appatt;
+        Element root = dom.getDocumentElement();
+        root.setAttributeNS(XML_NS_URI, "xmlns:"+appinfoPR, appinfoNS);
+        e.setAttributeNS(appinfoNS, appinfoQName, value);
     }
     
     // Create types from ClassType objects first, so that attributes are handled.
@@ -200,6 +209,8 @@ public class ModelToXSD {
         cte.setAttribute("name", cname);
         addDefinition(dom, cte, ct.getDefinition());
         typedefs.put(cname, cte);
+        if (ct.getIsDeprecated()) addAppinfo(dom, cte, nsuri, "deprecatedIndicator", "true");
+        if (ct.getIsExternal())   addAppinfo(dom, cte, nsuri, "externalAdapterTypeIndicator", "true");
         
         // ClassType with properties has complex content
         // ClassType without properties and no HasValue has complex content
@@ -371,8 +382,9 @@ public class ModelToXSD {
         if (!nsuri.equals(dt.getNamespace().getNamespaceURI())) return;        
         if (XSD_NS_URI.equals(dt.getNamespace().getNamespaceURI())) return;
         Element cte = dom.createElementNS(XSD_NS_URI, "xs:complexType");
-        cte.setAttribute("name", cname);
         addDefinition(dom, cte, dt.getDefinition());
+        cte.setAttribute("name", cname);
+        if (dt.getIsDeprecated()) addAppinfo(dom, cte, nsuri, "deprecatedIndicator", "true");
         typedefs.put(cname, cte);
         createSimpleContent(dom, cte, typedefs, nsdep, dt);
     }   
@@ -387,7 +399,8 @@ public class ModelToXSD {
         else pe = dom.createElementNS(XSD_NS_URI, "xs:element");
         addDefinition(dom, pe, p.getDefinition());
         pe.setAttribute("name", p.getName());
-        if ("true".equals(p.getAbstractIndicator())) pe.setAttribute("abstract", "true");
+        if (p.getIsAbstract())   pe.setAttribute("abstract", "true");
+        if (p.getIsDeprecated()) addAppinfo(dom, pe, nsuri, "deprecatedIndicator", "true");
         if (null != pt) {
             pe.setAttribute("type", pt.getQName());
             nsdep.add(pt.getNamespace());
@@ -427,42 +440,69 @@ public class ModelToXSD {
         // process string by lines to do what XSLT won't do :-(
         // For <xs:schema>, namespace decls and attributes on separate indented lines.
         // For <xs:element>, order as @ref, @minOccurs, @maxOccurs, @name, @type, @substitutionGroup, then others
-        Pattern elm = Pattern.compile("^(\\s+<xs:element)\\s+([^/]*)(/?>)");    // match <xs:element ...>
+        // For <xs:import>, order as @namespace, @schemaLocation, then others
+        Pattern linePat = Pattern.compile("^(\\s*)<([^\\s>]+)(.*)");
+        String[][]reorder = {
+                { "xs:element", "name", "ref", "type", "minOccurs", "maxOccurs", "substitutionGroup" },
+                { "xs:import", "namespace", "schemaLocation" },
+                { "xs:complexType", "name", "type" },
+                { "xs:attribute", "name", "type" }
+        };
         Scanner scn = new Scanner(ostr.toString());
-        while (scn.hasNextLine()) {
+        while (scn.hasNextLine()) {           
             String line = scn.nextLine();
-            Matcher em = elm.matcher(line);
-            // For <xs:schema>: write targetNamespace first, then namespace declarations, then attributes, on separate lines
-            if (line.startsWith("<xs:schema ")) {
-                line = line.substring(0, line.length()-1);
-                Map<String,String> smap = keyValMap(line);
-                w.write("<xs:schema");
-                if (null!=smap.get("targetNamespace")) { w.write("\n  "+smap.get("targetNamespace")); smap.remove("targetNamespace"); }
-                for (Map.Entry<String,String> me : smap.entrySet()) {
-                    if (me.getKey().startsWith("xmlns:")) { w.write("\n  "+me.getValue()); }
-                }       
-                for (Map.Entry<String,String> me : smap.entrySet()) {
-                    if (!me.getKey().startsWith("xmlns:")) { w.write("\n  "+me.getValue()); }
-                }                 
-                w.write(">");
-            }
-            // For xs:element, write attributes in specified order
-            else if (em.matches()) {
-                String[] order;
-                Map<String,String> tmap = keyValMap(em.group(2));
-                w.write(em.group(1));
-                if (null != tmap.get("ref")) order = new String[]{ "ref", "minOccurs", "maxOccurs" };
-                else order = new String[]{ "name", "type", "substitutionGroup" };
-                for (String key : order) {
-                    if (null != tmap.get(key)) {
-                        w.write(" " + tmap.get(key));
-                        tmap.remove(key);
+            Matcher lineM = linePat.matcher(line);
+//            System.out.print(String.format("line:   '%s'\n", line));
+            if (!lineM.matches()) w.write(line);
+            else {
+                String indent = lineM.group(1);
+                String tag = lineM.group(2);
+                String res = lineM.group(3);
+                String end;
+                res = res.stripTrailing();
+                if (res.endsWith("/>")) end = "/>";
+                else end = ">";
+                res = res.substring(0, res.length() - end.length());
+//                System.out.print(String.format("indent: '%s'\n", indent));
+//                System.out.print(String.format("tag:    '%s'\n", tag));
+//                System.out.print(String.format("rest:   '%s'\n", res));
+//                System.out.print(String.format("end:    '%s'\n", end));
+                for (int i = 0; i < reorder.length; i++) {
+                    if (tag.equals(reorder[i][0])) {
+                        w.write(indent);
+                        w.write("<" + tag);
+                        Map<String,String>tmap = keyValMap(res);
+                        for (int j = 1; j < reorder[i].length; j++) {
+                            String key = reorder[i][j];
+                            if (null != tmap.get(key)) {
+                                w.write(" " + tmap.get(key));
+                                tmap.remove(key);
+                            }
+                        }
+                        for (String str : tmap.values()) w.write(" " + str);
+                        w.write(end);
+                        line = null;
+                        i = reorder.length;
                     }
-                }              
-                for (String str : tmap.values()) { w.write(" "+str); }
-                w.write(em.group(3));
+                }
+                if (null != line && "xs:schema".equals(tag)) {
+                    w.write("<xs:schema");
+                    Map<String,String>tmap = keyValMap(res);
+                    if (null != tmap.get("targetNamespace")) {
+                        w.write("\n  " + tmap.get("targetNamespace"));
+                        tmap.remove("targetNamespace");
+                    }
+                    for (Map.Entry<String,String>me : tmap.entrySet()) {
+                        if (me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
+                    }
+                    for (Map.Entry<String,String>me : tmap.entrySet()) {
+                        if (!me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
+                    }     
+                    w.write(end);
+                    line = null;
+                }
+                if (null != line) w.write(line);
             }
-            else w.write(line);
             w.write("\n");
         }        
     }

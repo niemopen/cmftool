@@ -39,6 +39,8 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     private String prefix = null;           // namespace prefix; from setNamespace
     private Namespace namespace = null;     // namespace object
     private String definition = null;       // xs:documentation string
+    private boolean isAbstract = false;
+    private boolean isDeprecated = false;
     
     @Override
     public boolean isModelChild ()          { return true; }    // Components are model children
@@ -46,11 +48,17 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public void setName (String s)          { name = s; }
     public void setNamespace (Namespace ns) { namespace = ns; prefix = namespace.getNamespacePrefix(); }
     public void setDefinition (String s)    { definition = s; }
+    public void setIsAbstract(boolean f)    { isAbstract = f; }
+    public void setIsDeprecated(boolean f)  { isDeprecated = f; }
+    public void setIsAbstract (String s)    { isAbstract = "true".equals(s); }
+    public void setIsDeprecated (String s)  { isDeprecated = "true".equals(s); }    
     
-    public short getType()           { return type; }
-    public String getName ()         { return name; }
-    public Namespace getNamespace () { return namespace; }
-    public String getDefinition ()   { return definition; }
+    public short getType()                  { return type; }
+    public String getName ()                { return name; }
+    public Namespace getNamespace ()        { return namespace; }
+    public String getDefinition ()          { return definition; }
+    public boolean getIsAbstract ()         { return isAbstract; }
+    public boolean getIsDeprecated ()       { return isDeprecated; }    
     
     public String getQName () {
         return namespace.getNamespacePrefix()+":"+name;

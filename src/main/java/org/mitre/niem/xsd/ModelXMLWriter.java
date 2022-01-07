@@ -107,7 +107,9 @@ public class ModelXMLWriter {
         Element e = dom.createElementNS(CMF_NS_URI, "Class");
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         addComponentChildren(dom, e, x);
-        addSimpleChild(dom, e, "AbstractIndicator", x.getAbstractIndicator());
+        if (x.getIsAbstract())   addSimpleChild(dom, e, "AbstractIndicator", "true");
+        if (x.getIsDeprecated()) addSimpleChild(dom, e, "DeprecatedIndicator", "true");
+        if (x.getIsExternal())   addSimpleChild(dom, e, "ExternalAdapterTypeIndicator", "true");
         addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
         addComponentRef(dom, e, "HasValue", x.getHasValue());
         if (null != x.hasPropertyList()) 
@@ -119,7 +121,8 @@ public class ModelXMLWriter {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "Datatype");
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
-        addComponentChildren(dom, e, x);        
+        addComponentChildren(dom, e, x);  
+        if (x.getIsDeprecated()) addSimpleChild(dom, e, "DeprecatedIndicator", "true");
         addRestrictionOf(dom, e, x.getRestrictionOf());
         addUnionOf(dom, e, x.getUnionOf());
         addComponentRef(dom, e, "ListOf", x.getListOf());
@@ -173,6 +176,7 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "NamespaceURI", x.getNamespaceURI());
         addSimpleChild(dom, e, "NamespacePrefixName", x.getNamespacePrefix());
         addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
+        if (x.getIsExternal()) addSimpleChild(dom, e, "ExternalNamespaceIndicator", "true");
         p.appendChild(e);
     }  
     
@@ -192,7 +196,8 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "SubPropertyOf", x.getSubPropertyOf());
         addComponentRef(dom, e, "Class", x.getClassType());
         addComponentRef(dom, e, "Datatype", x.getDatatype());
-        addSimpleChild(dom, e, "AbstractIndicator", x.getAbstractIndicator());
+        if (x.getIsAbstract())   addSimpleChild(dom, e, "AbstractIndicator", "true");
+        if (x.getIsDeprecated()) addSimpleChild(dom, e, "DeprecatedIndicator", "true");
         p.appendChild(e);
     }
        

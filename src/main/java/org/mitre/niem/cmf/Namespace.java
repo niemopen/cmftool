@@ -34,6 +34,7 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     private String namespaceURI = null;
     private String namespacePrefix = null;
     private String definition = null;
+    private boolean isExternal = false;
     
     @Override
     public boolean isModelChild ()            { return true; }      // Namespace objects are model children
@@ -41,10 +42,13 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public void setNamespaceURI (String s)    { namespaceURI = s; }
     public void setNamespacePrefix (String s) { namespacePrefix = s; }
     public void setDefinition (String s)      { definition = s; }
+    public void setIsExternal (boolean f)     { isExternal = f; }
+    public void setIsExternal (String s)      { isExternal = "true".equals(s); }
     
     public String getNamespaceURI ()          { return namespaceURI; }
     public String getNamespacePrefix ()       { return namespacePrefix; }
     public String getDefinition ()            { return definition; }
+    public boolean getIsExternal ()           { return isExternal; }
     
     public Namespace () { }
     

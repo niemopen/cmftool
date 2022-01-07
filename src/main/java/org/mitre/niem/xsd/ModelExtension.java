@@ -72,7 +72,6 @@ import org.xml.sax.helpers.DefaultHandler;
  * created by hand.  In this case the class must generate correct default values
  * for any data not provided.
  * 
- * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -85,20 +84,9 @@ public class ModelExtension {
     private final Map<String,String> prefixMap;                               // nsPrefix -> nsURI, copied from Model
     private final TreeMap<String,SchemaDocRec> nsData = new TreeMap<>();      // info about each namespace
     private final TreeSet<String> attQNames = new TreeSet<>();                // set of attribute QNames
-//    private Namespace ns_appinfo = null;                                    // for appinfo prefix
-//    private Namespace ns_ctarg = null;                                      // for conformance target prefix
-//    private Namespace ns_proxy = null;                                      // for proxy prefix
-//    private Namespace ns_structures = null;                                 // for structures prefix
     
     public String getCatalogFilepath (String ns)    { return getRec(ns).cpath; }
-    
-//    public String getAppinfoPrefix ()    { return ns_appinfo.getNamespacePrefix(); }
-//    public String getProxyPrefix ()      { return ns_proxy.getNamespacePrefix(); }
-//    public String getStructuresPrefix () { return ns_structures.getNamespacePrefix(); }
-//    public String getAppinfoURI ()       { return ns_appinfo.getNamespaceURI(); }
-//    public String getProxyURI ()         { return ns_proxy.getNamespaceURI(); }
-//    public String getStructuresURI ()    { return ns_structures.getNamespaceURI(); }
-   
+      
     public boolean isAttribute (String qname) { return attQNames.contains(qname); }
     public void setIsAttribute (String qname) { attQNames.add(qname); }
     
@@ -170,44 +158,6 @@ public class ModelExtension {
         prefix = mungedPrefix(m.getPrefixMap(), prefix);
         return prefix;
     }
-    
-//    public String getAppinfoPrefix () {
-//        if (null != ns_appinfo) return ns_appinfo.getNamespacePrefix();
-//        ns_appinfo = new Namespace("", "");
-//        return getSomePrefix(ns_appinfo, "appinfo", APPINFO_NS_URI_PREFIX, APPINFO_NS_URI);
-//    }
-//    public String getConformanceTargetPrefix () {
-//        if (null != ns_ctarg) return ns_ctarg.getNamespacePrefix();
-//        ns_ctarg = new Namespace("", "");
-//        return getSomePrefix(ns_ctarg, "appinfo", CONFORMANCE_TARGET_NS_URI_PREFIX, CONFORMANCE_TARGET_NS_URI);
-//    }
-//    public String getProxyPrefix () {
-//        if (null != ns_proxy) return ns_proxy.getNamespacePrefix();
-//        ns_proxy = new Namespace("", "");
-//        return getSomePrefix(ns_proxy, "proxy", PROXY_NS_URI_PREFIX, PROXY_NS_URI);
-//    }
-//    public String getStructuresPrefix () {
-//        if (null != ns_structures) return ns_structures.getNamespacePrefix();
-//        ns_structures = new Namespace("", "");
-//        return getSomePrefix(ns_structures, "structures", STRUCTURES_NS_URI_PREFIX, STRUCTURES_NS_URI);
-//    }
-//            
-//    // Look through the namespace records for the latest version of a utility 
-//    // namespace (appinfo, proxy, structures).  If none found, use the 
-//    // standard namespace prefix.
-//    private String getSomePrefix (Namespace nsrec, String defaultPrefix, String uriPrefix, String uri) {
-//        nsData.forEach((ns,r) -> {
-//            if (ns.startsWith(uriPrefix) && nsrec.getNamespaceURI().compareTo(ns) < 0) {
-//                nsrec.setNamespacePrefix(r.prefix);
-//                nsrec.setNamespaceURI(ns);
-//            }
-//        });
-//        if (null == nsrec.getNamespacePrefix() || nsrec.getNamespacePrefix().isBlank()) {
-//            nsrec.setNamespacePrefix(defaultPrefix);
-//            nsrec.setNamespaceURI(uri);
-//        }
-//        return nsrec.getNamespacePrefix();           
-//    }
             
     public void writeXML (Writer w) throws ParserConfigurationException, TransformerConfigurationException, TransformerException {
         DocumentBuilder db = ParserBootstrap.docBuilder();

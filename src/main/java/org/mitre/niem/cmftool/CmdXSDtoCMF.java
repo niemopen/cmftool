@@ -29,6 +29,9 @@ import com.beust.jcommander.Parameters;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -40,6 +43,11 @@ import org.mitre.niem.cmf.Model;
 import org.mitre.niem.xsd.ModelExtension;
 import org.mitre.niem.xsd.ModelFromXSD;
 import org.mitre.niem.xsd.ModelXMLWriter;
+import org.mitre.niem.xsd.NamespaceInfo;
+import static org.mitre.niem.xsd.NamespaceInfo.NSK_EXTENSION;
+import static org.mitre.niem.xsd.NamespaceInfo.NSK_EXTERNAL;
+import static org.mitre.niem.xsd.NamespaceInfo.NSK_NIEM_MODEL;
+import static org.mitre.niem.xsd.NamespaceInfo.NSK_UNKNOWN;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
 import org.mitre.niem.xsd.Schema;
@@ -70,6 +78,9 @@ class CmdXSDtoCMF implements JCCommand {
     
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
+    
+    @Parameter(names = {"-q", "--quiet"}, description = "no output, exit status only")
+    private boolean quietFlag = false;
      
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
@@ -113,7 +124,8 @@ class CmdXSDtoCMF implements JCCommand {
             cob.usage();
             System.exit(1);
         }
-        // Set debug logging
+        // Set debug logging 
+        // FIXME quiet
         if (debugFlag) {
             Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.DEBUG);
         }
@@ -176,14 +188,46 @@ class CmdXSDtoCMF implements JCCommand {
             System.exit(1);
         }
         // Build the NIEM model object from the schema
-        ModelFromXSD mfact = new ModelFromXSD();
+        ModelFromXSD mfact = new ModelFromXSD(s);
         Model m = new Model();
         ModelExtension me = new ModelExtension(m);
+        NamespaceInfo nsd = new NamespaceInfo();
         try {
-            mfact.createModel(m, me, s);
+            mfact.createModel(m, me, nsd);
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             System.err.println(ex.getMessage());
             System.exit(1);
+        }
+        // Report namespaces processed
+        if (!quietFlag) {
+            List<String> conforming = new ArrayList<>();
+            List<String> external   = new ArrayList<>();
+            List<String> unknown    = new ArrayList<>();
+            nsd.getTargetNS().forEach((ns) -> {
+                switch(nsd.getNSType(ns)) {
+                    case NSK_EXTENSION:
+                    case NSK_NIEM_MODEL:
+                        conforming.add(ns);
+                        break;
+                    case NSK_EXTERNAL: external.add(ns); break;
+                    case NSK_UNKNOWN:  unknown.add(ns); break; 
+                }
+            });
+            if (!conforming.isEmpty()) {
+                Collections.sort(conforming);
+                System.out.println("Conforming namespaces:");
+                conforming.forEach((ns) -> { System.out.println("  " + ns);});
+            }
+            if (!external.isEmpty()) {
+                Collections.sort(external);
+                System.out.println("External namespaces (imported with appinfo:externalNamespaceIndicator):");
+                external.forEach((ns) -> { System.out.println("  " + ns);});
+            }
+            if (!unknown.isEmpty()) {
+                Collections.sort(unknown);
+                System.out.println("Unknown namespaces (no conformance assertion found):");
+                unknown.forEach((ns) -> { System.out.println("  " + ns);});
+            }
         }
         // Write the NIEM model instance to the output stream
         ModelXMLWriter mw = new ModelXMLWriter();

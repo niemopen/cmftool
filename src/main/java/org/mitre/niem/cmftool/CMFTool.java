@@ -49,9 +49,8 @@ public class CMFTool {
 
 //        args = new String[]{"m2r", "examples/CrashDriver-iepd/CrashDriver.cmf"};
 
-//        args = new String[]{"x2m", "-d", "C:\\Work\\im22\\uc2\\sos-iepd\\extension\\uc2Msg.xsd"};
-//        args = new String[]{"m2x", "-d", "-o", "/tmp/cmf", "C:\\Work\\im22\\uc2\\sos-iepd\\uc2Msg.cmf", "C:\\Work\\im22\\uc2\\sos-iepd\\uc2Msg.cmx"};
-
+//        args = new String[]{"x2m", "-d", "-o", "examples/Test", "examples/Test/Pattern.xsd"};
+//        args = new String[]{"m2x", "-d", "-o", "examples/Test/cmf", "examples/Test/deprecated.cmf", "examples/Test/deprecated.cmx"};
 //        args = new String[]{"x2m", "-o", "examples/CrashDriver-iepd", "examples/CrashDriver-iepd/xsd/extension/CrashDriver.xsd",
 //             "examples/CrashDriver-iepd/xsd/xml-catalog.xml"};
 

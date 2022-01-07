@@ -23,7 +23,6 @@
  */
 package org.mitre.niem.xsd;
 
-import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.UnionOf;

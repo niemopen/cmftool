@@ -2,7 +2,7 @@
 <Model
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.2/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.3/">
   <Namespace structures:uri="claim">
     <NamespaceURI>http://example.org/claim/1/</NamespaceURI>
     <NamespacePrefixName>claim</NamespacePrefixName>
@@ -17,6 +17,7 @@
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixName>nc</NamespacePrefixName>
     <DefinitionText>NIEM Core.</DefinitionText>
+    <ExternalNamespaceIndicator>false</ExternalNamespaceIndicator>
   </Namespace>
   <Namespace structures:uri="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
@@ -115,6 +116,8 @@
     <DefinitionText>A data type for an amount of money.</DefinitionText>
     <HasProperty structures:sequenceID="1">
       <Property structures:uri="nc:Amount" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
     <HasProperty structures:sequenceID="2">
       <Property structures:uri="nc:CurrencyAbstract" xsi:nil="true"/>

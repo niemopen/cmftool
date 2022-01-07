@@ -32,17 +32,15 @@ public class Property extends Component {
     private Property subPropertyOf = null;
     private ClassType classType = null;
     private Datatype datatype = null;
-    private String abstractIndicator = null;
     
-    public void setSubPropertyOf (Property s)   { subPropertyOf = s; }
-    public void setClassType (ClassType c)      { classType = c; }
-    public void setDatatype (Datatype d)        { datatype = d; }
-    public void setAbstractIndicator (String s) { abstractIndicator = s; }
+    public void setSubPropertyOf (Property s)     { subPropertyOf = s; }
+    public void setClassType (ClassType c)        { classType = c; }
+    public void setDatatype (Datatype d)          { datatype = d; }
+
     
-    public Property getSubPropertyOf ()   { return subPropertyOf; }
-    public ClassType getClassType ()      { return classType; }
-    public Datatype getDatatype()         { return datatype; }
-    public String getAbstractIndicator () { return abstractIndicator; }
+    public Property getSubPropertyOf ()           { return subPropertyOf; }
+    public ClassType getClassType ()              { return classType; }
+    public Datatype getDatatype()                 { return datatype; }
     
     public Property () { type = C_OBJECTPROPERTY; }
     

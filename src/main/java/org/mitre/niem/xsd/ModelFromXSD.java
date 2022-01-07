@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import static org.apache.commons.lang3.StringUtils.getCommonPrefix;
@@ -88,34 +87,51 @@ import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_CODE_LISTS_INSTANCE;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_PROXY;
 import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinNamespaceVersion;
 import static org.mitre.niem.xsd.NIEMBuiltins.isBuiltinNamespace;
-import static org.mitre.niem.xsd.NamespaceDecls.NSK_BUILTIN;
-import static org.mitre.niem.xsd.NamespaceDecls.NSK_EXTERNAL;
+import static org.mitre.niem.xsd.NamespaceInfo.NSK_BUILTIN;
+import static org.mitre.niem.xsd.NamespaceInfo.NSK_EXTERNAL;
 import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinNamespaceKind;
+import org.mitre.niem.xsd.NamespaceInfo.AppinfoRec;
+import static org.mitre.niem.xsd.NamespaceInfo.NSK_UNKNOWN;
 
 /**
- *
+ * An object for constructing a Model from a Schema.
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelFromXSD {
     static final Logger LOG = LogManager.getLogger(ModelFromXSD.class);
     
-    private List<String> omitSimpleTypes = null;        // list of FooSimpleType URIs to omit from model
-    private NamespaceDecls nsDecls = null;              // namespace declaration manager
-    private Model m = null;
-    private ModelExtension me = null;
-    private XSModel xs = null;
+    private NamespaceInfo nsInfo = null;               // info from schema parsing (and not in Xerces API)
+    private Model m = null;                             // model under construction
+    private ModelExtension me = null;                   // model extension for XSD
+    private XSModel xs = null;                          // from the Schema object
     
-    public void createModel (Model m, ModelExtension me, Schema s) throws ParserConfigurationException, SAXException, IOException {
-        omitSimpleTypes = new ArrayList<>();
-        nsDecls = new NamespaceDecls(); 
+    /**
+     * Constructs an object that can generate a Model from the Schema.
+     * @param s XML Schema object
+     */
+    public ModelFromXSD (Schema s) {
+        xs = s.xsmodel();
+    }
+    
+    /**
+     * Constructs the Model, ModelExtension, and NamespaceInfo objects from the
+     * XML schema.
+     * @param m Model object to be constructed
+     * @param me ModelExtension object to be constructed
+     * @param nsi NamespaceInfo object to be constructed
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException 
+     */
+    public void createModel (Model m, ModelExtension me, NamespaceInfo nsi) throws ParserConfigurationException, SAXException, IOException {
+        this.nsInfo = nsi; 
         this.m = m;
         this.me = me;
-        xs = s.xsmodel();
         generateNamespaces();
         generateClassesAndDatatypes();
         generateProperties();
-//        omitSimpleTypes();
+        processAppinfo();
     }
        
     private void generateNamespaces () {
@@ -134,7 +150,7 @@ public class ModelFromXSD {
               LOG.debug("Processing namespace {}", nsuri);
               if (docl.size() > 1) LOG.warn("Multiple documents listed for namespace {}?", nsuri);
               nsFile.put(nsuri,docl.item(0));
-              for (int j = 0; j < docl.getLength(); j++) nsDecls.processNamespace(nsuri, docl.item(j));
+              for (int j = 0; j < docl.getLength(); j++) nsInfo.processSchemaDocument(docl.item(j));
             }
         }
         // Find the root directory of the schema document pile
@@ -147,30 +163,31 @@ public class ModelFromXSD {
         // Create namespace objects and add to model
         nsFile.forEach((String nsuri, String furi) -> {
             me.setDocumentFilepath(nsuri, furi.substring(rlen));
-            me.setPrefix(nsuri, nsDecls.getPrefix(nsuri));
-            me.setNIEMVersion(nsuri, nsDecls.getNIEMVersion(nsuri));
-            int nsk = nsDecls.getNSType(nsuri);
+            me.setPrefix(nsuri, nsInfo.getPrefix(nsuri));
+            me.setNIEMVersion(nsuri, nsInfo.getNIEMVersion(nsuri));
+            int nsk = nsInfo.getNSType(nsuri);
             int bik = getBuiltinNamespaceKind(nsuri);
-            // Don't create Namespace for builtins (except code-lists-instance) or externals
-            if ((NIEM_CODE_LISTS_INSTANCE == bik || 0 > bik) && NSK_EXTERNAL != nsk) {
+            // Don't create Namespace for builtins (except code-lists-instance) or unknowns
+            if ((NIEM_CODE_LISTS_INSTANCE == bik || 0 > bik) && NSK_UNKNOWN != nsk) {
                 Namespace nsobj = new Namespace(m);
-                nsobj.setNamespacePrefix(nsDecls.getPrefix(nsuri));
+                nsobj.setNamespacePrefix(nsInfo.getPrefix(nsuri));
                 nsobj.setNamespaceURI(nsuri);
-                nsobj.setDefinition(nsDecls.getDocumentation(nsuri));
+                nsobj.setDefinition(nsInfo.getDocumentation(nsuri));
+                if (NSK_EXTERNAL == nsInfo.getNSType(nsuri)) nsobj.setIsExternal(true);
                 m.addNamespace(nsobj);
-                me.setConformanceTargets(nsuri, nsDecls.getConformanceTargets(nsuri));
-                me.setNIEMVersion(nsuri, nsDecls.getNIEMVersion(nsuri));
-                me.setNSVersion(nsuri, nsDecls.getNSVersion(nsuri));
+                me.setConformanceTargets(nsuri, nsInfo.getConformanceTargets(nsuri));
+                me.setNIEMVersion(nsuri, nsInfo.getNIEMVersion(nsuri));
+                me.setNSVersion(nsuri, nsInfo.getNSVersion(nsuri));
             }
         });
         // ModelExtension values set for structures, proxy, code list instance namespaces
         // Appinfo, code list schema, and conformanceTarget built-ins don't have namespaceItems
         // Make ModelExtension entries for them anyway
         nsFile.forEach((nsuri, furi) -> {
-            if (NSK_BUILTIN != nsDecls.getNSType(nsuri)) {
-                for (String declaredNS : nsDecls.getAllNamespacesDeclared(nsuri)) {
+            if (NSK_BUILTIN != nsInfo.getNSType(nsuri)) {
+                for (String declaredNS : nsInfo.getAllNamespacesDeclared(nsuri)) {
                     if (isBuiltinNamespace(declaredNS)) {
-                        String prefix = nsDecls.getPrefix(declaredNS);
+                        String prefix = nsInfo.getPrefix(declaredNS);
                         String version = getBuiltinNamespaceVersion(declaredNS);
                         if (null != prefix) me.setPrefix(declaredNS, prefix);
                         if (null != version) me.setNIEMVersion(declaredNS, version);
@@ -182,7 +199,7 @@ public class ModelFromXSD {
         // (Sometimes people import it, sometimes they don't)
         if (null == m.getNamespace(XSD_NS_URI)) {
             Namespace xsd = new Namespace(m);
-            xsd.setNamespacePrefix(nsDecls.getPrefix(XSD_NS_URI));
+            xsd.setNamespacePrefix(nsInfo.getPrefix(XSD_NS_URI));
             xsd.setNamespaceURI(XSD_NS_URI);
             m.addNamespace(xsd);
         }
@@ -213,7 +230,8 @@ public class ModelFromXSD {
         if (null != c) return c;                                                // already processed this complex type def
         if (XSD_NS_URI.equals(nsuri) && "anyType".equals(cname)) return null;   // recursion ends here
         if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) return null;            // skip types in structures namespace
-        if (NSK_EXTERNAL == nsDecls.getNSType(nsuri)) return null;              // skip types in external namespaces
+        if (NSK_EXTERNAL == nsInfo.getNSType(nsuri)) return null;               // skip types in external namespaces
+        if (NSK_UNKNOWN == nsInfo.getNSType(nsuri)) return null;                // skip types in unknown namespaces
         
         // Simple type is always a Datatype
         if (SIMPLE_TYPE == t.getTypeCategory()) {
@@ -234,7 +252,7 @@ public class ModelFromXSD {
             ClassType clobj = new ClassType(m);
             initComponent(clobj, ct);
             LOG.debug("Creating ClassType {}", clobj.getQName());
-            if (ct.getAbstract()) clobj.setAbstractIndicator("true");
+            if (ct.getAbstract()) clobj.setIsAbstract("true");
             if (null != base) {
                 if (C_CLASSTYPE == base.getType()) clobj.setExtensionOfClass((ClassType)base);
                 else clobj.setHasValue((Datatype)base);
@@ -278,7 +296,6 @@ public class ModelFromXSD {
         // as FooType and return that.
         if (null != base && bt.getName().endsWith("SimpleType")) {
             Datatype bdt = (Datatype) base;
-            omitSimpleTypes.add(bdt.getURI());      // remember we already handled this simple type
             m.removeDatatype(bdt);
             initComponent(bdt, ct);
             m.addDatatype(bdt);
@@ -382,8 +399,19 @@ public class ModelFromXSD {
         for (int i = 0; i < xmap.getLength(); i++) {
             XSElementDeclaration e = (XSElementDeclaration)xmap.item(i); 
             XSTypeDefinition t = e.getTypeDefinition();
+            String nsuri = e.getNamespace();
+            if (NSK_EXTERNAL == nsInfo.getNSType(nsuri)) continue;     // only generate external properties if referenced
             createProperty(e, t);
         }        
+        xmap = xs.getComponents(ATTRIBUTE_DECLARATION);
+        for (int i = 0; i < xmap.getLength(); i++) {
+            XSAttributeDeclaration a = (XSAttributeDeclaration)xmap.item(i);
+            XSTypeDefinition t = a.getTypeDefinition();
+            String nsuri = a.getNamespace();
+            if (NSK_EXTERNAL == nsInfo.getNSType(nsuri)) continue;     // only generate external attributes if referenced
+            Property p = createProperty(a, t);
+            if (null != p) me.setIsAttribute(p.getQName());
+        }
     }
     
     private Property createProperty (XSObject o, XSTypeDefinition t) {
@@ -392,20 +420,28 @@ public class ModelFromXSD {
         Property op = m.getProperty(nsuri, cname);
         if (null != op) return op;
         if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) return null;    // skip properties in structures namespace
-        if (NSK_EXTERNAL == nsDecls.getNSType(nsuri)) return null;       // skip properties in external namespace    
+        if (NSK_UNKNOWN == nsInfo.getNSType(nsuri)) return null;        // skip properties in unknown namespaces    
         op = new Property(m);
         initComponent(op, o);
         m.addProperty(op);
         LOG.debug("Creating Property {}", op.getQName());
+        
+        // If an external property, we're done; no substitution or types for those
+        if (NSK_EXTERNAL == nsInfo.getNSType(nsuri)) return op;
+        
         if (ELEMENT_DECLARATION == o.getType()) {
             XSElementDeclaration ed = (XSElementDeclaration)o;
             XSElementDeclaration sub = ed.getSubstitutionGroupAffiliation();
+            // Handle substitution, but not for external components
             if (null != sub) {
                 XSTypeDefinition st = sub.getTypeDefinition();      // substitution group == subproperty
                 Property sp = createProperty(sub, st);
                 op.setSubPropertyOf(sp);
             }
-            if (ed.getAbstract()) op.setAbstractIndicator("true");
+            if (ed.getAbstract()) op.setIsAbstract("true");
+        }
+        else if (ATTRIBUTE_DECLARATION == o.getType()) {
+            
         }
         Component tc = createClassOrDatatype(t);
         if (null != tc) {
@@ -440,14 +476,21 @@ public class ModelFromXSD {
         return d;
     }
     
-    // Remove all the FooSimpleType datatype objects that were renamed to
-    // FooType.
-    private void omitSimpleTypes () {
-        for (String curi : omitSimpleTypes) {
-            Component c = m.getComponent(curi);
-            if (null != c && C_DATATYPE == c.getType()) {
-                Datatype d = (Datatype)c;
-                m.removeDatatype(d);
+    // Appinfo attributes are not available through the Xerces XSD API, so we
+    // collect them while we are parsing the schema documents for namespace 
+    // declarations and import elements.  Now we iterate through the collected
+    // attributes and adjust model elements accordingly.
+    private void processAppinfo () {
+        for (AppinfoRec ar : nsInfo.getAppinfo()) {
+            switch (ar.attribute) {
+                case "deprecated":
+                    Component c = m.getComponent(ar.nsuri, ar.lname);
+                    if (null != c) c.setIsDeprecated(ar.value);
+                    break;
+                case "externalAdapterTypeIndicator":
+                    ClassType cl = m.getClassType(ar.nsuri, ar.lname);
+                    if (null != cl) cl.setIsExternal(ar.value);
+                    break;
             }
         }
     }
@@ -492,12 +535,14 @@ public class ModelFromXSD {
             String fkind = FACET_PATTERN == f.getFacetKind() ? "Pattern" : "Enumeration";
             XSObjectList annl = f.getAnnotations();
             StringList   vals = f.getLexicalFacetValues();
-            for (int j = 0; j < annl.getLength() && j < vals.getLength(); j++) {
-                XSAnnotation an = (XSAnnotation)annl.item(j);
+            for (int j = 0; j < vals.getLength(); j++) {
                 String val = vals.item(j);
                 String def = null;
-                if (null != an) def = parseDefinition((XSAnnotation)annl.item(j));
-                Facet fo   = new Facet(m);
+                if (j < annl.getLength()) {
+                    XSAnnotation an = (XSAnnotation)annl.item(j);
+                    if (null != an) def = parseDefinition((XSAnnotation)annl.item(j));
+                }
+                Facet fo = new Facet(m);
                 fo.setFacetKind(fkind);
                 fo.setStringVal(val);
                 fo.setDefinition(def);

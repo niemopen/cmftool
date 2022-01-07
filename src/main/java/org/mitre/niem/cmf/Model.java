@@ -35,7 +35,12 @@ import static org.mitre.niem.cmf.Component.C_OBJECTPROPERTY;
 import static org.mitre.niem.cmf.Namespace.mungedPrefix;
 
 /**
- *
+ * A class for a CMF model.
+ * 
+ * The class guarantees that every Namespace in the Model will have a unique
+ * namespace prefix, which means a QName is a unique identifier for a 
+ * Component.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -43,7 +48,7 @@ public class Model extends ObjectType {
     static final Logger LOG = LogManager.getLogger(Model.class);   
     
     private final Map<String,Component> modelComponents = new HashMap<>();      // map component URI to object; for duplicate checking
-    private final SortedSet<ClassType> classTypeSet     = new TreeSet<>();
+    private final SortedSet<ClassType> classTypeSet     = new TreeSet<>();      // all SortedSets are in QName order
     private final SortedSet<Datatype> datatypeSet       = new TreeSet<>();
     private final SortedSet<Namespace> namespaceSet     = new TreeSet<>();
     private final SortedSet<Property> propertySet       = new TreeSet<>();
@@ -56,7 +61,6 @@ public class Model extends ObjectType {
     public SortedSet<Property> propertySet()             { return propertySet; }   
        
     public Model () { }
-    public Model (Model m) { }  // FIXME -- useless? expect copy, but doesn't
     
     /**
      * Returns a copy of the map from namespace prefix to namespace URI.
@@ -68,31 +72,62 @@ public class Model extends ObjectType {
         return rv; 
     }
     
-    public Component getComponent (String curi) {
-        return modelComponents.get(curi);
+    /**
+     * Returns the model component with the specified QName, or null if no 
+     * such component.
+     * @param qname Component QName
+     * @return Component
+     */
+    public Component getComponent (String qname) {
+        int x = qname.indexOf(":");
+        if (0 >= x || qname.length() <= x) return null;     // not a QName
+        String prefix = qname.substring(0, x-1);
+        String lpart  = qname.substring(x+1);
+        String nsuri  = prefixMap.get(prefix);
+        if (null == nsuri) return null;                      // no NS with that prefix
+        return getComponent(nsuri, lpart);
     }
  
+    /**
+     * Return the model component with specified namespace and local name, or
+     * null if no such component.
+     * @param nsuri Namespace URI
+     * @param lname Local name
+     * @return Component
+     */
     public Component getComponent (String nsuri, String lname) {
         String curi = Component.genURI(nsuri, lname);
         return modelComponents.get(curi);
     }
+       
+    public ClassType getClassType (String qname) {
+        Component com = getComponent(qname);
+        return (null != com && C_CLASSTYPE == com.getType()) ? (ClassType)com : null;
+    }
+    
+    public Datatype getDatatype (String qname) {
+        Component com = getComponent(qname);
+        return (null != com && C_DATATYPE == com.getType()) ? (Datatype)com : null;
+    }
+
+    public Property getProperty (String qname) {
+        Component com = getComponent(qname);
+        return (null != com && C_OBJECTPROPERTY == com.getType()) ? (Property)com : null;
+    }       
     
     public ClassType getClassType (String nsuri, String lname) {
         Component com = getComponent(nsuri, lname);
-        if (null == com) return null;
-        return (C_CLASSTYPE == com.getType() ? (ClassType)com : null);
+        return (null != com && C_CLASSTYPE == com.getType()) ? (ClassType)com : null;
     }
     
     public Datatype getDatatype (String nsuri, String lname) {
         Component com = getComponent(nsuri, lname);
-        if (null == com) return null;
-        return (C_DATATYPE == com.getType() ? (Datatype)com : null);
+        return (null != com && C_DATATYPE == com.getType()) ? (Datatype)com : null;
     }
 
     public Property getProperty (String nsuri, String lname) {
         Component com = getComponent(nsuri, lname);
-        if (null == com) return null;
-        return (C_OBJECTPROPERTY == com.getType() ? (Property)com : null);
+        return (null != com && C_OBJECTPROPERTY == com.getType()) ? (Property)com : null;
     }
 
     public Namespace getNamespace (String nsuri) { return namespaceMap.get(nsuri); }
@@ -170,7 +205,7 @@ public class Model extends ObjectType {
     
     public void removeNamespace (Namespace x) {
         if (!this.namespaceSet.contains(x))
-        this.namespaceSet.remove(x);
+            this.namespaceSet.remove(x);
         this.namespaceMap.remove(x.getNamespaceURI());
     }
    

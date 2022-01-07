@@ -44,8 +44,12 @@ public class XStringObject extends XObjectType {
     public void addToClassType(XClassType c) {
         String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
         switch (this.getComponentLname()) {
-        case "AbstractIndicator":   c.getObject().setAbstractIndicator(val); break;
+        case "AbstractIndicator":   c.getObject().setIsAbstract(val); break;
         case "DefinitionText":      c.getObject().setDefinition(val); break;
+        case "DeprecatedIndicator": c.getObject().setIsDeprecated(val); break;
+        case "ExternalAdapterTypeIndicator": 
+            c.getObject().setIsExternal(val); 
+            break;
         case "Name":                c.getObject().setName(val); break;
         default:
             break;
@@ -57,6 +61,7 @@ public class XStringObject extends XObjectType {
         String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
         switch (this.getComponentLname()) {
         case "DefinitionText":      dt.getObject().setDefinition(val); break;
+        case "DeprecatedIndicator": dt.getObject().setIsDeprecated(val); break;        
         case "Name":                dt.getObject().setName(val); break;
         default:
             break;
@@ -93,6 +98,7 @@ public class XStringObject extends XObjectType {
         String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
         switch (this.getComponentLname()) {
         case "DefinitionText":       ns.getObject().setDefinition(val) ; break;
+        case "ExternalNamespaceIndicator": ns.getObject().setIsExternal(val); break;
         case "NamespacePrefixName":  ns.getObject().setNamespacePrefix(val); break;
         case "NamespaceURI":         ns.getObject().setNamespaceURI(val); break;
         default:
@@ -103,8 +109,9 @@ public class XStringObject extends XObjectType {
     public void addToProperty (XProperty op) {
         String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
         switch (this.getComponentLname()) {
-        case "AbstractIndicator":   op.getObject().setAbstractIndicator(val); break;
+        case "AbstractIndicator":   op.getObject().setIsAbstract(val); break;
         case "DefinitionText":      op.getObject().setDefinition(val); break;
+        case "DeprecatedIndicator": op.getObject().setIsDeprecated(val); break;        
         case "Name":                op.getObject().setName(val); break;
         default:
             break;

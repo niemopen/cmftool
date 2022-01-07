@@ -32,20 +32,23 @@ import java.util.List;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ClassType extends Component {
-    private String abstractIndicator = null;
+    private boolean isAbstract = false;
+    private boolean isDeprecated = false;
+    private boolean isExternal = false;
     private ClassType extensionOfClass  = null;
     private Datatype hasValue = null;
     private final List<HasProperty> hasPropertyList = new ArrayList<>();
-    
-    public void setAbstractIndicator (String s)   { abstractIndicator = s; }
+
+    public void setIsExternal (boolean f)         { isExternal = f; }    
+    public void setIsExternal (String s)          { isExternal = "true".equals(s); }
     public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
     public void setHasValue (Datatype v)          { hasValue = v; }
     
-    public String getAbstractIndicator ()   { return abstractIndicator; }
-    public ClassType getExtensionOfClass () { return extensionOfClass; }
-    public Datatype getHasValue()           { return hasValue; }
+    public boolean getIsExternal ()               { return isExternal; }
+    public ClassType getExtensionOfClass ()       { return extensionOfClass; }
+    public Datatype getHasValue()                 { return hasValue; }
             
-    public List<HasProperty> hasPropertyList ()       { return hasPropertyList; }
+    public List<HasProperty> hasPropertyList ()   { return hasPropertyList; }
 
     public void addHasProperty (HasProperty c) {
         this.hasPropertyList.add(c);

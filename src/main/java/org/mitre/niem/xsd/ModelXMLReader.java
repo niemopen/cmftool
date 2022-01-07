@@ -72,7 +72,6 @@ public class ModelXMLReader {
         private final Stack<XObjectType> objStack   = new Stack<>();       // elements under construction
         private StringBuilder chars                 = new StringBuilder(); // character content of current element
         private Locator loc                         = new LocatorImpl();   // for error msg line numbers
-        private XModel xmodel = null;                                      // the model document element
         private Model model = null;                                        // the model object
         
         @Override
@@ -82,7 +81,7 @@ public class ModelXMLReader {
         
         // Put a dummy element on the stack instead of coding for the empty
         // stack condition.  When we reach the end of the document element, 
-        // we'll try to add it to this dummy element... and nothing will happen.
+        // we'll add it to this dummy element... which does nothing.
         @Override
         public void startDocument () {
             XObjectType dummyRoot = new XObjectType();
@@ -95,9 +94,8 @@ public class ModelXMLReader {
             XObjectType parent = objStack.peek();
             XObjectType child = newObject(model, parent, eNamespace, eLocalName, atts, loc.getLineNumber());
             // First object created is the Model object
-            if (objStack.size() == 1) {             // element #0 is the dummy
-                xmodel = (XModel)child;
-                model = (Model)child.getObject();
+            if (objStack.size() == 1) {             // stack contains only dummy element #0
+                model = (Model)child.getObject();   // in which case we just created the Model object
             }
             objStack.add(child);
             chars = new StringBuilder();
@@ -158,41 +156,51 @@ public class ModelXMLReader {
             XObjectType o = null;
             if (ens.startsWith(CMF_NS_URI_PREFIX)) {
                 switch (eln) {
-                case "AbstractIndicator":   o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "Class":               o = new XClassType(m, p, ens, eln, atts, lineNum); break;
                 case "Datatype":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "DefinitionText":      o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
-                case "Enumeration":         o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "ExtensionOfClass":    o = new XClassType(m, p, ens, eln, atts, lineNum); break;
-                case "FractionDigits":      o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "HasProperty":         o = new XHasProperty(m, p, ens, eln, atts, lineNum); break;
                 case "HasValue":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "Length":              o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "ListOf":              o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "MaxExclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MaxInclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MaxLength":           o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MaxOccursQuantity":   o = new XStringObject(m, p, ens, eln, atts, lineNum); break;                
-                case "MinExclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MinInclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MinLength":           o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MinOccursQuantity":   o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "Model":               o = new XModel(m, p, ens, eln, atts, lineNum); break;
-                case "Name":                o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "Namespace":           o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
-                case "NamespacePrefixName": o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
-                case "NamespaceURI":        o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
-                case "NonNegativeValue":    o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "Property":            o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "Pattern":             o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "PositiveValue":       o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "RestrictionOf":       o = new XRestrictionOf(m, p, ens, eln, atts, lineNum); break;
-                case "StringValue":         o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "SubPropertyOf":       o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "TotalDigits":         o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "UnionOf":             o = new XUnionOf(m, p, ens, eln, atts, lineNum); break;
-                case "WhiteSpace":          o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "WhiteSpaceValueCode": o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+
+                case "Enumeration":
+                case "FractionDigits":
+                case "Length":       
+                case "MaxExclusive": 
+                case "MaxInclusive": 
+                case "MaxLength":    
+                case "MinExclusive": 
+                case "MinInclusive": 
+                case "MinLength":    
+                case "Pattern":      
+                case "PositiveValue":
+                case "TotalDigits":  
+                case "WhiteSpace":
+                    o = new XFacet(m, p, ens, eln, atts, lineNum);
+                    break;
+
+                case "AbstractIndicator":
+                case "DefinitionText":   
+                case "DeprecatedIndicator":
+                case "ExternalAdapterTypeIndicator":
+                case "ExternalNamespaceIndicator":  
+                case "MaxOccursQuantity": 
+                case "MinOccursQuantity": 
+                case "Name":              
+                case "NamespacePrefixName":
+                case "NamespaceURI":       
+                case "NonNegativeValue":   
+                case "StringValue":        
+                case "WhiteSpaceValueCode":
+                    o = new XStringObject(m, p, ens, eln, atts, lineNum);
+                    break;                
+                
                 default:
                     LOG.error("unknown element '{'{}'}'{} at line {}", ens, eln, lineNum);
                     o = new XUnknownObject(m, p, ens, eln, atts, lineNum);

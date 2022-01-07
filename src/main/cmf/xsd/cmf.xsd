@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:cmf="http://reference.niem.gov/specification/cmf/0.2/"
+           xmlns:cmf="http://reference.niem.gov/specification/cmf/0.3/"
            xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
            xmlns:xs-proxy="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
-           targetNamespace="http://reference.niem.gov/specification/cmf/0.2/"
+           targetNamespace="http://reference.niem.gov/specification/cmf/0.3/"
            ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ExtensionSchemaDocument"
            xml:lang="en-US"
            version="1">
@@ -59,7 +59,7 @@
       <xs:complexContent>
          <xs:extension base="cmf:ComponentType">
             <xs:sequence>
-               <xs:element ref="cmf:AbstractIndicator" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="cmf:ExternalAdapterTypeIndicator" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:ExtensionOfClass" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:HasValue" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:HasProperty" minOccurs="0" maxOccurs="unbounded"/>
@@ -83,6 +83,8 @@
                <xs:element ref="cmf:Name" minOccurs="1" maxOccurs="1"/>
                <xs:element ref="cmf:Namespace" minOccurs="1" maxOccurs="1"/>
                <xs:element ref="cmf:DefinitionText" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="cmf:AbstractIndicator" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="cmf:DeprecatedIndicator" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:ComponentAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
@@ -109,7 +111,7 @@
       </xs:annotation>
       <xs:complexContent>
          <xs:extension base="cmf:ComponentType">
-            <xs:sequence>
+            <xs:sequence>           
                <xs:element ref="cmf:RestrictionOf" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:UnionOf" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:ListOf" minOccurs="0" maxOccurs="1"/>
@@ -130,6 +132,11 @@
          <xs:documentation>A human-readable text definition of a data model component.</xs:documentation>
       </xs:annotation>
    </xs:element>
+   <xs:element name="DeprecatedIndicator" type="xs-proxy:boolean" nillable="true">
+      <xs:annotation>
+         <xs:documentation>The deprecated attribute provides a method for identifying schema components as being deprecated. A deprecated component is one that is provided, but the use of which is not recommended.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
    <xs:element name="Enumeration"
                type="cmf:AnyValueFacetType"
                substitutionGroup="cmf:FacetAbstract"
@@ -141,6 +148,16 @@
    <xs:element name="ExtensionOfClass" type="cmf:ClassType" nillable="true">
       <xs:annotation>
          <xs:documentation>A extension of a class.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <xs:element name="ExternalAdapterTypeIndicator" type="xs-proxy:boolean" nillable="true">
+      <xs:annotation>
+         <xs:documentation>True if the type is an external adapter type.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <xs:element name="ExternalNamespaceIndicator" type="xs-proxy:boolean" nillable="true">
+      <xs:annotation>
+         <xs:documentation>True if the namespace is expected to be non-conformat.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="FacetAbstract" abstract="true" nillable="true">
@@ -349,6 +366,7 @@
                <xs:element ref="cmf:NamespaceURI" minOccurs="1" maxOccurs="1"/>
                <xs:element ref="cmf:NamespacePrefixName" minOccurs="1" maxOccurs="1"/>
                <xs:element ref="cmf:DefinitionText" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="cmf:ExternalNamespaceIndicator" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:NamespaceAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
@@ -420,10 +438,10 @@
       <xs:complexContent>
          <xs:extension base="cmf:ComponentType">
             <xs:sequence>
+
                <xs:element ref="cmf:SubPropertyOf" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:Class" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:Datatype" minOccurs="0" maxOccurs="1"/>
-               <xs:element ref="cmf:AbstractIndicator" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:PropertyAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>
