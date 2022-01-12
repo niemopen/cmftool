@@ -29,7 +29,7 @@ import org.mitre.niem.cmf.ObjectType;
 import org.xml.sax.Attributes;
 
 /**
- * A class for reading/writing a NIEM model object from/to an XML document.
+ * A class for an element in a CMF XML document.
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -44,49 +44,12 @@ public class XObjectType {
     XObjectType parent            = null;    // remember parent of IDREF/URI placeholder
     XObjectType idRepl            = null;    // non-null when replacing IDREF/URI placeholders at end of document
     private int lineNumber        = 0;       // XML element starting line number
-    private String componentNsuri = null;    // NIEM model component namespace URI
     private String componentLname = null;    // NIEM model component local name
-    
-    public void setStringVal (String s) { 
-        stringVal = s;
-        isEmpty = false;
-    }
-    public void setIDRepl (XObjectType r)   { idRepl = r; }
-    
-    public ObjectType getObject ()          { return null; }        // override in subclass
-
-    public String getStringVal ()           { return stringVal; }
-    public boolean getIsEmpty ()            { return isEmpty; }
-    public XObjectType getParent ()         { return parent; }
-    public XObjectType getIDRepl ()         { return idRepl; }
-    public String getSequenceID ()          { return seq; }
-    public int getLineNumber ()             { return lineNumber; }
-    public String getComponentLname ()      { return componentLname; }
-    
-    // Returns correct object when replacing placeholders at end of document
-    public ObjectType getObjectToAdd()      { return null; }        // override in subclass
-       
-    // Reference placeholders have @ref, or @uri and no content
-    public String getRefKey () {
-        if (null != ref) return ref;
-        else if (null == uri) return null;
-        else if (isEmpty) return uri;
-        else return null;
-    }
-    
-    // Referred objects have @id, or @uri with content
-    public String getIDKey () {
-        if (null != id) return id;
-        else if (null == uri) return null;
-        else if (isEmpty) return null;
-        else return uri;
-    }
     
     XObjectType () {}
     
     XObjectType (Model m, XObjectType pobj, String ens, String eln, Attributes a, int line) {
         parent = pobj;
-        componentNsuri = ens;
         componentLname = eln;
         lineNumber = line;
         for (int i = 0; i < a.getLength(); i++) {
@@ -102,6 +65,39 @@ public class XObjectType {
                 }
             }
         }
+    }
+
+    public void setStringVal (String s) { 
+        stringVal = s;
+        isEmpty = false;
+    }
+    public void setIDRepl (XObjectType r)   { idRepl = r; }
+    
+    public ObjectType getObject ()          { return null; }        // override in subclass
+    public String getStringVal ()           { return stringVal; }
+    public boolean getIsEmpty ()            { return isEmpty; }
+    public XObjectType getParent ()         { return parent; }
+    public XObjectType getIDRepl ()         { return idRepl; }
+    public String getSequenceID ()          { return seq; }
+    public int getLineNumber ()             { return lineNumber; }
+    public String getComponentLname ()      { return componentLname; }
+       
+    // Returns the reference key in a placeholder object, or null if not a
+    // placeholder.  (Reference placeholders have @ref, or @uri and no content)
+    public String getRefKey () {
+        if (null != ref) return ref;
+        else if (null == uri) return null;
+        else if (isEmpty) return uri;
+        else return null;
+    }
+    
+    // Returnss the reference identifier for an object that can be the target
+    // of a reference placeholder; ie. objects with @id, or @uri with content
+    public String getIDKey () {
+        if (null != id) return id;
+        else if (null == uri) return null;
+        else if (isEmpty) return null;
+        else return uri;
     }
     
     public void addAsChild  (XObjectType child) { 

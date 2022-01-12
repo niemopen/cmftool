@@ -40,7 +40,7 @@
     <xs:simpleContent>
       <xs:extension base="nc:Degree90SimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
-	<xs:attribute ref="nc:errorValue"/> 
+	      <xs:attribute ref="nc:errorValue"/> 
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>

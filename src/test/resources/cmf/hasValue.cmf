@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.3/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://reference.niem.gov/specification/cmf/0.3/">
+  <Namespace structures:uri="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixName>nc</NamespacePrefixName>
+  </Namespace>
+  <Namespace structures:uri="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixName>xs</NamespacePrefixName>
+  </Namespace>
+  <Property structures:uri="nc:errorValue">
+    <Name>errorValue</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+  </Property>
+  <Class structures:uri="nc:Degree90Type">
+    <Name>Degree90Type</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a value between 0 (inclusive) and 90 (exclusive).</DefinitionText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <HasValue structures:uri="nc:Degree90SimpleType" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:uri="nc:errorValue" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+  </Class>
+  <Datatype structures:uri="nc:Degree90SimpleType">
+    <Name>Degree90SimpleType</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a value between 0 (inclusive) and 90 (exclusive).</DefinitionText>
+    <RestrictionOf>
+      <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+      <WhiteSpace>
+        <WhiteSpaceValueCode>collapse</WhiteSpaceValueCode>
+      </WhiteSpace>
+      <MaxExclusive>
+        <StringValue>90.0</StringValue>
+        <DefinitionText>The maximum value for a degree.</DefinitionText>
+      </MaxExclusive>
+      <MinInclusive>
+        <StringValue>0.0</StringValue>
+        <DefinitionText>The minimum value for a degree.</DefinitionText>
+      </MinInclusive>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:uri="xs:decimal">
+    <Name>decimal</Name>
+    <Namespace structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

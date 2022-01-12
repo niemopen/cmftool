@@ -41,9 +41,6 @@ public class HasProperty extends ObjectType {
     public String minOccursQuantity() { return minOccursQuantity; }
     public String maxOccursQuantity() { return maxOccursQuantity; } 
     
-  
-    public HasProperty (Model m) {
-        super(m);
-    }    
+    public HasProperty () { super();  }    
   
 }

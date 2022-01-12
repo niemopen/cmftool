@@ -40,8 +40,6 @@ public class Facet extends ObjectType {
     public String getFacetKind()    { return facetKind; }
     public String getStringVal()    { return stringVal; }
     
-    public Facet (Model m) {
-        super(m);
-    }
+    public Facet () { super(); }
 
 }

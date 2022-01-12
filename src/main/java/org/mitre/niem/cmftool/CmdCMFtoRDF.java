@@ -129,19 +129,28 @@ class CmdCMFtoRDF implements JCCommand {
         }
         // Read the model object from the model instance file
         Model m = null;
+        File ifile = new File(mainArgs.get(0));
+        FileInputStream is = null;
         try {
-            File ifile = new File(mainArgs.get(0));
-            FileInputStream is = new FileInputStream(ifile);
-            ModelXMLReader mr = new ModelXMLReader();
-            m = mr.readXML(is);
-        } catch (ParserConfigurationException | SAXException | IOException ex) {
+            is = new FileInputStream(ifile);
+        } catch (FileNotFoundException ex) {
             System.err.println(String.format("Error reading model file: %s", ex.getMessage()));
             System.exit(1);
         }
+        ModelXMLReader mr = new ModelXMLReader();
+        m = mr.readXML(is);
+        if (null == m) {
+            List<String> msgs = mr.getMessages();
+            System.err.print("Could not construct model object:");
+            if (1 == msgs.size()) System.err.print(msgs.get(0));
+            else msgs.forEach((xm) -> { System.err.print("\n  "+xm); });
+            System.err.println();
+            System.exit(1);         
+        }        
         // Write the NIEM model instance to the output stream
-        ModelToRDF rdfw = new ModelToRDF(m);
-        rdfw.writeRDF(ow);
-        ow.close();
-        System.exit(0);
+//        ModelToRDF rdfw = new ModelToRDF(m);
+//        rdfw.writeRDF(ow);
+//        ow.close();
+//        System.exit(0);
     }    
 }

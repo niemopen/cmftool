@@ -83,6 +83,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import static org.mitre.niem.NIEMConstants.PROXY_NS_URI_PREFIX;
+import org.mitre.niem.cmf.CMFException;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_CODE_LISTS_INSTANCE;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_PROXY;
 import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinNamespaceVersion;
@@ -169,12 +170,15 @@ public class ModelFromXSD {
             int bik = getBuiltinNamespaceKind(nsuri);
             // Don't create Namespace for builtins (except code-lists-instance) or unknowns
             if ((NIEM_CODE_LISTS_INSTANCE == bik || 0 > bik) && NSK_UNKNOWN != nsk) {
-                Namespace nsobj = new Namespace(m);
-                nsobj.setNamespacePrefix(nsInfo.getPrefix(nsuri));
+                Namespace nsobj = new Namespace(nsInfo.getPrefix(nsuri), nsuri);
                 nsobj.setNamespaceURI(nsuri);
                 nsobj.setDefinition(nsInfo.getDocumentation(nsuri));
                 if (NSK_EXTERNAL == nsInfo.getNSType(nsuri)) nsobj.setIsExternal(true);
-                m.addNamespace(nsobj);
+                try {
+                    m.addNamespace(nsobj);
+                } catch (CMFException ex) {
+                    // CAN'T HAPPEN
+                }
                 me.setConformanceTargets(nsuri, nsInfo.getConformanceTargets(nsuri));
                 me.setNIEMVersion(nsuri, nsInfo.getNIEMVersion(nsuri));
                 me.setNSVersion(nsuri, nsInfo.getNSVersion(nsuri));
@@ -197,11 +201,13 @@ public class ModelFromXSD {
         });
         // Create namespace for XSD if it doesn't already exist
         // (Sometimes people import it, sometimes they don't)
-        if (null == m.getNamespace(XSD_NS_URI)) {
-            Namespace xsd = new Namespace(m);
-            xsd.setNamespacePrefix(nsInfo.getPrefix(XSD_NS_URI));
-            xsd.setNamespaceURI(XSD_NS_URI);
-            m.addNamespace(xsd);
+        if (null == m.getNamespaceByURI(XSD_NS_URI)) {
+            Namespace xsd = new Namespace(nsInfo.getPrefix(XSD_NS_URI), XSD_NS_URI);
+            try {
+                m.addNamespace(xsd);
+            } catch (CMFException ex) {
+                // CAN'T HAPPEN
+            }
         }
     }   
     
@@ -249,8 +255,8 @@ public class ModelFromXSD {
         if (!elist.isEmpty() 
                 || !aset.isEmpty() 
                 || (null != base && C_CLASSTYPE == base.getType())) {
-            ClassType clobj = new ClassType(m);
-            initComponent(clobj, ct);
+            ClassType clobj = new ClassType(m.getNamespaceByURI(ct.getNamespace()), ct.getName());
+            clobj.setDefinition(getDefinition(ct));
             LOG.debug("Creating ClassType {}", clobj.getQName());
             if (ct.getAbstract()) clobj.setIsAbstract("true");
             if (null != base) {
@@ -264,7 +270,7 @@ public class ModelFromXSD {
                 XSTypeDefinition edt = e.getTypeDefinition();
                 Property op = createProperty(pt, edt);
                 if (null != op) {
-                    HasProperty hop = new HasProperty(m);
+                    HasProperty hop = new HasProperty();
                     hop.setProperty(op);
                     hop.setSequenceID(String.format("%d", seq++));
                     hop.setMinOccursQuantity(String.format("%d", p.getMinOccurs()));
@@ -278,7 +284,7 @@ public class ModelFromXSD {
                 Property dp = createProperty(ad, adt);
                 if (null != dp) {
                     me.setIsAttribute(dp.getQName());
-                    HasProperty hdp = new HasProperty(m);
+                    HasProperty hdp = new HasProperty();
                     hdp.setProperty(dp);
                     hdp.setMaxOccursQuantity("1");
                     if (au.getRequired()) hdp.setMinOccursQuantity("1");
@@ -286,7 +292,7 @@ public class ModelFromXSD {
                     clobj.addHasProperty(hdp);
                 }              
             }
-            m.addClassType(clobj);
+            m.addComponent(clobj);
             return clobj;
         }  
         // For a proxy niem-xs:foo type, just return the base xs:foo type
@@ -296,9 +302,10 @@ public class ModelFromXSD {
         // as FooType and return that.
         if (null != base && bt.getName().endsWith("SimpleType")) {
             Datatype bdt = (Datatype) base;
-            m.removeDatatype(bdt);
-            initComponent(bdt, ct);
-            m.addDatatype(bdt);
+            bdt.setName(ct.getName());
+            bdt.setNamespace(m.getNamespaceByURI(ct.getNamespace()));
+            bdt.setDefinition(getDefinition(ct));
+//            m.addComponent(bdt);
             LOG.debug("Creating Datatype {} from {}SimpleType", bdt.getQName(), ct.getName());
             return base;
         }
@@ -306,12 +313,12 @@ public class ModelFromXSD {
         // empty restriction of the base
         if (null != base) {
             Datatype bdt = (Datatype)base;
-            Datatype dt = new Datatype(m);
-            RestrictionOf r = new RestrictionOf(m);
-            initComponent(dt, ct);
+            RestrictionOf r = new RestrictionOf();
+            Datatype dt = new Datatype(m.getNamespaceByURI(ct.getNamespace()), ct.getName());
+            dt.setDefinition(getDefinition(ct));
             r.setDatatype(bdt);
             dt.setRestrictionOf(r);
-            m.addDatatype(dt);
+            m.addComponent(dt);
             LOG.debug("Creating Datatype {} from {}", dt.getQName(), bdt.getQName());            
             return dt;
         }
@@ -319,9 +326,9 @@ public class ModelFromXSD {
         // and no semantic attributes.  There is either no base type, or the
         // base type is in an external namespace or the structures namespace.
         // For that, we have a ClassType with no properties
-        ClassType clobj = new ClassType(m);
-        initComponent(clobj, ct);
-        m.addClassType(clobj);
+        ClassType clobj = new ClassType(m.getNamespaceByURI(ct.getNamespace()), ct.getName());
+        clobj.setDefinition(getDefinition(ct));
+        m.addComponent(clobj);
         LOG.debug("Creating empty ClassType {}", clobj.getQName());
         return clobj;
     }
@@ -421,9 +428,9 @@ public class ModelFromXSD {
         if (null != op) return op;
         if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) return null;    // skip properties in structures namespace
         if (NSK_UNKNOWN == nsInfo.getNSType(nsuri)) return null;        // skip properties in unknown namespaces    
-        op = new Property(m);
-        initComponent(op, o);
-        m.addProperty(op);
+        op = new Property(m.getNamespaceByURI(o.getNamespace()), o.getName());
+        op.setDefinition(getDefinition(o));
+        m.addComponent(op);
         LOG.debug("Creating Property {}", op.getQName());
         
         // If an external property, we're done; no substitution or types for those
@@ -439,6 +446,8 @@ public class ModelFromXSD {
                 op.setSubPropertyOf(sp);
             }
             if (ed.getAbstract()) op.setIsAbstract("true");
+            if (ed.getNillable()) me.setIsNillable(op.getQName());
+            
         }
         else if (ATTRIBUTE_DECLARATION == o.getType()) {
             
@@ -456,9 +465,9 @@ public class ModelFromXSD {
         String nsuri = st.getNamespace();
         Datatype d  = m.getDatatype(nsuri, cname);
         if (null != d) return d;                    // already created
-        d = new Datatype(m);
-        initComponent(d, st);
-        m.addDatatype(d);
+        d = new Datatype(m.getNamespaceByURI(st.getNamespace()), st.getName());
+        d.setDefinition(getDefinition(st));
+        m.addComponent(d);
         LOG.debug("Creating Datatype {}", d.getQName());
         if (XSD_NS_URI.equals(nsuri)) return d;     // xs: types are primatives
         switch(st.getVariety()) {
@@ -496,7 +505,7 @@ public class ModelFromXSD {
     }
     
     private UnionOf createUnionOf (XSSimpleTypeDefinition st) {
-        UnionOf u = new UnionOf(m);
+        UnionOf u = new UnionOf();
         XSObjectList members = st.getMemberTypes();
         if (null == members || members.getLength() < 1) return null;
         for (int i = 0; i < members.getLength(); i++) {
@@ -514,7 +523,7 @@ public class ModelFromXSD {
         if (XSD_NS_URI.equals(base.getNamespace()) && "anySimpleType".equals(base.getName())) return null;
         Datatype bt = createDatatype((XSSimpleTypeDefinition)base);
         if (null == bt) return null;
-        RestrictionOf r = new RestrictionOf(m);
+        RestrictionOf r = new RestrictionOf();
         r.setDatatype(bt);
         XSObjectList flist = st.getFacets();
         int facetCt = 0;
@@ -522,7 +531,7 @@ public class ModelFromXSD {
             XSFacet f = (XSFacet)flist.item(i);
             if (XSD_NS_URI.equals(st.getNamespace()) && FACET_WHITESPACE == f.getFacetKind()) continue; // FIXME
             if (XSD_NS_URI.equals(base.getNamespace()) && "token".equals(base.getName()) && FACET_WHITESPACE == f.getFacetKind()) continue;
-            Facet fo  = new Facet(m);
+            Facet fo  = new Facet();
             fo.setFacetKind(facetKind(f));
             fo.setStringVal(f.getLexicalFacetValue());
             fo.setDefinition(getDefinition(f));
@@ -542,7 +551,7 @@ public class ModelFromXSD {
                     XSAnnotation an = (XSAnnotation)annl.item(j);
                     if (null != an) def = parseDefinition((XSAnnotation)annl.item(j));
                 }
-                Facet fo = new Facet(m);
+                Facet fo = new Facet();
                 fo.setFacetKind(fkind);
                 fo.setStringVal(val);
                 fo.setDefinition(def);
@@ -575,7 +584,7 @@ public class ModelFromXSD {
     
     private void initComponent (Component c, XSObject o) {
         c.setName(o.getName());
-        c.setNamespace(m.getNamespace(o.getNamespace()));
+        c.setNamespace(m.getNamespaceByURI(o.getNamespace()));
         c.setDefinition(getDefinition(o));
     }
 

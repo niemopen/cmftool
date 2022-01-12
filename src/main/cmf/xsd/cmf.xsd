@@ -7,18 +7,18 @@
            targetNamespace="http://reference.niem.gov/specification/cmf/0.3/"
            ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ExtensionSchemaDocument"
            xml:lang="en-US"
-           version="1">
+           version="1">   
    <xs:annotation>
       <xs:documentation>A data model for the NIEM Common Model Format (CMF).</xs:documentation>
    </xs:annotation>
    <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
    <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
-   <xs:element name="AbstractIndicator" type="xs-proxy:boolean" nillable="true">
+   <xs:element name="AbstractIndicator" type="xs-proxy:boolean">
       <xs:annotation>
          <xs:documentation>True if a component is a base for extension, and must be specialized to be used directly; false if a component may be used directly.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="AnyValueAbstract" abstract="true" nillable="true">
+   <xs:element name="AnyValueAbstract" abstract="true">
       <xs:annotation>
          <xs:documentation>A data concept for a value of a facet.</xs:documentation>
       </xs:annotation>
@@ -127,20 +127,19 @@
          <xs:documentation>An augmentation point for cmf:DatatypeType.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="DefinitionText" type="xs-proxy:string" nillable="true">
+   <xs:element name="DefinitionText" type="xs-proxy:string">
       <xs:annotation>
          <xs:documentation>A human-readable text definition of a data model component.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="DeprecatedIndicator" type="xs-proxy:boolean" nillable="true">
+   <xs:element name="DeprecatedIndicator" type="xs-proxy:boolean">
       <xs:annotation>
          <xs:documentation>The deprecated attribute provides a method for identifying schema components as being deprecated. A deprecated component is one that is provided, but the use of which is not recommended.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="Enumeration"
                type="cmf:AnyValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>A restriction of the length of a data type.</xs:documentation>
       </xs:annotation>
@@ -150,32 +149,30 @@
          <xs:documentation>A extension of a class.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="ExternalAdapterTypeIndicator" type="xs-proxy:boolean" nillable="true">
+   <xs:element name="ExternalAdapterTypeIndicator" type="xs-proxy:boolean">
       <xs:annotation>
          <xs:documentation>True if the type is an external adapter type.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="ExternalNamespaceIndicator" type="xs-proxy:boolean" nillable="true">
+   <xs:element name="ExternalNamespaceIndicator" type="xs-proxy:boolean">
       <xs:annotation>
          <xs:documentation>True if the namespace is expected to be non-conformat.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="FacetAbstract" abstract="true" nillable="true">
+   <xs:element name="FacetAbstract" abstract="true">
       <xs:annotation>
          <xs:documentation>A data concept for a facet that restricts an aspect of a data type.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="FractionDigits"
                type="cmf:NonNegativeValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>A restriction on the precision of a decimal data type, via a restriction on the number of digits allowed to the right of the decimal point of its decimal representation.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="HasProperty"
-               type="cmf:HasPropertyType"
-               nillable="true">
+               type="cmf:HasPropertyType">
       <xs:annotation>
          <xs:documentation>An occurrence of a property as content of a class.</xs:documentation>
       </xs:annotation>
@@ -202,48 +199,40 @@
          <xs:documentation>An augmentation point for cmf:HasPropertyType.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="HasValue" 
-               type="cmf:DatatypeType"
-               nillable="true">
+   <xs:element name="HasValue" type="cmf:DatatypeType" nillable="true">
       <xs:annotation>
          <xs:documentation>A data type for a property as the value of a class. </xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="Length"
                type="cmf:NonNegativeValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>A restriction of the length of a data type. Unit of length varies depending on the type that is being derived from.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="ListOf"
-               type="cmf:DatatypeType"
-               nillable="true">
+   <xs:element name="ListOf" type="cmf:DatatypeType" nillable="true">
       <xs:annotation>
          <xs:documentation>A data type for a list of values.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="MaxExclusive"
                type="cmf:AnyValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>An exclusive upper bound of a data type.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="MaxInclusive"
                type="cmf:AnyValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>An inclusive upper bound of a data type.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="MaxLength"
                type="cmf:NonNegativeValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>A maximum length of a data type. Unit of length varies depending on the type that is being derived from.</xs:documentation>
       </xs:annotation>
@@ -283,24 +272,21 @@
    </xs:simpleType>
    <xs:element name="MinExclusive"
                type="cmf:AnyValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>An exclusive lower bound of a data type.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="MinInclusive"
                type="cmf:AnyValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>An inclusive lower bound of a data type.</xs:documentation>
       </xs:annotation>
    </xs:element>
    <xs:element name="MinLength"
                type="cmf:NonNegativeValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>A minimum length of a data type. Unit of length varies depending on the type that is being derived from.</xs:documentation>
       </xs:annotation>
@@ -310,12 +296,12 @@
          <xs:documentation>A minimum number of times a property may occur within a class.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="Model" type="cmf:ModelType" nillable="true">
+   <xs:element name="Model" type="cmf:ModelType">
       <xs:annotation>
          <xs:documentation>A data model.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="ModelItemAbstract" abstract="true" nillable="true">
+   <xs:element name="ModelItemAbstract" abstract="true">
       <xs:annotation>
          <xs:documentation>A data concept for an item in a data model.</xs:documentation>
       </xs:annotation>
@@ -338,7 +324,7 @@
          <xs:documentation>An augmentation point for cmf:ModelType.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="Name" type="cmf:NCName" nillable="true">
+   <xs:element name="Name" type="cmf:NCName">
       <xs:annotation>
          <xs:documentation>A name of a data model component.</xs:documentation>
       </xs:annotation>
@@ -351,7 +337,7 @@
          <xs:documentation>A namespace of a data model component.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="NamespacePrefixName" type="cmf:NCName" nillable="true">
+   <xs:element name="NamespacePrefixName" type="cmf:NCName">
       <xs:annotation>
          <xs:documentation>A namespace prefix name for a namespace.</xs:documentation>
       </xs:annotation>
@@ -379,7 +365,7 @@
          <xs:documentation>An augmentation point for cmf:NamespaceType.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="NamespaceURI" type="xs-proxy:anyURI" nillable="true">
+   <xs:element name="NamespaceURI" type="xs-proxy:anyURI">
       <xs:annotation>
          <xs:documentation>A namespace name URI for a namespace.</xs:documentation>
       </xs:annotation>
@@ -396,8 +382,7 @@
    </xs:complexType>
    <xs:element name="NonNegativeValue"
                type="xs-proxy:nonNegativeInteger"
-               substitutionGroup="cmf:AnyValueAbstract"
-               nillable="true">
+               substitutionGroup="cmf:AnyValueAbstract">
       <xs:annotation>
          <xs:documentation>A value of a facet, with an integer value zero or greater.</xs:documentation>
       </xs:annotation>
@@ -438,7 +423,6 @@
       <xs:complexContent>
          <xs:extension base="cmf:ComponentType">
             <xs:sequence>
-
                <xs:element ref="cmf:SubPropertyOf" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:Class" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:Datatype" minOccurs="0" maxOccurs="1"/>
@@ -456,8 +440,7 @@
    </xs:element>
    <xs:element name="Pattern"
                type="cmf:PatternFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>A restriction of the content of a datatype to values that match a specific pattern, provided as a regular expression.</xs:documentation>
       </xs:annotation>
@@ -485,8 +468,7 @@
    </xs:element>
    <xs:element name="PositiveValue"
                type="xs-proxy:positiveInteger"
-               substitutionGroup="cmf:AnyValueAbstract"
-               nillable="true">
+               substitutionGroup="cmf:AnyValueAbstract">
       <xs:annotation>
          <xs:documentation>A value of a facet, with an integer value greater than zero.</xs:documentation>
       </xs:annotation>
@@ -512,7 +494,7 @@
          <xs:documentation>An augmentation point for cmf:PositiveValueFacetType.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="RestrictionOf" type="cmf:RestrictionOfType" nillable="true">
+   <xs:element name="RestrictionOf" type="cmf:RestrictionOfType">
       <xs:annotation>
          <xs:documentation>A restriction of a data type.</xs:documentation>
       </xs:annotation>
@@ -540,8 +522,7 @@
    </xs:element>
    <xs:element name="StringValue"
                type="xs-proxy:string"
-               substitutionGroup="cmf:AnyValueAbstract"
-               nillable="true">
+               substitutionGroup="cmf:AnyValueAbstract">
       <xs:annotation>
          <xs:documentation>A value of a facet, with a string value.</xs:documentation>
       </xs:annotation>
@@ -553,13 +534,12 @@
    </xs:element>
    <xs:element name="TotalDigits"
                type="cmf:PositiveValueFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>A restriction on the size and precision of a decimal data type, via a restriction on the number of digits required to represent its value.</xs:documentation>
       </xs:annotation>
    </xs:element>
-   <xs:element name="UnionOf" type="cmf:UnionOfType" nillable="true">
+   <xs:element name="UnionOf" type="cmf:UnionOfType">
       <xs:annotation>
          <xs:documentation>A union of data types.</xs:documentation>
       </xs:annotation>
@@ -586,8 +566,7 @@
    </xs:element>
    <xs:element name="WhiteSpace"
                type="cmf:WhiteSpaceFacetType"
-               substitutionGroup="cmf:FacetAbstract"
-               nillable="true">
+               substitutionGroup="cmf:FacetAbstract">
       <xs:annotation>
          <xs:documentation>A constraint on how white space within data values is handled.</xs:documentation>
       </xs:annotation>
@@ -637,7 +616,7 @@
    </xs:element>
    <xs:element name="WhiteSpaceValueCode"
                type="cmf:WhiteSpaceValueCodeType"
-               nillable="true">
+              >
       <xs:annotation>
          <xs:documentation>A value of a specification of white space for a data type.</xs:documentation>
       </xs:annotation>

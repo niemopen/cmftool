@@ -33,6 +33,13 @@ public class Datatype extends Component {
     private UnionOf unionOf = null;
     private Datatype listOf = null;
     
+    public Datatype () { super(); type = C_DATATYPE; }    
+    
+    public Datatype (Namespace ns, String lname) {
+        super(ns, lname);
+        type = C_DATATYPE;
+    }
+    
     public void setRestrictionOf (RestrictionOf r) { restrictionOf = r; }
     public void setUnionOf (UnionOf u)             { unionOf = u; }
     public void setListOf (Datatype d)             { listOf = d; }
@@ -41,23 +48,16 @@ public class Datatype extends Component {
     public UnionOf getUnionOf()             { return unionOf; }
     public Datatype getListOf()             { return listOf; }
     
-    public Datatype getBaseType () {
-        if (null != restrictionOf) return restrictionOf.getDatatype().getBaseType();
-        else if (null != listOf)   return listOf.getBaseType();
-        else if (null != unionOf)  return null; // FIXME
-        else return this;
-    }
-    
-    public Datatype () { type = C_DATATYPE; }
-    
-    public Datatype (Model m) {
-        super(m);
-        type = C_DATATYPE; 
-    }
-    
+//    public Datatype getBaseType () {
+//        if (null != restrictionOf) return restrictionOf.getDatatype().getBaseType();
+//        else if (null != listOf)   return listOf.getBaseType();
+//        else if (null != unionOf)  return null; // FIXME
+//        else return this;
+//    }
+   
     @Override
-    public void addToModelSet (Model m) {
-        m.addDatatype(this);
+    public void addToModel (Model m) {
+        m.addComponent(this);
     }
  
 }

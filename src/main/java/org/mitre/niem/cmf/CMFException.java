@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2022 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,26 +21,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.xsd;
-
-import org.mitre.niem.cmf.Model;
-import org.xml.sax.Attributes;
+package org.mitre.niem.cmf;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class XModel extends XObjectType {
+public class CMFException extends Exception {
     
-    private Model obj = null;
-    
-    @Override
-    public Model getObject() { return obj; }
-    
-    XModel (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
-        super(m, p, ens, eln, a, line);
-        obj = new Model();
-    }    
+    public CMFException (String msg) { super(msg); }
     
 }

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.3/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://reference.niem.gov/specification/cmf/0.3/">
+  <Namespace structures:uri="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixName>nc</NamespacePrefixName>
+    <DefinitionText>NIEM Core.</DefinitionText>
+  </Namespace>
+  <Namespace structures:uri="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixName>xs</NamespacePrefixName>
+  </Namespace>
+  <Datatype structures:uri="nc:FacetsType">
+    <Name>FacetsType</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <RestrictionOf>
+      <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+      <WhiteSpace>
+        <WhiteSpaceValueCode>collapse</WhiteSpaceValueCode>
+      </WhiteSpace>
+      <FractionDigits>
+        <NonNegativeValue>2</NonNegativeValue>
+      </FractionDigits>
+      <Length>
+        <NonNegativeValue>8</NonNegativeValue>
+      </Length>
+      <MaxExclusive>
+        <StringValue>99.2</StringValue>
+      </MaxExclusive>
+      <MaxInclusive>
+        <StringValue>27.5</StringValue>
+      </MaxInclusive>
+      <MaxLength>
+        <NonNegativeValue>45</NonNegativeValue>
+      </MaxLength>
+      <MinExclusive>
+        <StringValue>10.1</StringValue>
+      </MinExclusive>
+      <MinInclusive>
+        <StringValue>34.5</StringValue>
+      </MinInclusive>
+      <MinLength>
+        <NonNegativeValue>99</NonNegativeValue>
+      </MinLength>
+      <Pattern>
+        <StringValue>\d{4}\.\d{2}</StringValue>
+        <DefinitionText>FooBar</DefinitionText>
+      </Pattern>
+      <TotalDigits>
+        <PositiveValue>5</PositiveValue>
+      </TotalDigits>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:uri="xs:decimal">
+    <Name>decimal</Name>
+    <Namespace structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

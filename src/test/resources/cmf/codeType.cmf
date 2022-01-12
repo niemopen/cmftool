@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.3/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://reference.niem.gov/specification/cmf/0.3/">
+  <Namespace structures:uri="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixName>nc</NamespacePrefixName>
+  </Namespace>
+  <Namespace structures:uri="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixName>xs</NamespacePrefixName>
+  </Namespace>
+  <Property structures:uri="nc:EmploymentPositionBasisAbstract">
+    <Name>EmploymentPositionBasisAbstract</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>A data concept for a nature or duration of the position, such as permanent, non-permanent, or contractor.</DefinitionText>
+    <AbstractIndicator>true</AbstractIndicator>
+  </Property>
+  <Property structures:uri="nc:EmploymentPositionBasisCode">
+    <Name>EmploymentPositionBasisCode</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>A nature or duration of the position, such as permanent, non-permanent, or contractor.</DefinitionText>
+    <SubPropertyOf structures:uri="nc:EmploymentPositionBasisAbstract" xsi:nil="true"/>
+    <Datatype structures:uri="nc:EmploymentPositionBasisCodeType" xsi:nil="true"/>
+  </Property>
+  <Datatype structures:uri="nc:EmploymentPositionBasisCodeType">
+    <Name>EmploymentPositionBasisCodeType</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a nature or duration of the employment position.</DefinitionText>
+    <RestrictionOf>
+      <Datatype structures:uri="xs:token" xsi:nil="true"/>
+      <Enumeration>
+        <StringValue>contractor</StringValue>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>non-permanent</StringValue>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>permanent</StringValue>
+      </Enumeration>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:uri="xs:token">
+    <Name>token</Name>
+    <Namespace structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

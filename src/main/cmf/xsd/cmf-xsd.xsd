@@ -31,6 +31,7 @@
             <xs:sequence>
                <xs:element ref="cmfx:SchemaDocument" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element ref="cmfx:AttributeName" minOccurs="0" maxOccurs="unbounded"/>
+               <xs:element ref="cmfx:NillableElementName" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
          </xs:extension>
       </xs:complexContent>
@@ -114,6 +115,12 @@
    <xs:element name="AttributeName" type="xs-proxy:token">
       <xs:annotation>
          <xs:documentation>A qualified name of an XML attribute.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   
+   <xs:element name="NillableElementName" type="xs-proxy:token">
+      <xs:annotation>
+         <xs:documentation>A qualified name of a nillable XML element.</xs:documentation>
       </xs:annotation>
    </xs:element>
    

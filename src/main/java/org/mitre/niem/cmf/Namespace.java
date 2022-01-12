@@ -23,67 +23,64 @@
  */
 package org.mitre.niem.cmf;
 
-import java.util.Map;
-
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Namespace extends ObjectType implements Comparable<Namespace> {
+    private Model model = null;             // Component objects know the Model they are part of     
     private String namespaceURI = null;
     private String namespacePrefix = null;
     private String definition = null;
     private boolean isExternal = false;
     
-    @Override
-    public boolean isModelChild ()            { return true; }      // Namespace objects are model children
-    
-    public void setNamespaceURI (String s)    { namespaceURI = s; }
-    public void setNamespacePrefix (String s) { namespacePrefix = s; }
-    public void setDefinition (String s)      { definition = s; }
-    public void setIsExternal (boolean f)     { isExternal = f; }
-    public void setIsExternal (String s)      { isExternal = "true".equals(s); }
-    
-    public String getNamespaceURI ()          { return namespaceURI; }
-    public String getNamespacePrefix ()       { return namespacePrefix; }
-    public String getDefinition ()            { return definition; }
-    public boolean getIsExternal ()           { return isExternal; }
-    
-    public Namespace () { }
-    
-    // A constructor for Namespace objects not part of a model (structures, etc.)
+    public Namespace () { super(); }
+     
     public Namespace (String p, String nsuri) {
+        super();
         namespacePrefix = p ;
         namespaceURI = nsuri;
     }
     
-    public Namespace (Model m) {
-        super(m);
+    @Override
+    public boolean isModelChild ()            { return true; }      // Namespace objects are model children
+    
+    public void setNamespaceURI (String s)    { 
+        namespaceURI = s;
+        if (null != getModel()) getModel().childChanged(this, namespacePrefix);
     }
     
+    public void setNamespacePrefix (String s) throws CMFException { 
+        String oldPrefix = namespacePrefix;
+        namespacePrefix = s;
+        if (null != getModel()) {
+            Namespace en = getModel().getNamespaceByPrefix(s);
+            if (null != en) {
+            throw new CMFException(
+                String.format("Duplicate namespace prefix \"%s\" (bound to %s and %s)",
+                        s, namespaceURI, en.getNamespaceURI()));
+            }
+            getModel().childChanged(this, oldPrefix);
+        }
+    }
+    
+    void setModel (Model m)                   { model = m; }
+    public void setDefinition (String s)      { definition = s; }
+    public void setIsExternal (boolean f)     { isExternal = f; }
+    public void setIsExternal (String s)      { isExternal = "true".equals(s); }
+    
+    public Model getModel ()                  { return model; }
+    public String getNamespaceURI ()          { return namespaceURI; }
+    public String getNamespacePrefix ()       { return namespacePrefix; }
+    public String getDefinition ()            { return definition; }
+    public boolean isExternal ()           { return isExternal; }
+
+    // Enforces guarantee that each namespace in a model has a unique prefix
     @Override
-    public void addToModelSet (Model m) {
+    public void addToModel (Model m) throws CMFException {
         m.addNamespace(this);
     }   
-        
-    /**
-     * Returns a munged namespace prefix that does not exist in the supplied prefix map
-     * For example, "nc" might turn into "nc_1" 
-     * @param pm map claimed prefix -> ??
-     * @param op desired prefix
-     * @return munged prefix not in prefix map
-     */
-    public static String mungedPrefix (Map<String,String>pm, String op) {
-        if (!pm.containsKey(op)) return op;
-        int count = 0;
-        String pat = op.replaceFirst("_\\d+$", "");    // remove existing suffix if any
-        pat = pat + "_%d";
-        while (pm.containsKey(op)) {
-            op = String.format(pat, ++count);
-        }
-        return op;
-    }
     
     @Override
     public int compareTo (Namespace o) {

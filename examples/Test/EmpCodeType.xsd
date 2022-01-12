@@ -35,4 +35,14 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
+  <xs:element name="EmploymentPositionBasisAbstract" abstract="true">
+    <xs:annotation>
+      <xs:documentation>A data concept for a nature or duration of the position, such as permanent, non-permanent, or contractor.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="EmploymentPositionBasisCode" type="nc:EmploymentPositionBasisCodeType" substitutionGroup="nc:EmploymentPositionBasisAbstract" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A nature or duration of the position, such as permanent, non-permanent, or contractor.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
 </xs:schema>

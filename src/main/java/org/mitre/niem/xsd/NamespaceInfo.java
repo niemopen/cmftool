@@ -35,7 +35,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import org.apache.logging.log4j.LogManager;
 import static org.mitre.niem.NIEMConstants.*;
-import static org.mitre.niem.cmf.Namespace.mungedPrefix;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_APPINFO;
 import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_STRUCTURES;
 import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinNamespaceVersion;
@@ -515,5 +514,16 @@ public class NamespaceInfo {
             attribute = an;
             value = av;
         }
+    }
+    
+    static String mungedPrefix (Map<String,String>pm, String op) {
+       if (!pm.containsKey(op)) return op;
+       int count = 0;
+       String pat = op.replaceFirst("_\\d+$", "");    // remove existing suffix if any
+       pat = pat + "_%d";
+       while (pm.containsKey(op)) {
+           op = String.format(pat, ++count);
+       }
+       return op;        
     }
 }

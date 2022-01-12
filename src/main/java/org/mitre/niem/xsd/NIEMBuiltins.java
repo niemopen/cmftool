@@ -51,7 +51,11 @@ public class NIEMBuiltins {
     public static int NIEM_STRUCTURES = 5;
     public static int NIEM_BUILTINS_COUNT = 6;
     
-    private static Pattern[] builtinNSPatterns= {
+    private static final String[] defaultPrefix = {
+        "appinfo", "cli", "clsi", "ct", "xs-proxy", "structures"
+    };
+    
+    private static final Pattern[] builtinNSPatterns= {
         Pattern.compile("http://release.niem.gov/niem/appinfo/([\\d.]+)/"),
         Pattern.compile("http://reference.niem.gov/niem/specification/code-lists/([\\d.]+)/code-lists-instance/"),
         Pattern.compile("http://reference.niem.gov/niem/specification/code-lists/([\\d.]+)/code-lists-schema-appinfo/"),        
@@ -59,7 +63,7 @@ public class NIEMBuiltins {
         Pattern.compile("http://release.niem.gov/niem/proxy/[^/]+/([\\d.]+)/"),
         Pattern.compile("http://release.niem.gov/niem/structures/([\\d.]+)/")
     };    
-    private static String[] builtinNSURI= {
+    private static final String[] builtinNSURI= {
         "http://release.niem.gov/niem/appinfo/VERSION/",
         "http://reference.niem.gov/niem/specification/code-lists/VERSION/code-lists-instance/",
         "http://reference.niem.gov/niem/specification/code-lists/VERSION/code-lists-schema-appinfo/",        
@@ -67,7 +71,7 @@ public class NIEMBuiltins {
         "http://release.niem.gov/niem/proxy/PROXY/VERSION/",
         "http://release.niem.gov/niem/structures/VERSION/"
     };
-    private static String[] builtinFilename = {
+    private static final String[] builtinFilename = {
         "appinfo.xsd",
         "code-list-instance.xsd",
         "code-list-schema-appinfo.xsd",
@@ -78,6 +82,16 @@ public class NIEMBuiltins {
     
     public static boolean isBuiltinNamespace (String nsuri) {
         return getBuiltinNamespaceKind(nsuri) >= 0;
+    }
+    
+    public static String getBuiltinDefaultPrefix (int which) {
+        if (0 > which || NIEM_BUILTINS_COUNT <= which) return null;
+        return defaultPrefix[which];
+    }
+    
+    public static String getBuiltinDefaultPrefix (String nsuri) {
+        int kind = getBuiltinNamespaceKind(nsuri);
+        return getBuiltinDefaultPrefix(kind);
     }
     
     public static int getBuiltinNamespaceKind (String nsuri) {

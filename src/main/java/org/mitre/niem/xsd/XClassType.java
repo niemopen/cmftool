@@ -25,7 +25,6 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Model;
-import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
 /**
@@ -41,24 +40,8 @@ public class XClassType extends XObjectType {
     
     XClassType (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new ClassType(m);
-    }
-    
-    // Replacing a placeholder? Use idRepl to replace obj
-    // Otherwise obj is the object to use
-    @Override
-    public ClassType getObjectToAdd () {
-        ClassType r = this.obj;
-        if (null != this.idRepl) {
-            try {
-                r = (ClassType)this.idRepl.getObject();
-            }
-            catch (ClassCastException e) {
-                LOG.error("line {}: ID/REF type mismatch", this.getLineNumber());
-            }
-        }
-        return r;
-    }    
+        obj = new ClassType();
+    } 
     
     @Override
     public void addAsChild (XObjectType child) {
@@ -70,11 +53,11 @@ public class XClassType extends XObjectType {
     // of the parent classtype.
     @Override
     public void addToClassType (XClassType c) {
-        c.getObject().setExtensionOfClass(this.getObjectToAdd());
+        c.getObject().setExtensionOfClass(this.getObject());
     } 
     
     @Override
     public void addToProperty (XProperty op) {
-        op.getObject().setClassType(this.getObjectToAdd());
+        op.getObject().setClassType(this.getObject());
     }    
 }

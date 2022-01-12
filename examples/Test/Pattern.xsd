@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema 
+  targetNamespace="http://release.niem.gov/niem/niem-core/5.0/" 
+  version="1" 
+  xml:lang="en-US" 
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument" 
+  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/" 
+  xmlns:geo="http://release.niem.gov/niem/adapters/geospatial/5.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/" 
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/" 
+  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/" 
+  xmlns:niem-xs="http://release.niem.gov/niem/proxy/niem-xs/5.0/">
+  <xs:annotation>
+    <xs:documentation>NIEM Core.</xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
+   
+  <!-- Facets, deprecation -->
+  
+  <xs:simpleType name="FacetsSimpleType">
+    <xs:annotation>
+      <xs:documentation>A data type to exercise restriction facets.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:decimal">
+      <xs:maxInclusive value="27.5"/>
+      <xs:minExclusive value="10.1"/>
+      <xs:fractionDigits value="2"/>
+      <xs:totalDigits value="5"/>
+      <xs:pattern value="\d{4}\.\d{2}">
+        <xs:annotation>
+          <xs:documentation>FooBar</xs:documentation>
+        </xs:annotation>
+      </xs:pattern>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="FacetsType">
+    <xs:simpleContent>
+      <xs:extension base="nc:FacetsSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  
+</xs:schema>

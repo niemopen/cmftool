@@ -23,12 +23,9 @@
  */
 package org.mitre.niem.xsd;
 
-import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Model;
-import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
-import static org.mitre.niem.NIEMConstants.CMF_NS_URI_PREFIX;
 
 /**
  *
@@ -43,7 +40,7 @@ public class XHasProperty extends XObjectType {
     
     XHasProperty (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new HasProperty(m);
+        obj = new HasProperty();
         obj.setSequenceID(this.getSequenceID());       
     }      
     
@@ -55,18 +52,6 @@ public class XHasProperty extends XObjectType {
    
     @Override
     public void addToClassType (XClassType x) { 
-        XObjectType r  = this.getIDRepl();      // null unless replacing IDREF/URI placeholder
-        ClassType po   = x.getObject();         // parent object
-        HasProperty co = this.getObject();      // child object, perhaps an IDREF/URI placeholder
-        try {
-            if (null != r) {
-                HasProperty ro = (HasProperty)r.getObject();    // object with desired ID
-                po.replaceHasProperty(co, ro);                  // replace the placeholder
-            } else {
-                po.addHasProperty(co);
-            }
-        } catch (ClassCastException e) {
-            LOG.error("line {}: ID/REF type mismatch", r.getLineNumber());
-        }
+        x.getObject().addHasProperty(this.getObject());
     }    
 }

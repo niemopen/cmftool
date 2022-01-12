@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.3/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://reference.niem.gov/specification/cmf/0.3/">
+  <Namespace structures:uri="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixName>nc</NamespacePrefixName>
+    <DefinitionText>NIEM Core.</DefinitionText>
+  </Namespace>
+  <Namespace structures:uri="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixName>xs</NamespacePrefixName>
+  </Namespace>
+  <Datatype structures:uri="nc:TokenListType">
+    <Name>TokenListType</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a white space-delimited list of tokens.</DefinitionText>
+    <ListOf structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:uri="xs:decimal">
+    <Name>decimal</Name>
+    <Namespace structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

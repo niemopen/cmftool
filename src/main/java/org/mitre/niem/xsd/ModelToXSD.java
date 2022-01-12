@@ -80,7 +80,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- *
+ * A class for writing a Model as a NIEM XML schema pile.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -98,9 +99,9 @@ public class ModelToXSD {
     
     public void writeXSD (File od) throws FileNotFoundException, ParserConfigurationException, TransformerException, IOException {
         // Write a schema document for each namespace
-        for (Namespace ns : m.namespaceSet()) {
+        for (Namespace ns : m.getNamespaceList()) {
             if (XSD_NS_URI.equals(ns.getNamespaceURI())) continue;
-            if (ns.getIsExternal()) continue;
+            if (ns.isExternal()) continue;
             String fn = me.getDocumentFilepath(ns.getNamespaceURI());
             File of = new File(od, fn);
             createParentDirectories(of);
@@ -130,7 +131,7 @@ public class ModelToXSD {
         LOG.debug("Writing schema document for {}", nsuri);
         
         // Add namespace version number, if specified
-        String nsv = me.getNSVersion(nsuri);
+        String nsv = me.getNamespaceVersion(nsuri);
         if (null != nsv && !nsv.isBlank()) root.setAttribute("version", nsv);
         
         // Add conformance target assertions, if any
@@ -143,7 +144,7 @@ public class ModelToXSD {
             root.setAttributeNS(ctns, ctprefix+":"+CONFORMANCE_ATTRIBUTE_NAME, cta);
         }
         // Add the <xs:annotation> element with namespace definition
-        Namespace ns = m.getNamespace(nsuri);
+        Namespace ns = m.getNamespaceByURI(nsuri);
         addDefinition(dom, root, ns.getDefinition());
         Element annot = (Element)root.getFirstChild();
         
@@ -152,12 +153,12 @@ public class ModelToXSD {
         // Remember external namespaces when encountered
         TreeMap<String,Element> typedefs = new TreeMap<>();
         TreeSet<Namespace> nsdep = new TreeSet<>();
-        for (ClassType cl : m.classTypeSet()) createTypeFromClass(dom, typedefs, nsdep, nsuri, cl);
-        for (Datatype dt : m.datatypeSet())   createTypeFromDatatype(dom, typedefs, nsdep, nsuri, dt);  
+        for (Component c : m.getComponentList()) createTypeFromClass(dom, typedefs, nsdep, nsuri, c.asClassType());
+        for (Component c : m.getComponentList()) createTypeFromDatatype(dom, typedefs, nsdep, nsuri, c.asDatatype());
         
         // Create elements and attributes for Property objects
         TreeMap<String,Element> propdecls = new TreeMap<>();
-        for (Property p : m.propertySet()) createElementOrAttribute(dom, propdecls, nsdep, nsuri, p);
+        for (Component c : m.getComponentList()) createElementOrAttribute(dom, propdecls, nsdep, nsuri, c.asProperty());
 
         // Add a namespace declaration and import element for each namespace dependency
         for (Namespace dns : nsdep) {
@@ -175,7 +176,7 @@ public class ModelToXSD {
             Element ie = dom.createElementNS(XSD_NS_URI, "xs:import");
             ie.setAttribute("namespace", dnsuri);
             ie.setAttribute("schemaLocation", sloc);
-            if (dns.getIsExternal()) addAppinfo(dom, ie, nsuri, "externalImportIndicator", "true");
+            if (dns.isExternal()) addAppinfo(dom, ie, nsuri, "externalImportIndicator", "true");
             root.appendChild(ie);
         }
         // Now add the type definitions and element/attribute declarations to the document
@@ -209,8 +210,8 @@ public class ModelToXSD {
         cte.setAttribute("name", cname);
         addDefinition(dom, cte, ct.getDefinition());
         typedefs.put(cname, cte);
-        if (ct.getIsDeprecated()) addAppinfo(dom, cte, nsuri, "deprecatedIndicator", "true");
-        if (ct.getIsExternal())   addAppinfo(dom, cte, nsuri, "externalAdapterTypeIndicator", "true");
+        if (ct.isDeprecated()) addAppinfo(dom, cte, nsuri, "deprecatedIndicator", "true");
+        if (ct.isExternal())   addAppinfo(dom, cte, nsuri, "externalAdapterTypeIndicator", "true");
         
         // ClassType with properties has complex content
         // ClassType without properties and no HasValue has complex content
@@ -384,7 +385,7 @@ public class ModelToXSD {
         Element cte = dom.createElementNS(XSD_NS_URI, "xs:complexType");
         addDefinition(dom, cte, dt.getDefinition());
         cte.setAttribute("name", cname);
-        if (dt.getIsDeprecated()) addAppinfo(dom, cte, nsuri, "deprecatedIndicator", "true");
+        if (dt.isDeprecated()) addAppinfo(dom, cte, nsuri, "deprecatedIndicator", "true");
         typedefs.put(cname, cte);
         createSimpleContent(dom, cte, typedefs, nsdep, dt);
     }   
@@ -399,8 +400,9 @@ public class ModelToXSD {
         else pe = dom.createElementNS(XSD_NS_URI, "xs:element");
         addDefinition(dom, pe, p.getDefinition());
         pe.setAttribute("name", p.getName());
-        if (p.getIsAbstract())   pe.setAttribute("abstract", "true");
-        if (p.getIsDeprecated()) addAppinfo(dom, pe, nsuri, "deprecatedIndicator", "true");
+        if (me.isNillable(p.getQName())) pe.setAttribute("nillable", "true");
+        if (p.isAbstract())   pe.setAttribute("abstract", "true");
+        if (p.isDeprecated()) addAppinfo(dom, pe, nsuri, "deprecatedIndicator", "true");
         if (null != pt) {
             pe.setAttribute("type", pt.getQName());
             nsdep.add(pt.getNamespace());

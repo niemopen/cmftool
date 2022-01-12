@@ -24,9 +24,7 @@
 package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Property;
-import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Model;
-import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
 /**
@@ -42,24 +40,8 @@ public class XProperty extends XObjectType {
     
     XProperty (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new Property(m);
+        obj = new Property();
     }    
-    
-    // Replacing a placeholder? Use idRepl to replace obj
-    // Otherwise obj is the object to use
-    @Override
-    public Property getObjectToAdd () {
-        Property r = this.obj;
-        if (null != this.idRepl) {
-            try {
-                r = (Property)this.idRepl.getObject();
-            }
-            catch (ClassCastException e) {
-                LOG.error("line {}: ID/REF type mismatch", this.getLineNumber());
-            }
-        }
-        return r;
-    }
     
     @Override
     public void addAsChild (XObjectType child) {
@@ -68,13 +50,13 @@ public class XProperty extends XObjectType {
     
     @Override
     public void addToHasProperty(XHasProperty x) {
-        x.getObject().setProperty(this.getObjectToAdd());
+        x.getObject().setProperty(this.getObject());
     }    
     
     // A property object added to a parent property object must be the result
     // of a SubPropertyOf element
     @Override
     public void addToProperty (XProperty x) {
-        x.getObject().setSubPropertyOf(this.getObjectToAdd());
+        x.getObject().setSubPropertyOf(this.getObject());
     }
 }
