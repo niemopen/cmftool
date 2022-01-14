@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:cmf="http://reference.niem.gov/specification/cmf/0.3/"
+           xmlns:cmf="http://reference.niem.gov/specification/cmf/0.4/"
            xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
            xmlns:xs-proxy="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
-           targetNamespace="http://reference.niem.gov/specification/cmf/0.3/"
+           targetNamespace="http://reference.niem.gov/specification/cmf/0.4/"
            ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ExtensionSchemaDocument"
            xml:lang="en-US"
            version="1">   
@@ -44,6 +44,21 @@
          <xs:documentation>An augmentation point for cmf:AnyValueFacetType.</xs:documentation>
       </xs:annotation>
    </xs:element>
+   <xs:element name="AugmentableIndicator" type="xs-proxy:boolean">
+      <xs:annotation>
+         <xs:documentation>True if the class can be augmented with additional properties.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <xs:element name="AugmentationElementNamespace" type="cmf:NamespaceType" nillable="true">
+      <xs:annotation>
+         <xs:documentation>A namespace of an augmentation that is an augmentation type.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+   <xs:element name="AugmentationTypeNamespace" type="cmf:NamespaceType" nillable="true">
+      <xs:annotation>
+         <xs:documentation>A namespace of an augmentation type containing this augmentation.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
    <xs:element name="Class"
                type="cmf:ClassType"
                substitutionGroup="cmf:ModelItemAbstract"
@@ -59,6 +74,7 @@
       <xs:complexContent>
          <xs:extension base="cmf:ComponentType">
             <xs:sequence>
+               <xs:element ref="cmf:AugmentableIndicator" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:ExternalAdapterTypeIndicator" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:ExtensionOfClass" minOccurs="0" maxOccurs="1"/>
                <xs:element ref="cmf:HasValue" minOccurs="0" maxOccurs="1"/>
@@ -187,6 +203,8 @@
                <xs:element ref="cmf:Property" minOccurs="1" maxOccurs="1"/>
                <xs:element ref="cmf:MinOccursQuantity" minOccurs="1" maxOccurs="1"/>
                <xs:element ref="cmf:MaxOccursQuantity" minOccurs="1" maxOccurs="1"/>
+               <xs:element ref="cmf:AugmentationElementNamespace" minOccurs="0" maxOccurs="1"/>
+               <xs:element ref="cmf:AugmentationTypeNamespace" minOccurs="0" maxOccurs="unbounded"/>
                <xs:element ref="cmf:HasPropertyAugmentationPoint"
                            minOccurs="0"
                            maxOccurs="unbounded"/>

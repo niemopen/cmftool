@@ -25,6 +25,7 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
+import org.mitre.niem.cmf.ObjectType;
 import org.xml.sax.Attributes;
 
 /**
@@ -35,6 +36,11 @@ import org.xml.sax.Attributes;
 public class XNamespace extends XObjectType {
     
     private Namespace obj = null;
+    
+    @Override
+    public void setObject (ObjectType o) { 
+        obj = Namespace.class == o.getClass() ? (Namespace)o : null;
+    }
     
     @Override
     public Namespace getObject () { return obj; }
@@ -58,6 +64,14 @@ public class XNamespace extends XObjectType {
     @Override
     public void addToDatatype (XDatatype dt) {
         dt.getObject().setNamespace(this.getObject());
+    }
+    
+    @Override
+    public void addToHasProperty (XHasProperty hp) {
+        switch(this.getComponentLname()) {
+        case "AugmentationElementNamespace":  hp.getObject().setAugmentElementNS(this.getObject()); break;
+        case "AugmentationTypeNamespace":     hp.getObject().augmentTypeNS().add(this.getObject()); break;
+        }
     }
     
     @Override

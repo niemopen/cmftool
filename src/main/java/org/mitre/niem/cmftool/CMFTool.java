@@ -47,9 +47,9 @@ public class CMFTool {
         
 // Uncomment arguments for debugging:
 
-//        args = new String[]{"m2r", "examples/CrashDriver-iepd/CrashDriver.cmf"};
+//        args = new String[]{"m2m", "src/test/resources/xsd/augment-0.cmf"};
 
-//        args = new String[]{"x2m", "-d", "-o", "examples/Test", "examples/Test/EmpCodeType.xsd"};
+//        args = new String[]{"x2m", "-d", "-o", "src/test/resources/xsd", "src/test/resources/xsd/augment-0.xsd"};
 //        args = new String[]{"m2x", "-d", "-o", "examples/Test/cmf", "examples/Test/deprecated.cmf", "examples/Test/deprecated.cmx"};
 //        args = new String[]{"x2m", "-o", "examples/CrashDriver-iepd", "examples/CrashDriver-iepd/xsd/extension/CrashDriver.xsd",
 //             "examples/CrashDriver-iepd/xsd/xml-catalog.xml"};

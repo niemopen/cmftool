@@ -196,6 +196,7 @@ public class ModelXMLReaderIntTest {
         ClassType c = m.getClassType("nc:Degree90Type");
         assertNotNull(c);
         assertFalse(c.isAbstract());
+        assertFalse(c.isAugmentable());
         assertTrue(c.isDeprecated());
         assertFalse(c.isExternal());
         assertNotNull(c.getDefinition());
@@ -205,8 +206,8 @@ public class ModelXMLReaderIntTest {
         HasProperty hp = c.hasPropertyList().get(0);
         assertNotNull(hp);
         assertEquals(hp.getProperty(), p);
-        assertEquals("0", hp.minOccursQuantity());
-        assertEquals("1", hp.maxOccursQuantity());
+        assertEquals(0, hp.minOccurs());
+        assertEquals(1, hp.maxOccurs());
     }
     
     @Test
@@ -349,6 +350,54 @@ public class ModelXMLReaderIntTest {
         ClassType geoP = m.getClassType("geo:PointType");
         assertNotNull(geoP);
         assertTrue(geoP.isExternal());
+        
+        ClassType tpt = m.getClassType("nc:TrackPointType");
+        assertNotNull(tpt);
+        assertEquals(2, tpt.hasPropertyList().size());
+        HasProperty h1 = tpt.hasPropertyList().get(0);
+        HasProperty h2 = tpt.hasPropertyList().get(1);
+        assertEquals("nc:IdentificationID", h1.getProperty().getQName());
+        assertEquals(0, h1.minOccurs());
+        assertTrue(h1.maxUnbounded());
+        assertEquals("geo:LocationGeospatialPoint", h2.getProperty().getQName());
+        assertEquals(1, h2.minOccurs());
+        assertEquals(1, h2.maxOccurs());
+        assertFalse(h2.maxUnbounded());
+    }
+
+    @Test
+    public void testAugmentations () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "cmf/augment.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        assertEquals(0, mr.getMessages().size());
+        
+        assertEquals(4, m.getNamespaceList().size());
+        assertEquals(11, m.getComponentList().size());
+        
+        ClassType ct = m.getClassType("nc:AddressType");
+        assertNotNull(ct);
+        assertTrue(ct.isAugmentable());
+        assertEquals(5, ct.hasPropertyList().size());
+        
+        HasProperty hp = ct.hasPropertyList().get(1);
+        assertEquals("j:AddressCommentText", hp.getProperty().getQName());
+        assertNull(hp.augmentElementNS());
+        assertEquals(2, hp.augmentTypeNS().size());
+        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("test")));
+        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("j")));        
+        
+        hp = ct.hasPropertyList().get(3);
+        assertEquals("j:AnotherAddress", hp.getProperty().getQName());
+        assertEquals(hp.augmentElementNS(), m.getNamespaceByPrefix("j"));
+        assertEquals(0, hp.augmentTypeNS().size());
     }
     
     @Test

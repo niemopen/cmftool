@@ -25,6 +25,7 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.ObjectType;
 import org.xml.sax.Attributes;
 
 /**
@@ -35,6 +36,11 @@ import org.xml.sax.Attributes;
 public class XProperty extends XObjectType {
     private Property obj = null;
     
+    @Override
+    public void setObject (ObjectType o) { 
+        obj = Property.class == o.getClass() ? (Property)o : null;
+    }
+
     @Override
     public Property getObject () { return obj; }
     

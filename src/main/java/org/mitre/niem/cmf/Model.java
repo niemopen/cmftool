@@ -127,12 +127,12 @@ public class Model extends ObjectType {
     }
     
 // There are a lot of referential integrity problems here...
-//    public void removeComponent (Component c) {
-//        String qn = c.getQName();
-//        components.remove(qn);
-//        orderedComponents = null;
-//        c.setModel(null);
-//    }
+    public void removeComponent (Component c) {
+        String qn = c.getQName();
+        components.remove(qn);
+        orderedComponents = null;
+        c.setModel(null);
+    }
 
     // Enforces guarantee that each namespace has a unique prefix.
     public void addNamespace (Namespace n) throws CMFException {

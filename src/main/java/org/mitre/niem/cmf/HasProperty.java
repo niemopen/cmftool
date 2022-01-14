@@ -23,6 +23,9 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  *
  * @author Scott Renner
@@ -30,16 +33,24 @@ package org.mitre.niem.cmf;
  */
 public class HasProperty extends ObjectType {
     private Property property = null;
-    private String minOccursQuantity = null;
-    private String maxOccursQuantity = null;
+    private int minQ = 1;
+    private int maxQ = 1;
+    private boolean maxUnbounded = false;
+    private Namespace augElementNS              = null;
+    private final Set<Namespace> augTypeNS      = new HashSet<>();
     
     public void setProperty (Property p)        { property = p; }
-    public void setMinOccursQuantity (String s) { minOccursQuantity = s; }
-    public void setMaxOccursQuantity (String s) { maxOccursQuantity = s; }
+    public void setMinOccurs (int m)            { minQ = m; }
+    public void setMaxOccurs (int m)            { maxQ = m; }
+    public void setMaxUnbounded (boolean f)     { maxUnbounded = f; }
+    public void setAugmentElementNS (Namespace n) { augElementNS = n; }
     
-    public Property getProperty()     { return property; }
-    public String minOccursQuantity() { return minOccursQuantity; }
-    public String maxOccursQuantity() { return maxOccursQuantity; } 
+    public Property getProperty()               { return property; }
+    public int minOccurs()                      { return minQ; }
+    public int maxOccurs()                      { return maxQ; } 
+    public boolean maxUnbounded()               { return maxUnbounded; }
+    public Namespace augmentElementNS ()        { return augElementNS; }
+    public Set<Namespace> augmentTypeNS()       { return augTypeNS; }
     
     public HasProperty () { super();  }    
   

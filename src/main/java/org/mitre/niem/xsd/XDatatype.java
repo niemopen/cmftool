@@ -25,6 +25,7 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.ObjectType;
 import org.xml.sax.Attributes;
 
 /**
@@ -34,6 +35,11 @@ import org.xml.sax.Attributes;
  */
 public class XDatatype extends XObjectType {  
     private Datatype obj = null;
+    
+    @Override
+    public void setObject (ObjectType o) { 
+        obj = Datatype.class == o.getClass() ? (Datatype)o : null;
+    }
     
     @Override
     public Datatype getObject () { return obj; }

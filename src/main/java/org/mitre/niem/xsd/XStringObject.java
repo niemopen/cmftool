@@ -23,8 +23,6 @@
  */
 package org.mitre.niem.xsd;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import org.xml.sax.Attributes;
@@ -45,9 +43,10 @@ public class XStringObject extends XObjectType {
 
     @Override
     public void addToClassType(XClassType xc) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+        String val = getStringVal();
         switch (this.getComponentLname()) {
         case "AbstractIndicator":            xc.getObject().setIsAbstract(val); break;
+        case "AugmentableIndicator":         xc.getObject().setIsAugmentable(val); break;
         case "DefinitionText":               xc.getObject().setDefinition(val); break;
         case "DeprecatedIndicator":          xc.getObject().setIsDeprecated(val); break;
         case "ExternalAdapterTypeIndicator": xc.getObject().setIsExternal(val); break;
@@ -59,7 +58,7 @@ public class XStringObject extends XObjectType {
     
     @Override
     public void addToDatatype(XDatatype xdt) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+        String val = getStringVal();
         switch (this.getComponentLname()) {
         case "DefinitionText":      xdt.getObject().setDefinition(val); break;
         case "DeprecatedIndicator": xdt.getObject().setIsDeprecated(val); break;        
@@ -71,7 +70,7 @@ public class XStringObject extends XObjectType {
     
     @Override
     public void addToFacet(XFacet xf) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+        String val = getStringVal();
         switch (this.getComponentLname()) {
         case "DefinitionText":      xf.getObject().setDefinition(val); break;
         case "NonNegativeValue":
@@ -85,10 +84,13 @@ public class XStringObject extends XObjectType {
     
     @Override
     public void addToHasProperty (XHasProperty xhp) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+        String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "MaxOccursQuantity":    xhp.getObject().setMaxOccursQuantity(val); break;
-        case "MinOccursQuantity":    xhp.getObject().setMinOccursQuantity(val); break;
+        case "MinOccursQuantity":    xhp.getObject().setMinOccurs(Integer.parseInt(val)); break;
+        case "MaxOccursQuantity":    
+            if ("unbounded".equals(val)) xhp.getObject().setMaxUnbounded(true);
+            else xhp.getObject().setMaxOccurs(Integer.parseInt(val)); 
+            break;
         default:
             break;
         }        
@@ -96,7 +98,7 @@ public class XStringObject extends XObjectType {
         
     @Override
     public void addToNamespace(XNamespace xns) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+        String val = getStringVal();
         switch (this.getComponentLname()) {
         case "DefinitionText":             xns.getObject().setDefinition(val) ; break;
         case "ExternalNamespaceIndicator": xns.getObject().setIsExternal(val); break;
@@ -114,7 +116,7 @@ public class XStringObject extends XObjectType {
      } 
     @Override
     public void addToProperty (XProperty xop) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+        String val = getStringVal();
         switch (this.getComponentLname()) {
         case "AbstractIndicator":   xop.getObject().setIsAbstract(val); break;
         case "DefinitionText":      xop.getObject().setDefinition(val); break;

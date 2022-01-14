@@ -116,8 +116,6 @@ public class ModelExtension {
     public void setPrefix (String ns, String p)               { getRec(ns).prefix = p; }
     public void setNSVersion (String ns, String v)            { getRec(ns).sversion = v; }
     
-
-    
     /**
      * Returns the conformance target URIs asserted for this namespace, or null if none.
      * @param ns namespace URI

@@ -248,14 +248,15 @@ public class ModelToXSD {
                 if (me.isAttribute(p.getQName())) { 
                     Element hpe = dom.createElementNS(XSD_NS_URI, "xs:attribute");
                     hpe.setAttribute("ref", p.getQName());
-                    if ("1".equals(hp.minOccursQuantity())) hpe.setAttribute("use", "required");
+                    if ("1".equals(hp.minOccurs())) hpe.setAttribute("use", "required");
                     else hpe.setAttribute("use", "optional");
                     exe.appendChild(hpe);
                 }
                 else {
                     Element hpe = dom.createElementNS(XSD_NS_URI, "xs:element");
-                    if (!"1".equals(hp.maxOccursQuantity())) hpe.setAttribute("maxOccurs", hp.maxOccursQuantity());
-                    if (!"1".equals(hp.minOccursQuantity())) hpe.setAttribute("minOccurs", hp.minOccursQuantity());
+                    if (1 != hp.minOccurs()) hpe.setAttribute("minOccurs", ""+hp.minOccurs());
+                    if (hp.maxUnbounded()) hpe.setAttribute("maxOccurs", "unbounded");
+                    else if (1 != hp.maxOccurs()) hpe.setAttribute("maxOccurs", ""+hp.maxOccurs());
                     hpe.setAttribute("ref", hp.getProperty().getQName());
                     sqe.appendChild(hpe);
                 }
@@ -318,7 +319,7 @@ public class ModelToXSD {
         for (HasProperty hp : hplist) {
             Element hpe = dom.createElementNS(XSD_NS_URI, "xs:attribute");
             hpe.setAttribute("ref", hp.getProperty().getQName());
-            if ("1".equals(hp.minOccursQuantity())) hpe.setAttribute("use", "required");
+            if ("1".equals(hp.minOccurs())) hpe.setAttribute("use", "required");
             exe.appendChild(hpe);
             nsdep.add(hp.getProperty().getNamespace());
         }

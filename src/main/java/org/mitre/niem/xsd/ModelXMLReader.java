@@ -178,7 +178,8 @@ public class ModelXMLReader {
                     fatalErr = true;
                 }
                 else {
-                    parent.addAsChild(idObj);
+                    ro.setObject(idObj.getObject());
+                    parent.addAsChild(ro);
                 }
             }
             if (fatalErr) return;
@@ -217,6 +218,10 @@ public class ModelXMLReader {
             XObjectType o = null;
             if (ens.startsWith(CMF_NS_URI_PREFIX)) {
                 switch (eln) {
+                case "AugmentationElementNamespace": 
+                    o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
+                case "AugmentationTypeNamespace":    
+                    o = new XNamespace(m, p, ens, eln, atts, lineNum); break;                
                 case "Class":               o = new XClassType(m, p, ens, eln, atts, lineNum); break;
                 case "Datatype":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "ExtensionOfClass":    o = new XClassType(m, p, ens, eln, atts, lineNum); break;
@@ -246,6 +251,7 @@ public class ModelXMLReader {
                     break;
 
                 case "AbstractIndicator":
+                case "AugmentableIndicator":
                 case "DefinitionText":   
                 case "DeprecatedIndicator":
                 case "ExternalAdapterTypeIndicator":

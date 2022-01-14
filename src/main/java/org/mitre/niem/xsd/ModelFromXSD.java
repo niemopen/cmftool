@@ -25,6 +25,7 @@ package org.mitre.niem.xsd;
 
 import java.io.IOException;
 import java.io.StringReader;
+import static java.lang.Math.max;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -133,6 +134,7 @@ public class ModelFromXSD {
         generateClassesAndDatatypes();
         generateProperties();
         processAppinfo();
+        processAugmentations();
     }
        
     private void generateNamespaces () {
@@ -269,12 +271,18 @@ public class ModelFromXSD {
                 XSElementDeclaration e = (XSElementDeclaration) pt;
                 XSTypeDefinition edt = e.getTypeDefinition();
                 Property op = createProperty(pt, edt);
-                if (null != op) {
+                
+                // Augmentation point elements will be removed from the model.
+                // Don't add the augmentation point as a property of this ClassPoint.
+                // Do remember that this complex type has one in the CMF-XSD extension.
+                if (e.getName().endsWith("AugmentationPoint")) clobj.setIsAugmentable(true);
+                else if (null != op) {
                     HasProperty hop = new HasProperty();
                     hop.setProperty(op);
                     hop.setSequenceID(String.format("%d", seq++));
-                    hop.setMinOccursQuantity(String.format("%d", p.getMinOccurs()));
-                    hop.setMaxOccursQuantity(p.getMaxOccursUnbounded() ? "unbounded" : String.format("%d", p.getMaxOccurs()));
+                    hop.setMinOccurs(p.getMinOccurs());
+                    hop.setMaxOccurs(p.getMaxOccurs());
+                    hop.setMaxUnbounded(p.getMaxOccursUnbounded());
                     clobj.addHasProperty(hop);
                 }                               
             }
@@ -286,9 +294,9 @@ public class ModelFromXSD {
                     me.setIsAttribute(dp.getQName());
                     HasProperty hdp = new HasProperty();
                     hdp.setProperty(dp);
-                    hdp.setMaxOccursQuantity("1");
-                    if (au.getRequired()) hdp.setMinOccursQuantity("1");
-                    else hdp.setMinOccursQuantity("0");
+                    hdp.setMaxOccurs(1);
+                    if (au.getRequired()) hdp.setMinOccurs(1);
+                    else hdp.setMinOccurs(0);
                     clobj.addHasProperty(hdp);
                 }              
             }
@@ -333,13 +341,18 @@ public class ModelFromXSD {
         return clobj;
     }
     
+    // Returns a list of elements declared by this complex type.  The Xerces API 
+    // gives us those elements plus all elements inherited from the base types.
+    // We have to remove the inherited elements.
     private List<XSParticle> collectClassElements (XSComplexTypeDefinition ct) {
         List<XSParticle> el = new ArrayList<>();        // element particles in this type
         List<XSParticle> bl = new ArrayList<>();        // element particles from base types
         XSTypeDefinition base = ct.getBaseType();
         XSParticle par = ct.getParticle();
         collectElements(par, el);                       // all elements in this type & base types 
-        while (null != base) {                          // collect elements from base types
+        
+        // Now collect elements from just the base types
+        while (null != base) {                          
             if (COMPLEX_TYPE != base.getTypeCategory()) break;
             XSComplexTypeDefinition bct = (XSComplexTypeDefinition)base;
             par = bct.getParticle();
@@ -354,6 +367,9 @@ public class ModelFromXSD {
         return el;
     }
     
+    // Returns a list of attributes declared by this complex type.  The Xerces API 
+    // gives us those attributes plus all attributes inherited from the base types.
+    // We have to remove the inherited attributes.     
     private Set<XSAttributeUse> collectClassAttributes (XSComplexTypeDefinition ct) {
         // First build a set of all attribute uses (in this type and in its base types)
         Set<XSAttributeUse> aset = new HashSet<>();
@@ -423,7 +439,7 @@ public class ModelFromXSD {
     
     private Property createProperty (XSObject o, XSTypeDefinition t) {
         String nsuri = o.getNamespace();
-        String cname = o.getName();        
+        String cname = o.getName();       
         Property op = m.getProperty(nsuri, cname);
         if (null != op) return op;
         if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) return null;    // skip properties in structures namespace
@@ -502,6 +518,83 @@ public class ModelFromXSD {
                     break;
             }
         }
+    }
+    
+    private void processAugmentations () {
+        // Find all elements substitutable for an augmentation point
+        for (Component c : m.getComponentList()) {
+            Property p = c.asProperty();
+            if (null == p || null == p.getSubPropertyOf()) continue;
+            if (!p.getSubPropertyOf().getName().endsWith("AugmentationPoint")) continue;
+            
+            // Property p is subsitutable for an augmentation point; find the augmented type
+            String atqn = new String(p.getSubPropertyOf().getQName()).replace("AugmentationPoint", "Type");
+            ClassType augmented = m.getClassType(atqn);
+            if (null == augmented) {
+                LOG.warn("Augmentation {} found, but no corresponding augmentable type {}", p.getQName(), atqn);
+                continue;
+            }
+            if (!augmented.isAugmentable()) {
+                LOG.warn("Augmentation {} found, but {} is not augmentable", p.getQName(), atqn);
+                continue;
+            }
+            // If Property p has an augmentation type, add type children to the augmented type
+            ClassType ptype = p.getClassType();
+            if (null != ptype && ptype.getName().endsWith("AugmentationType")) {
+                for (HasProperty hp : ptype.hasPropertyList()) {
+                    addAugmentPropertyToClass(augmented, p.getNamespace(), hp, true);
+                }
+            }
+            // Otherwise add augmentation property p to the augmented type
+            else {
+                HasProperty ahp = new HasProperty();
+                ahp.setProperty(p);
+                ahp.setMinOccurs(0);
+                ahp.setMaxUnbounded(true);
+                addAugmentPropertyToClass(augmented, p.getNamespace(), ahp, false);
+                p.setSubPropertyOf(null);    // remove AugmentationPoint subpropertyOf
+            }         
+        }
+        // All augmentations processed. Remove augmentation types,
+        // augmentation points, and augmentation elements from model
+        List<Component> delComps = new ArrayList<>();
+        for (Component c : m.getComponentList()) {
+            String lname = c.getName();
+            if (lname.endsWith("AugmentationType")
+                    || lname.endsWith("AugmentationPoint")
+                    || lname.endsWith("Augmentation")) delComps.add(c);
+        }
+        for (Component c : delComps) { m.removeComponent(c); }
+    }
+    
+    // Adds augmentation property to the augmented class
+    // aug = augmented class
+    // ans = namespace of the augmentation property
+    // ahp = augmentation property, with min/max occurs
+    // fromAugType = true if ahp is member of an augmentation type
+    private void addAugmentPropertyToClass (ClassType aug, Namespace ans, HasProperty ahp, boolean fromAugType) {
+        // See if augmentation property is already a class member
+        HasProperty augHP = null;
+        for (HasProperty hp : aug.hasPropertyList()) {
+            if (hp.getProperty() == ahp.getProperty()) { augHP = hp; break; }
+        }
+        // Not there?  Create new HasProperty and add to class
+        if (null == augHP) {
+            augHP = new HasProperty();
+            augHP.setProperty(ahp.getProperty());
+            augHP.setMaxUnbounded(ahp.maxUnbounded());
+            augHP.setMaxOccurs(ahp.maxOccurs());    // maxOccurs from aug type (assume aug element not repeated)
+            augHP.setMinOccurs(0);                  // augmentation properties always optional
+            aug.addHasProperty(augHP);
+            augHP.setSequenceID(""+aug.hasPropertyList().size());
+        }
+        // Already there?  Perhaps adjust max occurs
+        else {
+            if (ahp.maxUnbounded()) augHP.setMaxUnbounded(true);
+            else if (!augHP.maxUnbounded()) augHP.setMaxOccurs(max(augHP.maxOccurs(), ahp.maxOccurs()));
+        }
+        if (fromAugType) augHP.augmentTypeNS().add(ans);
+        else augHP.setAugmentElementNS(ans);
     }
     
     private UnionOf createUnionOf (XSSimpleTypeDefinition st) {

@@ -111,9 +111,10 @@ public class ModelXMLWriter {
         Element e = dom.createElementNS(CMF_NS_URI, "Class");
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         addComponentChildren(dom, e, x);
-        if (x.isAbstract())   addSimpleChild(dom, e, "AbstractIndicator", "true");
-        if (x.isDeprecated()) addSimpleChild(dom, e, "DeprecatedIndicator", "true");
-        if (x.isExternal())   addSimpleChild(dom, e, "ExternalAdapterTypeIndicator", "true");
+        if (x.isAbstract())    addSimpleChild(dom, e, "AbstractIndicator", "true");
+        if (x.isDeprecated())  addSimpleChild(dom, e, "DeprecatedIndicator", "true");
+        if (x.isAugmentable()) addSimpleChild(dom, e, "AugmentableIndicator", "true");
+        if (x.isExternal())    addSimpleChild(dom, e, "ExternalAdapterTypeIndicator", "true");
         addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
         addComponentRef(dom, e, "HasValue", x.getHasValue());
         if (null != x.hasPropertyList()) 
@@ -169,8 +170,12 @@ public class ModelXMLWriter {
         if (null != x.getSequenceID()) 
             e.setAttributeNS(STRUCTURES_NS_URI, "structures:sequenceID", x.getSequenceID());
         addComponentRef(dom, e, "Property", x.getProperty());
-        addSimpleChild(dom, e, "MinOccursQuantity", x.minOccursQuantity());            
-        addSimpleChild(dom, e, "MaxOccursQuantity", x.maxOccursQuantity());            
+        addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());            
+        addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs()); 
+        addNamespaceRef(dom, e, "AugmentationElementNamespace", x.augmentElementNS()); 
+        for (Namespace ns : x.augmentTypeNS()) {
+            addNamespaceRef(dom, e, "AugmentationTypeNamespace", ns);
+        }        
         p.appendChild(e);
     }
             
@@ -185,9 +190,9 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }  
     
-    public void addNamespaceRef (Document dom, Element p, Namespace x) {
+    public void addNamespaceRef (Document dom, Element p, String lname, Namespace x) {
         if (null == x) return;
-        Element e = dom.createElementNS(CMF_NS_URI, "Namespace");
+        Element e = dom.createElementNS(CMF_NS_URI, lname);
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getNamespacePrefix());
         e.setAttributeNS(XSI_NS_URI, "xsi:nil", "true");
         p.appendChild(e);
@@ -234,7 +239,7 @@ public class ModelXMLWriter {
     public void addComponentChildren (Document dom, Element p, Component x) {
         if (null == x) return;
         addSimpleChild(dom, p, "Name", x.getName());
-        addNamespaceRef(dom, p, x.getNamespace());
+        addNamespaceRef(dom, p, "Namespace", x.getNamespace());
         addSimpleChild(dom, p, "DefinitionText", x.getDefinition());
     }
     

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.3/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://reference.niem.gov/specification/cmf/0.3/">
+  <Namespace structures:uri="j">
+    <NamespaceURI>http://release.niem.gov/niem/domains/jxdm/7.0/</NamespaceURI>
+    <NamespacePrefixName>j</NamespacePrefixName>
+    <DefinitionText>Justice domain.</DefinitionText>
+  </Namespace>
+  <Namespace structures:uri="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixName>nc</NamespacePrefixName>
+    <DefinitionText>NIEM Core.</DefinitionText>
+  </Namespace>
+  <Namespace structures:uri="test">
+    <NamespaceURI>http://example.com/dummyAugmentation/</NamespaceURI>
+    <NamespacePrefixName>test</NamespacePrefixName>
+    <DefinitionText>Justice domain.</DefinitionText>
+  </Namespace>
+  <Namespace structures:uri="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixName>xs</NamespacePrefixName>
+  </Namespace>
+  <Property structures:uri="j:AddressCommentText">
+    <Name>AddressCommentText</Name>
+    <Namespace structures:uri="j" xsi:nil="true"/>
+    <DefinitionText>A comment about an address.</DefinitionText>
+    <Class structures:uri="nc:TextType" xsi:nil="true"/>
+  </Property>
+  <Property structures:uri="j:AddressVerifiedDate">
+    <Name>AddressVerifiedDate</Name>
+    <Namespace structures:uri="j" xsi:nil="true"/>
+    <DefinitionText>A date on which the address was verified.</DefinitionText>
+    <Datatype structures:uri="xs:string" xsi:nil="true"/>
+  </Property>
+  <Property structures:uri="j:AnotherAddress">
+    <Name>AnotherAddress</Name>
+    <Namespace structures:uri="j" xsi:nil="true"/>
+    <Datatype structures:uri="xs:string" xsi:nil="true"/>
+  </Property>
+  <Property structures:uri="nc:AddressFullText">
+    <Name>AddressFullText</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>A complete address.</DefinitionText>
+    <Class structures:uri="nc:TextType" xsi:nil="true"/>
+  </Property>
+  <Property structures:uri="nc:partialIndicator">
+    <Name>partialIndicator</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
+    <Datatype structures:uri="xs:boolean" xsi:nil="true"/>
+  </Property>
+  <Property structures:uri="test:AddressCommentText">
+    <Name>AddressCommentText</Name>
+    <Namespace structures:uri="test" xsi:nil="true"/>
+    <DefinitionText>A comment about an address.</DefinitionText>
+    <Class structures:uri="nc:TextType" xsi:nil="true"/>
+  </Property>
+  <Property structures:uri="test:BoogalaText">
+    <Name>BoogalaText</Name>
+    <Namespace structures:uri="test" xsi:nil="true"/>
+    <DefinitionText>A date on which the address was verified.</DefinitionText>
+    <Datatype structures:uri="xs:string" xsi:nil="true"/>
+  </Property>
+  <Class structures:uri="nc:AddressType">
+    <Name>AddressType</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a geophysical location described by postal information.</DefinitionText>
+    <AugmentableIndicator>true</AugmentableIndicator>
+    <HasProperty structures:sequenceID="1">
+      <Property structures:uri="nc:AddressFullText" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty structures:sequenceID="2">
+      <Property structures:uri="j:AddressCommentText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationTypeNamespace structures:uri="test" xsi:nil="true"/>
+      <AugmentationTypeNamespace structures:uri="j" xsi:nil="true"/>
+    </HasProperty>
+    <HasProperty structures:sequenceID="3">
+      <Property structures:uri="j:AddressVerifiedDate" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+      <AugmentationTypeNamespace structures:uri="j" xsi:nil="true"/>
+    </HasProperty>
+    <HasProperty structures:sequenceID="4">
+      <Property structures:uri="j:AnotherAddress" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+      <AugmentationElementNamespace structures:uri="j" xsi:nil="true"/>
+    </HasProperty>
+    <HasProperty structures:sequenceID="5">
+      <Property structures:uri="test:BoogalaText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationTypeNamespace structures:uri="test" xsi:nil="true"/>
+    </HasProperty>
+  </Class>
+  <Class structures:uri="nc:TextType">
+    <Name>TextType</Name>
+    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a character string.</DefinitionText>
+    <HasValue structures:uri="xs:string" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:uri="nc:partialIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+  </Class>
+  <Datatype structures:uri="xs:boolean">
+    <Name>boolean</Name>
+    <Namespace structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:uri="xs:string">
+    <Name>string</Name>
+    <Namespace structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

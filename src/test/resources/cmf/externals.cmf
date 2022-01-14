@@ -80,8 +80,8 @@
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <HasProperty structures:sequenceID="1">
       <Property structures:uri="nc:IdentificationID" xsi:nil="true"/>
-      <MinOccursQuantity>1</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
     <HasProperty structures:sequenceID="2">
       <Property structures:uri="geo:LocationGeospatialPoint" xsi:nil="true"/>

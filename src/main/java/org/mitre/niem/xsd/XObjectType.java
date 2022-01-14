@@ -42,7 +42,6 @@ public class XObjectType {
     private String stringVal      = null;
     private boolean isEmpty       = true;    // false if this XML element has child or string content
     XObjectType parent            = null;    // remember parent of IDREF/URI placeholder
-    XObjectType idRepl            = null;    // non-null when replacing IDREF/URI placeholders at end of document
     private int lineNumber        = 0;       // XML element starting line number
     private String componentLname = null;    // NIEM model component local name
     
@@ -70,14 +69,12 @@ public class XObjectType {
     public void setStringVal (String s) { 
         stringVal = s;
         isEmpty = false;
-    }
-    public void setIDRepl (XObjectType r)   { idRepl = r; }
-    
+    }   
+    public void setObject (ObjectType o)    { }                     // override in subclass
     public ObjectType getObject ()          { return null; }        // override in subclass
     public String getStringVal ()           { return stringVal; }
     public boolean getIsEmpty ()            { return isEmpty; }
     public XObjectType getParent ()         { return parent; }
-    public XObjectType getIDRepl ()         { return idRepl; }
     public String getSequenceID ()          { return seq; }
     public int getLineNumber ()             { return lineNumber; }
     public String getComponentLname ()      { return componentLname; }

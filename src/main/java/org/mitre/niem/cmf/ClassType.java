@@ -33,6 +33,7 @@ import java.util.List;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ClassType extends Component {
+    private boolean isAugmentable = false;
     private boolean isExternal = false;
     private ClassType extensionOfClass  = null;
     private Datatype hasValue = null;
@@ -45,11 +46,14 @@ public class ClassType extends Component {
         type = C_CLASSTYPE;
     }
 
+    public void setIsAugmentable (boolean f)      { isAugmentable = f; }
+    public void setIsAugmentable (String s)       { isAugmentable = "true".equals(s); }
     public void setIsExternal (boolean f)         { isExternal = f; }    
     public void setIsExternal (String s)          { isExternal = "true".equals(s); }
     public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
     public void setHasValue (Datatype v)          { hasValue = v; }
     
+    public boolean isAugmentable ()               { return isAugmentable; }
     public boolean isExternal ()                  { return isExternal; }
     public ClassType getExtensionOfClass ()       { return extensionOfClass; }
     public Datatype getHasValue()                 { return hasValue; }
