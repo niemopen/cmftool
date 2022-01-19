@@ -148,9 +148,9 @@ class CmdCMFtoRDF implements JCCommand {
             System.exit(1);         
         }        
         // Write the NIEM model instance to the output stream
-//        ModelToRDF rdfw = new ModelToRDF(m);
-//        rdfw.writeRDF(ow);
-//        ow.close();
-//        System.exit(0);
+        ModelToRDF rdfw = new ModelToRDF(m);
+        rdfw.writeRDF(ow);
+        ow.close();
+        System.exit(0);
     }    
 }

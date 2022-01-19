@@ -28,6 +28,7 @@ import static org.mitre.niem.NIEMConstants.OWL_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDFS_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDF_NS_URI;
 import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
@@ -39,67 +40,71 @@ import org.mitre.niem.cmf.Property;
  */
 public class ModelToRDF {
     
-//    private final Model m;
-//    
-//    public ModelToRDF (Model m) {
-//        this.m = m;
-//    }
-//    
-//    public void writeRDF (PrintWriter ow) {
-//        writeNamespaces(ow);
-//        writeProperties(ow);
-//        writeClasses(ow);
-//    }
-//    
-//    private void writeNamespaces (PrintWriter ow) {
-//        for (Namespace ns : m.namespaceSet()) {
-//            ow.print(String.format("@prefix %-15s <%s> .\n", 
-//                    ns.getNamespacePrefix()+":", 
-//                    ns.getNamespaceURI()));
-//        }
-//        ow.print("\n");
-//        ow.print(String.format("@prefix %-15s <%s> .\n", "owl:", OWL_NS_URI));
-//        ow.print(String.format("@prefix %-15s <%s> .\n", "rdfs:", RDFS_NS_URI));
-//        ow.print(String.format("@prefix %-15s <%s> .\n", "rdf:", RDF_NS_URI));        
-//    }
-//    
-//    private void writeProperties (PrintWriter ow) {
-//        for (Property p : m.propertySet()) {
-//            ow.print("\n");
-//            ow.print(p.getQName());
-//            if (null != p.getClassType()) {
-//                ow.print("\n    a owl:ObjectProperty");
-//                if (null != p.getSubPropertyOf()) {
-//                    ow.print(" ;\n    rdfs:subPropertyOf " + p.getSubPropertyOf().getQName());
-//                }
-//                ow.print(" ;\n    rdfs:range " + p.getClassType().getQName());
-//            }
-//            else if (null != p.getDatatype()) {
-//                ow.print("\n    a owl:DataProperty");
+    private final Model m;
+    
+    public ModelToRDF (Model m) {
+        this.m = m;
+    }
+    
+    public void writeRDF (PrintWriter ow) {
+        writeNamespaces(ow);
+        writeProperties(ow);
+        writeClasses(ow);
+    }
+    
+    private void writeNamespaces (PrintWriter ow) {
+        for (Namespace ns : m.getNamespaceList()) {
+            ow.print(String.format("@prefix %-15s <%s> .\n", 
+                    ns.getNamespacePrefix()+":", 
+                    ns.getNamespaceURI()));
+        }
+        ow.print("\n");
+        ow.print(String.format("@prefix %-15s <%s> .\n", "owl:", OWL_NS_URI));
+        ow.print(String.format("@prefix %-15s <%s> .\n", "rdfs:", RDFS_NS_URI));
+        ow.print(String.format("@prefix %-15s <%s> .\n", "rdf:", RDF_NS_URI));        
+    }
+    
+    private void writeProperties (PrintWriter ow) {
+        for (Component c : m.getComponentList()) {
+            Property p = c.asProperty();
+            if (null == p) continue;
+            ow.print("\n");
+            ow.print(p.getQName());
+            if (null != p.getClassType()) {
+                ow.print("\n    a owl:ObjectProperty");
+                if (null != p.getSubPropertyOf()) {
+                    ow.print(" ;\n    rdfs:subPropertyOf " + p.getSubPropertyOf().getQName());
+                }
+                ow.print(" ;\n    rdfs:range " + p.getClassType().getQName());
+            }
+            else if (null != p.getDatatype()) {
+                ow.print("\n    a owl:DataProperty");
 //                ow.print(" ;\n    rdfs:range " + p.getDatatype().getBaseType().getQName());
-//            }
-//            if (null != p.getDefinition()) {
-//                ow.print(" ;\n    rdfs:comment \"" + p.getDefinition() + "\"");               
-//            }
-//            ow.println(" .");
-//        }
-//    }
-//    
-//    private void writeClasses (PrintWriter ow) {
-//        for (ClassType ct : m.classTypeSet()) {
-//            ow.print("\n");
-//            ow.print(ct.getQName());
-//            ow.print("\n    a owl:Class");
-//            if (null != ct.getExtensionOfClass()) {
-//                ow.print(" ;\n    rdfs:subClassOf " + ct.getExtensionOfClass().getQName());
-//            }
-//            if (null != ct.getDefinition()) {
-//                ow.print(" ;\n    rdfs:comment \"" + ct.getDefinition() + "\"");               
-//            }       
-//            ow.println(" .");
-//        }
-//    }
-//    
+            }
+            if (null != p.getDefinition()) {
+                ow.print(" ;\n    rdfs:comment \"" + p.getDefinition() + "\"");               
+            }
+            ow.println(" .");
+        }
+    }
+    
+    private void writeClasses (PrintWriter ow) {
+        for (Component c : m.getComponentList()) {
+            ClassType ct = c.asClassType();
+            if (null == ct) continue;
+            ow.print("\n");
+            ow.print(ct.getQName());
+            ow.print("\n    a owl:Class");
+            if (null != ct.getExtensionOfClass()) {
+                ow.print(" ;\n    rdfs:subClassOf " + ct.getExtensionOfClass().getQName());
+            }
+            if (null != ct.getDefinition()) {
+                ow.print(" ;\n    rdfs:comment \"" + ct.getDefinition() + "\"");               
+            }       
+            ow.println(" .");
+        }
+    }
+    
 
     
 }
