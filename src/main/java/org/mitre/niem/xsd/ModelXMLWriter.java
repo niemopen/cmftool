@@ -49,11 +49,12 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI;
-import static org.mitre.niem.NIEMConstants.XML_NS_URI;
 import static org.mitre.niem.NIEMConstants.XSI_NS_URI;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import static org.mitre.niem.NIEMConstants.CMF_NS_URI;
+import static org.mitre.niem.NIEMConstants.XMLNS_URI;
+import static org.mitre.niem.cmf.Namespace.NSK_NUMKINDS;
 
 /**
  *
@@ -96,9 +97,9 @@ public class ModelXMLWriter {
     
     public Element genModel (Document dom, Model m) {
         Element e = dom.createElementNS(CMF_NS_URI, "Model");
-        e.setAttributeNS(XML_NS_URI, "xmlns:cmf", CMF_NS_URI);
-        e.setAttributeNS(XML_NS_URI, "xmlns:xsi", XSI_NS_URI);
-        e.setAttributeNS(XML_NS_URI, "xmlns:structures", STRUCTURES_NS_URI); 
+        e.setAttributeNS(XMLNS_URI, "xmlns:cmf", CMF_NS_URI);
+        e.setAttributeNS(XMLNS_URI, "xmlns:xsi", XSI_NS_URI);
+        e.setAttributeNS(XMLNS_URI, "xmlns:structures", STRUCTURES_NS_URI); 
         for (Namespace z : m.getNamespaceList()) { addNamespace(dom, e, z); }
         for (Component c : m.getComponentList()) { addProperty(dom, e, c.asProperty()); }
         for (Component c : m.getComponentList()) { addClassType(dom, e, c.asClassType()); }
@@ -111,8 +112,6 @@ public class ModelXMLWriter {
         Element e = dom.createElementNS(CMF_NS_URI, "Class");
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         addComponentChildren(dom, e, x);
-        if (x.isAbstract())    addSimpleChild(dom, e, "AbstractIndicator", "true");
-        if (x.isDeprecated())  addSimpleChild(dom, e, "DeprecatedIndicator", "true");
         if (x.isAugmentable()) addSimpleChild(dom, e, "AugmentableIndicator", "true");
         if (x.isExternal())    addSimpleChild(dom, e, "ExternalAdapterTypeIndicator", "true");
         addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
@@ -128,7 +127,6 @@ public class ModelXMLWriter {
         Element e = dom.createElementNS(CMF_NS_URI, "Datatype");
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
         addComponentChildren(dom, e, x);  
-        if (x.isDeprecated()) addSimpleChild(dom, e, "DeprecatedIndicator", "true");
         addRestrictionOf(dom, e, x.getRestrictionOf());
         addUnionOf(dom, e, x.getUnionOf());
         addComponentRef(dom, e, "ListOf", x.getListOf());
@@ -173,9 +171,9 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());            
         addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs()); 
         addNamespaceRef(dom, e, "AugmentationElementNamespace", x.augmentElementNS()); 
-        for (Namespace ns : x.augmentTypeNS()) {
+        x.augmentTypeNS().stream().sorted().forEach((ns) -> {
             addNamespaceRef(dom, e, "AugmentationTypeNamespace", ns);
-        }        
+        });        
         p.appendChild(e);
     }
             
@@ -186,7 +184,8 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "NamespaceURI", x.getNamespaceURI());
         addSimpleChild(dom, e, "NamespacePrefixName", x.getNamespacePrefix());
         addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
-        if (x.isExternal()) addSimpleChild(dom, e, "ExternalNamespaceIndicator", "true");
+        int nsk = x.getKind();
+        if (nsk >= 0 && nsk < NSK_NUMKINDS) addSimpleChild(dom, e, "NamespaceKindCode", x.getKindCode());
         p.appendChild(e);
     }  
     
@@ -206,8 +205,6 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "SubPropertyOf", x.getSubPropertyOf());
         addComponentRef(dom, e, "Class", x.getClassType());
         addComponentRef(dom, e, "Datatype", x.getDatatype());
-        if (x.isAbstract())   addSimpleChild(dom, e, "AbstractIndicator", "true");
-        if (x.isDeprecated()) addSimpleChild(dom, e, "DeprecatedIndicator", "true");
         p.appendChild(e);
     }
        
@@ -241,6 +238,8 @@ public class ModelXMLWriter {
         addSimpleChild(dom, p, "Name", x.getName());
         addNamespaceRef(dom, p, "Namespace", x.getNamespace());
         addSimpleChild(dom, p, "DefinitionText", x.getDefinition());
+        if (x.isAbstract())   addSimpleChild(dom, p, "AbstractIndicator", "true");
+        if (x.isDeprecated()) addSimpleChild(dom, p, "DeprecatedIndicator", "true");
     }
     
     public void addSimpleChild (Document dom, Element p, String eln, String value) {

@@ -31,12 +31,16 @@ Supporting that CMF guarantee requires a fair amount of complexity in the XSD-to
 
 1. Some namespace prefixes are predefined.  They can't be used for anything else in a CMF model:
 
-   | Prefix | Namespace                                   |
-   | ------ | ------------------------------------------- |
-   | rdf    | http://www.w3.org/1999/02/22-rdf-syntax-ns# |
-   | rdfs   | http://www.w3.org/2000/01/rdf-schema#       |
-   | owl    | http://www.w3.org/2002/07/owl#              |
-   | xs     | http://www.w3.org/2001/XMLSchema            |
+   | Prefix | Namespace                                        |
+   | ------ | ------------------------------------------------ |
+   | cmf    | http://reference.niem.gov/specification/cmf/0.4/ |
+   | rdf    | http://www.w3.org/1999/02/22-rdf-syntax-ns       |
+   | rdfs   | http://www.w3.org/2000/01/rdf-schema             |
+   | owl    | http://www.w3.org/2002/07/owl                    |
+   | xs     | http://www.w3.org/2001/XMLSchema                 |
+   | xsd    | http://www.w3.org/2001/XMLSchema                 |
+
+   (It turns out that the "xsd" prefix is hard-wired into OWL2; that's why I reserve both prefixes.  I'm not sure whether the rdf, rdfs, and owl namespace URIs actually end with "#" -- but I do the right thing when binding a namespace prefix in JSON-LD and RDF.)
 
 2. Namespace declarations in the extension schema documents have the next highest priority.  We assume the guy writing the extension schema knows what he wants.
 
@@ -48,6 +52,8 @@ Supporting that CMF guarantee requires a fair amount of complexity in the XSD-to
 
 6. The losing namespace prefix is munged; for example, `nc_1:`, then `nc_2:`, instead of `nc:`.
 
+6. Prefixes for the built-in namespaces (appinfo, cli, clsi, ct, xs-proxy, and structures) are also guaranteed to be unique with each other and with namespaces in the model.  This becomes interesting when a model includes components from different NIEM versions.
+
 ## Components from the structures namespace
 
 The attributes in this namespace -- `@id, @ref, @uri, @metadata, @relationshipMetadata, @sequenceID`-- are not part of the CMF model representation.  These attributes are part of the XML plumbing; they don't express model semantics.  The object types  -- `ObjectType, AssociationType, MetadataType` -- are likewise omitted from the model in CMF.  (There is [special handling](#Augmentations) for `AugmentationType`.)
@@ -56,14 +62,14 @@ The attributes in this namespace -- `@id, @ref, @uri, @metadata, @relationshipMe
 
 Each attribute and element declared in the appinfo namespace has an equivalent element in CMF:
 
-| XSD                          | CMF                 |
-| :--------------------------- | ------------------- |
-| appliesToTypes               | *tbd*               |
-| appliesToElements            | *tbd*               |
-| deprecated                   | DeprecatedIndicator |
-| externalAdapterTypeIndicator | ExternalIndicator   |
-| externalImportIndicator      | ExternalIndicator   |
-| LocalTerm                    | LocalTerm           |
+| XSD                          | CMF                               |
+| :--------------------------- | --------------------------------- |
+| appliesToTypes               | *tbd*                             |
+| appliesToElements            | *tbd*                             |
+| deprecated                   | DeprecatedIndicator               |
+| externalAdapterTypeIndicator | ExternalIndicator                 |
+| externalImportIndicator      | ExternalIndicator                 |
+| LocalTerm                    | LocalTerm *(not implemented yet)* |
 
 ## Complex content
 
@@ -123,7 +129,7 @@ A type definition with complex content always maps to a Class object in CMF.  No
 
 A type definition with simple content usually maps to a Datatype object in CMF.  But if the type definition includes attributes, then it maps to a Class object with a HasValue object.
 
-The HasValue object must have a Datatype -- in this case, a Datatype named`Degree90SimpleType`.  But in general, `FooSimpleType`definitions don't appear in the CMF.
+The HasValue object must have a Datatype -- in this case, a Datatype named`Degree90SimpleType`.  (This is one more reason why I don't like attributes.)  In general, `FooSimpleType`definitions don't appear in the CMF.
 
 We'll have to think about what happens when a subset removes all the attributes from a simple content type.  We probably don't want subsetting to turn a Class into a Datatype.  But that's what will happen if we aren't careful.
 
@@ -256,7 +262,7 @@ The NIEM proxy types are a convenience mechanism for adding the `structures` att
 
 ### Restriction
 
-Restricting the range of a decimal value.  Observe that `FooSimpleType` definitions do not appear in the CMF model representation.
+Here is an example of restricting the range of a decimal value.  Observe that `FooSimpleType` definitions do not appear in the CMF model representation.
 
 **NIEM XSD:**
 
@@ -431,7 +437,7 @@ An augmentation is the XML Schema mechanism that allows the authors of one names
 
 An element with an augmentation type (like `j:AddressAugmentation`) has no semantics of its own -- it is just a bag of properties.  For this reason, the augmentation type and augmentation element declaration do not appear in the CMF model.
 
-The added property is just like the other properties of the augmented type, except that the CMF model needs to record the namespace that made the addition.  For example:
+The added property is just like the other properties of the augmented type, except that the CMF model needs to keep track of the namespace that made the addition.  For example:
 
 **NIEM XSD:**
 
@@ -513,11 +519,13 @@ There are some other aspects of augmentation in XSD that do not contribute to th
 
 * The name of the augmentation type (an augmentation type for `BarType` might not be named `BarAugmentationType`)
 * The name of the augmentation element (might not be `BarAugmentation`) 
-* More than one augmentation element in a namespace that is substituted for `BarAugmentationPoint`
+* More than one augmentation element in a namespace that is substituted for `BarAugmentationPoint`.  For example, someone could create`ns:AddressAugmentation` and `ns:OtherAddressAugmentation`, both substitutable for `nc:AddressAugmentationPoint`.  
 
 My preference is to forbid all three practices in the NDR.  If that is not acceptable, we'll have to put some extra information in the CMF-XSD extension.
 
 I don't think cardinality constraints on augmentation points make any sense, so I'm not supporting them at present.  (BTW, I also don't believe in metadata on an augmentation element -- but that's not a CMF issue.)
+
+Types with complex content are augmentable if and only if they have an `AugmentationPoint` element.  This is a property in the CMF model.
 
 ## Adapter types / External content
 
@@ -536,10 +544,10 @@ The components of an external namespace do not appear in a CMF file.  A CMF-to-X
 **NIEM CMF**
 
 ```xml
-  <Namespace structures:uri="hs">
+  <Namespace structures:uri="gml">
     <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
     <NamespacePrefixName>gml</NamespacePrefixName>
-    <DefinitionText>Geography Markup Language (GML) version 3.2.1 schemas.  See http://www.opengeospatial.org OGC document 07-036 for documentation: "The Geography Markup Language (GML) was originally developed within the Open Geospatial Consortium, Inc. (OGC). ISO 19136 was prepared by ISO/TC 211 jointly with the OGC."  See http://schemas.opengis.net/gml/ for schemas.</DefinitionText>
+    <DefinitionText>GML Subset schema, written by gmlSubset.xslt</DefinitionText>
     <ExternalIndicator>true</ExternalIndicator>
   </Namespace>
 ```
@@ -570,16 +578,37 @@ An adapter type appears in CMF as a Class object, also marked as external.
 **NIEM CMF**
 
 ```xml
-  <Class structures:uri="geo:PointType>
+  <Class structures:uri="geo:PointType">
     <Name>PointType</Name>
     <Namespace structures:uri="geo" xsi:nil="true"/>
     <DefinitionText>A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DefinitionText>
     <HasProperty structures:sequenceID="1">
       <Property structures:uri="gml:Point" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
-      <MaxOccursQuantity>1/MaxOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
 	  <ExternalIndicator>true</ExternalIndicator>
     </HasProperty>
   </Class>
 ```
 
+## CMF-XSD Extension
+
+Information in the XSD schema pile that does not belong in the CMF model is recorded in the CMF-XSD extension file.  This file is used in the CMF-to-XSD transformation.  It can be edited to control things like schema file names and the schema directory structure.  It can be omitted, in which case default values are used.  Here is a sample:
+
+```xml
+<ModelExtension xmlns="http://reference.niem.gov/specification/cmf/XMLExtension/1.0/">
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/domains/humanServices/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/domains/hs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <NamespacePrefixText>hs</NamespacePrefixText>
+  </SchemaDocument>
+  <AttributeQName>nc:personNameCommentText</AttributeQName>
+  <NillableElementQName>hs:Child</NillableElementQName>
+  <NillableElementQName>hs:Parent</NillableElementQName>
+</ModelExtension>
+```
+
+The difference between an attribute and and an element is an XML thing, so I record it here.  LIkewise the difference between nillable and non-nillable elements.  But I could move these into the CMF model, with `AttributeIndicator` and `ReferenceableIndicator` properties.  Thoughts?

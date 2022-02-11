@@ -25,6 +25,7 @@ package org.mitre.niem.cmftool;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -50,6 +51,9 @@ import org.xml.sax.SAXException;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
+
+@Parameters(commandDescription = "write a NIEM model instance as a NIEM schema")
+        
 class CmdCMFtoXSD implements JCCommand {
     
     @Parameter(names = "-o", description = "output directory for schema pile")

@@ -23,6 +23,8 @@
  */
 package org.mitre.niem.xsd;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import org.xml.sax.Attributes;
@@ -100,16 +102,10 @@ public class XStringObject extends XObjectType {
     public void addToNamespace(XNamespace xns) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DefinitionText":             xns.getObject().setDefinition(val) ; break;
-        case "ExternalNamespaceIndicator": xns.getObject().setIsExternal(val); break;
-        case "NamespaceURI":               xns.getObject().setNamespaceURI(val); break;
-        case "NamespacePrefixName": 
-            try {
-                xns.getObject().setNamespacePrefix(val);
-            } catch (CMFException ex) {
-                // can't be a duplicate prefix now -- not part of a model yet
-            }
-            break;
+        case "DefinitionText":      xns.getObject().setDefinition(val) ; break;
+        case "NamespaceKindCode":   xns.getObject().setKind(val); break;
+        case "NamespaceURI":        try { xns.getObject().setNamespaceURI(val); }    catch (CMFException ex) { } break;
+        case "NamespacePrefixName": try { xns.getObject().setNamespacePrefix(val); } catch (CMFException ex) { } break;
         default:
             break;
         }

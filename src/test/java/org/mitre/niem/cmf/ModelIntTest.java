@@ -134,7 +134,7 @@ public class ModelIntTest {
         CMFException ex = assertThrows(
                 CMFException.class, () -> fish.setNamespacePrefix("dogs"),
                 "setNamespacePrefix failed to throw CMFException");
-        assertTrue(ex.getMessage().contains("Duplicate namespace prefix"));                
+        assertTrue(ex.getMessage().contains("prefix already assigned"));                
     }
     
     @Test
@@ -143,7 +143,7 @@ public class ModelIntTest {
         CMFException ex = assertThrows(
                 CMFException.class, () -> dup.addToModel(m),
                 "addToModel failed to throw CMFException");
-        assertTrue(ex.getMessage().contains("Duplicate namespace prefix"));
+        assertTrue(ex.getMessage().contains("prefix already assigned"));
     }
     
 }

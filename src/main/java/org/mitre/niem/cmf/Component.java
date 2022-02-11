@@ -64,7 +64,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     }
     
     void setModel (Model m)                 { model = m; }    
-    public void setDefinition (String s)    { definition = s; }
+    public void setDefinition (String s)    { definition = (null == s ? null : s.strip().replaceAll("\\s+", " ")); }
     public void setIsAbstract(boolean f)    { isAbstract = f; }
     public void setIsDeprecated(boolean f)  { isDeprecated = f; }
     public void setIsAbstract (String s)    { isAbstract = "true".equals(s); }
@@ -74,6 +74,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public short getType()                  { return type; }
     public String getName ()                { return name; }
     public Namespace getNamespace ()        { return namespace; }
+    public String getNamespaceURI ()        { return namespace.getNamespaceURI(); }
     public String getDefinition ()          { return definition; }
     public boolean isAbstract ()            { return isAbstract; }
     public boolean isDeprecated ()          { return isDeprecated; }    

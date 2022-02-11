@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:cmfx="http://reference.niem.gov/specification/cmf/XSD/0.1/"
+           xmlns:cmfx="http://reference.niem.gov/specification/cmf/XSD/0.4/"
            xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
            xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
            xmlns:xs-proxy="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
-           targetNamespace="http://reference.niem.gov/specification/cmf/XSD/0.1/"
+           targetNamespace="http://reference.niem.gov/specification/cmf/XSD/0.4/"
            ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ExtensionSchemaDocument"
            version="1">
    <xs:annotation>

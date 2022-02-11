@@ -255,10 +255,10 @@ public class ModelXMLReader {
                 case "DefinitionText":   
                 case "DeprecatedIndicator":
                 case "ExternalAdapterTypeIndicator":
-                case "ExternalNamespaceIndicator":  
                 case "MaxOccursQuantity": 
                 case "MinOccursQuantity": 
-                case "Name":              
+                case "Name":          
+                case "NamespaceKindCode":
                 case "NamespacePrefixName":
                 case "NamespaceURI":       
                 case "NonNegativeValue":   

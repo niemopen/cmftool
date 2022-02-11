@@ -25,10 +25,7 @@ package org.mitre.niem.xsd;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -49,7 +46,8 @@ public class FileCompare {
             while (null != line1 && null != line2) {
                 line1 = line1.stripTrailing();
                 line2 = line2.stripTrailing();
-                if (!line1.equals(line2)) return "files differ, line "+ln;
+                if (!line1.equals(line2)) 
+                    return "files differ, line "+ln;
                 line1 = br1.readLine();
                 line2 = br2.readLine();
                 ln++;

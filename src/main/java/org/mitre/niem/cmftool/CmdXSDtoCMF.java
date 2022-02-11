@@ -39,14 +39,19 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.Model;
+import static org.mitre.niem.cmf.Namespace.NSK_BUILTIN;
+import static org.mitre.niem.cmf.Namespace.NSK_CORE;
+import static org.mitre.niem.cmf.Namespace.NSK_DOMAIN;
+import static org.mitre.niem.cmf.Namespace.NSK_EXTENSION;
+import static org.mitre.niem.cmf.Namespace.NSK_EXTERNAL;
+import static org.mitre.niem.cmf.Namespace.NSK_OTHERNIEM;
+import static org.mitre.niem.cmf.Namespace.NSK_UNKNOWN;
+import static org.mitre.niem.cmf.Namespace.NSK_XML;
+import static org.mitre.niem.cmf.Namespace.NSK_XSD;
 import org.mitre.niem.xsd.ModelExtension;
 import org.mitre.niem.xsd.ModelFromXSD;
 import org.mitre.niem.xsd.ModelXMLWriter;
 import org.mitre.niem.xsd.NamespaceInfo;
-import static org.mitre.niem.xsd.NamespaceInfo.NSK_EXTENSION;
-import static org.mitre.niem.xsd.NamespaceInfo.NSK_EXTERNAL;
-import static org.mitre.niem.xsd.NamespaceInfo.NSK_NIEM_MODEL;
-import static org.mitre.niem.xsd.NamespaceInfo.NSK_UNKNOWN;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
 import org.mitre.niem.xsd.Schema;
@@ -190,9 +195,9 @@ class CmdXSDtoCMF implements JCCommand {
         ModelFromXSD mfact = new ModelFromXSD(s);
         Model m = new Model();
         ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo();
+        NamespaceInfo nsi = new NamespaceInfo();
         try {
-            mfact.createModel(m, me, nsd);
+            mfact.createModel(m, me, nsi);
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             System.err.println(ex.getMessage());
             System.exit(1);
@@ -201,15 +206,23 @@ class CmdXSDtoCMF implements JCCommand {
         if (!quietFlag) {
             List<String> conforming = new ArrayList<>();
             List<String> external   = new ArrayList<>();
+            List<String> builtins   = new ArrayList<>();
             List<String> unknown    = new ArrayList<>();
-            nsd.getTargetNS().forEach((ns) -> {
-                switch(nsd.getNSType(ns)) {
+            nsi.targetNamespaces().forEach((nsuri) -> {
+                switch(nsi.getNSKind(nsuri)) {
                     case NSK_EXTENSION:
-                    case NSK_NIEM_MODEL:
-                        conforming.add(ns);
+                    case NSK_DOMAIN:
+                    case NSK_CORE:
+                    case NSK_OTHERNIEM:
+                        conforming.add(nsuri);
                         break;
-                    case NSK_EXTERNAL: external.add(ns); break;
-                    case NSK_UNKNOWN:  unknown.add(ns); break; 
+                    case NSK_BUILTIN:
+                    case NSK_XML:
+                    case NSK_XSD:
+                        builtins.add(nsuri);
+                        break;
+                    case NSK_EXTERNAL: external.add(nsuri); break;
+                    case NSK_UNKNOWN:  unknown.add(nsuri); break; 
                 }
             });
             if (!conforming.isEmpty()) {
@@ -221,6 +234,11 @@ class CmdXSDtoCMF implements JCCommand {
                 Collections.sort(external);
                 System.out.println("External namespaces (imported with appinfo:externalNamespaceIndicator):");
                 external.forEach((ns) -> { System.out.println("  " + ns);});
+            }
+            if (!builtins.isEmpty()) {
+                Collections.sort(builtins);
+                System.out.println("Built-in namespaces:");
+                builtins.forEach((ns) -> { System.out.println("  "+ns);});
             }
             if (!unknown.isEmpty()) {
                 Collections.sort(unknown);

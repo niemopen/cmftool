@@ -67,12 +67,13 @@ public class Schema {
     private final List<String> schemaDocs  = new ArrayList<>();
     private final List<String> initialNS   = new ArrayList<>();
     private final List<String> schemaURIs  = new ArrayList<>();
+    private final List<String> msgs        = new ArrayList<>();
     private XMLCatalogResolver resolver    = null;
     private XSModel xsmodel                = null;
     
     // Use the static genSchema method to create a Schema object
     private Schema () { } 
-    
+       
     // Creates a Schema object from a list of XML Catalog files, XML Schema documents,
     // and namespace URIs.  Figures out which is which.  Order is preserved.
     public static Schema genSchema (String ... args) throws IOException, FileNotFoundException, ParserConfigurationException, SchemaException {
@@ -142,7 +143,7 @@ public class Schema {
         return s;
     }
     
-    private static String getXMLDocumentNamespace (String fn) throws FileNotFoundException, ParserConfigurationException {
+    private static String getXMLDocumentNamespace (String fn) throws FileNotFoundException, ParserConfigurationException, IOException {
         String ns = null;
         try {
             FileInputStream is = new FileInputStream(fn);
@@ -155,6 +156,7 @@ public class Schema {
                     ns = qn.getNamespaceURI();
                 }
             }
+            is.close();
         } catch (XMLStreamException ex) {
             ns = "";
         }
@@ -171,7 +173,12 @@ public class Schema {
         }
         return res;
     }
-    
+
+    public List<String> assemblyMessages () { 
+       if (null == xsmodel) xsmodel();
+       return msgs; 
+   }
+     
     public XSModel xsmodel () {
         if (null != xsmodel) return xsmodel;    // cached result
         XSLoader loader;
@@ -189,30 +196,9 @@ public class Schema {
                 schemaURIs.toArray(new String[0]),
                 schemaURIs.size());
         xsmodel = loader.loadURIList(slist);
-        
-//        XSNamespaceItemList nsl = xsmodel.getNamespaceItems();
-//        for (int i = 0; i < nsl.getLength(); i++) {
-//            XSNamespaceItem nsi = nsl.item(i);
-//            String ns = nsi.getSchemaNamespace();
-//            System.out.println(String.format("NSI #%d: %s", i, ns));
-//            
-//            XSObjectList ans = nsi.getAnnotations();
-//            System.out.println(String.format("%d annotations:", ans.getLength()));
-//            for (int j = 0; j < ans.getLength(); j++) {
-//                XSAnnotation a = (XSAnnotation)ans.item(j);
-//                String as = a.getAnnotationString();
-//                System.out.println(String.format(" #%d: '%s'", j, as));
-//            }
-//            
-//            StringList docl = nsi.getDocumentLocations();
-//            for (int j = 0; j < docl.getLength(); j++) {
-//                String duri = docl.item(j);
-//                System.out.println(String.format(" doc#%d: %s", j, duri));
-//            }            
-//         }
         return xsmodel;
     }
-    
+     
     private class Handler implements DOMErrorHandler {
         Handler () { super(); }
         @Override
@@ -233,7 +219,7 @@ public class Schema {
                     fn = uri.substring(index + 1)+":";
                 }
             }
-            System.out.println(String.format("%s %s %d:%d %s",
+            msgs.add(String.format("%s %s %d:%d %s",
                     sevstr,
                     fn,
                     loc.getLineNumber(),

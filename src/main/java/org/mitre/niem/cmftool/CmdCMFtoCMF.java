@@ -29,11 +29,8 @@ import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.mitre.niem.cmf.Model;
@@ -41,7 +38,6 @@ import org.mitre.niem.xsd.ModelXMLReader;
 import org.mitre.niem.xsd.ModelXMLWriter;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
-import org.xml.sax.SAXException;
 
 /**
  *

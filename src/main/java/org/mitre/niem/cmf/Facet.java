@@ -39,6 +39,9 @@ public class Facet extends ObjectType {
     public String getDefinition ()  { return definition; }
     public String getFacetKind()    { return facetKind; }
     public String getStringVal()    { return stringVal; }
+    public String getXSDFacet() {
+        return facetKind.substring(0,1).toLowerCase() + facetKind.substring(1);
+    }
     
     public Facet () { super(); }
 
