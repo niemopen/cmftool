@@ -29,7 +29,6 @@ import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
@@ -39,7 +38,6 @@ import org.mitre.niem.xsd.ModelXMLReader;
 import org.mitre.niem.xsd.ModelXMLWriter;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -57,7 +55,7 @@ class CmdCMFtoCMF implements JCCommand {
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "modelFile.nmi")
+    @Parameter(description = "modelFile.cmf")
     private List<String> mainArgs;
     
     CmdCMFtoCMF () {
@@ -132,15 +130,25 @@ class CmdCMFtoCMF implements JCCommand {
         }
         // Read the model object from the model instance file
         Model m = null;
+        File ifile = new File(mainArgs.get(0));
+        FileInputStream is = null;
         try {
-            File ifile = new File(mainArgs.get(0));
-            FileInputStream is = new FileInputStream(ifile);
-            ModelXMLReader mr = new ModelXMLReader();
-            m = mr.readXML(is);
-        } catch (ParserConfigurationException | SAXException | IOException ex) {
+            is = new FileInputStream(ifile);
+        } catch (FileNotFoundException ex) {
             System.err.println(String.format("Error reading model file: %s", ex.getMessage()));
             System.exit(1);
         }
+        ModelXMLReader mr = new ModelXMLReader();
+        m = mr.readXML(is);
+        if (null == m) {
+            List<String> msgs = mr.getMessages();
+            System.err.print("Could not construct model object:");
+            if (1 == msgs.size()) System.err.print(msgs.get(0));
+            else msgs.forEach((xm) -> { System.err.print("\n  "+xm); });
+            System.err.println();
+            System.exit(1);         
+        }
+
         // Write the NIEM model instance to the output stream
         ModelXMLWriter mw = new ModelXMLWriter();
         try {            

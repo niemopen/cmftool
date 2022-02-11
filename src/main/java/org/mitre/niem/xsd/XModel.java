@@ -38,13 +38,9 @@ public class XModel extends XObjectType {
     @Override
     public Model getObject() { return obj; }
     
-    XModel (Model m) {
-        obj = m;
-    }
-
     XModel (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new Model(m);
+        obj = new Model();
     }    
     
 }

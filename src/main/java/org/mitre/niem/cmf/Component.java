@@ -34,46 +34,84 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public static final short C_DATATYPE = 2;
     public static final short C_OBJECTPROPERTY = 3;
     
+    private Model model = null;             // Component objects know the Model they are part of 
     protected short type;                   // component type (ClassType, Property, etc.)
     private String name = null;             // local name
-    private String prefix = null;           // namespace prefix; from setNamespace
     private Namespace namespace = null;     // namespace object
     private String definition = null;       // xs:documentation string
+    private boolean isAbstract = false;
+    private boolean isDeprecated = false;
+    
+    public Component () { super(); }
+
+    public Component (Namespace ns, String lname) {
+        super();
+        namespace = ns;
+        name = lname;
+    }
     
     @Override
     public boolean isModelChild ()          { return true; }    // Components are model children
+
+    public void setName (String s) { 
+        name = s;
+        if (null != getModel()) getModel().childChanged(this);
+    }
     
-    public void setName (String s)          { name = s; }
-    public void setNamespace (Namespace ns) { namespace = ns; prefix = namespace.getNamespacePrefix(); }
-    public void setDefinition (String s)    { definition = s; }
+    public void setNamespace (Namespace ns) { 
+        namespace = ns; 
+        if (null != getModel()) getModel().childChanged(this);
+    }
     
-    public short getType()           { return type; }
-    public String getName ()         { return name; }
-    public Namespace getNamespace () { return namespace; }
-    public String getDefinition ()   { return definition; }
+    void setModel (Model m)                 { model = m; }    
+    public void setDefinition (String s)    { definition = (null == s ? null : s.strip().replaceAll("\\s+", " ")); }
+    public void setIsAbstract(boolean f)    { isAbstract = f; }
+    public void setIsDeprecated(boolean f)  { isDeprecated = f; }
+    public void setIsAbstract (String s)    { isAbstract = "true".equals(s); }
+    public void setIsDeprecated (String s)  { isDeprecated = "true".equals(s); }    
+    
+    public Model getModel ()                { return model; }
+    public short getType()                  { return type; }
+    public String getName ()                { return name; }
+    public Namespace getNamespace ()        { return namespace; }
+    public String getNamespaceURI ()        { return namespace.getNamespaceURI(); }
+    public String getDefinition ()          { return definition; }
+    public boolean isAbstract ()            { return isAbstract; }
+    public boolean isDeprecated ()          { return isDeprecated; }    
     
     public String getQName () {
         return namespace.getNamespacePrefix()+":"+name;
     }
     
     public String getURI () {  
-        return genURI(this.getNamespace().getNamespaceURI(), this.getName());
+        return genURI(namespace.getNamespaceURI(), this.getName());
     }
     
-    Component () {}
+    public ClassType asClassType () {
+        return C_CLASSTYPE == type ? (ClassType)this : null; 
+    }
+    public Datatype asDatatype () {
+        return C_DATATYPE == type ? (Datatype)this : null; 
+    }
+    public Property asProperty () {
+        return C_OBJECTPROPERTY == type || C_DATAPROPERTY == type ? (Property)this : null; 
+    }
     
-    Component (Model m) {
-        super(m);
-    }      
-       
+    @Override
+    public void addToModel (Model m) {
+        m.addComponent(this);
+    }
+    
+    // Model components are ordered by their QNames
     @Override
     public int compareTo (Component o) {
-        int rv = this.prefix.compareTo(o.prefix);
+        int rv = this.namespace.getNamespacePrefix().compareTo(o.namespace.getNamespacePrefix());
         if (rv != 0) return rv;
         return this.name.compareTo(o.name);
     }    
     
     public static String genURI (String nsuri, String lname) {
+        if (nsuri.endsWith("#")) return nsuri.concat(lname);
         return nsuri.concat("#").concat(lname);
     }
 }

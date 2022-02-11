@@ -25,7 +25,6 @@ package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  *
@@ -37,9 +36,7 @@ public class UnionOf extends ObjectType {
     
     public List<Datatype> getDatatypeList()        { return datatypeList; } 
     
-    public UnionOf (Model m) {
-        super(m);
-    }    
+    public UnionOf () { super(); }    
     
     public void addDatatype (Datatype c) {
         this.datatypeList.add(c);

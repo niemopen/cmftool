@@ -40,9 +40,7 @@ public class RestrictionOf extends ObjectType {
     
     public List<Facet> getFacetList()     { return facetList; }
     
-    public RestrictionOf (Model m) {
-        super(m);
-    }
+    public RestrictionOf () { super(); }
       
     public void addFacet (Facet c) {
         this.facetList.add(c);

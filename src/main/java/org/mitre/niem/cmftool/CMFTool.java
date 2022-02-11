@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class CMFTool {
     
-    public static String VERSION_ID = "cmftool 0.2 (19 October 2021)";
+    public static String VERSION_ID = "cmftool 0.5 (11 Feb 2022)";
     
     public static void main (String[] args) {
         CMFTool obj = new CMFTool();
@@ -44,47 +44,35 @@ public class CMFTool {
     }    
     
     private void run (String[] args) {
-        
-// Uncomment arguments for debugging:
-
-
-
-//        args = new String[]{"x2m", "-o", "src/test/resources/CrashDriver-iepd", "src/test/resources/CrashDriver-iepd/xsd/extension/CrashDriver.xsd",
-//             "src/test/resources/CrashDriver-iepd/xsd/xml-catalog.xml"};
-
-//        args = new String[]{"x2m", "-o", "src/test/resources/TwoVersions", "src/test/resources/TwoVersions/PersonName.xsd",
-//             "src/test/resources/TwoVersions/PercentType.xsd"};      
-
-//        args = new String[]{"x2m", "-d", "-o", "src/test/resources/Test", "src/test/resources/Test/CodeType.xsd" };
-
-//        args = new String[]{"x2m", "-d", "-o", "src/test/resources/Test", "src/test/resources/Test/Degree90Type.xsd" };
-
-//        args = new String[]{"x2m", "-o", "/tmp/cmf", "/Work/Stuff/NIEM/Releases/niem-5.0/xsd/niem-core.xsd",
-//            "/Work/Stuff/NIEM/Releases/niem-5.0/xsd/xml-catalog.xml" };
          
-//        args = new String[]{"m2x",  "-o", "/tmp/cmf", 
-//          "src/test/resources/CrashDriver-iepd/CrashDriver.cmf", "src/test/resources/CrashDriver-iepd/CrashDriver.cmx"};
+    // Uncomment arguments for debugging:
 
-//        args = new String[]{"m2x", "-o", "/tmp/cmf",
-//            "src/test/resources/TwoVersions/PersonName.cmf", "src/test/resources/TwoVersions/PersonName.cmx"};
-
-//        args = new String[]{"m2x", "-o", "/tmp/cmf",
-//            "src/test/resources/Test/CodeType.cmf", "src/test/resources/Test/CodeType.cmx"};
-
-//        args = new String[]{"m2x", "-d", "-o", "/Tmp/cmf/xsd", "/Tmp/cmf/jxdm.cmf", "/Tmp/cmf/jxdm.cmx" };
+    String xtd = "src/test/resources/xsd/";
+    if (0 == args.length) {
+        args = new String[]{"x2m", "-o", xtd, xtd+"twoversions-0.xsd" };
+//        args = new String[]{"xcmp", xtd+"nameinfo.xsd", xtd+"out/nameinfo.xsd"};
+//        args = new String[]{"m2x", "-d", "-o", xtd+"out", xtd+"twoversions-0.cmf", xtd+"twoversions-0.cmx"};
+    }
+    
 
         JCommander jc = new JCommander();
         CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
         jc.setProgramName("cmftool");
         
-        CmdCMFtoCMF nmiToNmiCmd = new CmdCMFtoCMF(jc);
-        CmdCMFtoXSD nmiToXsdCmd = new CmdCMFtoXSD(jc);
-        CmdXSDtoCMF xsdToNmiCmd = new CmdXSDtoCMF(jc);        
-        CommandHelp helpCmd     = new CommandHelp(jc);    
-        jc.addCommand("m2x", nmiToXsdCmd);
-        jc.addCommand("m2m", nmiToNmiCmd);
-        jc.addCommand("x2m", xsdToNmiCmd);        
+        CmdCMFtoCMF cmfToCmfCmd = new CmdCMFtoCMF(jc);
+        CmdCMFtoOWL cmfToOwlCmd = new CmdCMFtoOWL(jc);
+        CmdCMFtoXSD cmfToXsdCmd = new CmdCMFtoXSD(jc);
+        CmdXSDtoCMF xsdToCmfCmd = new CmdXSDtoCMF(jc);       
+        CmdXSDcanonicalize xsdCanon = new CmdXSDcanonicalize(jc);
+        CmdXSDcmp xsdCmpCmd         = new CmdXSDcmp(jc);
+        CommandHelp helpCmd         = new CommandHelp(jc);    
+        jc.addCommand("m2m", cmfToCmfCmd);
+        jc.addCommand("m2o", cmfToOwlCmd);
+        jc.addCommand("m2x", cmfToXsdCmd);
+        jc.addCommand("x2m", xsdToCmfCmd);  
+        jc.addCommand("xcanon", xsdCanon);
+        jc.addCommand("xcmp", xsdCmpCmd);
         jc.addCommand("help", helpCmd, "usage");
         
         if (args.length < 1) {

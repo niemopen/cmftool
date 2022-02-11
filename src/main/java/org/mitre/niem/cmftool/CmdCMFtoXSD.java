@@ -25,6 +25,7 @@ package org.mitre.niem.cmftool;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -50,6 +51,9 @@ import org.xml.sax.SAXException;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
+
+@Parameters(commandDescription = "write a NIEM model instance as a NIEM schema")
+        
 class CmdCMFtoXSD implements JCCommand {
     
     @Parameter(names = "-o", description = "output directory for schema pile")
@@ -138,24 +142,32 @@ class CmdCMFtoXSD implements JCCommand {
         }
         // Read the model object from the model file
         Model m = null;
-        String mfp = mainArgs.get(0);
+        File ifile = new File(mainArgs.get(0));
+        FileInputStream is = null;
         try {
-            File ifile = new File(mfp);
-            FileInputStream is = new FileInputStream(ifile);
-            ModelXMLReader mr = new ModelXMLReader();
-            m = mr.readXML(is);
-        } catch (ParserConfigurationException | SAXException | IOException ex) {
+            is = new FileInputStream(ifile);
+        } catch (FileNotFoundException ex) {
             System.err.println(String.format("Error reading model file: %s", ex.getMessage()));
             System.exit(1);
         }
+        ModelXMLReader mr = new ModelXMLReader();
+        m = mr.readXML(is);
+        if (null == m) {
+            List<String> msgs = mr.getMessages();
+            System.err.print("Could not construct model object:");
+            if (1 == msgs.size()) System.err.print(msgs.get(0));
+            else msgs.forEach((xm) -> { System.err.print("\n  "+xm); });
+            System.err.println();
+            System.exit(1);         
+        }        
         // Read the model extension object from the extension file, if provided
         ModelExtension me = null;
         if (mainArgs.size() == 2) {
             me = new ModelExtension(m);
             String extfp = mainArgs.get(1);
             try {
-                File ifile = new File(extfp);
-                FileInputStream is = new FileInputStream(ifile);
+                ifile = new File(extfp);
+                is = new FileInputStream(ifile);
                 me.readXML(is);
             } catch (ParserConfigurationException | SAXException | IOException ex) {
                 System.err.println(String.format("Error reading extension file: %s", ex.getMessage()));

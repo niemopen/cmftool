@@ -32,29 +32,25 @@ public class Property extends Component {
     private Property subPropertyOf = null;
     private ClassType classType = null;
     private Datatype datatype = null;
-    private String abstractIndicator = null;
+
+    public Property () { super(); type = C_OBJECTPROPERTY; }
     
-    public void setSubPropertyOf (Property s)   { subPropertyOf = s; }
-    public void setClassType (ClassType c)      { classType = c; }
-    public void setDatatype (Datatype d)        { datatype = d; }
-    public void setAbstractIndicator (String s) { abstractIndicator = s; }
-    
-    public Property getSubPropertyOf ()   { return subPropertyOf; }
-    public ClassType getClassType ()      { return classType; }
-    public Datatype getDatatype()         { return datatype; }
-    public String getAbstractIndicator () { return abstractIndicator; }
-    
-    public Property () { type = C_OBJECTPROPERTY; }
-    
-    public Property (Model m) {
-        super(m);
+    public Property (Namespace ns, String lname) {
+        super(ns, lname);
         type = C_OBJECTPROPERTY;
     }
     
-    @Override
-    public void addToModelSet (Model m) {
-        m.addProperty(this);
-    }
+    public void setSubPropertyOf (Property s)     { subPropertyOf = s; }
+    public void setClassType (ClassType c)        { classType = c; }
+    public void setDatatype (Datatype d)          { datatype = d; }
 
+    public Property getSubPropertyOf ()           { return subPropertyOf; }
+    public ClassType getClassType ()              { return classType; }
+    public Datatype getDatatype()                 { return datatype; }
+    
+    @Override
+    public void addToModel (Model m) {
+         m.addComponent(this);
+    }
     
 }

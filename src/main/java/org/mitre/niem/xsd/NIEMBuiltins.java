@@ -26,11 +26,9 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 /**
@@ -51,7 +49,11 @@ public class NIEMBuiltins {
     public static int NIEM_STRUCTURES = 5;
     public static int NIEM_BUILTINS_COUNT = 6;
     
-    private static Pattern[] builtinNSPatterns= {
+    private static final String[] defaultPrefix = {
+        "appinfo", "cli", "clsi", "ct", "xs-proxy", "structures"
+    };
+    
+    private static final Pattern[] builtinNSPatterns= {
         Pattern.compile("http://release.niem.gov/niem/appinfo/([\\d.]+)/"),
         Pattern.compile("http://reference.niem.gov/niem/specification/code-lists/([\\d.]+)/code-lists-instance/"),
         Pattern.compile("http://reference.niem.gov/niem/specification/code-lists/([\\d.]+)/code-lists-schema-appinfo/"),        
@@ -59,7 +61,7 @@ public class NIEMBuiltins {
         Pattern.compile("http://release.niem.gov/niem/proxy/[^/]+/([\\d.]+)/"),
         Pattern.compile("http://release.niem.gov/niem/structures/([\\d.]+)/")
     };    
-    private static String[] builtinNSURI= {
+    private static final String[] builtinNSURI= {
         "http://release.niem.gov/niem/appinfo/VERSION/",
         "http://reference.niem.gov/niem/specification/code-lists/VERSION/code-lists-instance/",
         "http://reference.niem.gov/niem/specification/code-lists/VERSION/code-lists-schema-appinfo/",        
@@ -67,7 +69,7 @@ public class NIEMBuiltins {
         "http://release.niem.gov/niem/proxy/PROXY/VERSION/",
         "http://release.niem.gov/niem/structures/VERSION/"
     };
-    private static String[] builtinFilename = {
+    private static final String[] builtinFilename = {
         "appinfo.xsd",
         "code-list-instance.xsd",
         "code-list-schema-appinfo.xsd",
@@ -76,11 +78,21 @@ public class NIEMBuiltins {
         "structures.xsd"
     };
     
-    public static boolean isBuiltinNamespace (String nsuri) {
-        return getBuiltinNamespaceKind(nsuri) >= 0;
+    public static boolean isBuiltin (String nsuri) {
+        return getBuiltinKind(nsuri) >= 0;
     }
     
-    public static int getBuiltinNamespaceKind (String nsuri) {
+    public static String getBuiltinDefaultPrefix (int which) {
+        if (0 > which || NIEM_BUILTINS_COUNT <= which) return null;
+        return defaultPrefix[which];
+    }
+    
+    public static String getBuiltinDefaultPrefix (String nsuri) {
+        int kind = getBuiltinKind(nsuri);
+        return getBuiltinDefaultPrefix(kind);
+    }
+    
+    public static int getBuiltinKind (String nsuri) {
         for (int i = builtinNSPatterns.length - 1; i >= 0; i--) {
             Matcher m = builtinNSPatterns[i].matcher(nsuri);
             if (m.matches()) return i;
@@ -88,7 +100,7 @@ public class NIEMBuiltins {
         return -1;
     }
     
-    public static String getBuiltinNamespaceVersion (String nsuri) {
+    public static String getBuiltinVersion (String nsuri) {
         for (int i = builtinNSPatterns.length - 1; i >= 0; i--) {
             Matcher m = builtinNSPatterns[i].matcher(nsuri);
             if (m.matches()) return m.group(1);
@@ -104,7 +116,7 @@ public class NIEMBuiltins {
      * @param version NIEM version
      * @return builtin namespace uri
      */
-    public static String getBuiltinNamespaceURI (int which, String version) {
+    public static String getBuiltinURI (int which, String version) {
         String res = builtinNSURI[which];
         version = version.replaceFirst("\\.[\\d.]+$", ".0");   // ignore minor version numbers
         if (NIEM_CONFORMANCE_TARGETS == which) version = "3.0";
@@ -115,16 +127,16 @@ public class NIEMBuiltins {
     }
     
     public static String getBuiltinNamespaceURI (String nsuri, String version) {
-        int which = getBuiltinNamespaceKind(nsuri);
+        int which = getBuiltinKind(nsuri);
         if (which < 0) return null;
-        return getBuiltinNamespaceURI(which, version);
+        return getBuiltinURI(which, version);
     }
     
     public static File getBuiltinDocumentFile (String nsuri) {
         String appdir = NIEMBuiltins.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        String version = getBuiltinNamespaceVersion(nsuri);
+        String version = getBuiltinVersion(nsuri);
         String res;
-        int kind = getBuiltinNamespaceKind(nsuri);
+        int kind = getBuiltinKind(nsuri);
         if (appdir.endsWith(".jar")) res = FilenameUtils.concat(appdir, "../../share/xsd");
         else res = FilenameUtils.concat(appdir, "../../../../src/main/dist/share/xsd");
         res = FilenameUtils.concat(res, version);
@@ -136,8 +148,8 @@ public class NIEMBuiltins {
         List<String> res = new ArrayList<>();
         for (String s: uris) { res.add(s); }
         res.sort((String s, String o) -> {
-            String tv = getBuiltinNamespaceVersion(s);
-            String ov = getBuiltinNamespaceVersion(o);
+            String tv = getBuiltinVersion(s);
+            String ov = getBuiltinVersion(o);
             return ov.compareTo(tv);
         });
         return res;
