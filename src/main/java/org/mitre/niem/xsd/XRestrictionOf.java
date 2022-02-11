@@ -25,7 +25,6 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.RestrictionOf;
-import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
 /**
@@ -41,23 +40,7 @@ public class XRestrictionOf extends XObjectType {
     
     XRestrictionOf (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new RestrictionOf(m);
-    }
-    
-    // Replacing a placeholder? Use idRepl to replace obj
-    // Otherwise obj is the object to use
-    @Override
-    public RestrictionOf getObjectToAdd () {
-        RestrictionOf r = this.obj;
-        if (null != this.idRepl) {
-            try {
-                r = (RestrictionOf)this.idRepl.getObject();
-            }
-            catch (ClassCastException e) {
-                LOG.error("line {}: ID/REF type mismatch", this.getLineNumber());
-            }
-        }
-        return r;
+        obj = new RestrictionOf();
     }
         
     @Override
@@ -68,6 +51,6 @@ public class XRestrictionOf extends XObjectType {
     
     @Override
     public void addToDatatype (XDatatype dt) { 
-        dt.getObject().setRestrictionOf(this.getObjectToAdd());
+        dt.getObject().setRestrictionOf(this.getObject());
     }      
 }

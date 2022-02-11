@@ -16,6 +16,9 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
+version = 0.5
+sourceCompatibility = 17
+
 dependencies {
     // Xerces XML Schema API not compatable with JRE 11 javax.xml.catalog
     implementation group: 'xerces', name: 'xercesImpl', version: '2.12.1'
@@ -26,11 +29,12 @@ dependencies {
     
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
     implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.14.1'
-    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.14.1'    
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.17.1'
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.17.1'    
     
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.2'
 }
 
 test {

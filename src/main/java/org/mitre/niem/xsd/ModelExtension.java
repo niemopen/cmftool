@@ -25,7 +25,6 @@ package org.mitre.niem.xsd;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,10 +43,14 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import static org.mitre.niem.NIEMConstants.CMFX_NS_URI;
 import static org.mitre.niem.NIEMConstants.DEFAULT_NIEM_VERSION;
+import static org.mitre.niem.NIEMConstants.XMLNS_URI;
 import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
 import org.mitre.niem.cmf.Model;
-import static org.mitre.niem.cmf.Namespace.mungedPrefix;
+import org.mitre.niem.cmf.NamespaceMap;
+import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinDefaultPrefix;
+import static org.mitre.niem.xsd.NamespaceInfo.mungedPrefix;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.Attributes;
@@ -60,7 +63,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * <li> relative path to schema document for each namespace></li>
  * <li> conformance targets asserted for each namespace</li>
  * <li> schema version attribute for each namespace</li>
- * <li> namespace prefix for appinfo, proxy, structures namespaces</li>
+ * <li> namespace prefix for the builtin namespaces</li>
  * <li> indicator to say if a QName is an XML attribute</li></ul>
  * 
  * The contents of this object may be read from a ModelExtension document
@@ -72,7 +75,6 @@ import org.xml.sax.helpers.DefaultHandler;
  * created by hand.  In this case the class must generate correct default values
  * for any data not provided.
  * 
- * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -81,38 +83,36 @@ public class ModelExtension {
     static final Logger LOG = LogManager.getLogger(ModelExtension.class);    
     private static final String ME_URI = "http://reference.niem.gov/specification/cmf/XMLExtension/1.0/";
 
-    private final Model m;                                                    // Model object being extended
-    private final Map<String,String> prefixMap;                               // nsPrefix -> nsURI, copied from Model
-    private final TreeMap<String,SchemaDocRec> nsData = new TreeMap<>();      // info about each namespace
-    private final TreeSet<String> attQNames = new TreeSet<>();                // set of attribute QNames
-//    private Namespace ns_appinfo = null;                                    // for appinfo prefix
-//    private Namespace ns_ctarg = null;                                      // for conformance target prefix
-//    private Namespace ns_proxy = null;                                      // for proxy prefix
-//    private Namespace ns_structures = null;                                 // for structures prefix
+    // ModelExtension needs its own namespace prefix / URI map, because when 
+    // reading the object from a file, it must mung the prefix assigned to
+    // builtin namespaces if they conflict with a prefix in the model.
+    
+    private final NamespaceMap nsmap;                                       // from the Model object
+    private final TreeMap<String,SchemaDocRec> nsData = new TreeMap<>();    // info about each namespace
+    private final TreeSet<String> attQNames           = new TreeSet<>();    // set of attribute QNames
+    private final TreeSet<String> nillableElements    = new TreeSet<>();    // set of nillable element QNames
+    
+//    public ModelExtension () { }
+    
+    public ModelExtension (Model m) { 
+        nsmap = m.namespaceMap();
+    }
     
     public String getCatalogFilepath (String ns)    { return getRec(ns).cpath; }
-    
-//    public String getAppinfoPrefix ()    { return ns_appinfo.getNamespacePrefix(); }
-//    public String getProxyPrefix ()      { return ns_proxy.getNamespacePrefix(); }
-//    public String getStructuresPrefix () { return ns_structures.getNamespacePrefix(); }
-//    public String getAppinfoURI ()       { return ns_appinfo.getNamespaceURI(); }
-//    public String getProxyURI ()         { return ns_proxy.getNamespaceURI(); }
-//    public String getStructuresURI ()    { return ns_structures.getNamespaceURI(); }
-   
+      
     public boolean isAttribute (String qname) { return attQNames.contains(qname); }
     public void setIsAttribute (String qname) { attQNames.add(qname); }
+    
+    public boolean isNillable (String qname)  { return nillableElements.contains(qname); }
+    public void setIsNillable (String qname)  { nillableElements.add(qname); }
     
     public void setCatalogFilepath (String ns, String fp)     { getRec(ns).cpath = fp; }
     public void setConformanceTargets (String ns, String cts) { getRec(ns).ctarg = cts; }
     public void setDocumentFilepath (String ns, String fp)    { getRec(ns).fpath = fp; }
     public void setNIEMVersion(String ns, String v)           { getRec(ns).nversion = v; }
-    public void setPrefix (String ns, String p)               { getRec(ns).prefix = p; }    // to set a utility namespace prefix
+    public void setPrefix (String ns, String p)               { getRec(ns).prefix = p; }
     public void setNSVersion (String ns, String v)            { getRec(ns).sversion = v; }
-    
-    public ModelExtension (Model m) {
-        this.m = m;
-        prefixMap = m.getPrefixMap();       // a modifiable copy
-    }
+    public void setKind (String ns, int k)                    { getRec(ns).skind = k; }
     
     /**
      * Returns the conformance target URIs asserted for this namespace, or null if none.
@@ -153,79 +153,46 @@ public class ModelExtension {
      * @param ns namespace URI
      * @return schema version
      */
-    public String getNSVersion (String ns) {
+    public String getNamespaceVersion (String ns) {
         return getRec(ns).sversion;
     }
-       
-    /**
-     * Returns the namespace prefix for the builtin namespace with the specified URI.
-     * Possibly creates a default prefix if none specified.  That prefix could be
-     * munged to be unique.
-     * @param ns builtin namespace URI
-     * @return namespace prefix
-     */
-    public String getBuiltinPrefix (String ns) {
-        String prefix = getRec(ns).prefix;
-        if (null != prefix) return prefix;
-        prefix = mungedPrefix(m.getPrefixMap(), prefix);
-        return prefix;
+    
+    public int getSchemaKind (String ns) {
+        return getRec(ns).skind;
     }
     
-//    public String getAppinfoPrefix () {
-//        if (null != ns_appinfo) return ns_appinfo.getNamespacePrefix();
-//        ns_appinfo = new Namespace("", "");
-//        return getSomePrefix(ns_appinfo, "appinfo", APPINFO_NS_URI_PREFIX, APPINFO_NS_URI);
-//    }
-//    public String getConformanceTargetPrefix () {
-//        if (null != ns_ctarg) return ns_ctarg.getNamespacePrefix();
-//        ns_ctarg = new Namespace("", "");
-//        return getSomePrefix(ns_ctarg, "appinfo", CONFORMANCE_TARGET_NS_URI_PREFIX, CONFORMANCE_TARGET_NS_URI);
-//    }
-//    public String getProxyPrefix () {
-//        if (null != ns_proxy) return ns_proxy.getNamespacePrefix();
-//        ns_proxy = new Namespace("", "");
-//        return getSomePrefix(ns_proxy, "proxy", PROXY_NS_URI_PREFIX, PROXY_NS_URI);
-//    }
-//    public String getStructuresPrefix () {
-//        if (null != ns_structures) return ns_structures.getNamespacePrefix();
-//        ns_structures = new Namespace("", "");
-//        return getSomePrefix(ns_structures, "structures", STRUCTURES_NS_URI_PREFIX, STRUCTURES_NS_URI);
-//    }
-//            
-//    // Look through the namespace records for the latest version of a utility 
-//    // namespace (appinfo, proxy, structures).  If none found, use the 
-//    // standard namespace prefix.
-//    private String getSomePrefix (Namespace nsrec, String defaultPrefix, String uriPrefix, String uri) {
-//        nsData.forEach((ns,r) -> {
-//            if (ns.startsWith(uriPrefix) && nsrec.getNamespaceURI().compareTo(ns) < 0) {
-//                nsrec.setNamespacePrefix(r.prefix);
-//                nsrec.setNamespaceURI(ns);
-//            }
-//        });
-//        if (null == nsrec.getNamespacePrefix() || nsrec.getNamespacePrefix().isBlank()) {
-//            nsrec.setNamespacePrefix(defaultPrefix);
-//            nsrec.setNamespaceURI(uri);
-//        }
-//        return nsrec.getNamespacePrefix();           
-//    }
+    /**
+     * Returns the namespace prefix for the specified builtin namespace.
+     * Returns the default builtin prefix (suitably munged) if not specified.
+     * @param nsuri
+     * @return 
+     */
+    public String getBuiltinPrefix (String nsuri) {
+        String prefix = nsmap.getPrefix(nsuri);
+        if (null != prefix) return prefix;              // prefix already assigned to this URI
+        prefix = getBuiltinDefaultPrefix(nsuri);        // the default prefix for this builtin (eg "appinfo")
+        prefix = nsmap.assignPrefix(prefix, nsuri);     // default prefix munged, if necessary
+        return prefix;
+    }
             
     public void writeXML (Writer w) throws ParserConfigurationException, TransformerConfigurationException, TransformerException {
         DocumentBuilder db = ParserBootstrap.docBuilder();
         Document dom = db.newDocument();
         Element root = dom.createElementNS(ME_URI, "ModelExtension");
+        root.setAttributeNS(XMLNS_URI, "xmlns", CMFX_NS_URI);
         dom.appendChild(root);
         
         // Iterate through namespace records
         nsData.forEach((ns,rec) -> {
             if (!XSD_NS_URI.equals(ns)) {
                 Element sde = dom.createElementNS(ME_URI, "SchemaDocument");
-                addChild(dom, sde, "NamespaceURI", ns);
-                addChild(dom, sde, "CatalogFilePathText", rec.cpath);
-                addChild(dom, sde, "ConformanceTargetURIList", rec.ctarg);
-                addChild(dom, sde, "DocumentFilePathText", rec.fpath);
-                addChild(dom, sde, "NIEMVersionText", rec.nversion);
-                addChild(dom, sde, "SchemaVersionText", rec.sversion);                
-                addChild(dom, sde, "NamespacePrefixText", rec.prefix);                
+                addSimpleChild(dom, sde, "NamespaceURI", ns);
+                addSimpleChild(dom, sde, "CatalogFilePathText", rec.cpath);
+                addSimpleChild(dom, sde, "ConformanceTargetURIList", rec.ctarg);
+                addSimpleChild(dom, sde, "DocumentFilePathText", rec.fpath);
+                addSimpleChild(dom, sde, "NIEMVersionText", rec.nversion);
+                addSimpleChild(dom, sde, "SchemaVersionText", rec.sversion);                
+                addSimpleChild(dom, sde, "NamespacePrefixText", rec.prefix);                
                 root.appendChild(sde);
             }
         });
@@ -234,16 +201,20 @@ public class ModelExtension {
             ae.setTextContent(aqn);
             root.appendChild(ae);
         }
+        for (String nen : nillableElements) {
+            Element ne = dom.createElementNS(ME_URI, "NillableElementQName");
+            ne.setTextContent(nen);
+            root.appendChild(ne);
+        }
         Transformer tr = TransformerFactory.newInstance().newTransformer();
         tr.setOutputProperty(OutputKeys.INDENT, "yes");
         tr.setOutputProperty(OutputKeys.METHOD, "xml");
         tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
         tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        StringWriter ostr = new StringWriter();
         tr.transform(new DOMSource(dom), new StreamResult(w));        
     }
     
-    private void addChild (Document dom, Element p, String name, String val) {
+    private void addSimpleChild (Document dom, Element p, String name, String val) {
         if (null == val) return;
         Element c = dom.createElementNS(ME_URI, name);
         c.setTextContent(val);
@@ -260,23 +231,20 @@ public class ModelExtension {
         
         // Look for duplicate file paths and duplicate namespace prefixes
         Map<String,String> fpmap = new HashMap<>();     // fpath -> nsURI
-        nsData.forEach((ns,rec) -> {
+        nsData.forEach((nsuri,rec) -> {
             if (null != rec.fpath && fpmap.containsKey(rec.fpath)) {
                 String ons = fpmap.get(rec.fpath);
-                LOG.warn("readXML: Duplicate filepaths: {} and {} both map to {}", ns, ons, rec.fpath);
-                LOG.warn("readXML: Changing file path of {} to the default", ons);
-                getRec(ons).fpath = null;
+                LOG.warn("ModelExtension: Duplicate filepaths: {} and {} both map to {}", nsuri, ons, rec.fpath);
             }
-            fpmap.put(rec.fpath, ns);
+            fpmap.put(rec.fpath, nsuri);
             String opr = rec.prefix;
-            if (null != opr && prefixMap.containsKey(opr) && !prefixMap.get(opr).equals(ns)) {
-                String npr = mungedPrefix(prefixMap, opr);
-                LOG.warn("readXML: Can't assign prefix {} to {} (already bound to {})", opr, ns, prefixMap.get(opr));
-                LOG.warn("readXML: Assigned prefix {} to {} instead", npr, ns);
+            String npr = nsmap.assignPrefix(opr, nsuri);
+            if (!opr.equals(npr)) {
+                LOG.warn("ModelExtension: Can't assign prefix {} to {} (already bound to {})", opr, nsuri, nsmap.getURI(opr));
+                LOG.warn("ModelExtension: Assigned prefix {} to {} instead", npr, nsuri);
                 rec.prefix = npr;
             }
         });
-        
      }
     
     private class Handler extends DefaultHandler {
@@ -296,6 +264,7 @@ public class ModelExtension {
                 case "NamespacePrefixText":
                 case "NamespaceURI":
                 case "NIEMVersionText":
+                case "NillableElementQName":
                 case "SchemaVersionText":
                     sb = new StringBuilder();
                     break;
@@ -314,6 +283,7 @@ public class ModelExtension {
                 case "NamespacePrefixText":         nrec.prefix = sb.toString(); break;
                 case "NamespaceURI":                cns = sb.toString(); break;
                 case "NIEMVersionText":             nrec.nversion = sb.toString(); break;
+                case "NillableElementQName":        me.setIsNillable(sb.toString()); break;
                 case "SchemaVersionText":           nrec.sversion = sb.toString(); break;
                 case "SchemaDocument":              me.nsData.put(cns, nrec); break;
             }            
@@ -340,7 +310,8 @@ public class ModelExtension {
         String fpath = null;     // file path to schema document
         String nversion = null;  // NIEM version 
         String prefix = null;    // namespace declaration prefix; for utility namespaces
-        String sversion = null;  // schema element version attribute  
+        String sversion = null;  // schema element version attribute 
+        int skind = -1;          // schema kind (from NamespaceInfo: NSK_EXTERNAL, etc.)
         
         @Override
         public String toString() {

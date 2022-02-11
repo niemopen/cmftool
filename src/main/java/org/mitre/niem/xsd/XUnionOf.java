@@ -25,7 +25,6 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.UnionOf;
-import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
 /**
@@ -41,24 +40,8 @@ public class XUnionOf extends XObjectType {
     
     public XUnionOf (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new UnionOf(m);
+        obj = new UnionOf();
     }    
-    
-    // Replacing a placeholder? Use idRepl to replace obj
-    // Otherwise obj is the object to use
-    @Override
-    public UnionOf getObjectToAdd () {
-        UnionOf r = this.obj;
-        if (null != this.idRepl) {
-            try {
-                r = (UnionOf)this.idRepl.getObject();
-            }
-            catch (ClassCastException e) {
-                LOG.error("line {}: ID/REF type mismatch", this.getLineNumber());
-            }
-        }
-        return r;
-    }
         
     @Override
     public void addAsChild (XObjectType child) {
@@ -68,8 +51,7 @@ public class XUnionOf extends XObjectType {
     
     @Override
     public void addToDatatype (XDatatype dt) { 
-        dt.getObject().setUnionOf(this.getObjectToAdd());
+        dt.getObject().setUnionOf(this.getObject());
     }
-    
     
 }

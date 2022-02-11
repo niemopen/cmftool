@@ -23,6 +23,9 @@
  */
 package org.mitre.niem.xsd;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import org.xml.sax.Attributes;
 
@@ -41,60 +44,80 @@ public class XStringObject extends XObjectType {
     }
 
     @Override
-    public void addToClassType(XClassType c) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+    public void addToClassType(XClassType xc) {
+        String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "AbstractIndicator":   c.getObject().setAbstractIndicator(val); break;
-        case "DefinitionText":      c.getObject().setDefinition(val); break;
-        case "Name":                c.getObject().setName(val); break;
+        case "AbstractIndicator":            xc.getObject().setIsAbstract(val); break;
+        case "AugmentableIndicator":         xc.getObject().setIsAugmentable(val); break;
+        case "DefinitionText":               xc.getObject().setDefinition(val); break;
+        case "DeprecatedIndicator":          xc.getObject().setIsDeprecated(val); break;
+        case "ExternalAdapterTypeIndicator": xc.getObject().setIsExternal(val); break;
+        case "Name":                         xc.getObject().setName(val); break;
         default:
             break;
         }
     }
     
     @Override
-    public void addToDatatype(XDatatype dt) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+    public void addToDatatype(XDatatype xdt) {
+        String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DefinitionText":      dt.getObject().setDefinition(val); break;
-        case "Name":                dt.getObject().setName(val); break;
+        case "DefinitionText":      xdt.getObject().setDefinition(val); break;
+        case "DeprecatedIndicator": xdt.getObject().setIsDeprecated(val); break;        
+        case "Name":                xdt.getObject().setName(val); break;
         default:
             break;
         }
     } 
     
     @Override
-    public void addToFacet(XFacet dt) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+    public void addToFacet(XFacet xf) {
+        String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DefinitionText":      dt.getObject().setDefinition(val); break;
+        case "DefinitionText":      xf.getObject().setDefinition(val); break;
         case "NonNegativeValue":
         case "PositiveValue":
         case "StringValue":
-        case "WhiteSpaceValueCode": dt.getObject().setStringVal(val); break;
+        case "WhiteSpaceValueCode": xf.getObject().setStringVal(val); break;
         default:
             break;
         }
     } 
+    
+    @Override
+    public void addToHasProperty (XHasProperty xhp) {
+        String val = getStringVal();
+        switch (this.getComponentLname()) {
+        case "MinOccursQuantity":    xhp.getObject().setMinOccurs(Integer.parseInt(val)); break;
+        case "MaxOccursQuantity":    
+            if ("unbounded".equals(val)) xhp.getObject().setMaxUnbounded(true);
+            else xhp.getObject().setMaxOccurs(Integer.parseInt(val)); 
+            break;
+        default:
+            break;
+        }        
+    }
         
     @Override
-    public void addToNamespace(XNamespace ns) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+    public void addToNamespace(XNamespace xns) {
+        String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DefinitionText":       ns.getObject().setDefinition(val) ; break;
-        case "NamespacePrefixName":  ns.getObject().setNamespacePrefix(val); break;
-        case "NamespaceURI":         ns.getObject().setNamespaceURI(val); break;
+        case "DefinitionText":      xns.getObject().setDefinition(val) ; break;
+        case "NamespaceKindCode":   xns.getObject().setKind(val); break;
+        case "NamespaceURI":        try { xns.getObject().setNamespaceURI(val); }    catch (CMFException ex) { } break;
+        case "NamespacePrefixName": try { xns.getObject().setNamespacePrefix(val); } catch (CMFException ex) { } break;
         default:
             break;
         }
      } 
     @Override
-    public void addToProperty (XProperty op) {
-        String val = (null != getIDRepl() ? getIDRepl().getStringVal() : getStringVal());
+    public void addToProperty (XProperty xop) {
+        String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "AbstractIndicator":   op.getObject().setAbstractIndicator(val); break;
-        case "DefinitionText":      op.getObject().setDefinition(val); break;
-        case "Name":                op.getObject().setName(val); break;
+        case "AbstractIndicator":   xop.getObject().setIsAbstract(val); break;
+        case "DefinitionText":      xop.getObject().setDefinition(val); break;
+        case "DeprecatedIndicator": xop.getObject().setIsDeprecated(val); break;        
+        case "Name":                xop.getObject().setName(val); break;
         default:
             break;
         }

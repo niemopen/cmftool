@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.4/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://reference.niem.gov/specification/cmf/0.4/">
+  <Namespace structures:uri="ns">
+    <NamespaceURI>http://example.com/codes/</NamespaceURI>
+    <NamespacePrefixName>ns</NamespacePrefixName>
+    <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:uri="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixName>xs</NamespacePrefixName>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <Property structures:uri="ns:Numbers">
+    <Name>Numbers</Name>
+    <Namespace structures:uri="ns" xsi:nil="true"/>
+    <Datatype structures:uri="ns:UnionType" xsi:nil="true"/>
+  </Property>
+  <Datatype structures:uri="ns:UnionType">
+    <Name>UnionType</Name>
+    <Namespace structures:uri="ns" xsi:nil="true"/>
+    <UnionOf>
+      <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+      <Datatype structures:uri="xs:float" xsi:nil="true"/>
+    </UnionOf>
+  </Datatype>
+  <Datatype structures:uri="xs:decimal">
+    <Name>decimal</Name>
+    <Namespace structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:uri="xs:float">
+    <Name>float</Name>
+    <Namespace structures:uri="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

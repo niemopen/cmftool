@@ -24,28 +24,22 @@
 package org.mitre.niem.cmf;
 
 /**
- * A class to represent a NIEM model component.
+ * A class to represent an object in a CMF model.
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ObjectType {
-    private Model model = null;             // every object knows the model it is part of
     private String sequenceID = null;       // any model component can have a sequence number
 
     public void setSequenceID (String s) { sequenceID = s; }
 
-    public Model getModel()            { return model; }
     public String getSequenceID ()     { return sequenceID; }
     public boolean isModelChild ()     { return false; }        // override in Component and Namespace class
     
     public ObjectType () {
     }
-   
-    public ObjectType (Model m) {
-        model = m;
-    }
-   
-    // Override for components and namespaces
-    public void addToModelSet (Model m) { }
+    
+    // Override in model child classes
+    public void addToModel (Model m) throws CMFException  { }
 
 }

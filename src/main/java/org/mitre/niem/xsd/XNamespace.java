@@ -25,7 +25,7 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
-import static org.mitre.niem.xsd.ModelXMLReader.LOG;
+import org.mitre.niem.cmf.ObjectType;
 import org.xml.sax.Attributes;
 
 /**
@@ -38,28 +38,17 @@ public class XNamespace extends XObjectType {
     private Namespace obj = null;
     
     @Override
+    public void setObject (ObjectType o) { 
+        obj = Namespace.class == o.getClass() ? (Namespace)o : null;
+    }
+    
+    @Override
     public Namespace getObject () { return obj; }
     
     XNamespace (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new Namespace(m);
+        obj = new Namespace();
     }    
-    
-    // Replacing a placeholder? Use idRepl to replace obj
-    // Otherwise obj is the object to use
-    @Override
-    public Namespace getObjectToAdd () {
-        Namespace r = this.obj;
-        if (null != this.idRepl) {
-            try {
-                r = (Namespace)this.idRepl.getObject();
-            }
-            catch (ClassCastException e) {
-                LOG.error("line {}: ID/REF type mismatch", this.getLineNumber());
-            }
-        }
-        return r;
-    }
     
     @Override
     public void addAsChild (XObjectType child) {
@@ -69,16 +58,24 @@ public class XNamespace extends XObjectType {
 
     @Override
     public void addToClassType (XClassType c) {
-        c.getObject().setNamespace(this.getObjectToAdd());
+        c.getObject().setNamespace(this.getObject());
     }
     
     @Override
     public void addToDatatype (XDatatype dt) {
-        dt.getObject().setNamespace(this.getObjectToAdd());
+        dt.getObject().setNamespace(this.getObject());
+    }
+    
+    @Override
+    public void addToHasProperty (XHasProperty hp) {
+        switch(this.getComponentLname()) {
+        case "AugmentationElementNamespace":  hp.getObject().setAugmentElementNS(this.getObject()); break;
+        case "AugmentationTypeNamespace":     hp.getObject().augmentTypeNS().add(this.getObject()); break;
+        }
     }
     
     @Override
     public void addToProperty (XProperty op) {
-        op.getObject().setNamespace(this.getObjectToAdd());
+        op.getObject().setNamespace(this.getObject());
     }    
 }

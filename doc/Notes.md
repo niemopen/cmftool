@@ -1,18 +1,15 @@
-* Model extensions
+* 8 Feb 2022
 
-Separate extension file, or extension elements in Model document?
-Perhaps separate message files in the same message specification,
-with the same extension; eg. Model.cmf and ModelXML.cmf
+- need to correct whitespace facet inserted by Xerces
+- FooAugmentation must substitute for FooAugmentationPoint in FooType; is this in NDR?
 
-* ModelToXSD
+* 4 Feb 2022
 
-- Not keeping track of specific utility schema versions, or of the proxy schema.
-  Just use the latest version.  Later on, the version can be a program option.
-
-- CodeType becomes a Datatype, not a ClassType
+- Generated XSD doesn't have @xml:lang or @version
 
 * Not Done Yet
-
-- Appinfo
 - Code lists-instance
 - Code-lists-schema-appinfo
+
+
+

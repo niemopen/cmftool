@@ -27,25 +27,38 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * A class for a CMF Class object
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ClassType extends Component {
-    private String abstractIndicator = null;
+    private boolean isAugmentable = false;
+    private boolean isExternal = false;
     private ClassType extensionOfClass  = null;
     private Datatype hasValue = null;
     private final List<HasProperty> hasPropertyList = new ArrayList<>();
     
-    public void setAbstractIndicator (String s)   { abstractIndicator = s; }
+    public ClassType () { super(); type = C_CLASSTYPE; }
+    
+    public ClassType (Namespace ns, String lname) {
+        super(ns, lname);
+        type = C_CLASSTYPE;
+    }
+
+    public void setIsAugmentable (boolean f)      { isAugmentable = f; }
+    public void setIsAugmentable (String s)       { isAugmentable = "true".equals(s); }
+    public void setIsExternal (boolean f)         { isExternal = f; }    
+    public void setIsExternal (String s)          { isExternal = "true".equals(s); }
     public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
     public void setHasValue (Datatype v)          { hasValue = v; }
     
-    public String getAbstractIndicator ()   { return abstractIndicator; }
-    public ClassType getExtensionOfClass () { return extensionOfClass; }
-    public Datatype getHasValue()           { return hasValue; }
+    public boolean isAugmentable ()               { return isAugmentable; }
+    public boolean isExternal ()                  { return isExternal; }
+    public ClassType getExtensionOfClass ()       { return extensionOfClass; }
+    public Datatype getHasValue()                 { return hasValue; }
             
-    public List<HasProperty> hasPropertyList ()       { return hasPropertyList; }
+    public List<HasProperty> hasPropertyList ()   { return hasPropertyList; }
 
     public void addHasProperty (HasProperty c) {
         this.hasPropertyList.add(c);
@@ -61,17 +74,11 @@ public class ClassType extends Component {
         this.hasPropertyList.set(index, np);
         
     }
-      
-    public ClassType () { type = C_CLASSTYPE; }
-       
-    public ClassType (Model m) {
-        super(m);
-        type = C_CLASSTYPE;
-    }
-    
+           
     @Override
-    public void addToModelSet (Model m) {
-        m.addClassType(this);
+    public void addToModel (Model m) {
+
+        m.addComponent(this);
     }
  
 }

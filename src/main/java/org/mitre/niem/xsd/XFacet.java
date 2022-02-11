@@ -25,8 +25,6 @@ package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.Model;
-import org.mitre.niem.cmf.RestrictionOf;
-import static org.mitre.niem.xsd.ModelXMLReader.LOG;
 import org.xml.sax.Attributes;
 
 /**
@@ -42,7 +40,7 @@ public class XFacet extends XObjectType {
     
     XFacet (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new Facet(m);
+        obj = new Facet();
         obj.setFacetKind(eln);
     }   
 
@@ -54,19 +52,7 @@ public class XFacet extends XObjectType {
     
     @Override
     public void addToRestrictionOf (XRestrictionOf x) {
-        XObjectType r    = this.getIDRepl();   // null unless replacing IDREF/URI placeholder
-        RestrictionOf po = x.getObject();      // parent object
-        Facet co         = this.getObject();   // child object, null or an IDREF/URI placeholder
-        try {
-            if (null != r) {
-                Facet ro = (Facet)r.getObject();    // object with desired ID
-                po.replaceFacet(co, ro);            // replace the placeholder
-            } else {
-                po.addFacet(co);
-            }
-        } catch (ClassCastException e) {
-            LOG.error("line {}: ID/REF type mismatch", r.getLineNumber());
-        }
+        x.getObject().addFacet(this.getObject());
     }    
    
 }

@@ -29,6 +29,8 @@ import com.beust.jcommander.Parameters;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -37,9 +39,19 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.Model;
+import static org.mitre.niem.cmf.Namespace.NSK_BUILTIN;
+import static org.mitre.niem.cmf.Namespace.NSK_CORE;
+import static org.mitre.niem.cmf.Namespace.NSK_DOMAIN;
+import static org.mitre.niem.cmf.Namespace.NSK_EXTENSION;
+import static org.mitre.niem.cmf.Namespace.NSK_EXTERNAL;
+import static org.mitre.niem.cmf.Namespace.NSK_OTHERNIEM;
+import static org.mitre.niem.cmf.Namespace.NSK_UNKNOWN;
+import static org.mitre.niem.cmf.Namespace.NSK_XML;
+import static org.mitre.niem.cmf.Namespace.NSK_XSD;
 import org.mitre.niem.xsd.ModelExtension;
 import org.mitre.niem.xsd.ModelFromXSD;
 import org.mitre.niem.xsd.ModelXMLWriter;
+import org.mitre.niem.xsd.NamespaceInfo;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
 import org.mitre.niem.xsd.Schema;
@@ -70,6 +82,9 @@ class CmdXSDtoCMF implements JCCommand {
     
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
+    
+    @Parameter(names = {"-q", "--quiet"}, description = "no output, exit status only")
+    private boolean quietFlag = false;
      
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
@@ -113,7 +128,8 @@ class CmdXSDtoCMF implements JCCommand {
             cob.usage();
             System.exit(1);
         }
-        // Set debug logging
+        // Set debug logging 
+        // FIXME quiet
         if (debugFlag) {
             Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.DEBUG);
         }
@@ -176,14 +192,59 @@ class CmdXSDtoCMF implements JCCommand {
             System.exit(1);
         }
         // Build the NIEM model object from the schema
-        ModelFromXSD mfact = new ModelFromXSD();
+        ModelFromXSD mfact = new ModelFromXSD(s);
         Model m = new Model();
         ModelExtension me = new ModelExtension(m);
+        NamespaceInfo nsi = new NamespaceInfo();
         try {
-            mfact.createModel(m, me, s);
+            mfact.createModel(m, me, nsi);
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             System.err.println(ex.getMessage());
             System.exit(1);
+        }
+        // Report namespaces processed
+        if (!quietFlag) {
+            List<String> conforming = new ArrayList<>();
+            List<String> external   = new ArrayList<>();
+            List<String> builtins   = new ArrayList<>();
+            List<String> unknown    = new ArrayList<>();
+            nsi.targetNamespaces().forEach((nsuri) -> {
+                switch(nsi.getNSKind(nsuri)) {
+                    case NSK_EXTENSION:
+                    case NSK_DOMAIN:
+                    case NSK_CORE:
+                    case NSK_OTHERNIEM:
+                        conforming.add(nsuri);
+                        break;
+                    case NSK_BUILTIN:
+                    case NSK_XML:
+                    case NSK_XSD:
+                        builtins.add(nsuri);
+                        break;
+                    case NSK_EXTERNAL: external.add(nsuri); break;
+                    case NSK_UNKNOWN:  unknown.add(nsuri); break; 
+                }
+            });
+            if (!conforming.isEmpty()) {
+                Collections.sort(conforming);
+                System.out.println("Conforming namespaces:");
+                conforming.forEach((ns) -> { System.out.println("  " + ns);});
+            }
+            if (!external.isEmpty()) {
+                Collections.sort(external);
+                System.out.println("External namespaces (imported with appinfo:externalNamespaceIndicator):");
+                external.forEach((ns) -> { System.out.println("  " + ns);});
+            }
+            if (!builtins.isEmpty()) {
+                Collections.sort(builtins);
+                System.out.println("Built-in namespaces:");
+                builtins.forEach((ns) -> { System.out.println("  "+ns);});
+            }
+            if (!unknown.isEmpty()) {
+                Collections.sort(unknown);
+                System.out.println("Unknown namespaces (no conformance assertion found):");
+                unknown.forEach((ns) -> { System.out.println("  " + ns);});
+            }
         }
         // Write the NIEM model instance to the output stream
         ModelXMLWriter mw = new ModelXMLWriter();

@@ -37,14 +37,14 @@ import java.util.Stack;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.LocatorImpl;
 import static org.mitre.niem.NIEMConstants.CMF_NS_URI_PREFIX;
+import org.mitre.niem.cmf.CMFException;
+import org.xml.sax.SAXParseException;
 
 /**
  * A class for constructing a NIEM Model object from an XML model file
@@ -53,27 +53,62 @@ import static org.mitre.niem.NIEMConstants.CMF_NS_URI_PREFIX;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelXMLReader { 
-    static final Logger LOG = LogManager.getLogger(ModelXMLReader.class);
+   
+    List<String> msgList = new ArrayList<>();       // messages from last CMF parsing
     
-    public Model readXML(InputStream is) throws ParserConfigurationException, SAXException, IOException {
-        SAXParserFactory sf = SAXParserFactory.newInstance();
-        sf.setNamespaceAware(true);
-        sf.setValidating(false);
-        SAXParser saxp = sf.newSAXParser();
-        Handler h = new Handler();
-        saxp.parse(is, h);
-        return h.model;
+    public ModelXMLReader () { }
+    
+    /**
+     * Create a Model object from a CMF model input stream, or null if a valid
+     * Model cannot be constructed.
+     * @param is model input stream
+     * @return Model
+     */
+    public Model readXML(InputStream is) {
+        msgList = new ArrayList<>();
+        try {
+            SAXParserFactory sf = SAXParserFactory.newInstance();
+            sf.setNamespaceAware(true);
+            sf.setValidating(false);
+            SAXParser saxp = sf.newSAXParser();
+            Handler h = new Handler(msgList);
+            saxp.parse(is, h);
+            if (!h.fatalErr) return h.model;
+        } catch (ParserConfigurationException | SAXException | IOException ex) {
+            msgList.add(ex.toString());
+        }
+        return null;    // caught an exception
     }
     
+    /**
+     * Returns the list of messages produced by the last readXML operation.
+     * @return message list
+     */
+    public List<String> getMessages ()  { return msgList; }
+    
+    
+    // A single parsing pass through the CMF input stream means we must remember
+    // all the element references, and replace them with the target element at
+    // the end of the document.  All of this reference resolution happens before
+    // any objects are added to the Model object.
+    //
+    // The only references allowed in a CMF document are for ClassType, 
+    // Datatype, Namespace, and Property elements.  Nothing else is nillble.
+    // So we don't have to worry about replacing a reference at the correct
+    // index in a list.
+    
     class Handler extends DefaultHandler {      
-        private final Set<ObjectType> realObjs      = new HashSet<>();     // set of non-placeholder model objects
-        private final Map<String,XObjectType> idMap = new HashMap<>();     // map @id value -> object
-        private final List<XObjectType> refPHolders = new ArrayList<>();   // list of IDREF/URI placeholder objects to be replaced
-        private final Stack<XObjectType> objStack   = new Stack<>();       // elements under construction
+        private final Set<ObjectType> mObjs         = new HashSet<>();     // model children to be added at endDocument
+        private final Map<String,XObjectType> idMap = new HashMap<>();     // map @id value -> target element
+        private final List<XObjectType> refPHolders = new ArrayList<>();   // list of reference placeholder elements to be replaced
+        private final Stack<XObjectType> objStack   = new Stack<>();       // XML elements under construction
         private StringBuilder chars                 = new StringBuilder(); // character content of current element
         private Locator loc                         = new LocatorImpl();   // for error msg line numbers
-        private XModel xmodel = null;                                      // the model document element
-        private Model model = null;                                        // the model object
+        private List<String> msgList                = new ArrayList<>();   // list of error messages
+        private boolean fatalErr                    = false;               // true if we can't complete a valid Model
+        private Model model                         = null;                // the model object
+        
+        Handler (List<String> ml) { msgList = ml; }
         
         @Override
         public void setDocumentLocator (Locator l) {
@@ -82,7 +117,7 @@ public class ModelXMLReader {
         
         // Put a dummy element on the stack instead of coding for the empty
         // stack condition.  When we reach the end of the document element, 
-        // we'll try to add it to this dummy element... and nothing will happen.
+        // we'll add it to this dummy element... which does nothing.
         @Override
         public void startDocument () {
             XObjectType dummyRoot = new XObjectType();
@@ -91,13 +126,12 @@ public class ModelXMLReader {
         
         @Override
         public void startElement(String eNamespace, String eLocalName, String eQName, Attributes atts) {
-            // Create appropriate object and initialize from XML attributes
+            // Create appropriate element and initialize from XML attributes
             XObjectType parent = objStack.peek();
             XObjectType child = newObject(model, parent, eNamespace, eLocalName, atts, loc.getLineNumber());
             // First object created is the Model object
-            if (objStack.size() == 1) {             // element #0 is the dummy
-                xmodel = (XModel)child;
-                model = (Model)child.getObject();
+            if (objStack.size() == 1) {             // stack contains only dummy element #0
+                model = (Model)child.getObject();   // in which case we just created the Model object
             }
             objStack.add(child);
             chars = new StringBuilder();
@@ -111,41 +145,53 @@ public class ModelXMLReader {
                 child.setStringVal(chars.toString().trim());
                 chars = new StringBuilder();
             }            
-            // Remember objects with @id, or non-empty objects with @uri
-            // Use these to replace reference placeholder objects upon endDocument
+            // Remember elements with @id, or non-empty objects with @uri
+            // Use these to handle reference placeholder elements upon endDocument
             if (null != child.getIDKey()) {
                 idMap.put(child.getIDKey(), child);
             }
             // Remember reference placeholder objects to be replaced upon endDocument
             if (null != child.getRefKey()) {
-                refPHolders.add(child);             // remember IDREF/URI placeholder for later replacement
+                refPHolders.add(child);             // remember IDREF/URI placeholder element for later replacement
             }
             // Not a placeholder? Remember object to be added to model at endDocument.
             else {
                 ObjectType obj = child.getObject();
-                if (null != obj && obj.isModelChild()) realObjs.add(obj);
-            }
-            // Add child to parent even if child is a placeholder
-            parent.addAsChild(child);      
+                if (null != obj && obj.isModelChild()) mObjs.add(obj);
+                parent.addAsChild(child);
+            }     
         }
         
         @Override
         public void endDocument () {
+            // Handle all placeholder elements; add real object to parent object
             for (var ro : refPHolders) {
-                String ref = ro.getRefKey();        // IDREF or URI attribute string value
-                XObjectType idObj = idMap.get(ref); // object with ID = ref string
+                String ref         = ro.getRefKey();        // IDREF or URI attribute string value
+                XObjectType parent = ro.getParent();        // parent element with the reference child element
+                XObjectType idObj  = idMap.get(ref);        // element with ID = ref string
                 if (null == idObj) {
-                    LOG.error("no matching ID for IDREF/URI {} at line {}", ref, ro.getLineNumber());
+                    msgList.add(String.format("no matching ID for IDREF/URI %s at line %s", ref, ro.getLineNumber()));
+                    fatalErr = true;
+                }
+                else if (ro.getObject().getClass() != idObj.getObject().getClass()) {
+                    msgList.add(String.format("IDREF/URI type mismatch at line %s", ro.getLineNumber()));
+                    fatalErr = true;
                 }
                 else {
-                    ro.setIDRepl(idObj);            // set so that addChild executes a replacement
-                    ro.getParent().addAsChild(ro);  // replace the placeholder with the referenced object
+                    ro.setObject(idObj.getObject());
+                    parent.addAsChild(ro);
                 }
             }
-            // Placeholders replaced, now collect real component objects for Model
-            for (ObjectType obj : realObjs) {
-                if (null == obj) continue;
-                obj.addToModelSet(model);
+            if (fatalErr) return;
+            
+            // Placeholders replaced, now add the model children to the Model
+            for (ObjectType obj : mObjs   ) {
+                try {
+                    obj.addToModel(model);
+                } catch (CMFException ex) {     // duplicate namespace prefix!
+                    msgList.add(ex.getLocalizedMessage());
+                    fatalErr = true;
+                }
             }
         }
         
@@ -154,51 +200,82 @@ public class ModelXMLReader {
             chars.append(ch, start, length);
         }
         
+        @Override
+        public void error (SAXParseException ex) {
+            msgList.add(String.format("SAX[error] %s", ex.getLocalizedMessage()));
+        }
+        @Override
+        public void fatalError (SAXParseException ex) {
+            msgList.add(String.format("SAX[fatal] %s", ex.getLocalizedMessage()));
+            fatalErr = true;
+        }
+        @Override
+        public void warning (SAXParseException ex) {
+            msgList.add(String.format("SAX[warn]  %s", ex.getLocalizedMessage()));
+        }
+        
         private XObjectType newObject (Model m, XObjectType p, String ens, String eln, Attributes atts, int lineNum) {
             XObjectType o = null;
             if (ens.startsWith(CMF_NS_URI_PREFIX)) {
                 switch (eln) {
-                case "AbstractIndicator":   o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+                case "AugmentationElementNamespace": 
+                    o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
+                case "AugmentationTypeNamespace":    
+                    o = new XNamespace(m, p, ens, eln, atts, lineNum); break;                
                 case "Class":               o = new XClassType(m, p, ens, eln, atts, lineNum); break;
                 case "Datatype":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "DefinitionText":      o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
-                case "Enumeration":         o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "ExtensionOfClass":    o = new XClassType(m, p, ens, eln, atts, lineNum); break;
-                case "FractionDigits":      o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "HasProperty":         o = new XHasProperty(m, p, ens, eln, atts, lineNum); break;
                 case "HasValue":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "Length":              o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "ListOf":              o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "MaxExclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MaxInclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MaxLength":           o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MinExclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MinInclusive":        o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "MinLength":           o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "Model":               o = new XModel(m, p, ens, eln, atts, lineNum); break;
-                case "Name":                o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "Namespace":           o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
-                case "NamespacePrefixName": o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
-                case "NamespaceURI":        o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
-                case "NonNegativeValue":    o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "Property":            o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "Pattern":             o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "PositiveValue":       o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "RestrictionOf":       o = new XRestrictionOf(m, p, ens, eln, atts, lineNum); break;
-                case "StringValue":         o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
                 case "SubPropertyOf":       o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "TotalDigits":         o = new XFacet(m, p, ens, eln, atts, lineNum); break;
                 case "UnionOf":             o = new XUnionOf(m, p, ens, eln, atts, lineNum); break;
-                case "WhiteSpace":          o = new XFacet(m, p, ens, eln, atts, lineNum); break;
-                case "WhiteSpaceValueCode": o = new XStringObject(m, p, ens, eln, atts, lineNum); break;
+
+                case "Enumeration":
+                case "FractionDigits":
+                case "Length":       
+                case "MaxExclusive": 
+                case "MaxInclusive": 
+                case "MaxLength":    
+                case "MinExclusive": 
+                case "MinInclusive": 
+                case "MinLength":    
+                case "Pattern":      
+                case "TotalDigits":  
+                case "WhiteSpace":
+                    o = new XFacet(m, p, ens, eln, atts, lineNum);
+                    break;
+
+                case "AbstractIndicator":
+                case "AugmentableIndicator":
+                case "DefinitionText":   
+                case "DeprecatedIndicator":
+                case "ExternalAdapterTypeIndicator":
+                case "MaxOccursQuantity": 
+                case "MinOccursQuantity": 
+                case "Name":          
+                case "NamespaceKindCode":
+                case "NamespacePrefixName":
+                case "NamespaceURI":       
+                case "NonNegativeValue":   
+                case "PositiveValue":
+                case "StringValue":        
+                case "WhiteSpaceValueCode":
+                    o = new XStringObject(m, p, ens, eln, atts, lineNum);
+                    break;                
+                
                 default:
-                    LOG.error("unknown element '{'{}'}'{} at line {}", ens, eln, lineNum);
+                    msgList.add(String.format("Unknown element {%s}%s at line %d in CMF input", ens, eln, lineNum));
                     o = new XUnknownObject(m, p, ens, eln, atts, lineNum);
                     break;
                 }
             }
             else {
-                LOG.error("unknown element '{'{}'}'{} at line {}", ens, eln, lineNum);
+                msgList.add(String.format("Unknown element {%s}%s at line %d in CMF input", ens, eln, lineNum));
                 o = new XUnknownObject(m, p, ens, eln, atts, lineNum);
             }
             return o;
