@@ -35,9 +35,7 @@ import java.util.Map;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class CMFTool {
-    
-    public static String VERSION_ID = "cmftool 0.5 (11 Feb 2022)";
-    
+      
     public static void main (String[] args) {
         CMFTool obj = new CMFTool();
         obj.run(args);
@@ -46,7 +44,7 @@ public class CMFTool {
     private void run (String[] args) {
          
     // Uncomment arguments for debugging:
-
+     
     String xtd = "src/test/resources/xsd/";
     if (0 == args.length) {
         args = new String[]{"x2m", "-o", xtd, xtd+"twoversions-0.xsd" };
@@ -96,7 +94,7 @@ public class CMFTool {
         cmd.runCommand(cob);               
     }    
     
-    @Parameters(commandDescription = "list of niemtran commands")
+    @Parameters(commandDescription = "list of cmftool commands")
     private class CommandHelp implements JCCommand {
         
         @Parameter(description = "display help for this command")
@@ -114,7 +112,7 @@ public class CMFTool {
 
         @Override
         public void runCommand(JCommander helpOb) {
-            System.out.println("Version: " + VERSION_ID);
+            System.out.println("Version: " + CMFTool.class.getPackage().getImplementationVersion());
             if (helpArgs != null && !helpArgs.isEmpty()) {
                 String cmdName = helpArgs.get(0);
                 Map<String, JCommander> cmdMap = jc.getCommands();
