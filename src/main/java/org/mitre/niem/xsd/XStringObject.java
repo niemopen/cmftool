@@ -23,8 +23,6 @@
  */
 package org.mitre.niem.xsd;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import org.xml.sax.Attributes;
@@ -52,6 +50,7 @@ public class XStringObject extends XObjectType {
         case "DefinitionText":               xc.getObject().setDefinition(val); break;
         case "DeprecatedIndicator":          xc.getObject().setIsDeprecated(val); break;
         case "ExternalAdapterTypeIndicator": xc.getObject().setIsExternal(val); break;
+        case "MetadataIndicator":            xc.getObject().setCanHaveMD(val); break;        
         case "Name":                         xc.getObject().setName(val); break;
         default:
             break;
@@ -114,12 +113,30 @@ public class XStringObject extends XObjectType {
     public void addToProperty (XProperty xop) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "AbstractIndicator":   xop.getObject().setIsAbstract(val); break;
-        case "DefinitionText":      xop.getObject().setDefinition(val); break;
-        case "DeprecatedIndicator": xop.getObject().setIsDeprecated(val); break;        
-        case "Name":                xop.getObject().setName(val); break;
+        case "AbstractIndicator":      xop.getObject().setIsAbstract(val); break;
+        case "AttributeIndicator":     xop.getObject().setIsAttribute(val); break;
+        case "DefinitionText":         xop.getObject().setDefinition(val); break;
+        case "DeprecatedIndicator":    xop.getObject().setIsDeprecated(val); break;  
+        case "MetadataIndicator":      xop.getObject().setCanHaveMD(val); break;
+        case "ReferenceableIndicator": xop.getObject().setIsReferenceable(val); break;
+        case "Name":                   xop.getObject().setName(val); break;
         default:
             break;
+        }
+    }
+    
+    @Override
+    public void addToSchemaDocument (XSchemaDocument xsd) {
+        String val = getStringVal();
+        switch (this.getComponentLname()) {
+            case "ConformanceTargetURIList": xsd.getObject().setConfTargets(val); break;
+            case "DocumentFilePathText":     xsd.getObject().setFilePath(val); break;
+            case "NamespacePrefixName":      xsd.getObject().setPrefix(val); break;
+            case "NamespaceURI":             xsd.getObject().setUri(val); break;
+            case "NIEMVersionText":          xsd.getObject().setNIEMversion(val); break;
+            case "SchemaVersionText":        xsd.getObject().setSchemaVersion(val); break;
+            default:
+                break;
         }
     }
 

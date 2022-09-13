@@ -72,7 +72,7 @@ public class ModelXMLWriterIT {
         FileInputStream cmfIS = null;
         File cmfDir = new File(testDirPath, "cmf");
         String[] testFiles = cmfDir.list(new SuffixFileFilter(".cmf"));
-//        String[] testFiles = { "mismatchIDRef.cmf" };
+//        String[] testFiles = { "extension.cmf" };
         for (String tfn : testFiles) {
             File inF = new File(cmfDir, tfn);
             try {
@@ -94,7 +94,39 @@ public class ModelXMLWriterIT {
                 outPW.close();
                 String result = compareIgnoringTrailingWhitespace(inF, outF);
                 outF.delete();
-                assertNull(result);
+                assertNull(result, tfn);
+            } catch (Exception ex) {
+                fail("Can't create output model file");
+            }
+        }
+    }
+
+    @Test
+    public void reWriteXML () throws TransformerException {
+        FileInputStream cmfIS = null;
+        File cmfDir = new File(testDirPath, "cmf");
+//        String[] testFiles = cmfDir.list(new SuffixFileFilter(".cmf"));
+        String[] testFiles = { "unionOf.cmf" };
+        for (String tfn : testFiles) {
+            File inF = new File(cmfDir, tfn);
+            try {
+                cmfIS = new FileInputStream(inF);
+            } catch (FileNotFoundException ex) {
+                fail("Where is my input file?");
+            }
+            ModelXMLReader mr = new ModelXMLReader();
+            Model m = mr.readXML(cmfIS);  
+            //if (!mr.getMessages().isEmpty()) continue;
+            
+            String ofn = tfn + "-new";
+            File outF = null;
+            PrintWriter outPW = null;
+            ModelXMLWriter mw = new ModelXMLWriter();
+            try {
+                outF = new File(cmfDir, ofn);
+                outPW = new PrintWriter(outF);
+                mw.writeXML(m, outPW);    
+                outPW.close();
             } catch (Exception ex) {
                 fail("Can't create output model file");
             }

@@ -26,6 +26,7 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.Collection;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
@@ -41,6 +42,8 @@ import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
+import org.mitre.niem.cmf.SchemaDocument;
+import org.mitre.niem.cmf.SchemaPile;
 import org.mitre.niem.cmf.UnionOf;
 
 /**
@@ -70,6 +73,74 @@ public class ModelXMLReaderIT {
     @AfterEach
     public void tearDown() {
     }    
+  
+    @Test
+    public void testAttributeIndicator () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "cmf/extension.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        assertEquals(0, mr.getMessages().size());
+        
+        Property p = m.getProperty("nc:partialIndicator");
+        assertNotNull(p);
+        assertTrue(p.isAttribute());
+        
+        p = m.getProperty("nc:PersonGivenName");
+        assertNotNull(p);
+        assertFalse(p.isAttribute());
+    }
+    
+    @Test
+    public void testSchemaDocument () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "cmf/extension.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        assertEquals(0, mr.getMessages().size());
+        
+        SchemaPile sp = m.getSchemaPile();
+        assertNotNull(sp);
+        Collection<SchemaDocument> sdc = sp.getAllSchemaDocuments();
+        assertNotNull(sdc);
+        assertEquals(5, sdc.size());
+        
+        SchemaDocument sd = sp.getSchemaDocument("http://release.niem.gov/niem/appinfo/5.0/");
+        assertNotNull(sd);
+        assertEquals("appinfo", sd.prefix());
+        assertEquals("5.0", sd.niemVersion());
+        assertNull(sd.confTargets());
+        assertNull(sd.filePath());
+        assertNull(sd.schemaVersion());
+        
+        sd = sp.getSchemaDocument("http://release.niem.gov/niem/conformanceTargets/3.0/");
+        assertNotNull(sd);
+        assertEquals("ct", sd.prefix());
+        assertEquals("3.0", sd.niemVersion());
+        assertNull(sd.confTargets());
+        assertNull(sd.filePath());
+        assertNull(sd.schemaVersion());    
+    
+        sd = sp.getSchemaDocument("http://release.niem.gov/niem/niem-core/5.0/");
+        assertNotNull(sd);
+        assertEquals("nc", sd.prefix());
+        assertEquals("5.0", sd.niemVersion());
+        assertEquals("http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument", sd.confTargets());
+        assertEquals("niem/niem-core.xsd", sd.filePath());
+        assertEquals("1", sd.schemaVersion());  
+    }
     
     @Test
     public void testExtensionOf () {

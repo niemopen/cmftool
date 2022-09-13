@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2022 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,31 +21,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.xsd;
+package org.mitre.niem.cmf;
 
-import org.mitre.niem.cmf.Model;
-import org.xml.sax.Attributes;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- *
+ * A class for recording some properties of an XML Schema document pile. 
+ * Needed for the second translation in XSD -> CMF -> XSD.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class XModel extends XObjectType {
+public class SchemaPile {
+    private Map<String,SchemaDocument> sdoc = new HashMap<>();
     
-    private Model obj = null;
+    public SchemaPile () {}
     
-    @Override
-    public Model getObject() { return obj; }
+    public void addSchemaDocument (SchemaDocument sd) {
+        if (sd.uri() != null) sdoc.put(sd.uri(), sd);
+    }
     
-    XModel (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
-        super(m, p, ens, eln, a, line);
-        obj = new Model();
-    }  
+    public SchemaDocument getSchemaDocument (String uri) {
+        return sdoc.get(uri);
+    }
     
-    @Override
-    public void addAsChild (XObjectType child) {
-        child.addToModel(this);
-    }     
-    
+    public Collection<SchemaDocument> getAllSchemaDocuments () {
+        return sdoc.values();
+    }
 }

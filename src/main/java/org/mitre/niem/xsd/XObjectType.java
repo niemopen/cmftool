@@ -105,8 +105,10 @@ public class XObjectType {
     public void addToDatatype (XDatatype dt) { }
     public void addToFacet (XFacet f) { }
     public void addToHasProperty (XHasProperty h) { }
+    public void addToModel (XModel m) { }
     public void addToNamespace (XNamespace ns) { }
     public void addToProperty (XProperty op) { }
     public void addToRestrictionOf (XRestrictionOf r) { }
+    public void addToSchemaDocument (XSchemaDocument s) { }
     public void addToUnionOf (XUnionOf u) { }    
 }

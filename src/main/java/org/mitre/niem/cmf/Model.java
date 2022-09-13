@@ -45,7 +45,14 @@ import static org.mitre.niem.cmf.Component.C_OBJECTPROPERTY;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Model extends ObjectType {
-    static final Logger LOG = LogManager.getLogger(Model.class);   
+    static final Logger LOG = LogManager.getLogger(Model.class);
+    
+    // Collection of schema document properties
+    private SchemaPile spile = new SchemaPile();
+    public SchemaPile getSchemaPile() { return spile; }
+    public void addSchemaDocument (SchemaDocument sd) {
+        spile.addSchemaDocument(sd);
+    }
 
     // Map of namespace prefix and URI.  Includes mappings for built-in namespaces 
     // that are not part of the model (but still need to be unique).  Code for

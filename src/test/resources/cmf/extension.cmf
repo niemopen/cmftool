@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.4/"
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.5/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.4/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.5/">
   <Namespace structures:uri="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixName>nc</NamespacePrefixName>
@@ -25,12 +25,16 @@
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
     <Datatype structures:uri="xs:boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:personNameInitialIndicator">
     <Name>personNameInitialIndicator</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>True if value represents the first letter or initials of a persons name; false otherwise.</DefinitionText>
     <Datatype structures:uri="xs:boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Class structures:uri="nc:PersonNameTextType">
     <Name>PersonNameTextType</Name>
@@ -68,4 +72,34 @@
     <Name>string</Name>
     <Namespace structures:uri="xs" xsi:nil="true"/>
   </Datatype>
+  <SchemaDocument>
+    <NamespacePrefixName>ct</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/conformanceTargets/3.0/</NamespaceURI>
+    <NIEMVersionText>3.0</NIEMVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>niem-xs</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>appinfo</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/appinfo/5.0/</NamespaceURI>
+    <NIEMVersionText>5.0</NIEMVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>structures</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>nc</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/niem-core.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
 </Model>

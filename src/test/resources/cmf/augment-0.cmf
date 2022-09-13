@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.4/"
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.5/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.4/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.5/">
   <Namespace structures:uri="j">
     <NamespaceURI>http://release.niem.gov/niem/domains/jxdm/7.0/</NamespaceURI>
     <NamespacePrefixName>j</NamespacePrefixName>
@@ -32,41 +32,48 @@
     <Namespace structures:uri="j" xsi:nil="true"/>
     <DefinitionText>A comment about an address.</DefinitionText>
     <Class structures:uri="nc:TextType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="j:AddressVerifiedDate">
     <Name>AddressVerifiedDate</Name>
     <Namespace structures:uri="j" xsi:nil="true"/>
     <DefinitionText>A date on which the address was verified.</DefinitionText>
     <Datatype structures:uri="xs:string" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="j:AnotherAddress">
     <Name>AnotherAddress</Name>
     <Namespace structures:uri="j" xsi:nil="true"/>
     <Datatype structures:uri="xs:string" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:AddressFullText">
     <Name>AddressFullText</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>A complete address.</DefinitionText>
     <Class structures:uri="nc:TextType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:partialIndicator">
     <Name>partialIndicator</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
     <Datatype structures:uri="xs:boolean" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="test:AddressCommentText">
     <Name>AddressCommentText</Name>
     <Namespace structures:uri="test" xsi:nil="true"/>
     <DefinitionText>A comment about an address.</DefinitionText>
     <Class structures:uri="nc:TextType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="test:BoogalaText">
     <Name>BoogalaText</Name>
     <Namespace structures:uri="test" xsi:nil="true"/>
     <DefinitionText>A date on which the address was verified.</DefinitionText>
     <Datatype structures:uri="xs:string" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Class structures:uri="nc:AddressType">
     <Name>AddressType</Name>
@@ -123,4 +130,50 @@
     <Name>string</Name>
     <Namespace structures:uri="xs" xsi:nil="true"/>
   </Datatype>
+  <SchemaDocument>
+    <NamespacePrefixName>ct</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/conformanceTargets/3.0/</NamespaceURI>
+    <NIEMVersionText>3.0</NIEMVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>niem-xs</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>appinfo</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/appinfo/5.0/</NamespaceURI>
+    <NIEMVersionText>5.0</NIEMVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>test</NamespacePrefixName>
+    <NamespaceURI>http://example.com/dummyAugmentation/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>augment-0.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>j</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/domains/jxdm/7.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>augment-1.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>structures</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixName>nc</NamespacePrefixName>
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>augment-2.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
 </Model>

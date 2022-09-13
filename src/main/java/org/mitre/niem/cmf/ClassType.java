@@ -35,6 +35,7 @@ import java.util.List;
 public class ClassType extends Component {
     private boolean isAugmentable = false;
     private boolean isExternal = false;
+    private boolean canHaveMD = false;
     private ClassType extensionOfClass  = null;
     private Datatype hasValue = null;
     private final List<HasProperty> hasPropertyList = new ArrayList<>();
@@ -50,11 +51,14 @@ public class ClassType extends Component {
     public void setIsAugmentable (String s)       { isAugmentable = "true".equals(s); }
     public void setIsExternal (boolean f)         { isExternal = f; }    
     public void setIsExternal (String s)          { isExternal = "true".equals(s); }
+    public void setCanHaveMD (boolean f)          { canHaveMD = f; }
+    public void setCanHaveMD (String s)           { canHaveMD = "true".equals(s); }
     public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
     public void setHasValue (Datatype v)          { hasValue = v; }
     
     public boolean isAugmentable ()               { return isAugmentable; }
     public boolean isExternal ()                  { return isExternal; }
+    public boolean canHaveMD ()                   { return canHaveMD; }
     public ClassType getExtensionOfClass ()       { return extensionOfClass; }
     public Datatype getHasValue()                 { return hasValue; }
             

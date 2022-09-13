@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2022 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@
 package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.ObjectType;
+import org.mitre.niem.cmf.SchemaDocument;
 import org.xml.sax.Attributes;
 
 /**
@@ -31,21 +33,30 @@ import org.xml.sax.Attributes;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class XModel extends XObjectType {
-    
-    private Model obj = null;
+public class XSchemaDocument extends XObjectType {
+    private SchemaDocument obj = null;
     
     @Override
-    public Model getObject() { return obj; }
+    public void setObject (ObjectType o) { 
+        obj = SchemaDocument.class == o.getClass() ? (SchemaDocument)o : null;
+    }
+
+    @Override
+    public SchemaDocument getObject () { return obj; }
     
-    XModel (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+    XSchemaDocument (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new Model();
-    }  
+        obj = new SchemaDocument();
+    }    
     
     @Override
     public void addAsChild (XObjectType child) {
-        child.addToModel(this);
-    }     
+        child.addToSchemaDocument(this);
+        super.addAsChild(child);  
+    }      
     
+    @Override
+    public void addToModel (XModel x) {
+        x.getObject().addSchemaDocument(this.getObject());
+    }
 }

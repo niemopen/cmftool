@@ -232,6 +232,7 @@ public class ModelXMLReader {
                 case "Namespace":           o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
                 case "Property":            o = new XProperty(m, p, ens, eln, atts, lineNum); break;
                 case "RestrictionOf":       o = new XRestrictionOf(m, p, ens, eln, atts, lineNum); break;
+                case "SchemaDocument":      o = new XSchemaDocument(m, p, ens, eln, atts, lineNum); break;
                 case "SubPropertyOf":       o = new XProperty(m, p, ens, eln, atts, lineNum); break;
                 case "UnionOf":             o = new XUnionOf(m, p, ens, eln, atts, lineNum); break;
 
@@ -251,18 +252,26 @@ public class ModelXMLReader {
                     break;
 
                 case "AbstractIndicator":
+                case "AttributeIndicator":
                 case "AugmentableIndicator":
+                case "ConformanceTargetURIList":
                 case "DefinitionText":   
                 case "DeprecatedIndicator":
+                case "DocumentFilePathText":
                 case "ExternalAdapterTypeIndicator":
                 case "MaxOccursQuantity": 
+                case "MetadataIndicator":
                 case "MinOccursQuantity": 
                 case "Name":          
                 case "NamespaceKindCode":
                 case "NamespacePrefixName":
                 case "NamespaceURI":       
-                case "NonNegativeValue":   
+                case "NIEMVersionText":
+                case "NonNegativeValue": 
+                case "OrderedPropertyIndicator":
                 case "PositiveValue":
+                case "ReferenceableIndicator":
+                case "SchemaVersionText":
                 case "StringValue":        
                 case "WhiteSpaceValueCode":
                     o = new XStringObject(m, p, ens, eln, atts, lineNum);

@@ -55,6 +55,8 @@ import org.w3c.dom.Element;
 import static org.mitre.niem.NIEMConstants.CMF_NS_URI;
 import static org.mitre.niem.NIEMConstants.XMLNS_URI;
 import static org.mitre.niem.cmf.Namespace.NSK_NUMKINDS;
+import org.mitre.niem.cmf.SchemaDocument;
+import org.mitre.niem.cmf.SchemaPile;
 
 /**
  *
@@ -104,7 +106,21 @@ public class ModelXMLWriter {
         for (Component c : m.getComponentList()) { addProperty(dom, e, c.asProperty()); }
         for (Component c : m.getComponentList()) { addClassType(dom, e, c.asClassType()); }
         for (Component c : m.getComponentList()) { addDatatype(dom, e, c.asDatatype()); }
+        SchemaPile sp = m.getSchemaPile();
+        for (SchemaDocument sd : sp.getAllSchemaDocuments()) { addSchemaDocument(dom, e, sd); }
         return e;
+    }
+    
+    public void addSchemaDocument (Document dom, Element p, SchemaDocument x) {
+        if (null == x) return;
+        Element e = dom.createElementNS(CMF_NS_URI, "SchemaDocument");
+        addSimpleChild(dom, e, "NamespacePrefixName", x.prefix());
+        addSimpleChild(dom, e, "NamespaceURI", x.uri());
+        addSimpleChild(dom, e, "ConformanceTargetURIList", x.confTargets());
+        addSimpleChild(dom, e, "DocumentFilePathText", x.filePath());
+        addSimpleChild(dom, e, "NIEMVersionText", x.niemVersion());
+        addSimpleChild(dom, e, "SchemaVersionText", x.schemaVersion());
+        p.appendChild(e);
     }
  
     public void addClassType (Document dom, Element p, ClassType x) {
@@ -205,6 +221,9 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "SubPropertyOf", x.getSubPropertyOf());
         addComponentRef(dom, e, "Class", x.getClassType());
         addComponentRef(dom, e, "Datatype", x.getDatatype());
+        if (x.isAttribute())     addSimpleChild(dom, e, "AttributeIndicator", "true");
+        if (x.canHaveMD())       addSimpleChild(dom, e, "MetadataIndicator", "true");
+        if (x.isReferenceable()) addSimpleChild(dom, e, "ReferenceableIndicator", "true");
         p.appendChild(e);
     }
        
@@ -247,6 +266,10 @@ public class ModelXMLWriter {
         Element c = dom.createElementNS(CMF_NS_URI, eln);
         c.setTextContent(value);
         p.appendChild(c);
+    }
+    
+    public void addSimpleChild (Document dom, Element p, String eln, boolean value) {
+        addSimpleChild(dom, p, eln, value ? "true" : "false");
     }
     
     public void addAttribute (Document dom, Element p, String an, String value) {
