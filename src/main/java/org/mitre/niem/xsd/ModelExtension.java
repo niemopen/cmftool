@@ -49,8 +49,8 @@ import static org.mitre.niem.NIEMConstants.XMLNS_URI;
 import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.NamespaceMap;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinDefaultPrefix;
-import static org.mitre.niem.xsd.NamespaceInfo.mungedPrefix;
+//import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinDefaultPrefix;
+//import static org.mitre.niem.xsd.NamespaceInfo.mungedPrefix;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.Attributes;
@@ -170,7 +170,7 @@ public class ModelExtension {
     public String getBuiltinPrefix (String nsuri) {
         String prefix = nsmap.getPrefix(nsuri);
         if (null != prefix) return prefix;              // prefix already assigned to this URI
-        prefix = getBuiltinDefaultPrefix(nsuri);        // the default prefix for this builtin (eg "appinfo")
+//        prefix = getBuiltinDefaultPrefix(nsuri);        // the default prefix for this builtin (eg "appinfo")
         prefix = nsmap.assignPrefix(prefix, nsuri);     // default prefix munged, if necessary
         return prefix;
     }

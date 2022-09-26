@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<xs:schema 
-  targetNamespace="http://release.niem.gov/niem/niem-core/5.0/" 
-  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/" 
-  xmlns:xs="http://www.w3.org/2001/XMLSchema" 
-  xmlns:structures="http://release.niem.gov/niem/structures/5.0/" 
-  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/" 
-  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/" 
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<xs:schema
+  targetNamespace="http://release.niem.gov/niem/niem-core/5.0/"
+  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
   xmlns:niem-xs="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
-  version="1" xml:lang="en-US" 
-  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument">
-  
-  <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+  version="1"
+  xml:lang="en-US">
   <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
-  
   <xs:simpleType name="Degree90SimpleType">
     <xs:annotation>
       <xs:documentation>Should appear as Degree90SimpleType</xs:documentation>
@@ -32,7 +29,6 @@
       </xs:maxExclusive>
     </xs:restriction>
   </xs:simpleType>
-  
   <xs:complexType name="Degree90Type">
     <xs:annotation>
       <xs:documentation>HasValue type should be Degree90SimpleType</xs:documentation>
@@ -40,11 +36,13 @@
     <xs:simpleContent>
       <xs:extension base="nc:Degree90SimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
-	      <xs:attribute ref="nc:errorValue"/> 
+        <xs:attribute ref="nc:errorValue"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  
+  <xs:simpleType name="ListSimpleType">
+    <xs:list itemType="xs:integer"/>
+  </xs:simpleType>
   <xs:complexType name="ListTestType">
     <xs:annotation>
       <xs:documentation>HasValue type should be nc:ListSimpleType</xs:documentation>
@@ -52,23 +50,10 @@
     <xs:simpleContent>
       <xs:extension base="nc:ListSimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
-        <xs:attribute ref="nc:errorValue"/> 
-      </xs:extension>
-    </xs:simpleContent>
-  </xs:complexType> 
-  
-  <xs:complexType name="UnionTestType">
-    <xs:annotation>
-      <xs:documentation>HasValue type should be nc:UnionSimpleType</xs:documentation>
-    </xs:annotation>
-    <xs:simpleContent>
-      <xs:extension base="nc:UnionSimpleType">
-        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
-        <xs:attribute ref="nc:errorValue"/> 
+        <xs:attribute ref="nc:errorValue"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  
   <xs:complexType name="NoAttributeTestType">
     <xs:annotation>
       <xs:documentation>should be Datatype with base nc:Degree90SimpleTypeEqua</xs:documentation>
@@ -79,13 +64,19 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  
   <xs:simpleType name="UnionSimpleType">
     <xs:union memberTypes="xs:integer xs:decimal"/>
   </xs:simpleType>
+  <xs:complexType name="UnionTestType">
+    <xs:annotation>
+      <xs:documentation>HasValue type should be nc:UnionSimpleType</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="nc:UnionSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+        <xs:attribute ref="nc:errorValue"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
   <xs:attribute name="errorValue" type="xs:decimal"/>
-  
-  <xs:simpleType name="ListSimpleType">
-    <xs:list itemType="xs:integer"/>
-  </xs:simpleType>
 </xs:schema>

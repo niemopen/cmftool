@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- unusual binding for "aamva_d20"; takes priority over deeper declaration  -->
-<xs:schema 
-  targetNamespace="http://release.niem.gov/niem/domains/jxdm/7.0/" 
-  version="1" 
-  xml:lang="en-US" 
-  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument" 
-  xmlns:aamva_d20="http://example.com/somethingElse/" 
-  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/" 
-  xmlns:j="http://release.niem.gov/niem/domains/jxdm/7.0/" 
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-  xmlns:structures="http://release.niem.gov/niem/structures/5.0/" 
-  xmlns:xs="http://www.w3.org/2001/XMLSchema" 
-  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/" 
-  xmlns:niem-xs="http://release.niem.gov/niem/proxy/niem-xs/5.0/" 
-  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/">
+<xs:schema
+  targetNamespace="http://release.niem.gov/niem/domains/jxdm/7.0/"
+  xmlns:aamva_d20="http://example.com/somethingElse/"
+  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:j="http://release.niem.gov/niem/domains/jxdm/7.0/"
+  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
+  xmlns:niem-xs="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+  version="1"
+  xml:lang="en-US">
   <xs:annotation>
     <xs:documentation>Test schema for namespace declaration priority; funky binding for "aamva_d20"</xs:documentation>
   </xs:annotation>
@@ -201,7 +200,7 @@
       <xs:documentation>An identification that is affixed to the raw materials (card stock, laminate, etc.) used in producing driver licenses and ID cards. The numbers are issued by the material's manufacturer and provide a unique reference to a card within a jurisdiction.</xs:documentation>
     </xs:annotation>
   </xs:element>
-  <xs:element xmlns:aamva_d20="http://release.niem.gov/niem/codes/aamva_d20/5.0/" name="InjurySeverityCode" type="aamva_d20:AccidentSeverityCodeType" substitutionGroup="nc:InjurySeverityAbstract">
+  <xs:element name="InjurySeverityCode" type="aamva_d20:AccidentSeverityCodeType" substitutionGroup="nc:InjurySeverityAbstract" xmlns:aamva_d20="http://release.niem.gov/niem/codes/aamva_d20/5.0/">
     <xs:annotation>
       <xs:documentation>A severity of an injury received by a person, such as in a traffic accident or crash.</xs:documentation>
     </xs:annotation>
@@ -211,7 +210,7 @@
       <xs:documentation>True if a juvenile is to be processed as an adult; false otherwise.</xs:documentation>
     </xs:annotation>
   </xs:element>
-  <xs:element name="Metadata" type="j:MetadataType" nillable="true" appinfo:appliesToTypes="structures:AssociationType structures:ObjectType">
+  <xs:element name="Metadata" type="j:MetadataType" appinfo:appliesToTypes="structures:AssociationType structures:ObjectType" nillable="true">
     <xs:annotation>
       <xs:documentation>Information that further qualifies the kind of data represented.</xs:documentation>
     </xs:annotation>

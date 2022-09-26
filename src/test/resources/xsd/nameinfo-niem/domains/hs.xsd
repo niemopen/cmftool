@@ -1,45 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema 
-  targetNamespace="http://release.niem.gov/niem/domains/humanServices/5.0/" 
-  version="1" 
-  xml:lang="en-US" 
-  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument" 
-  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/" 
-  xmlns:xs="http://www.w3.org/2001/XMLSchema" 
-  xmlns:structures="http://release.niem.gov/niem/structures/5.0/" 
-  xmlns:hs="http://release.niem.gov/niem/domains/humanServices/5.0/" 
-  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/" 
-  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/" 
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<xs:schema
+  targetNamespace="http://release.niem.gov/niem/domains/humanServices/5.0/"
+  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:hs="http://release.niem.gov/niem/domains/humanServices/5.0/"
+  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+  version="1"
+  xml:lang="en-US">
   <xs:annotation>
     <xs:documentation>Human Services</xs:documentation>
     <xs:appinfo>
-      <appinfo:LocalTerm term="AFCARS" literal="Adoption and Foster Care Analysis and Reporting System (AFCARS)"/>
-      <appinfo:LocalTerm term="ASFA" literal="Adoption and Safe Families Act"/>
-      <appinfo:LocalTerm term="CFR" definition="Code of Federal Regulations"/>
-      <appinfo:LocalTerm term="Comp" literal="Compensation"/>
-      <appinfo:LocalTerm term="EBT" literal="Electronic Benefit Transfer"/>
-      <appinfo:LocalTerm term="FEIN" literal="Federal Employer Identification Number"/>
-      <appinfo:LocalTerm term="FIPS" literal="Federal Information Processing Series"/>
-      <appinfo:LocalTerm term="firesetting" definition="A behavior that includes setting fires both accidentally and intentionally."/>
-      <appinfo:LocalTerm term="FS" literal="Food Stamps"/>
-      <appinfo:LocalTerm term="habilitative" definition="Habilitative services help a person keep, learn, or improve skills and functioning for daily living."/>
-      <appinfo:LocalTerm term="ICPC" literal="Interstate Compact on the Placement of Children"/>
-      <appinfo:LocalTerm term="ICWA" literal="Indian Child Welfare Act"/>
-      <appinfo:LocalTerm term="IV-D" definition="Title IV-D of the Social Security Act"/>
-      <appinfo:LocalTerm term="IV-E" definition="Title IV-E of the Social Security Act addressing Federal Payments for Foster Care and Adoption Assistance."/>
-      <appinfo:LocalTerm term="NCANDS" literal="National Child Abuse and Neglect Data System"/>
-      <appinfo:LocalTerm term="NCIC" literal="National Crime Information Center"/>
-      <appinfo:LocalTerm term="NCP" literal="Noncustodial parent"/>
-      <appinfo:LocalTerm term="NPI" literal="National Provider Identifier"/>
-      <appinfo:LocalTerm term="PARIS" literal="Public Assistance Reporting Information System"/>
-      <appinfo:LocalTerm term="Polyvictimization" definition="Multiple victimizations of a person"/>
-      <appinfo:LocalTerm term="SSA" literal="Social Security Administration"/>
-      <appinfo:LocalTerm term="SSI" literal="Supplemental Security Income"/>
-      <appinfo:LocalTerm term="SSN" literal="Social Security Number"/>
-      <appinfo:LocalTerm term="TANF" literal="Temporary Assistance to Needy Families"/>
-      <appinfo:LocalTerm term="UCCJEA" literal="Uniform Child Custody Jurisdiction and Enforcement Act"/>
-      <appinfo:LocalTerm term="VA" literal="Veterans Affairs"/>
+      <appinfo:LocalTerm literal="Adoption and Foster Care Analysis and Reporting System (AFCARS)" term="AFCARS"/>
+      <appinfo:LocalTerm literal="Adoption and Safe Families Act" term="ASFA"/>
+      <appinfo:LocalTerm definition="Code of Federal Regulations" term="CFR"/>
+      <appinfo:LocalTerm literal="Compensation" term="Comp"/>
+      <appinfo:LocalTerm literal="Electronic Benefit Transfer" term="EBT"/>
+      <appinfo:LocalTerm literal="Federal Employer Identification Number" term="FEIN"/>
+      <appinfo:LocalTerm literal="Federal Information Processing Series" term="FIPS"/>
+      <appinfo:LocalTerm definition="A behavior that includes setting fires both accidentally and intentionally." term="firesetting"/>
+      <appinfo:LocalTerm literal="Food Stamps" term="FS"/>
+      <appinfo:LocalTerm definition="Habilitative services help a person keep, learn, or improve skills and functioning for daily living." term="habilitative"/>
+      <appinfo:LocalTerm literal="Interstate Compact on the Placement of Children" term="ICPC"/>
+      <appinfo:LocalTerm literal="Indian Child Welfare Act" term="ICWA"/>
+      <appinfo:LocalTerm definition="Title IV-D of the Social Security Act" term="IV-D"/>
+      <appinfo:LocalTerm definition="Title IV-E of the Social Security Act addressing Federal Payments for Foster Care and Adoption Assistance." term="IV-E"/>
+      <appinfo:LocalTerm literal="National Child Abuse and Neglect Data System" term="NCANDS"/>
+      <appinfo:LocalTerm literal="National Crime Information Center" term="NCIC"/>
+      <appinfo:LocalTerm literal="Noncustodial parent" term="NCP"/>
+      <appinfo:LocalTerm literal="National Provider Identifier" term="NPI"/>
+      <appinfo:LocalTerm literal="Public Assistance Reporting Information System" term="PARIS"/>
+      <appinfo:LocalTerm definition="Multiple victimizations of a person" term="Polyvictimization"/>
+      <appinfo:LocalTerm literal="Social Security Administration" term="SSA"/>
+      <appinfo:LocalTerm literal="Supplemental Security Income" term="SSI"/>
+      <appinfo:LocalTerm literal="Social Security Number" term="SSN"/>
+      <appinfo:LocalTerm literal="Temporary Assistance to Needy Families" term="TANF"/>
+      <appinfo:LocalTerm literal="Uniform Child Custody Jurisdiction and Enforcement Act" term="UCCJEA"/>
+      <appinfo:LocalTerm literal="Veterans Affairs" term="VA"/>
     </xs:appinfo>
   </xs:annotation>
   <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="../niem-core.xsd"/>

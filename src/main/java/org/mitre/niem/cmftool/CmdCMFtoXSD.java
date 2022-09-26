@@ -160,20 +160,6 @@ class CmdCMFtoXSD implements JCCommand {
             System.err.println();
             System.exit(1);         
         }        
-        // Read the model extension object from the extension file, if provided
-        ModelExtension me = null;
-        if (mainArgs.size() == 2) {
-            me = new ModelExtension(m);
-            String extfp = mainArgs.get(1);
-            try {
-                ifile = new File(extfp);
-                is = new FileInputStream(ifile);
-                me.readXML(is);
-            } catch (ParserConfigurationException | SAXException | IOException ex) {
-                System.err.println(String.format("Error reading extension file: %s", ex.getMessage()));
-                Logger.getLogger(CmdCMFtoXSD.class.getName()).log(Level.SEVERE, null, ex);
-            } 
-        }
         // Create the output directory if necessary
         if (!od.exists()) {
             try {
@@ -184,7 +170,7 @@ class CmdCMFtoXSD implements JCCommand {
             }
         }
         // Write the NIEM model instance to the output stream
-        ModelToXSD mw = new ModelToXSD(m, me);
+        ModelToXSD mw = new ModelToXSD(m);
         try {
             mw.writeXSD(od);
         } catch (FileNotFoundException ex) {

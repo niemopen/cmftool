@@ -32,6 +32,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.apache.commons.io.FilenameUtils;
@@ -39,23 +40,21 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.Model;
-import static org.mitre.niem.cmf.Namespace.NSK_BUILTIN;
-import static org.mitre.niem.cmf.Namespace.NSK_CORE;
-import static org.mitre.niem.cmf.Namespace.NSK_DOMAIN;
-import static org.mitre.niem.cmf.Namespace.NSK_EXTENSION;
-import static org.mitre.niem.cmf.Namespace.NSK_EXTERNAL;
-import static org.mitre.niem.cmf.Namespace.NSK_OTHERNIEM;
-import static org.mitre.niem.cmf.Namespace.NSK_UNKNOWN;
-import static org.mitre.niem.cmf.Namespace.NSK_XML;
-import static org.mitre.niem.cmf.Namespace.NSK_XSD;
-import org.mitre.niem.xsd.ModelExtension;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_DOMAIN;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTENSION;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_XSD;
 import org.mitre.niem.xsd.ModelFromXSD;
 import org.mitre.niem.xsd.ModelXMLWriter;
-import org.mitre.niem.xsd.NamespaceInfo;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
-import org.mitre.niem.xsd.Schema;
-import org.mitre.niem.xsd.SchemaException;
+import org.mitre.niem.xsd.XMLSchema;
+import org.mitre.niem.xsd.XMLSchemaDocument;
 import org.xml.sax.SAXException;
 
 /**
@@ -153,26 +152,17 @@ class CmdXSDtoCMF implements JCCommand {
                 }
             }
             if (null == modelFN) modelFN = obase + ".cmf";
-            if (null == mextFN)  mextFN  = obase + ".cmx";
         }
         // Make sure output files are writable
-        String modelFP = String.format("%s/%s", outputDir, modelFN);
-        String mextFP  = String.format("%s/%s", outputDir, mextFN);        
+        String modelFP = String.format("%s/%s", outputDir, modelFN); 
         PrintWriter modelPW = null;
-        PrintWriter mextPW = null;
         try {
             modelPW = new PrintWriter(modelFP);
         } catch (FileNotFoundException ex) {
             System.err.println(String.format("Can't write output file %s: %s", modelFP, ex.getMessage()));
             System.exit(1);
-        }
-        try {
-            mextPW =  new PrintWriter(mextFP);
-        } catch (FileNotFoundException ex) {
-            System.err.println(String.format("Can't write output file %s: %s", mextFP, ex.getMessage()));
-            System.exit(1);
         }        
-        // Make sure the Xerces parser can be initialized
+        // Make sure the Xerces parsers can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
         } catch (ParserConfigurationException ex) {
@@ -181,25 +171,22 @@ class CmdXSDtoCMF implements JCCommand {
         }
         // Construct the schema object from arguments
         String[] aa = mainArgs.toArray(new String[0]);
-        Schema s = null;
+        XMLSchema s = null;
+        Model m = null;
+        Map<String,XMLSchemaDocument> sdoc = null;
         try {
-            s = Schema.genSchema(aa);
+            ModelFromXSD mfact = new ModelFromXSD();
+            s = new XMLSchema(aa);
+            m = mfact.createModel(s);
+            sdoc = s.schemaDocuments();
         } catch (IOException ex) {
             System.err.println(String.format("IO error reading schema documents: %s", ex.getMessage()));
             System.exit(1);
-        } catch (SchemaException | ParserConfigurationException ex) {
-            System.err.println(ex.getMessage());
+        } catch (XMLSchema.XMLSchemaException | SAXException ex) {
+            System.err.println(String.format("Error building XML schema: %s", ex.getMessage()));
             System.exit(1);
-        }
-        // Build the NIEM model object from the schema
-        ModelFromXSD mfact = new ModelFromXSD(s);
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsi = new NamespaceInfo();
-        try {
-            mfact.createModel(m, me, nsi);
-        } catch (ParserConfigurationException | SAXException | IOException ex) {
-            System.err.println(ex.getMessage());
+        } catch (ParserConfigurationException ex) {
+            System.err.println("Parser configuration error: " + ex.getMessage());
             System.exit(1);
         }
         // Report namespaces processed
@@ -208,8 +195,8 @@ class CmdXSDtoCMF implements JCCommand {
             List<String> external   = new ArrayList<>();
             List<String> builtins   = new ArrayList<>();
             List<String> unknown    = new ArrayList<>();
-            nsi.targetNamespaces().forEach((nsuri) -> {
-                switch(nsi.getNSKind(nsuri)) {
+            sdoc.forEach((nsuri, sd) -> { 
+                switch(sd.schemaKind()) {
                     case NSK_EXTENSION:
                     case NSK_DOMAIN:
                     case NSK_CORE:
@@ -250,7 +237,6 @@ class CmdXSDtoCMF implements JCCommand {
         ModelXMLWriter mw = new ModelXMLWriter();
         try {            
             mw.writeXML(m, modelPW); modelPW.close();
-            me.writeXML(mextPW);   mextPW.close();
         } catch (TransformerException ex) {
             System.err.println(String.format("Output error: %s", ex.getMessage()));
             System.exit(1);

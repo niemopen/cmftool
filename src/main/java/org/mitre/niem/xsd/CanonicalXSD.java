@@ -92,6 +92,7 @@ public class CanonicalXSD {
                     break;
                 case "element":
                 case "attribute":
+                case "attributeGroup":
                     declarations.add(e);
                     break;
             }

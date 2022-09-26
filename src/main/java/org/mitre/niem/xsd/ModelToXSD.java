@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
@@ -56,6 +55,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import static org.apache.commons.io.FileUtils.copyFile;
 import static org.apache.commons.io.FileUtils.createParentDirectories;
+import org.apache.commons.io.FilenameUtils;
 import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,16 +71,21 @@ import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_APPINFO;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_CONFORMANCE_TARGETS;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_PROXY;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_STRUCTURES;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinDocumentFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import static org.mitre.niem.NIEMConstants.XMLNS_URI;
+import static org.mitre.niem.NIEMConstants.XML_NS_URI;
+import org.mitre.niem.cmf.SchemaDocument;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_APPINFO;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_BUILTINS_COUNT;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_CONFORMANCE_TARGETS;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_PROXY;
+import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_STRUCTURES;
+import static org.mitre.niem.xsd.NIEMBuiltins.defaultBuiltinFilename;
+import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinDefaultPrefix;
+import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinDocumentFile;
+import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinKind;
 import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinURI;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinNamespaceURI;
 
 /**
  * A class for writing a Model as a NIEM XML schema pile.
@@ -92,7 +97,6 @@ public class ModelToXSD {
     static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
         
     private final Model m;
-    private final ModelExtension me;
     private final Map<String,Namespace> builtinNSmap;     // map nsURI of a correct version built-in -> its Namespace object
     private final HashMap<ClassType,Property> augPoint;   // map of ClassType -> augmentation point Property
     private final HashMap<Property,ClassType> augElement; // map of property -> ClassType with augmentation point it substitutes for
@@ -105,13 +109,10 @@ public class ModelToXSD {
     private TreeMap<String,Element> nsTypedefs = null;    // map name -> schema definition of type in a namespace
     private HashSet<Namespace> nsNSdeps = null;           // Namespace objects of namespaces referenced in current namespace
     String nsNIEMVersion = null;                          // NIEM version of current namespace (eg. "5.0")
-    Namespace nsProxyNS = null;                           // proxy NS for current namespace (based on NIEM version)
-    Namespace nsStructuresNS = null;                      // structures NS for current namespace (based on NIEM version)
 
     
-    public ModelToXSD (Model m, ModelExtension me) {
+    public ModelToXSD (Model m) {
         this.m = m;
-        this.me = me;
         builtinNSmap = new HashMap<>();
         augPoint = new HashMap<>();
         augElement = new HashMap<>();
@@ -169,23 +170,66 @@ public class ModelToXSD {
                 fooSimpleTypes.add(dt);
             }
         }
-        
+        // Collect all the NIEM versions, establish builtin namespace prefixes
+        ArrayList<String> allVers = new ArrayList<>();
+        m.schemadoc().forEach((ns,sd) -> {
+            String nvers = sd.niemVersion();
+            if (null != nvers && !allVers.contains(nvers)) allVers.add(nvers);
+        });
+        Collections.sort(allVers);
+        Collections.reverse(allVers);   // highest versions first
+        for (String nv : allVers) {
+            for (int bkind = 0; bkind < NIEM_BUILTINS_COUNT; bkind++) {
+                String bprefix = getBuiltinDefaultPrefix(bkind);
+                String bnsuri  = getBuiltinURI(bkind, nv);
+                if (null != m.namespaceMap().getURI(bnsuri)) continue;      // already has a prefix
+                if (null == m.namespaceMap().getPrefix(bprefix)) {
+                    m.namespaceMap().assignPrefix(bprefix, bnsuri);         // preferred prefix is available
+                }
+                else {
+                    String vsuf = nv.replaceAll(":","");
+                    m.namespaceMap().assignPrefix(bprefix+vsuf, bnsuri);
+                }
+            }
+        }
         // Write a schema document for each namespace
         for (Namespace ns : m.getNamespaceList()) {
             if (XSD_NS_URI.equals(ns.getNamespaceURI())) continue;
+            if (XML_NS_URI.equals(ns.getNamespaceURI())) continue;
             if (ns.isExternal()) continue;
-            String fn = me.getDocumentFilepath(ns.getNamespaceURI());
-            File of = new File(od, fn);
+            String dfp = m.filePath(ns.getNamespaceURI());
+            File of = new File(od, dfp);
             createParentDirectories(of);
             FileWriter ofw = new FileWriter(of);
             writeDocument(ns.getNamespaceURI(), ofw);
             ofw.close();
         }
-        // Copy builtin schema documents to the destination
+        // Copy the needed builtin schema documents to the destination
         for (String uri : builtinNSmap.keySet()) {
-            String dfp = me.getDocumentFilepath(uri);
+            String dfp = m.filePath(uri);
+            if (null == dfp) {
+                int which = getBuiltinKind(uri);
+                dfp = defaultBuiltinFilename(which);
+            }
             File df = new File(od, dfp);
             File sf = getBuiltinDocumentFile(uri);
+            createParentDirectories(df);
+            copyFile(sf, df);
+        }
+        // Copy the XML namespace schema if needed
+        SchemaDocument xmlsd = m.schemadoc().get(XML_NS_URI);
+        String fp = m.filePath(XML_NS_URI);
+        if (null != xmlsd) {
+            File sf;
+            String sfp;
+            String appdir = NIEMBuiltins.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            if (appdir.endsWith(".jar")) sfp = FilenameUtils.concat(appdir, "../../share/xsd");
+            else sfp = FilenameUtils.concat(appdir, "../../../../src/main/dist/share/xsd"); 
+            sfp = FilenameUtils.concat(sfp, "xml.xsd");
+            sf = new File(sfp);
+
+            if (null == fp) fp = "xml.xsd";
+            File df = new File(od, fp);   
             createParentDirectories(df);
             copyFile(sf, df);
         }
@@ -200,28 +244,27 @@ public class ModelToXSD {
         root.setAttribute("targetNamespace", nsuri);
         dom.appendChild(root);
         
-        nsNIEMVersion = me.getNIEMVersion(nsuri);
-        nsProxyNS      = getBuiltinNamespace(NIEM_PROXY, nsNIEMVersion);
-        nsStructuresNS = getBuiltinNamespace(NIEM_STRUCTURES, nsNIEMVersion);
+        nsNIEMVersion = m.niemVersion(nsuri);
         nsNSdeps    = new HashSet<>();
         nsPropdecls = new TreeMap<>();
         nsTypedefs  = new TreeMap<>();
         nsNSdeps.addAll(subpropDeps.get(nsuri));
-        nsNSdeps.add(nsStructuresNS);
+        nsNSdeps.add(getBuiltinNamespace(NIEM_STRUCTURES, nsNIEMVersion));
         
         LOG.debug("Writing schema document for {}", nsuri);
         
         // Add namespace version number, if specified
-        String nsv = me.getNamespaceVersion(nsuri);
+        String nsv = m.schemaVersion(nsuri);
         if (null != nsv && !nsv.isBlank()) root.setAttribute("version", nsv);
         
         // Add conformance target assertions, if any
-        String cta = me.getConformanceTargets(nsuri);
+        String cta = m.conformanceTargets(nsuri);
         if (null != cta) {
             String ctns = getBuiltinURI(NIEM_CONFORMANCE_TARGETS, nsNIEMVersion);
-            String ctprefix = me.getBuiltinPrefix(ctns);
+            String ctprefix;
+            ctprefix = m.namespaceMap().getPrefix(ctns);
             root.setAttributeNS(XMLNS_URI, "xmlns:"+ctprefix, ctns);
-            root.setAttributeNS(ctns, ctprefix+":"+CONFORMANCE_ATTRIBUTE_NAME, cta);
+            root.setAttributeNS(ctns, ctprefix + ":" + CONFORMANCE_ATTRIBUTE_NAME, cta);
         }
         // Add the <xs:annotation> element with namespace definition
         Namespace ns = m.getNamespaceByURI(nsuri);
@@ -270,8 +313,8 @@ public class ModelToXSD {
             root.setAttributeNS(XMLNS_URI, "xmlns:" + dnspre, dnsuri);
             if (XSD_NS_URI.equals(dnsuri)) continue;   // don't import XSD
             if (nsuri.equals(dnsuri)) continue;        // don't import current namespace
-            Path thisDoc = Paths.get(me.getDocumentFilepath(nsuri));
-            Path importDoc = Paths.get(me.getDocumentFilepath(dnsuri));
+            Path thisDoc   = Paths.get(m.filePath(nsuri));
+            Path importDoc = Paths.get(m.filePath(dnsuri));
             Path toImportDoc;
             if (null != thisDoc.getParent()) toImportDoc = thisDoc.getParent().relativize(importDoc);
             else toImportDoc = importDoc;
@@ -293,9 +336,9 @@ public class ModelToXSD {
     }
     
     private void addAppinfo (Document dom, Element e, String nsuri, String appatt, String value) {
-        String niemVersion = me.getNIEMVersion(nsuri);
+        String niemVersion = m.niemVersion(nsuri);
         String appinfoNS = getBuiltinURI(NIEM_APPINFO, niemVersion);
-        String appinfoPR = me.getBuiltinPrefix(appinfoNS);
+        String appinfoPR = m.namespaceMap().getPrefix(appinfoNS);
         String appinfoQName = appinfoPR + ":" + appatt;
         Element root = dom.getDocumentElement();
         root.setAttributeNS(XMLNS_URI, "xmlns:"+appinfoPR, appinfoNS);
@@ -336,7 +379,7 @@ public class ModelToXSD {
         boolean isAugType = false;
  
         if (null == ct.getExtensionOfClass()) {
-            String spr = nsStructuresNS.getNamespacePrefix();
+            String spr = getBuiltinNamespace(NIEM_STRUCTURES, nsNIEMVersion).getNamespacePrefix();
             if (cname.endsWith("AssociationType"))       exe.setAttribute("base", spr+":AssociationType");
             else if (cname.endsWith("MetadataType"))     exe.setAttribute("base", spr+":MetadataType");
             else if (cname.endsWith("AugmentationType")) {
@@ -359,7 +402,7 @@ public class ModelToXSD {
             if (isAugType && !hp.augmentTypeNS().contains(ct.getNamespace())) continue;
             
             Property p = hp.getProperty();
-            if (me.isAttribute(p.getQName())) { 
+            if (p.isAttribute()) { 
                 Element hpe = dom.createElementNS(XSD_NS_URI, "xs:attribute");
                 hpe.setAttribute("ref", p.getQName());
                 if ("1".equals(hp.minOccurs())) hpe.setAttribute("use", "required");
@@ -408,11 +451,13 @@ public class ModelToXSD {
         
         // Base type is xs:foo w/o restriction -> xs:extension base="xs-proxy:foo"
         if (null == r && XSD_NS_URI.equals(bdt.getNamespaceURI())) {
+            Namespace nsProxyNS = getBuiltinNamespace(NIEM_PROXY, nsNIEMVersion);
             baseQN = nsProxyNS.getNamespacePrefix() + ":" + bdt.getName();
             nsNSdeps.add(nsProxyNS);
         }
         // Base type has empty Restriction -> xs:extension base="FooType"
         else if (null != r && r.getFacetList().isEmpty()) {
+            Namespace nsProxyNS = getBuiltinNamespace(NIEM_PROXY, nsNIEMVersion);
             Datatype rb = r.getDatatype();
             String rbn = rb.getName();
             String rns = rb.getNamespaceURI();
@@ -429,7 +474,8 @@ public class ModelToXSD {
         // Create a simpleType, use that for xs:extension base
         else {
             Element age = dom.createElementNS(XSD_NS_URI, "xs:attributeGroup");
-            age.setAttribute("ref", nsStructuresNS.getNamespacePrefix() + ":" + "SimpleObjectAttributeGroup");
+            String spr = getBuiltinNamespace(NIEM_STRUCTURES, nsNIEMVersion).getNamespacePrefix();
+            age.setAttribute("ref", spr + ":" + "SimpleObjectAttributeGroup");
             exe.appendChild(age);
             baseQN = createSimpleType(dom, bdt);
         }
@@ -522,19 +568,19 @@ public class ModelToXSD {
     
     private void createElementOrAttribute(Document dom, String nsuri, Property p) {
         if (null == p) return;
-        boolean isAttribute = me.isAttribute(p.getQName());
+        boolean isAttribute = p.isAttribute();
         ClassType pct = p.getClassType();
         Datatype pdt  = p.getDatatype();
         Element pe;
         if (!nsuri.equals(p.getNamespaceURI())) return;   
-        LOG.debug("Creating {} for {}", (me.isAttribute(p.getQName()) ? "attribute" : "element"), p.getQName());
+        LOG.debug("Creating {} for {}", (p.isAttribute() ? "attribute" : "element"), p.getQName());
         if (isAttribute) pe = dom.createElementNS(XSD_NS_URI, "xs:attribute");
         else pe = dom.createElementNS(XSD_NS_URI, "xs:element");
         addDefinition(dom, pe, p.getDefinition());
         pe.setAttribute("name", p.getName());
-        if (me.isNillable(p.getQName())) pe.setAttribute("nillable", "true");
-        if (p.isAbstract())   pe.setAttribute("abstract", "true");
-        if (p.isDeprecated()) addAppinfo(dom, pe, nsuri, "deprecated", "true");
+        if (p.isReferenceable()) pe.setAttribute("nillable", "true");
+        if (p.isAbstract())      pe.setAttribute("abstract", "true");
+        if (p.isDeprecated())    addAppinfo(dom, pe, nsuri, "deprecated", "true");
         if (null != pct) {
             pe.setAttribute("type", pct.getQName());
             nsNSdeps.add(pct.getNamespace());
@@ -549,6 +595,7 @@ public class ModelToXSD {
             Namespace pdtNS = pdt.getNamespace();
             String pdtQN    = pdt.getQName();
             if (XSD_NS_URI.equals(pdt.getNamespace())) {
+                Namespace nsProxyNS = getBuiltinNamespace(NIEM_PROXY, nsNIEMVersion);
                 pdtNS = nsProxyNS;
                 pdtQN = nsProxyNS.getNamespacePrefix() + ":" + pdt.getName();                
             }
@@ -688,12 +735,13 @@ public class ModelToXSD {
     
     // Returns a Namespace object with the right prefix and URI for the
     // specified builtin and NIEM version.  Mungs the prefix if necessary.
-    // Creates the Namespace object if necessary.
+    // Creates a Namespace object if necessary -- but doesn't add it to the
+    // model.
     private Namespace getBuiltinNamespace (int kind, String niemVersion) {
         String bnsuri = getBuiltinURI(kind, niemVersion);  // eg. gimme the URI for structures in NIEM 4.0
         Namespace bns = builtinNSmap.get(bnsuri);                   // do we already have a Namespace for that
         if (null != bns) return bns;                                // if so, return it
-        String bprefix = me.getBuiltinPrefix(bnsuri);               // get prefix; munged if necessary to make unique
+        String bprefix = m.namespaceMap().getPrefix(bnsuri);        // get prefix; munged if necessary to make unique
         bns = new Namespace(bprefix, bnsuri);                       // create Namespace object for this built-in
         builtinNSmap.put(bnsuri, bns);                              // remember it if we need it again
         return bns;                                                 // and return the Namespace; ta da!

@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2022 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,33 +23,17 @@
  */
 package org.mitre.niem.cmf;
 
+import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_NUMKINDS;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
+import static org.mitre.niem.cmf.NamespaceKind.namespaceCode2Kind;
+
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Namespace extends ObjectType implements Comparable<Namespace> {
-    
-    // The nine kinds of namespace.  Order is signficant, because it controls
-    // the order of namespace prefix assignment: extension, niem-model, builtin,
-    // XSD, XML, external, unknown.  
-    public final static int NSK_EXTENSION  = 0;     // has conformance assertion, not in NIEM model
-    public final static int NSK_DOMAIN     = 1;     // domain schema
-    public final static int NSK_CORE       = 2;     // niem core schema
-    public final static int NSK_OTHERNIEM  = 3;     // other niem; starts with release or publication prefix
-    public final static int NSK_BUILTIN    = 4;     // appinfo, code-lists, conformance, proxy, structures
-    public final static int NSK_XSD        = 5;     // namespace for XSD datatypes
-    public final static int NSK_XML        = 6;     // namespace for xml: attributes
-    public final static int NSK_EXTERNAL   = 7;     // imported with appinfo:externalImportIndicator
-    public final static int NSK_UNKNOWN    = 8;     // no conformance assertion
-    public final static int NSK_NUMKINDS   = 9;     // this many kinds of schemas  
-    
-    private final static String[] namespaceKind = { "EXTENSION", "DOMAIN", "CORE", "OTHERNIEM", "BUILTIN", "XSD", "XML", "EXTERNAL", "UNKNOWN" };
-    private final static boolean[] nskInModel   = { true,        true,     true,   true,        false,     true,  true,  true,       false};
-    
-    public static String kindCode (int kind)      { return kind < 0 || kind > NSK_NUMKINDS ? "UNKNOWN" : namespaceKind[kind]; }
-    public static boolean kindInModel (int kind)  { return kind < 0 || kind > NSK_NUMKINDS ? false : nskInModel[kind]; }
-    
     
     private Model model = null;             // Namespace objects know the Model they are part of     
     private String namespaceURI = null;
@@ -84,17 +68,13 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     void setModel (Model m)                   { model = m; }
     public void setDefinition (String s)      { definition = s; }
     public void setKind (int k)               { nsKind = k; }
-    public void setKind (String c) {
-        nsKind = 0;
-        while (nsKind < NSK_NUMKINDS && !c.equals(namespaceKind[nsKind])) nsKind++;
-    }
+    public void setKind (String c)            { nsKind = namespaceCode2Kind(c); }
     
     public Model getModel ()                  { return model; }
     public String getNamespaceURI ()          { return namespaceURI; }
     public String getNamespacePrefix ()       { return namespacePrefix; }
     public String getDefinition ()            { return definition; }
     public int getKind ()                     { return nsKind; }
-    public String getKindCode ()              { return kindCode(nsKind); }
     public boolean isExternal ()              { return nsKind == NSK_EXTERNAL; }
 
     // Enforces guarantee that each namespace in a model has a unique prefix

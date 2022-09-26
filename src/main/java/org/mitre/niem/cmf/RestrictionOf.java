@@ -1,13 +1,13 @@
 /*
  * NOTICE
- * 
+ *
  * This software was produced for the U. S. Government
  * under Basic Contract No. W56KGU-18-D-0004, and is
  * subject to the Rights in Noncommercial Computer Software
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
- * 
- * Copyright 2020-2021 The MITRE Corporation.
+ *
+ * Copyright 2020-2022 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,5 @@ public class RestrictionOf extends ObjectType {
         int index = this.facetList.indexOf(oc);
         if (index < 0) return;
         this.facetList.set(index, nc);        
-    }    
-   
+    }       
 }

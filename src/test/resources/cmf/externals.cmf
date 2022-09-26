@@ -40,26 +40,22 @@
     <DefinitionText>A 2D or 3D geometric point. A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DefinitionText>
     <SubPropertyOf structures:uri="nc:LocationGeospatialCoordinateAbstract" xsi:nil="true"/>
     <Class structures:uri="geo:PointType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="gml:Point">
     <Name>Point</Name>
     <Namespace structures:uri="gml" xsi:nil="true"/>
     <DefinitionText>A Point is defined by a single coordinate tuple. The direct position of a point is specified by the pos element which is of type DirectPositionType.</DefinitionText>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:LocationGeospatialCoordinateAbstract">
     <Name>LocationGeospatialCoordinateAbstract</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>A data concept for a geospatial location.</DefinitionText>
     <AbstractIndicator>true</AbstractIndicator>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="ns:TrackPoint">
     <Name>TrackPoint</Name>
     <Namespace structures:uri="ns" xsi:nil="true"/>
     <Class structures:uri="ns:TrackPointType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Class structures:uri="geo:PointType">
     <Name>PointType</Name>
@@ -81,4 +77,48 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
   </Class>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/adapters/geospatial/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals-niem/adapters/geospatial.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals-niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://example.com/external-content/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
+    <DocumentFilePathText>externals-niem/external/ogc/gml/3.2.1/gml.xsd</DocumentFilePathText>
+    <SchemaVersionText>3.2.1 2010-01-28</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://www.w3.org/1999/xlink</NamespaceURI>
+    <DocumentFilePathText>externals-niem/external/ogc/xlink/1.0.0/xlinks.xsd</DocumentFilePathText>
+    <SchemaVersionText>2.0</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <DocumentFilePathText>externals-niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals-niem/niem-core.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
 </Model>

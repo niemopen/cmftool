@@ -34,6 +34,8 @@ import static org.mitre.niem.NIEMConstants.XML_NS_URI;
 import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
 import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinVersion;
 
+
+
 /**
  *
  * A class for the mappings from namespace prefix to namespace URI.
@@ -48,7 +50,7 @@ public class NamespaceMap {
 
     
     public NamespaceMap () { 
-        // Establish reserved namespace prefixes: cmf, owl, rdf, rdfs, xs, xsd, xml
+        // Initialize the reserved namespace prefixes: cmf, owl, rdf, rdfs, xs, xsd, xml
         prefix2URI.put("cmf", CMF_NS_URI);
         prefix2URI.put("owl", OWL_NS_URI);
         prefix2URI.put("rdf", RDF_NS_URI);

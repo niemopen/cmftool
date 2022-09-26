@@ -131,8 +131,7 @@ public class XStringObject extends XObjectType {
         switch (this.getComponentLname()) {
             case "ConformanceTargetURIList": xsd.getObject().setConfTargets(val); break;
             case "DocumentFilePathText":     xsd.getObject().setFilePath(val); break;
-            case "NamespacePrefixName":      xsd.getObject().setPrefix(val); break;
-            case "NamespaceURI":             xsd.getObject().setUri(val); break;
+            case "NamespaceURI":             xsd.getObject().setTargetNS(val); break;
             case "NIEMVersionText":          xsd.getObject().setNIEMversion(val); break;
             case "SchemaVersionText":        xsd.getObject().setSchemaVersion(val); break;
             default:

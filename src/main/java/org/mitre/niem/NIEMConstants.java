@@ -28,7 +28,7 @@ package org.mitre.niem;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class NIEMConstants {
+public final class NIEMConstants {
     public static final String APPINFO_NS_URI = "http://release.niem.gov/niem/appinfo/5.0/";    
     public static final String APPINFO_NS_URI_PREFIX = "http://release.niem.gov/niem/appinfo/";
     public static final String CODE_LIST_INSTANCE_NS_URI_PREFIX = "http://reference.niem.gov/niem/specification/code-lists/";
@@ -42,6 +42,7 @@ public class NIEMConstants {
     public static final String NDR_CT_URI_PREFIX = "http://reference.niem.gov/niem/specification/naming-and-design-rules/";   
     public static final String NIEM_CORE_PATTERN = "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/";
     public static final String NIEM_DOMAIN_PATTERN = "http://((publication)|(release))\\.niem\\.gov/niem/domains/";    
+    public static final String NIEM_MODEL_PATTERN  = "http://((publication)|(release))\\.niem\\.gov/niem/";
     public static final String NIEM_PUBLICATION_PREFIX = "http://publication.niem.gov/niem/";
     public static final String NIEM_RELEASE_PREFIX = "http://release.niem.gov/niem/";
     public static final String PROXY_NS_URI = "http://release.niem.gov/niem/proxy/niem-xs/5.0/";     
@@ -63,6 +64,8 @@ public class NIEMConstants {
         CONFORMANCE_TARGET_NS_URI_PREFIX,
         PROXY_NS_URI_PREFIX,
         STRUCTURES_NS_URI_PREFIX
-    };    
+    }; 
+    
+    private NIEMConstants () { }
 
 }

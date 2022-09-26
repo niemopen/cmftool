@@ -57,6 +57,6 @@ public class XSchemaDocument extends XObjectType {
     
     @Override
     public void addToModel (XModel x) {
-        x.getObject().addSchemaDocument(this.getObject());
+        x.getObject().addSchemaDoc(this.getObject().targetNS(), this.getObject());
     }
 }

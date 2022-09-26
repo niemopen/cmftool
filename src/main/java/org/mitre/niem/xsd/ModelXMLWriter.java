@@ -54,9 +54,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import static org.mitre.niem.NIEMConstants.CMF_NS_URI;
 import static org.mitre.niem.NIEMConstants.XMLNS_URI;
-import static org.mitre.niem.cmf.Namespace.NSK_NUMKINDS;
+import static org.mitre.niem.cmf.NamespaceKind.namespaceKind2Code;
 import org.mitre.niem.cmf.SchemaDocument;
-import org.mitre.niem.cmf.SchemaPile;
 
 /**
  *
@@ -97,7 +96,7 @@ public class ModelXMLWriter {
         }
     }
     
-    public Element genModel (Document dom, Model m) {
+    private Element genModel (Document dom, Model m) {
         Element e = dom.createElementNS(CMF_NS_URI, "Model");
         e.setAttributeNS(XMLNS_URI, "xmlns:cmf", CMF_NS_URI);
         e.setAttributeNS(XMLNS_URI, "xmlns:xsi", XSI_NS_URI);
@@ -106,16 +105,15 @@ public class ModelXMLWriter {
         for (Component c : m.getComponentList()) { addProperty(dom, e, c.asProperty()); }
         for (Component c : m.getComponentList()) { addClassType(dom, e, c.asClassType()); }
         for (Component c : m.getComponentList()) { addDatatype(dom, e, c.asDatatype()); }
-        SchemaPile sp = m.getSchemaPile();
-        for (SchemaDocument sd : sp.getAllSchemaDocuments()) { addSchemaDocument(dom, e, sd); }
+        m.schemadoc().forEach((nsuri, sd) ->     { addSchemaDocument(dom, e, nsuri, sd); });
+
         return e;
     }
     
-    public void addSchemaDocument (Document dom, Element p, SchemaDocument x) {
+    public void addSchemaDocument (Document dom, Element p, String nsuri, SchemaDocument x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "SchemaDocument");
-        addSimpleChild(dom, e, "NamespacePrefixName", x.prefix());
-        addSimpleChild(dom, e, "NamespaceURI", x.uri());
+        addSimpleChild(dom, e, "NamespaceURI", nsuri);
         addSimpleChild(dom, e, "ConformanceTargetURIList", x.confTargets());
         addSimpleChild(dom, e, "DocumentFilePathText", x.filePath());
         addSimpleChild(dom, e, "NIEMVersionText", x.niemVersion());
@@ -123,7 +121,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
  
-    public void addClassType (Document dom, Element p, ClassType x) {
+    private void addClassType (Document dom, Element p, ClassType x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "Class");
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
@@ -137,7 +135,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
     
-    public void addDatatype (Document dom, Element p, Datatype x) {
+    private void addDatatype (Document dom, Element p, Datatype x) {
         if (null == x) return;
         LOG.debug("addDatatype {}", x.getQName());
         Element e = dom.createElementNS(CMF_NS_URI, "Datatype");
@@ -149,7 +147,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
         
-    public void addFacet (Document dom, Element p, Facet x) {
+    private void addFacet (Document dom, Element p, Facet x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, x.getFacetKind());
         switch (x.getFacetKind()) {
@@ -178,7 +176,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
         
-    public void addHasProperty (Document dom, Element p, HasProperty x) {
+    private void addHasProperty (Document dom, Element p, HasProperty x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "HasProperty");    
         if (null != x.getSequenceID()) 
@@ -193,7 +191,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
             
-    public void addNamespace (Document dom, Element p, Namespace x) {
+    private void addNamespace (Document dom, Element p, Namespace x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "Namespace");
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getNamespacePrefix());
@@ -201,11 +199,11 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "NamespacePrefixName", x.getNamespacePrefix());
         addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
         int nsk = x.getKind();
-        if (nsk >= 0 && nsk < NSK_NUMKINDS) addSimpleChild(dom, e, "NamespaceKindCode", x.getKindCode());
+        addSimpleChild(dom, e, "NamespaceKindCode", namespaceKind2Code(nsk));
         p.appendChild(e);
     }  
     
-    public void addNamespaceRef (Document dom, Element p, String lname, Namespace x) {
+    private void addNamespaceRef (Document dom, Element p, String lname, Namespace x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, lname);
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", x.getNamespacePrefix());
@@ -213,7 +211,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
     
-    public void addProperty (Document dom, Element p, Property x) {
+    private void addProperty (Document dom, Element p, Property x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "Property");
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
@@ -227,7 +225,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
        
-    public void addRestrictionOf (Document dom, Element p, RestrictionOf x) {
+    private void addRestrictionOf (Document dom, Element p, RestrictionOf x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "RestrictionOf");        
         addComponentRef(dom, e, "Datatype", x.getDatatype());
@@ -236,7 +234,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
       
-    public void addUnionOf (Document dom, Element p, UnionOf x) {
+    private void addUnionOf (Document dom, Element p, UnionOf x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "UnionOf");        
         if (null != x.getDatatypeList())
@@ -244,7 +242,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
 
-    public void addComponentRef (Document dom, Element p, String lname, Component x) {
+    private void addComponentRef (Document dom, Element p, String lname, Component x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, lname);
         e.setAttributeNS(STRUCTURES_NS_URI, "structures:uri", componentIDString(x));
@@ -252,7 +250,7 @@ public class ModelXMLWriter {
         p.appendChild(e);
     }
     
-    public void addComponentChildren (Document dom, Element p, Component x) {
+    private void addComponentChildren (Document dom, Element p, Component x) {
         if (null == x) return;
         addSimpleChild(dom, p, "Name", x.getName());
         addNamespaceRef(dom, p, "Namespace", x.getNamespace());
@@ -261,18 +259,18 @@ public class ModelXMLWriter {
         if (x.isDeprecated()) addSimpleChild(dom, p, "DeprecatedIndicator", "true");
     }
     
-    public void addSimpleChild (Document dom, Element p, String eln, String value) {
+    private void addSimpleChild (Document dom, Element p, String eln, String value) {
         if (null == value) return;
         Element c = dom.createElementNS(CMF_NS_URI, eln);
         c.setTextContent(value);
         p.appendChild(c);
     }
     
-    public void addSimpleChild (Document dom, Element p, String eln, boolean value) {
+    private void addSimpleChild (Document dom, Element p, String eln, boolean value) {
         addSimpleChild(dom, p, eln, value ? "true" : "false");
     }
     
-    public void addAttribute (Document dom, Element p, String an, String value) {
+    private void addAttribute (Document dom, Element p, String an, String value) {
         if (null == value) return;
         p.setAttributeNS(CMF_NS_URI, an, value);
     }

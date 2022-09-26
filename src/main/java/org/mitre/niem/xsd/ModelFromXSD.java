@@ -27,14 +27,13 @@ import java.io.IOException;
 import java.io.StringReader;
 import static java.lang.Math.max;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
-import static org.apache.commons.lang3.StringUtils.getCommonPrefix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.xerces.xs.StringList;
@@ -54,8 +53,6 @@ import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSModelGroup;
 import org.apache.xerces.xs.XSMultiValueFacet;
 import org.apache.xerces.xs.XSNamedMap;
-import org.apache.xerces.xs.XSNamespaceItem;
-import org.apache.xerces.xs.XSNamespaceItemList;
 import org.apache.xerces.xs.XSObject;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSParticle;
@@ -86,16 +83,14 @@ import org.xml.sax.helpers.DefaultHandler;
 import static org.mitre.niem.NIEMConstants.PROXY_NS_URI_PREFIX;
 import static org.mitre.niem.NIEMConstants.XML_NS_URI;
 import org.mitre.niem.cmf.CMFException;
-import static org.mitre.niem.cmf.Namespace.NSK_BUILTIN;
-import static org.mitre.niem.cmf.Namespace.NSK_EXTERNAL;
-import static org.mitre.niem.cmf.Namespace.NSK_UNKNOWN;
-import static org.mitre.niem.cmf.Namespace.NSK_XML;
-import static org.mitre.niem.cmf.Namespace.NSK_XSD;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_XSD;
+import static org.mitre.niem.cmf.NamespaceKind.isNamespaceKindInCMF;
+import static org.mitre.niem.cmf.NamespaceKind.namespaceKindFromURI;
 import org.mitre.niem.cmf.NamespaceMap;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_CODE_LISTS_INSTANCE;
-import org.mitre.niem.xsd.NamespaceInfo.AppinfoRec;
-import org.mitre.niem.xsd.NamespaceInfo.NSDeclRec;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinKind;
+import org.mitre.niem.cmf.SchemaDocument;
 
 /**
  * An object for constructing a Model from a Schema.
@@ -105,102 +100,66 @@ import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinKind;
 public class ModelFromXSD {
     static final Logger LOG = LogManager.getLogger(ModelFromXSD.class);
     
-    private NamespaceInfo nsi = null;               // info from schema parsing (and not in Xerces API)
-    private Model m = null;                         // model under construction
-    private ModelExtension me = null;               // model extension for XSD
-    private XSModel xs = null;                      // from the Schema object
-    private Map<String,Property> xmlAtts = null;    // xml: attributes encountered (QName -> Property object)
+    private Model m = null;                                 // model under construction
+    private NamespaceMap nsmap = null;                      // namespace prefix/URI mapping handler
+    private XSModel xs = null;                              // from the XMLSchema object    
+    private Map<String,XMLSchemaDocument> sdoc = null;      // map nsURI -> XMLSchemaDocument object
     private Set<String> fooSimpleTypes = null;      // QNames where FooSimpleType not changed to FooType
-    private Namespace xmlNS = null;                 // Namespace object for xml: attributes
+
     
-    /**
-     * Constructs an object that can generate a Model from the Schema.
-     * @param s XML Schema object
-     */
-    public ModelFromXSD (Schema s) {
-        xs = s.xsmodel();
+    public ModelFromXSD () { }
+    
+    public Model createModel (String ... args) throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException  {
+        XMLSchema s = new XMLSchema(args);
+        return createModel(s);
     }
     
-    /**
-     * Constructs the Model, ModelExtension, and NamespaceInfo objects from the
-     * XML schema.
-     * @param m Model object to be constructed
-     * @param me ModelExtension object to be constructed
-     * @throws ParserConfigurationException
-     * @throws SAXException
-     * @throws IOException 
-     */
-    public void createModel (Model m, ModelExtension me, NamespaceInfo nsi) throws ParserConfigurationException, SAXException, IOException {
-        this.m = m;
-        this.me = me;
-        this.nsi = nsi;
-        xmlAtts = new HashMap<>();
+    public Model createModel (XMLSchema s) throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+        m     = new Model();
+        nsmap = m.namespaceMap();
+        xs    = s.xsmodel();
+        sdoc  = s.schemaDocuments();
         fooSimpleTypes = new HashSet<>();
+         
         generateNamespaces();
         findFooSimpleTypes();
         generateClassesAndDatatypes();
         generateProperties();
         processAppinfo();
         processAugmentations();
+        
+        sdoc.forEach((nsuri, sd) -> {
+            SchemaDocument cmfsd = new SchemaDocument();
+            cmfsd.setTargetNS(nsuri);
+            cmfsd.setConfTargets(sd.conformanceTargets());
+            cmfsd.setFilePath(sd.filepath());
+            cmfsd.setNIEMversion(sd.niemVersion());
+            cmfsd.setSchemaVersion(sd.schemaVersion());
+            m.addSchemaDoc(nsuri, cmfsd);
+        });
+        return m;
     }
-       
+    
     private void generateNamespaces () {
-        Map<String,String> nsFile = new HashMap<>();          // nsURI -> schema document file URI
-        XSNamespaceItemList nslist = xs.getNamespaceItems();
-        
-        // Iterate over XSNamespaceItems to process schema documents 
-        // One entry for each namespace URI that was a @targetNamespace in any document
-        // One entry if there is a no-namespace document
-        for (int i = 0; i < nslist.getLength(); i++) {
-            XSNamespaceItem xnsi = nslist.item(i);
-            String nsuri = xnsi.getSchemaNamespace();
-            StringList docl = xnsi.getDocumentLocations();
-            if (docl.size() < 1) {
-                if (!XSD_NS_URI.equals(nsuri)) LOG.error("No document listed for namespace {}", nsuri);                
-            } 
-            else {
-                if (docl.size() > 1) LOG.warn("Multiple documents listed for namespace {}?", nsuri);
-                for (int j = 0; j < docl.getLength(); j++) {
-                    LOG.debug("Processing file {} for namespace {}", docl.item(j), nsuri);
-                    nsFile.put(nsuri,docl.item(j));
-                    nsi.processSchemaDocument(docl.item(j));    // process schema document
-                }
-            }
+        // Generate namespace prefix map from sorted list of all namespace declarations in schema
+        List<XMLNamespaceDeclaration> allnsd = new ArrayList<>();
+        for (var sd : sdoc.values()) {
+            allnsd.addAll(sd.namespaceDecls());
         }
-        // Find the root directory of the schema document pile
-        // Make each document path relative to that directory
-        String rootDirURI = getCommonPrefix(nsFile.values().toArray(String[]::new));
-        int ls = rootDirURI.lastIndexOf("/");
-        if (ls < 0) rootDirURI = "";
-        else rootDirURI = rootDirURI.substring(0, ls+1);
-        int rlen = rootDirURI.length();
+        Collections.sort(allnsd);
+        for (var nsd : allnsd) nsmap.assignPrefix(nsd.decPrefix(), nsd.decURI());
         
-        // Process namespace declarations in priority order, add to Model namespace map
-        NamespaceMap nsmap = m.namespaceMap();
-        for (NSDeclRec nr : nsi.getNSdecls()) {
-            String reqP = nr.prefix;    // desired prefix
-            String uri  = nr.uri;       // namespace uri
-            nsmap.assignPrefix(reqP, uri);
-        }
-        // Handle namespace for each schema document
-        // Add namespace objects to model
-        // Store non-model schema information in ModelExtension object
-        nsFile.forEach((String nsuri, String furi) -> {
+        // Create Namespace objects, add to model
+        sdoc.forEach((nsuri, sd) -> {
             String prefix = nsmap.getPrefix(nsuri);
-            int skind = nsi.getNSKind(nsuri);
-            if (NSK_UNKNOWN != skind && (NSK_BUILTIN != skind || NIEM_CODE_LISTS_INSTANCE == getBuiltinKind(nsuri))) {
+            int kind = sd.schemaKind();
+            if (isNamespaceKindInCMF(kind)) {
                 Namespace n = new Namespace(prefix, nsuri);
-                n.setDefinition(nsi.getDocumentation(nsuri));
-                n.setKind(skind);
+                n.setDefinition(sd.documentation());
+                n.setKind(kind);
                 try { m.addNamespace(n); } catch (CMFException ex) { } // CAN'T HAPPEN
                 LOG.debug("Created namespace {}", nsuri);
             }
-            me.setConformanceTargets(nsuri, nsi.getConformanceTargets(nsuri));
-            me.setDocumentFilepath(nsuri, furi.substring(rlen));
-            me.setNIEMVersion(nsuri, nsi.getNIEMVersion(nsuri));
-            me.setPrefix(nsuri, prefix);
-            me.setNSVersion(nsuri, me.getNamespaceVersion(nsuri));
-            me.setKind(nsuri, skind);
         });
         // Add namespace for XSD to model if it isn't already there
         // (Sometimes people import it, sometimes they don't)
@@ -210,20 +169,37 @@ public class ModelFromXSD {
             try { m.addNamespace(xsd); } catch (CMFException ex) { }    // CAN'T HAPPEN
             LOG.debug("Created namespace {}", XSD_NS_URI);
         }
-    }   
+    }
     
+    // We only need the xml: namespace in the model if there are attributes
+    // from that namespace.  Create and add the Namespace object only if needed.
+    private Namespace xmlNamespace () {
+        Namespace xmlNS = m.getNamespaceByURI(XML_NS_URI);
+        if (null == xmlNS) {
+            String xmlPrefix = nsmap.getPrefix(XML_NS_URI);     // it's predefined in the NamespaceMap
+            xmlNS = new Namespace(xmlPrefix, XML_NS_URI);
+            try {
+                m.addNamespace(xmlNS);
+            } catch (CMFException ex) {
+                LOG.error("can't add XML namespace to model??");
+            }
+        }
+        return xmlNS;
+    }
+          
     // Make a pass through all the complex type declarations to identify 
     // where we may need FooSimpleType instead of FooType
     private void findFooSimpleTypes () {
         XSNamedMap xmap = xs.getComponents(XSTypeDefinition.COMPLEX_TYPE);
         for (int i = 0; i < xmap.getLength(); i++) {
             XSComplexTypeDefinition ct = (XSComplexTypeDefinition)xmap.item(i);
-            String nsuri = ct.getNamespace();      
-            if (nsuri.startsWith(PROXY_NS_URI_PREFIX)) continue;    // don't generate proxy datatypes         
-            if (nsuri.equals(XSD_NS_URI)) continue; 
-            if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) continue;            // skip types in structures namespace
-            if (NSK_EXTERNAL == nsi.getNSKind(nsuri)) continue;                  // skip types in external namespaces
-            if (NSK_UNKNOWN == nsi.getNSKind(nsuri)) continue;                   // skip types in unknown namespaces            
+            String nsuri = ct.getNamespace();
+            XMLSchemaDocument sd = sdoc.get(nsuri);
+            if (nsuri.startsWith(PROXY_NS_URI_PREFIX)) continue;       // don't generate proxy datatypes         
+            if (nsuri.equals(XSD_NS_URI)) continue;                    // skip XSD namespace
+            if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) continue;  // skip types in structures namespace
+            if (NSK_EXTERNAL == sd.schemaKind()) continue;             // skip types in external namespaces
+            if (NSK_UNKNOWN == sd.schemaKind()) continue;              // skip types in unknown namespaces            
             
             List<XSParticle> elist     = collectClassElements(ct);
             List<XSAttributeUse> alist = collectClassAttributes(ct); 
@@ -269,12 +245,15 @@ public class ModelFromXSD {
         String nsuri = ct.getNamespace();
         String cname = ct.getName();        
         Component c  = m.getComponent(nsuri, cname);
+        XMLSchemaDocument sd = sdoc.get(nsuri);
+        int skind = (null == sd ? NSK_UNKNOWN : sd.schemaKind());
+
+        LOG.debug("maybe CreateClassOrDatatype: {}#{}", nsuri, cname);
         if (null != c) return c;                                                // already processed this complex type def
         if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) return null;            // skip types in structures namespace
-        if (NSK_EXTERNAL == nsi.getNSKind(nsuri)) return null;                  // skip types in external namespaces
-        if (NSK_UNKNOWN == nsi.getNSKind(nsuri)) return null;                   // skip types in unknown namespaces
-        if (XSD_NS_URI.equals(nsuri) && "anyType".equals(cname)) return null;
-        LOG.debug("CreateClassOrDatatype: {}", cname);
+        if (NSK_UNKNOWN == skind || NSK_EXTERNAL == skind) return null;         // skip unknown and external namespaces
+        if (XSD_NS_URI.equals(nsuri) && "anyType".equals(cname)) return null;   // skip xs:anyType
+        LOG.debug("CreateClassOrDatatype: {}#{}", nsuri, cname);
         
         // Collect attributes and child elements
         List<XSParticle> elist     = collectClassElements(ct);
@@ -332,7 +311,6 @@ public class ModelFromXSD {
                 XSTypeDefinition adt = ad.getTypeDefinition();
                 Property dp = createProperty(ad, adt);
                 if (null != dp) {
-                    me.setIsAttribute(dp.getQName());
                     HasProperty hdp = new HasProperty();
                     hdp.setProperty(dp);
                     hdp.setMaxOccurs(1);
@@ -455,7 +433,8 @@ public class ModelFromXSD {
             XSElementDeclaration e = (XSElementDeclaration)xmap.item(i); 
             XSTypeDefinition t = e.getTypeDefinition();
             String nsuri = e.getNamespace();
-            if (NSK_EXTERNAL == nsi.getNSKind(nsuri)) continue;      // only generate external properties if referenced
+            XMLSchemaDocument sd = sdoc.get(nsuri);
+            if (NSK_EXTERNAL == sd.schemaKind()) continue;      // only generate external properties if referenced
             createProperty(e, t);
         }        
         xmap = xs.getComponents(ATTRIBUTE_DECLARATION);
@@ -463,10 +442,11 @@ public class ModelFromXSD {
             XSAttributeDeclaration a = (XSAttributeDeclaration)xmap.item(i);
             XSTypeDefinition t = a.getTypeDefinition();
             String nsuri = a.getNamespace();
-            if (NSK_EXTERNAL == nsi.getNSKind(nsuri)) continue;      // only generate external attributes if referenced
-            if (NSK_XML == nsi.getNSKind(nsuri)) continue;           // only generate xml: attributes if referenced
+            XMLSchemaDocument sd = sdoc.get(nsuri);            
+            if (NSK_EXTERNAL == sd.schemaKind()) continue;      // only generate external attributes if referenced
+            if (NSK_XML == sd.schemaKind()) continue;           // only generate xml: attributes if referenced
             Property p = createProperty(a, t);
-            if (null != p) me.setIsAttribute(p.getQName());
+            if (null != p) p.setIsAttribute(true);
         }
     }
     
@@ -477,15 +457,10 @@ public class ModelFromXSD {
         Property op = m.getProperty(nsuri, cname);
         if (null != op) return op;
         if (nsuri.startsWith(STRUCTURES_NS_URI_PREFIX)) return null;    // skip properties in structures namespace
-        if (NSK_UNKNOWN == nsi.getNSKind(nsuri)) return null;           // skip properties in unknown namespaces    
-        int val = nsi.getNSKind(nsuri);
-        if (NSK_XML == nsi.getNSKind(nsuri)) {                          // special handling for xml: attributes
-            op = xmlAtts.get(cname);
-            if (null != op) return op;
-            if (null == xmlNS) {
-                xmlNS = new Namespace("xml", XML_NS_URI);
-                try { m.addNamespace(xmlNS); } catch (CMFException ex) { } // CAN'T HAPPEN
-            }
+        if (NSK_UNKNOWN == sdoc.get(nsuri).schemaKind()) return null;   // skip properties in unknown namespaces    
+        int val = sdoc.get(nsuri).schemaKind();
+        if (NSK_XML == sdoc.get(nsuri).schemaKind()) {                  // special handling for xml: attributes
+            Namespace xmlNS = xmlNamespace();
             op = new Property(xmlNS, cname);
             m.addComponent(op);
             LOG.debug("Created attribute xml:" + cname);
@@ -511,8 +486,8 @@ public class ModelFromXSD {
                 Property sp = createProperty(sub, st);
                 op.setSubPropertyOf(sp);
             }
-            if (ed.getAbstract()) op.setIsAbstract("true");
-            if (ed.getNillable()) me.setIsNillable(op.getQName());
+            if (ed.getAbstract()) op.setIsAbstract(true);
+            if (ed.getNillable()) op.setIsReferenceable(true);
         }
         // Create ClassType or Datatype object if required
         Component tc = m.getComponent(t.getNamespace(), t.getName());
@@ -672,18 +647,34 @@ public class ModelFromXSD {
     // declarations and import elements.  Now we iterate through the collected
     // attributes and adjust model elements accordingly.
     private void processAppinfo () {
-        for (AppinfoRec ar : nsi.appinfoList()) {
-            switch (ar.attribute) {
-                case "deprecated":
-                    Component c = m.getComponent(ar.nsuri, ar.lname);
-                    if (null != c) c.setIsDeprecated(ar.value);
-                    break;
-                case "externalAdapterTypeIndicator":
-                    ClassType cl = m.getClassType(ar.nsuri, ar.lname);
-                    if (null != cl) cl.setIsExternal(ar.value);
-                    break;
+        for (var sd : sdoc.values()) {
+            for (var app : sd.appinfo()) {
+                String compNS = app.componentEQN().getValue0();
+                String compLN = app.componentEQN().getValue1();
+                switch (app.attLname()) {
+                    case "deprecated":
+                        Component c = m.getComponent(compNS, compLN);
+                        if (null != c) c.setIsDeprecated(app.attValue());
+                        break;
+                    case "externalAdapterTypeIndicator":
+                        ClassType cl = m.getClassType(compNS, compLN);
+                        if (null != cl) cl.setIsExternal(app.attValue());
+                        break;
+                }
             }
         }
+//        for (AppinfoRec ar : nsi.appinfoList()) {
+//            switch (ar.attribute) {
+//                case "deprecated":
+//                    Component c = m.getComponent(ar.nsuri, ar.lname);
+//                    if (null != c) c.setIsDeprecated(ar.value);
+//                    break;
+//                case "externalAdapterTypeIndicator":
+//                    ClassType cl = m.getClassType(ar.nsuri, ar.lname);
+//                    if (null != cl) cl.setIsExternal(ar.value);
+//                    break;
+//            }
+//        }
     }
     
     // Special handling for augmentations.  Augmentation types do not appear in 
@@ -707,12 +698,15 @@ public class ModelFromXSD {
                 LOG.warn("Augmentation {} found, but {} is not augmentable", p.getQName(), atqn);
                 continue;
             }
+            LOG.debug("{} augments {}", p.getQName(), augmented.getQName());
             // If Property p has an augmentation type, add type children to the augmented type
             ClassType ptype = p.getClassType();
             if (null != ptype && ptype.getName().endsWith("AugmentationType")) {
+                LOG.debug("Augmenting {} with augmentation type {}", augmented.getQName(), ptype.getQName());
                 for (HasProperty hp : ptype.hasPropertyList()) {
                     addAugmentPropertyToClass(augmented, p.getNamespace(), hp, true);
                 }
+                LOG.debug("Done with augmentation type {}", ptype.getQName());
             }
             // Otherwise add augmentation property p to the augmented type
             else {
@@ -749,6 +743,7 @@ public class ModelFromXSD {
         }
         // Not there?  Create new HasProperty and add to class
         if (null == augHP) {
+            LOG.debug("Augmenting {} with new augmentation {}", aug.getQName(), ahp.getProperty().getQName());
             augHP = new HasProperty();
             augHP.setProperty(ahp.getProperty());
             augHP.setMaxUnbounded(ahp.maxUnbounded());
@@ -759,6 +754,7 @@ public class ModelFromXSD {
         }
         // Already there?  Perhaps adjust max occurs
         else {
+            LOG.debug("Augmenting {} with repeated augmentation {}", aug.getQName(), ahp.getProperty().getQName());
             if (ahp.maxUnbounded()) augHP.setMaxUnbounded(true);
             else if (!augHP.maxUnbounded()) augHP.setMaxOccurs(max(augHP.maxOccurs(), ahp.maxOccurs()));
         }

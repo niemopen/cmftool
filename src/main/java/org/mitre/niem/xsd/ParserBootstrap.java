@@ -59,6 +59,8 @@ public class ParserBootstrap {
     private XMLInputFactory staxFact = null;
     private DocumentBuilder db = null;
     
+    private ParserBootstrap () { }
+    
     private static class Holder {
         private static final ParserBootstrap instance = new ParserBootstrap();
     }
@@ -67,7 +69,7 @@ public class ParserBootstrap {
         init(BOOTSTRAP_ALL);
     }
     
-    public synchronized static void init (int which) throws ParserConfigurationException {
+    public static void init (int which) throws ParserConfigurationException {
  
         if (0 != (which | BOOTSTRAP_XERCES_XS) && null == Holder.instance.xsimpl) {
             System.setProperty(DOMImplementationRegistry.PROPERTY, "org.apache.xerces.dom.DOMXSImplementationSourceImpl");

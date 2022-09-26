@@ -31,26 +31,32 @@ package org.mitre.niem.cmf;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class SchemaDocument extends ObjectType {
-    private String nsprefix = null;
-    private String nsuri = null;
+    private String targetNS = null;
     private String confTargs = null;
     private String filepath = null;
     private String niemVersion = null;
     private String schemaVersion = null;
     
-    public void setPrefix (String s)        { nsprefix = s; }
-    public void setUri (String s)           { nsuri = s; }
+    public void setTargetNS (String s)         { targetNS = s; }
     public void setConfTargets (String s)   { confTargs = s; }
     public void setFilePath (String s)      { filepath = s; }
     public void setNIEMversion (String s)   { niemVersion = s; }
     public void setSchemaVersion (String s) { schemaVersion = s; }
     
-    public String prefix()          { return nsprefix; }
-    public String uri()             { return nsuri; }
-    public String confTargets()     { return confTargs; }
-    public String filePath()        { return filepath; }
-    public String niemVersion()     { return niemVersion; }
-    public String schemaVersion()   { return schemaVersion; }
+    public String targetNS( )                  { return targetNS; }
+    public String confTargets ()            { return confTargs; }
+    public String filePath ()               { return filepath; }
+    public String niemVersion ()            { return niemVersion; }
+    public String schemaVersion ()          { return schemaVersion; }
     
     public SchemaDocument () { super(); }
+    
+    public SchemaDocument (String ns, String ct, String fp, String nv, String sv) {
+        super();
+        targetNS = ns;
+        confTargs = ct;
+        filepath = fp;
+        niemVersion = nv;
+        schemaVersion = sv;
+    }
 }

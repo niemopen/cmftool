@@ -78,7 +78,12 @@ public class NIEMBuiltins {
         "structures.xsd"
     };
     
-    public static boolean isBuiltin (String nsuri) {
+    public static String defaultBuiltinFilename (int which) {
+        if (0 > which || NIEM_BUILTINS_COUNT <= which) return null;
+        return builtinFilename[which];
+    }
+    
+    public static boolean isBuiltinNamespace (String nsuri) {
         return getBuiltinKind(nsuri) >= 0;
     }
     

@@ -19,7 +19,6 @@
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>A data concept for a nature or duration of the position, such as permanent, non-permanent, or contractor.</DefinitionText>
     <AbstractIndicator>true</AbstractIndicator>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:EmploymentPositionBasisCode">
     <Name>EmploymentPositionBasisCode</Name>
@@ -51,29 +50,19 @@
     <Namespace structures:uri="xs" xsi:nil="true"/>
   </Datatype>
   <SchemaDocument>
-    <NamespacePrefixName>ct</NamespacePrefixName>
-    <NamespaceURI>http://release.niem.gov/niem/conformanceTargets/3.0/</NamespaceURI>
-    <NIEMVersionText>3.0</NIEMVersionText>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixName>niem-xs</NamespacePrefixName>
     <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
   </SchemaDocument>
   <SchemaDocument>
-    <NamespacePrefixName>appinfo</NamespacePrefixName>
-    <NamespaceURI>http://release.niem.gov/niem/appinfo/5.0/</NamespaceURI>
-    <NIEMVersionText>5.0</NIEMVersionText>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixName>structures</NamespacePrefixName>
     <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
   </SchemaDocument>
   <SchemaDocument>
-    <NamespacePrefixName>nc</NamespacePrefixName>
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>codeType.xsd</DocumentFilePathText>

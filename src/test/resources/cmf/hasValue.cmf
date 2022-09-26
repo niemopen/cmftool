@@ -18,7 +18,7 @@
     <Name>errorValue</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
+    <AttributeIndicator>true</AttributeIndicator>
   </Property>
   <Class structures:uri="nc:Degree90Type">
     <Name>Degree90Type</Name>
@@ -54,4 +54,24 @@
     <Name>decimal</Name>
     <Namespace structures:uri="xs" xsi:nil="true"/>
   </Datatype>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>hasValue.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
 </Model>

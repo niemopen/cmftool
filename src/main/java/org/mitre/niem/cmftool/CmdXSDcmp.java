@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import javax.xml.parsers.ParserConfigurationException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,9 +40,7 @@ import static org.apache.xerces.xs.XSConstants.TYPE_DEFINITION;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSObject;
-import org.mitre.niem.xsd.ModelFromXSD;
-import org.mitre.niem.xsd.Schema;
-import org.mitre.niem.xsd.SchemaException;
+import org.mitre.niem.xsd.XMLSchema;
 
 /**
  *
@@ -155,15 +152,17 @@ public class CmdXSDcmp implements JCCommand {
     
     private XSModel genXSModel (String argS) {
         String[] argL = argS.split(fsep);
-        Schema s = null;
+        XMLSchema s = null;
         try {
-            s = Schema.genSchema(argL);
-        } catch (IOException | ParserConfigurationException | SchemaException ex) {
+            s = new XMLSchema(argL);
+        } catch (IOException ex) {
             System.out.println("Could not generate schema from '" + argS + "': " + ex.getMessage());
             System.exit(2);
+        } catch (XMLSchema.XMLSchemaException ex) {
+            java.util.logging.Logger.getLogger(CmdXSDcmp.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         XSModel xm = s.xsmodel();
-        List<String> msgs = s.assemblyMessages();
+        List<String> msgs = s.xsModelMsgs();
         if (null == xm || !msgs.isEmpty()) {
             System.out.println("Generating schema from '" + argS + "'");
             for (String m : msgs) System.out.println(m);

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.4/"
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.5/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.4/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.5/">
   <Namespace structures:uri="claim">
     <NamespaceURI>http://example.org/claim/1/</NamespaceURI>
     <NamespacePrefixName>claim</NamespacePrefixName>
@@ -32,18 +32,21 @@
     <Namespace structures:uri="claim" xsi:nil="true"/>
     <DefinitionText>An insurance claim resulting from an auto crash.</DefinitionText>
     <Class structures:uri="claim:ClaimType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="claim:DamagedVehicle">
     <Name>DamagedVehicle</Name>
     <Namespace structures:uri="claim" xsi:nil="true"/>
     <DefinitionText>A vehicle that has sustained damage.</DefinitionText>
     <Class structures:uri="nc:VehicleType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="claim:VehicleDamageAmount">
     <Name>VehicleDamageAmount</Name>
     <Namespace structures:uri="claim" xsi:nil="true"/>
     <DefinitionText>An amount of money evaluating the cost of repair of damage to a vehicle.</DefinitionText>
     <Class structures:uri="nc:AmountType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="iso_4217:CurrencyCode">
     <Name>CurrencyCode</Name>
@@ -51,12 +54,14 @@
     <DefinitionText>A unit of money or exchange.</DefinitionText>
     <SubPropertyOf structures:uri="nc:CurrencyAbstract" xsi:nil="true"/>
     <Datatype structures:uri="iso_4217:CurrencyCodeType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:Amount">
     <Name>Amount</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>An amount of money.</DefinitionText>
     <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:CurrencyAbstract">
     <Name>CurrencyAbstract</Name>
@@ -69,24 +74,28 @@
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>An identifier.</DefinitionText>
     <Datatype structures:uri="xs:string" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:ItemValue">
     <Name>ItemValue</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>An evaluation of the monetary worth of an item.</DefinitionText>
     <Class structures:uri="nc:ItemValueType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:ItemValueAmount">
     <Name>ItemValueAmount</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>A monetary value of an item.</DefinitionText>
     <Class structures:uri="nc:AmountType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:uri="nc:VehicleIdentification">
     <Name>VehicleIdentification</Name>
     <Namespace structures:uri="nc" xsi:nil="true"/>
     <DefinitionText>A unique identification for a specific vehicle.</DefinitionText>
     <Class structures:uri="nc:IdentificationType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Class structures:uri="claim:ClaimType">
     <Name>ClaimType</Name>
@@ -902,4 +911,38 @@
     <Name>token</Name>
     <Namespace structures:uri="xs" xsi:nil="true"/>
   </Datatype>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/codes/iso_4217/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/codes/iso_4217.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://example.org/claim/1/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>extension/claim.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/niem-core.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
 </Model>

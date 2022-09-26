@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema targetNamespace="http://release.niem.gov/niem/adapters/geospatial/5.0/" version="1" xml:lang="en-US" xsi:schemaLocation="http://release.niem.gov/niem/appinfo/5.0/ ../utility/appinfo.xsd http://release.niem.gov/niem/conformanceTargets/3.0/ ../utility/conformanceTargets.xsd" ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument" xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:geo="http://release.niem.gov/niem/adapters/geospatial/5.0/" xmlns:structures="http://release.niem.gov/niem/structures/5.0/" xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/" xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2">
+<xs:schema
+  targetNamespace="http://release.niem.gov/niem/adapters/geospatial/5.0/"
+  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:geo="http://release.niem.gov/niem/adapters/geospatial/5.0/"
+  xmlns:gml="http://www.opengis.net/gml/3.2"
+  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+  version="1"
+  xml:lang="en-US"
+  xsi:schemaLocation="http://release.niem.gov/niem/appinfo/5.0/ ../utility/appinfo.xsd http://release.niem.gov/niem/conformanceTargets/3.0/ ../utility/conformanceTargets.xsd">
   <xs:annotation>
     <xs:documentation>Defines NIEM adapter types for external geospatial components defined by OGC and ISO.  It references local copies of unmodified schemas from external standards in local directory tree fragments that mirror the directory structures of the canonical schema sources on the world wide web, and a profile of the OGC Open Location Services (XLS) schema that is based on GML version 3.2.1.</xs:documentation>
     <xs:appinfo>
-      <appinfo:LocalTerm term="GML" literal="Geography Markup Language"/>
-      <appinfo:LocalTerm term="Multi" definition="one or more"/>
-      <appinfo:LocalTerm term="OGC" literal="Open Geospatial Consortium"/>
+      <appinfo:LocalTerm literal="Geography Markup Language" term="GML"/>
+      <appinfo:LocalTerm definition="one or more" term="Multi"/>
+      <appinfo:LocalTerm literal="Open Geospatial Consortium" term="OGC"/>
     </xs:appinfo>
   </xs:annotation>
   <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="../niem-core.xsd"/>

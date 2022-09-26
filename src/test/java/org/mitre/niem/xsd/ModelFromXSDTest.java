@@ -1,12 +1,12 @@
 /*
  * NOTICE
- * 
+ *
  * This software was produced for the U. S. Government
  * under Basic Contract No. W56KGU-18-D-0004, and is
  * subject to the Rights in Noncommercial Computer Software
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
- * 
+ *
  * Copyright 2020-2022 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,11 +23,9 @@
  */
 package org.mitre.niem.xsd;
 
+import java.io.IOException;
 import java.util.List;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
+import javax.xml.parsers.ParserConfigurationException;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
@@ -40,43 +38,38 @@ import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
 import org.mitre.niem.cmf.UnionOf;
+import org.xml.sax.SAXException;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ModelFromXSDIT {
+public class ModelFromXSDTest {
     
-    private static final String testDirPath = "src/test/resources";
-    
-    public ModelFromXSDIT() {
-    }
-    
-    @BeforeAll
-    public static void setUpClass() {
-    }
-    
-    @AfterAll
-    public static void tearDownClass() {
-    }
-    
-    @BeforeEach
-    public void setUp() {
-    }
-    
-    @AfterEach
-    public void tearDown() {
+    public ModelFromXSDTest() {
     }
 
     @Test
+    public void testCreateModel () throws Exception {
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel("src/test/resources/xsd/externals.xsd");
+        
+        List<Namespace> nslist = m.getNamespaceList();
+        assertEquals(5, nslist.size());
+        assertEquals("geo", nslist.get(0).getNamespacePrefix());
+        assertEquals("gml", nslist.get(1).getNamespacePrefix());
+        assertEquals("nc", nslist.get(2).getNamespacePrefix());
+        assertEquals("ns", nslist.get(3).getNamespacePrefix());
+        assertEquals("xs", nslist.get(4).getNamespacePrefix());
+    }
+    
+    @Test
     @DisplayName("Augmentation")
-    public void testAugmentation () {
-        String[] args = { "src/test/resources/xsd/augment-0.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+    public void testAugmentation () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+        ModelFromXSD mfact = new ModelFromXSD();        
+        Model m = mfact.createModel("src/test/resources/xsd/augment-0.xsd");  
+        
         assertEquals(4, m.getNamespaceList().size());
         assertEquals(10, m.getComponentList().size());
         assertNotNull(m.getNamespaceByPrefix("j"));
@@ -90,6 +83,7 @@ public class ModelFromXSDIT {
         List<HasProperty> hpl = ct.hasPropertyList();
         assertNotNull(hpl);
         assertEquals(5, hpl.size());
+        
         HasProperty hp = hpl.get(0);
         assertEquals(hp.getProperty(), m.getProperty("nc:AddressFullText"));
         assertEquals(1, hp.minOccurs());
@@ -97,6 +91,7 @@ public class ModelFromXSDIT {
         assertFalse(hp.maxUnbounded());
         assertNull(hp.augmentElementNS());
         assertEquals(0, hp.augmentTypeNS().size());
+        
         hp = hpl.get(1);
         assertEquals(hp.getProperty(), m.getProperty("j:AddressCommentText"));
         assertEquals(0, hp.minOccurs());
@@ -106,19 +101,22 @@ public class ModelFromXSDIT {
         assertEquals(2, hp.augmentTypeNS().size());
         assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("test")));
         assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("j")));
+        
         hp = hpl.get(2);
         assertEquals(hp.getProperty(), m.getProperty("j:AddressVerifiedDate"));
         assertEquals(0, hp.minOccurs());
         assertTrue(hp.maxUnbounded());
         assertNull(hp.augmentElementNS());
         assertEquals(1, hp.augmentTypeNS().size());
-        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("j")));        
+        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("j")));
+        
         hp = hpl.get(3);
         assertEquals(hp.getProperty(), m.getProperty("j:AnotherAddress"));
         assertEquals(0, hp.minOccurs());
         assertTrue(hp.maxUnbounded());
         assertEquals(hp.augmentElementNS(), m.getNamespaceByPrefix("j"));
         assertEquals(0, hp.augmentTypeNS().size());
+        
         hp = hpl.get(4);
         assertEquals(hp.getProperty(), m.getProperty("test:BoogalaText"));
         assertEquals(0, hp.minOccurs());
@@ -128,15 +126,14 @@ public class ModelFromXSDIT {
         assertEquals(1, hp.augmentTypeNS().size());        
         assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("test")));
     }
-        
+
     @Test
     @DisplayName("Code list")
-    public void testCodelist () {
+    public void testCodelist () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/codelist.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(4, m.getComponentList().size());
         Datatype dt = m.getDatatype("nc:EmploymentPositionBasisCodeType");
@@ -169,12 +166,11 @@ public class ModelFromXSDIT {
     
     @Test
     @DisplayName("Code list ClassType")
-    public void testCodelistClasstype () {
+    public void testCodelistClasstype () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/codelistClassType.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args); 
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(6, m.getComponentList().size());
         Datatype dt = m.getDatatype("nc:EmploymentPositionBasisCodeSimpleType");
@@ -221,12 +217,11 @@ public class ModelFromXSDIT {
     
     @Test
     @DisplayName("Code list Union")
-    public void testCodelistUnion () {
+    public void testCodelistUnion () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/codelistUnion.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(4, m.getComponentList().size());
         Datatype u = m.getDatatype("test:ColorCodeType");
@@ -242,12 +237,11 @@ public class ModelFromXSDIT {
     
     @Test
     @DisplayName("External namespace")
-    public void testComplexContent () {
+    public void testComplexContent () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/complexContent.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(12, m.getComponentList().size());
         ClassType ct = m.getClassType("nc:PersonNameType");
@@ -274,7 +268,7 @@ public class ModelFromXSDIT {
         assertEquals(0, hp.minOccurs());
         assertEquals(1, hp.maxOccurs());
         assertFalse(hp.maxUnbounded()); 
-        assertTrue(me.isAttribute("nc:personNameCommentText"));
+        assertTrue(m.getProperty("nc:personNameCommentText").isAttribute());
         assertNotNull(m.getClassType("nc:PersonNameTextType"));
         assertNotNull(m.getClassType("nc:ProperNameTextType"));
         assertNotNull(m.getClassType("nc:TextType"));        
@@ -282,12 +276,11 @@ public class ModelFromXSDIT {
         
     @Test
     @DisplayName("appinfo:deprecated")
-    public void testDeprecated () {
+    public void testDeprecated () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/deprecated.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(9, m.getComponentList().size());
         Property p = m.getProperty("nc:ConfidencePercent");
@@ -308,18 +301,23 @@ public class ModelFromXSDIT {
         ClassType ct = m.getClassType("nc:TextType");
         assertNotNull(ct);
         assertTrue(ct.isDeprecated());
-        assertTrue(me.isAttribute("nc:DepAtt"));
-        assertFalse(me.isAttribute("nc:SecretPercent"));
+        
+        p = m.getProperty("nc:DepAtt");
+        assertNotNull(p);
+        assertTrue(p.isAttribute());
+        
+        p = m.getProperty("nc:SecretPercent");
+        assertNotNull(p);
+        assertFalse(p.isAttribute());
     }
 
     @Test
     @DisplayName("External namespace")
-    public void testExternals () {
+    public void testExternals () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/externals.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(5, m.getNamespaceList().size());
         assertEquals(6, m.getComponentList().size());
         Namespace n = m.getNamespaceByPrefix("ns");
@@ -338,12 +336,11 @@ public class ModelFromXSDIT {
     
     @Test
     @DisplayName("HasValue")
-    public void testHasValue () {
+    public void testHasValue () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/hasValue.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(10, m.getComponentList().size());
         ClassType ct = m.getClassType("nc:Degree90Type");
@@ -375,12 +372,11 @@ public class ModelFromXSDIT {
 
     @Test
     @DisplayName("List type")
-    public void testListType () {
+    public void testListType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/list.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(2, m.getComponentList().size());
         Datatype dt = m.getDatatype("nc:TokenListType");
@@ -394,12 +390,11 @@ public class ModelFromXSDIT {
          
     @Test
     @DisplayName("Namespace prefix prioritization")
-    public void testNamespace_1 () {
+    public void testNamespace_1 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/namespace-1.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(3, m.getNamespaceList().size());
         assertEquals("nc", m.getNamespaceByURI("http://example.com/Foo/1.0/").getNamespacePrefix());
         assertEquals("bar", m.getNamespaceByURI("http://release.niem.gov/niem/niem-core/5.0/").getNamespacePrefix());
@@ -407,12 +402,11 @@ public class ModelFromXSDIT {
 
     @Test
     @DisplayName("Namespace prefix munging")
-    public void testNamespace_2 () {
+    public void testNamespace_2 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/namespace-2.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(3, m.getNamespaceList().size());
         assertEquals("nc", m.getNamespaceByURI("http://example.com/Foo/1.0/").getNamespacePrefix());
         assertEquals("nc_5", m.getNamespaceByURI("http://release.niem.gov/niem/niem-core/5.0/").getNamespacePrefix());
@@ -420,24 +414,27 @@ public class ModelFromXSDIT {
 
     @Test
     @DisplayName("Nillable")
-    public void testNillable () {
+    public void testNillable () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/proxy.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);     
-        assertTrue(me.isNillable("nc:ConfidencePercent"));
-        assertFalse(me.isNillable("nc:SomeText"));
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        Property p = m.getProperty("nc:ConfidencePercent");
+        assertNotNull(p);
+        assertTrue(p.isReferenceable());
+        
+        p = m.getProperty("nc:SomeText");
+        assertNotNull(p);
+        assertFalse(p.isReferenceable());     
     }
     
     @Test
     @DisplayName("Proxy")
-    public void testProxy () {
+    public void testProxy () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/proxy.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(5, m.getComponentList().size());
         Datatype dt = m.getDatatype("nc:PercentType");
@@ -457,12 +454,12 @@ public class ModelFromXSDIT {
 
     @Test
     @DisplayName("Restriction")
-    public void testRestriction () {
+    public void testRestriction () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/restriction.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+ 
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(2, m.getComponentList().size());
         assertNull(m.getDatatype("nc:AngularMinuteSimpleType"));
@@ -484,29 +481,27 @@ public class ModelFromXSDIT {
 
     @Test
     @DisplayName("TwoVersions")
-    public void testTwoVersions () {
+    public void testTwoVersions () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/twoversions-0.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(3, m.getNamespaceList().size());
         assertEquals(16, m.getComponentList().size());
-        assertEquals("http://release.niem.gov/niem/niem-core/4.0/", m.getNamespaceByPrefix("nc").getNamespaceURI());
-        assertEquals("http://release.niem.gov/niem/niem-core/5.0/", m.getNamespaceByPrefix("nc_5").getNamespaceURI());
+        assertEquals("http://release.niem.gov/niem/niem-core/4.0/", m.getNamespaceByPrefix("nc_4").getNamespaceURI());
+        assertEquals("http://release.niem.gov/niem/niem-core/5.0/", m.getNamespaceByPrefix("nc").getNamespaceURI());
         assertEquals("http://www.w3.org/2001/XMLSchema", m.getNamespaceByPrefix("xs").getNamespaceURI());
-        assertNotNull(m.getProperty("nc:ConfidencePercent"));
-        assertNotNull(m.getProperty("nc_5:PersonGivenName"));
+        assertNotNull(m.getProperty("nc_4:ConfidencePercent"));
+        assertNotNull(m.getProperty("nc:PersonGivenName"));
     }
   
     @Test
     @DisplayName("Union type")
-    public void testUnionType () {
+    public void testUnionType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/union.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(4, m.getComponentList().size());
         Datatype dt = m.getDatatype("ns:UnionType");
@@ -524,12 +519,11 @@ public class ModelFromXSDIT {
 
     @Test
     @DisplayName("xml:lang")
-    public void testXMLlang () {
+    public void testXMLlang () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
         String[] args = { "src/test/resources/xsd/xml-lang.xsd" };
-        Model m = new Model();
-        ModelExtension me = new ModelExtension(m);
-        NamespaceInfo nsd = new NamespaceInfo(); 
-        readModel(m, me, nsd, args);       
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
         assertEquals(3, m.getNamespaceList().size());
         assertEquals(6, m.getComponentList().size());
         Namespace xml = m.getNamespaceByPrefix("xml");
@@ -538,15 +532,5 @@ public class ModelFromXSDIT {
         assertNotNull(p);
         ClassType ct = m.getClassType("nc:TextType");
         assertEquals(ct.hasPropertyList().get(2).getProperty(), p);
-    }
-  
-    private void readModel(Model m, ModelExtension me, NamespaceInfo nsd, String[] args) {
-        try {
-            Schema s = Schema.genSchema(args);
-            ModelFromXSD mfact = new ModelFromXSD(s);
-            mfact.createModel(m, me, nsd);
-        } catch (Exception ex) {
-            fail("Can't create model");
-        } 
     }
 }

@@ -11,8 +11,8 @@
   <xs:annotation>
     <xs:documentation>Test for proxy types</xs:documentation>
   </xs:annotation>
-  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
   <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
   <xs:complexType name="PercentType">
     <xs:annotation>
       <xs:documentation>A data type for a ratio, proper fraction, or percentage, with 100% represented as the value 100.</xs:documentation>

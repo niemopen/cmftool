@@ -47,7 +47,8 @@ public class CMFTool {
      
     String xtd = "src/test/resources/xsd/";
     if (0 == args.length) {
-        args = new String[]{"x2m", "-o", xtd, xtd+"twoversions-0.xsd" };
+        args = new String[]{"xval", "-d", "-s", "examples/Claim-iepd/extension/claim.xsd", "examples/Claim-iepd/xml-catalog.xml"};
+//        args = new String[]{"xval", "-d", "-o", xtd, xtd+"twoversions-0.xsd" };
 //        args = new String[]{"xcmp", xtd+"nameinfo.xsd", xtd+"out/nameinfo.xsd"};
 //        args = new String[]{"m2x", "-d", "-o", xtd+"out", xtd+"twoversions-0.cmf", xtd+"twoversions-0.cmx"};
     }
@@ -64,6 +65,7 @@ public class CMFTool {
         CmdXSDtoCMF xsdToCmfCmd = new CmdXSDtoCMF(jc);       
         CmdXSDcanonicalize xsdCanon = new CmdXSDcanonicalize(jc);
         CmdXSDcmp xsdCmpCmd         = new CmdXSDcmp(jc);
+        CmdXSDvalidate xsValCmd     = new CmdXSDvalidate(jc);
         CommandHelp helpCmd         = new CommandHelp(jc);    
         jc.addCommand("m2m", cmfToCmfCmd);
         jc.addCommand("m2o", cmfToOwlCmd);
@@ -71,9 +73,11 @@ public class CMFTool {
         jc.addCommand("x2m", xsdToCmfCmd);  
         jc.addCommand("xcanon", xsdCanon);
         jc.addCommand("xcmp", xsdCmpCmd);
+        jc.addCommand("xval", xsValCmd);
         jc.addCommand("help", helpCmd, "usage");
         
         if (args.length < 1) {
+            System.out.println("Version: " + CMFTool.class.getPackage().getImplementationVersion());
             jc.usage();
             System.exit(2);
         }
@@ -81,6 +85,7 @@ public class CMFTool {
             jc.parse(args);
         }
         catch (Exception ex) {
+            System.out.println("Version: " + CMFTool.class.getPackage().getImplementationVersion());
             jc.usage();
             System.exit(2);
         }
