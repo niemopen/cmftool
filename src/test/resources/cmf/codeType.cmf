@@ -4,36 +4,36 @@
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://reference.niem.gov/specification/cmf/0.5/">
-  <Namespace structures:uri="nc">
+  <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixName>nc</NamespacePrefixName>
     <NamespaceKindCode>CORE</NamespaceKindCode>
   </Namespace>
-  <Namespace structures:uri="xs">
+  <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixName>xs</NamespacePrefixName>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:uri="nc:EmploymentPositionBasisAbstract">
+  <Property structures:id="nc.EmploymentPositionBasisAbstract">
     <Name>EmploymentPositionBasisAbstract</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data concept for a nature or duration of the position, such as permanent, non-permanent, or contractor.</DefinitionText>
     <AbstractIndicator>true</AbstractIndicator>
   </Property>
-  <Property structures:uri="nc:EmploymentPositionBasisCode">
+  <Property structures:id="nc.EmploymentPositionBasisCode">
     <Name>EmploymentPositionBasisCode</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A nature or duration of the position, such as permanent, non-permanent, or contractor.</DefinitionText>
-    <SubPropertyOf structures:uri="nc:EmploymentPositionBasisAbstract" xsi:nil="true"/>
-    <Datatype structures:uri="nc:EmploymentPositionBasisCodeType" xsi:nil="true"/>
+    <SubPropertyOf structures:ref="nc.EmploymentPositionBasisAbstract" xsi:nil="true"/>
+    <Datatype structures:ref="nc.EmploymentPositionBasisCodeType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Datatype structures:uri="nc:EmploymentPositionBasisCodeType">
+  <Datatype structures:id="nc.EmploymentPositionBasisCodeType">
     <Name>EmploymentPositionBasisCodeType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for a nature or duration of the employment position.</DefinitionText>
     <RestrictionOf>
-      <Datatype structures:uri="xs:token" xsi:nil="true"/>
+      <Datatype structures:ref="xs.token" xsi:nil="true"/>
       <Enumeration>
         <StringValue>contractor</StringValue>
       </Enumeration>
@@ -45,9 +45,9 @@
       </Enumeration>
     </RestrictionOf>
   </Datatype>
-  <Datatype structures:uri="xs:token">
+  <Datatype structures:id="xs.token">
     <Name>token</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
   <SchemaDocument>
     <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>

@@ -4,35 +4,35 @@
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://reference.niem.gov/specification/cmf/0.5/">
-  <Namespace structures:uri="nc">
+  <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixName>nc</NamespacePrefixName>
     <NamespaceKindCode>CORE</NamespaceKindCode>
   </Namespace>
-  <Namespace structures:uri="xs">
+  <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixName>xs</NamespacePrefixName>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:uri="nc:toleranceNumeric">
+  <Property structures:id="nc.toleranceNumeric">
     <Name>toleranceNumeric</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>An allowable range for error on a point estimate.</DefinitionText>
-    <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+    <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </Property>
-  <Datatype structures:uri="nc:NumericType">
+  <Datatype structures:id="nc.NumericType">
     <Name>NumericType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for a number value.</DefinitionText>
     <DeprecatedIndicator>true</DeprecatedIndicator>
     <RestrictionOf>
-      <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+      <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
     </RestrictionOf>
   </Datatype>
-  <Datatype structures:uri="xs:decimal">
+  <Datatype structures:id="xs.decimal">
     <Name>decimal</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
   <SchemaDocument>
     <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>

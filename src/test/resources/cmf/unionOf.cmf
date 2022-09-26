@@ -4,36 +4,36 @@
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://reference.niem.gov/specification/cmf/0.5/">
-  <Namespace structures:uri="ns">
+  <Namespace structures:id="ns">
     <NamespaceURI>http://example.com/codes/</NamespaceURI>
     <NamespacePrefixName>ns</NamespacePrefixName>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
   </Namespace>
-  <Namespace structures:uri="xs">
+  <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixName>xs</NamespacePrefixName>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:uri="ns:Numbers">
+  <Property structures:id="ns.Numbers">
     <Name>Numbers</Name>
-    <Namespace structures:uri="ns" xsi:nil="true"/>
-    <Datatype structures:uri="ns:UnionType" xsi:nil="true"/>
+    <Namespace structures:ref="ns" xsi:nil="true"/>
+    <Datatype structures:ref="ns.UnionType" xsi:nil="true"/>
   </Property>
-  <Datatype structures:uri="ns:UnionType">
+  <Datatype structures:id="ns.UnionType">
     <Name>UnionType</Name>
-    <Namespace structures:uri="ns" xsi:nil="true"/>
+    <Namespace structures:ref="ns" xsi:nil="true"/>
     <UnionOf>
-      <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
-      <Datatype structures:uri="xs:float" xsi:nil="true"/>
+      <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
+      <Datatype structures:ref="xs.float" xsi:nil="true"/>
     </UnionOf>
   </Datatype>
-  <Datatype structures:uri="xs:decimal">
+  <Datatype structures:id="xs.decimal">
     <Name>decimal</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
-  <Datatype structures:uri="xs:float">
+  <Datatype structures:id="xs.float">
     <Name>float</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
   <SchemaDocument>
     <NamespaceURI>http://example.com/codes/</NamespaceURI>

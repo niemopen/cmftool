@@ -4,23 +4,23 @@
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://reference.niem.gov/specification/cmf/0.5/">
-  <Namespace structures:uri="nc">
+  <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixName>nc</NamespacePrefixName>
     <DefinitionText>Mismatch idref test.</DefinitionText>
   </Namespace>
-  <Namespace structures:uri="xs">
+  <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixName>xs</NamespacePrefixName>
   </Namespace>
-  <Datatype structures:uri="nc:TokenListType">
+  <Datatype structures:id="nc.TokenListType">
     <Name>TokenListType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for a white space-delimited list of tokens.</DefinitionText>
-    <ListOf structures:uri="xs" xsi:nil="true"/>
+    <ListOf structures:ref="xs" xsi:nil="true"/>
   </Datatype>
-  <Datatype structures:uri="xs:decimal">
+  <Datatype structures:id="xs.decimal">
     <Name>decimal</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
 </Model>

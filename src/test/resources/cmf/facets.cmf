@@ -4,22 +4,22 @@
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://reference.niem.gov/specification/cmf/0.5/">
-  <Namespace structures:uri="nc">
+  <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixName>nc</NamespacePrefixName>
     <DefinitionText>Facet test</DefinitionText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
   </Namespace>
-  <Namespace structures:uri="xs">
+  <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixName>xs</NamespacePrefixName>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Datatype structures:uri="nc:FacetsType">
+  <Datatype structures:id="nc.FacetsType">
     <Name>FacetsType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <RestrictionOf>
-      <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+      <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
       <WhiteSpace>
         <WhiteSpaceValueCode>collapse</WhiteSpaceValueCode>
       </WhiteSpace>
@@ -56,8 +56,8 @@
       </TotalDigits>
     </RestrictionOf>
   </Datatype>
-  <Datatype structures:uri="xs:decimal">
+  <Datatype structures:id="xs.decimal">
     <Name>decimal</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
 </Model>

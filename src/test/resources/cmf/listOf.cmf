@@ -4,35 +4,35 @@
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://reference.niem.gov/specification/cmf/0.5/">
-  <Namespace structures:uri="nc">
+  <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixName>nc</NamespacePrefixName>
     <NamespaceKindCode>CORE</NamespaceKindCode>
   </Namespace>
-  <Namespace structures:uri="xs">
+  <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixName>xs</NamespacePrefixName>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:uri="nc:errorValue">
+  <Property structures:id="nc.errorValue">
     <Name>errorValue</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
-    <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </Property>
-  <Datatype structures:uri="nc:TokenListType">
+  <Datatype structures:id="nc.TokenListType">
     <Name>TokenListType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for a white space-delimited list of tokens.</DefinitionText>
-    <ListOf structures:uri="xs:token" xsi:nil="true"/>
+    <ListOf structures:ref="xs.token" xsi:nil="true"/>
   </Datatype>
-  <Datatype structures:uri="xs:decimal">
+  <Datatype structures:id="xs.decimal">
     <Name>decimal</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
-  <Datatype structures:uri="xs:token">
+  <Datatype structures:id="xs.token">
     <Name>token</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
   <SchemaDocument>
     <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
