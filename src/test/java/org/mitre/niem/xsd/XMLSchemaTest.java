@@ -25,15 +25,10 @@ package org.mitre.niem.xsd;
 
 import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
-import nl.altindag.log.LogCaptor;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.javatuples.Pair;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.xml.sax.SAXException;
 
@@ -44,22 +39,6 @@ import org.xml.sax.SAXException;
  */
 public class XMLSchemaTest {
     private static final String testDirPath = "src/test/resources";
-//    private static LogCaptor logCaptor;
-//
-//    @BeforeAll
-//    public static void setupLogCaptor() {
-//        logCaptor = LogCaptor.forClass(XMLSchema.class);
-//    }
-//    
-//    @AfterEach
-//    public void clearLogs() {
-//        logCaptor.clearLogs();
-//    }
-//    
-//    @AfterAll
-//    public static void tearDown() {
-//        logCaptor.close();
-//    }  
     
     public XMLSchemaTest() { }
    
@@ -67,7 +46,7 @@ public class XMLSchemaTest {
     public void testGGS () throws XMLSchema.XMLSchemaException, IOException, SAXException, ParserConfigurationException {
         var s = new XMLSchema(ga("cat/cat1.xml", "xsd/union.xsd", "http://example.com/external-content/"));
         assertEquals(1, s.catalogs().size());
-        assertEquals(2, s.schemaDocs().size());
+        assertEquals(2, s.initialSchemaDocs().size());
         assertEquals(1, s.initialNS().size());   
     }
     
@@ -76,7 +55,7 @@ public class XMLSchemaTest {
     public void testGS01 () throws XMLSchema.XMLSchemaException, IOException {
         var s = new XMLSchema(ga("file:/C:/Work/NetBeans/CMFTool/src/test/resources/xsd/list.xsd"));
         assertEquals(0, s.catalogs().size());
-        assertEquals(1, s.schemaDocs().size());
+        assertEquals(1, s.initialSchemaDocs().size());
         assertEquals(0, s.initialNS().size());
     }
     

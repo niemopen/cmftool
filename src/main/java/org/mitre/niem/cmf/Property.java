@@ -47,11 +47,11 @@ public class Property extends Component {
     public void setClassType (ClassType c)        { classType = c; }
     public void setDatatype (Datatype d)          { datatype = d; }
     public void setIsAttribute (boolean f)        { isAttribute = f; }
-    public void setIsAttribute (String s)         { isAttribute = "true".equals(s); }
+    public void setIsAttribute (String s)         { isAttribute = null != s && "true".equals(s); }
     public void setIsReferenceable (boolean f)    { isReferenceable = f; }
     public void setIsReferenceable (String s)     { isReferenceable = "true".equals(s); }    
     public void setCanHaveMD (boolean f)          { canHaveMD = f; }
-    public void setCanHaveMD (String s)           { canHaveMD = "true".equals(s); }    
+    public void setCanHaveMD (String s)           { canHaveMD = null != s && "true".equals(s); }    
 
     public Property getSubPropertyOf ()           { return subPropertyOf; }
     public ClassType getClassType ()              { return classType; }

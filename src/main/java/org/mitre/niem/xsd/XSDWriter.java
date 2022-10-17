@@ -50,7 +50,7 @@ public class XSDWriter {
     // Writes the XSD document model.  Post-processing of XSLT output to do
     // what XSLT should do, but doesn't.  You can't process arbitrary XML in
     // this way, but we know what the XSLT output of a NIEM conforming
-    // schema document is going to be , so it works.
+    // schema document is going to be, so it works.
     public static void writeDOM (Document dom, Writer w) 
             throws TransformerConfigurationException, TransformerException, IOException {
         

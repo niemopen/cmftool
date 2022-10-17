@@ -80,17 +80,23 @@ public class XMLNamespaceScope {
         mapFlag = true;
     }
 
-    public Pair<String, String> resolve (String str) throws XMLNamespaceMapException {
-        if (null == str)throw new XMLNamespaceMapException("null is not a valid QName");
+    /**
+     * Expand a QName into a <namespaceURI,localName> pair. Returns null if
+     * the argument is not a valid QName or has no binding in the current scope.
+     * @param str QName to expand
+     * @return <namespaceURI,localName> or null
+     */
+    public Pair<String, String> expandQName (String str) {
+        if (null == str) return null;
         int cpos = str.indexOf(":");
         if (cpos < 0) return Pair.with(null, str);
-        if (cpos == str.length() - 1) throw new XMLNamespaceMapException(String.format("'%s' is not a valid QName", str));
+        if (cpos == str.length() - 1) return null;
         
         String prefix = str.substring(0, cpos);
         String lname = str.substring(cpos + 1);
-        if (0 <= lname.indexOf(":")) throw new XMLNamespaceMapException(String.format("'%s' is not a valid QName", str));
+        if (0 <= lname.indexOf(":")) return null;
         String uri = currentMap.get(prefix);
-        if (null == uri) throw new XMLNamespaceMapException(String.format("no binding in scope for prefix '%s'", prefix));
+        if (null == uri) return null;
         return Pair.with(uri, lname);
     }
 

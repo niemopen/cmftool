@@ -39,6 +39,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
@@ -182,7 +183,7 @@ class CmdXSDtoCMF implements JCCommand {
         } catch (IOException ex) {
             System.err.println(String.format("IO error reading schema documents: %s", ex.getMessage()));
             System.exit(1);
-        } catch (XMLSchema.XMLSchemaException | SAXException ex) {
+        } catch (XMLSchema.XMLSchemaException | CMFException | SAXException ex) {
             System.err.println(String.format("Error building XML schema: %s", ex.getMessage()));
             System.exit(1);
         } catch (ParserConfigurationException ex) {

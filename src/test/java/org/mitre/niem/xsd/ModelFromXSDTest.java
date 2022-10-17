@@ -29,6 +29,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
+import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
@@ -66,19 +67,18 @@ public class ModelFromXSDTest {
     
     @Test
     @DisplayName("Augmentation")
-    public void testAugmentation () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
-        ModelFromXSD mfact = new ModelFromXSD();        
+    public void testAugmentation () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel("src/test/resources/xsd/augment-0.xsd");  
         
         assertEquals(4, m.getNamespaceList().size());
-        assertEquals(10, m.getComponentList().size());
+        assertEquals(11, m.getComponentList().size());
         assertNotNull(m.getNamespaceByPrefix("j"));
         assertNotNull(m.getNamespaceByPrefix("nc"));
         assertNotNull(m.getNamespaceByPrefix("test"));
         assertNotNull(m.getNamespaceByPrefix("xs"));             
         ClassType ct = m.getClassType("nc:AddressType");
         assertNotNull(ct);
-        assertNull(ct.getHasValue());
         assertTrue(ct.isAugmentable());
         List<HasProperty> hpl = ct.hasPropertyList();
         assertNotNull(hpl);
@@ -129,7 +129,7 @@ public class ModelFromXSDTest {
 
     @Test
     @DisplayName("Code list")
-    public void testCodelist () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testCodelist () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/codelist.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
@@ -166,14 +166,14 @@ public class ModelFromXSDTest {
     
     @Test
     @DisplayName("Code list ClassType")
-    public void testCodelistClasstype () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testCodelistClasstype () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/codelistClassType.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args); 
        
         assertEquals(2, m.getNamespaceList().size());
-        assertEquals(6, m.getComponentList().size());
-        Datatype dt = m.getDatatype("nc:EmploymentPositionBasisCodeSimpleType");
+        assertEquals(7, m.getComponentList().size());
+        Datatype dt = m.getDatatype("nc:EmploymentPositionBasisCodeLiteralType");
         assertNotNull(dt);
         RestrictionOf r = dt.getRestrictionOf();
         assertNotNull(r);
@@ -190,11 +190,17 @@ public class ModelFromXSDTest {
         
         ClassType ct = m.getClassType("nc:EmploymentPositionBasisCodeType");
         assertNotNull(ct);
-        assertEquals(ct.getHasValue(), dt);
         List<HasProperty> hpl = ct.hasPropertyList();
         assertNotNull(hpl);
-        assertEquals(1, hpl.size());
+        assertEquals(2, hpl.size());
         HasProperty hp = hpl.get(0);
+        assertNotNull(hp);
+        assertEquals(hp.getProperty(), m.getProperty("nc:EmploymentPositionBasisCodeLiteral"));
+        assertEquals(1, hp.minOccurs());
+        assertEquals(1, hp.maxOccurs());
+        assertFalse(hp.maxUnbounded());        
+
+        hp = hpl.get(1);
         assertNotNull(hp);
         assertEquals(hp.getProperty(), m.getProperty("nc:foo"));
         assertEquals(1, hp.minOccurs());
@@ -212,12 +218,12 @@ public class ModelFromXSDTest {
         assertEquals(p2.getClassType(), ct);
         assertNull(p2.getDatatype());
         assertNotNull(m.getDatatype("xs:token"));
-        assertNotNull(m.getDatatype("nc:EmploymentPositionBasisCodeSimpleType"));
+        assertNotNull(m.getDatatype("nc:EmploymentPositionBasisCodeLiteralType"));
     }
     
     @Test
     @DisplayName("Code list Union")
-    public void testCodelistUnion () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testCodelistUnion () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/codelistUnion.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
@@ -236,14 +242,14 @@ public class ModelFromXSDTest {
     }
     
     @Test
-    @DisplayName("External namespace")
-    public void testComplexContent () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    @DisplayName("Complex content")
+    public void testComplexContent () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/complexContent.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
         assertEquals(2, m.getNamespaceList().size());
-        assertEquals(12, m.getComponentList().size());
+        assertEquals(15, m.getComponentList().size());
         ClassType ct = m.getClassType("nc:PersonNameType");
         assertNotNull(ct);
         List<HasProperty> hpl = ct.hasPropertyList();
@@ -276,13 +282,13 @@ public class ModelFromXSDTest {
         
     @Test
     @DisplayName("appinfo:deprecated")
-    public void testDeprecated () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testDeprecated () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/deprecated.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
         assertEquals(2, m.getNamespaceList().size());
-        assertEquals(9, m.getComponentList().size());
+        assertEquals(10, m.getComponentList().size());
         Property p = m.getProperty("nc:ConfidencePercent");
         assertNotNull(p);
         assertFalse(p.isDeprecated()); 
@@ -313,13 +319,13 @@ public class ModelFromXSDTest {
 
     @Test
     @DisplayName("External namespace")
-    public void testExternals () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testExternals () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/externals.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
         assertEquals(5, m.getNamespaceList().size());
-        assertEquals(6, m.getComponentList().size());
+        assertEquals(5, m.getComponentList().size());
         Namespace n = m.getNamespaceByPrefix("ns");
         assertNotNull(n);
         assertFalse(n.isExternal());
@@ -333,46 +339,10 @@ public class ModelFromXSDTest {
         assertNotNull(ct);
         assertFalse(ct.isExternal());
     }
-    
-    @Test
-    @DisplayName("HasValue")
-    public void testHasValue () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
-        String[] args = { "src/test/resources/xsd/hasValue.xsd" };
-        ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel(args);
-       
-        assertEquals(2, m.getNamespaceList().size());
-        assertEquals(10, m.getComponentList().size());
-        ClassType ct = m.getClassType("nc:Degree90Type");
-        assertEquals(ct.getHasValue(), m.getDatatype("nc:Degree90SimpleType"));
-        assertEquals(1, ct.hasPropertyList().size());
-        HasProperty hp = ct.hasPropertyList().get(0);
-        assertNotNull(hp);
-        assertEquals(hp.getProperty(), m.getProperty("nc:errorValue"));
-        assertEquals(0, hp.minOccurs());
-        assertEquals(1, hp.maxOccurs());
-        assertFalse(hp.maxUnbounded());
-        
-        Datatype dt = m.getDatatype("nc:Degree90SimpleType");
-        assertNull(dt.getListOf());
-        assertNull(dt.getUnionOf());
-        RestrictionOf r = dt.getRestrictionOf();
-        assertEquals(r.getDatatype(), m.getDatatype("xs:decimal"));
-        
-        ct = m.getClassType("nc:UnionTestType");
-        assertEquals(ct.getHasValue(), m.getDatatype("nc:UnionSimpleType"));
-        
-        ct = m.getClassType("nc:ListTestType");
-        assertEquals(ct.getHasValue(), m.getDatatype("nc:ListSimpleType"));
-        
-        dt = m.getDatatype("nc:NoAttributeTestType");
-        r = dt.getRestrictionOf();
-        assertEquals(r.getDatatype(), m.getDatatype("nc:Degree90SimpleType"));
-    }
 
     @Test
     @DisplayName("List type")
-    public void testListType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testListType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/list.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
@@ -390,7 +360,7 @@ public class ModelFromXSDTest {
          
     @Test
     @DisplayName("Namespace prefix prioritization")
-    public void testNamespace_1 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testNamespace_1 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/namespace-1.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
@@ -402,7 +372,7 @@ public class ModelFromXSDTest {
 
     @Test
     @DisplayName("Namespace prefix munging")
-    public void testNamespace_2 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testNamespace_2 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/namespace-2.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
@@ -414,7 +384,7 @@ public class ModelFromXSDTest {
 
     @Test
     @DisplayName("Nillable")
-    public void testNillable () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testNillable () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/proxy.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
@@ -430,7 +400,7 @@ public class ModelFromXSDTest {
     
     @Test
     @DisplayName("Proxy")
-    public void testProxy () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testProxy () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/proxy.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
@@ -454,11 +424,10 @@ public class ModelFromXSDTest {
 
     @Test
     @DisplayName("Restriction")
-    public void testRestriction () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testRestriction () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/restriction.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
- 
        
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(2, m.getComponentList().size());
@@ -470,24 +439,22 @@ public class ModelFromXSDTest {
         assertEquals(r.getDatatype(), m.getDatatype("xs:decimal"));
         List<Facet> fl = r.getFacetList();
         Facet f = fl.get(0);
-        assertEquals("WhiteSpace", f.getFacetKind());
-        f = fl.get(1);
         assertEquals("MaxExclusive", f.getFacetKind());
         assertEquals("60.0", f.getStringVal());
-        f = fl.get(2);
+        f = fl.get(1);
         assertEquals("MinInclusive", f.getFacetKind());
         assertEquals("0.0", f.getStringVal());        
     }
 
     @Test
     @DisplayName("TwoVersions")
-    public void testTwoVersions () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testTwoVersions () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/twoversions-0.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
         assertEquals(3, m.getNamespaceList().size());
-        assertEquals(16, m.getComponentList().size());
+        assertEquals(19, m.getComponentList().size());
         assertEquals("http://release.niem.gov/niem/niem-core/4.0/", m.getNamespaceByPrefix("nc_4").getNamespaceURI());
         assertEquals("http://release.niem.gov/niem/niem-core/5.0/", m.getNamespaceByPrefix("nc").getNamespaceURI());
         assertEquals("http://www.w3.org/2001/XMLSchema", m.getNamespaceByPrefix("xs").getNamespaceURI());
@@ -497,7 +464,7 @@ public class ModelFromXSDTest {
   
     @Test
     @DisplayName("Union type")
-    public void testUnionType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testUnionType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/union.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
@@ -516,21 +483,55 @@ public class ModelFromXSDTest {
         assertEquals(ul.get(0), m.getDatatype("xs:decimal"));
         assertEquals(ul.get(1), m.getDatatype("xs:float"));        
     }
+    
+    @Test
+    public void testWhitespace () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/whitespace.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);   
+        
+        Datatype dt = m.getDatatype("nc:CStringType");
+        RestrictionOf r = dt.getRestrictionOf();
+        Facet f = r.getFacetList().get(0);
+        assertEquals(2, r.getFacetList().size());
+        assertEquals("WhiteSpace", f.getFacetKind());
+        assertEquals("collapse", f.getStringVal());
+        f = r.getFacetList().get(1);
+        assertEquals("MaxLength", f.getFacetKind());
+        assertEquals("20", f.getStringVal());
+
+        dt = m.getDatatype("nc:LStringType");
+        r = dt.getRestrictionOf();
+        f = r.getFacetList().get(0);
+        assertEquals(1, r.getFacetList().size());
+        assertEquals("MaxLength", f.getFacetKind());
+        assertEquals("20", f.getStringVal());        
+    
+        dt = m.getDatatype("nc:AngularMinuteType");
+        r = dt.getRestrictionOf();
+        f = r.getFacetList().get(0);
+        assertEquals(2, r.getFacetList().size());
+        assertEquals("MaxExclusive", f.getFacetKind());
+        assertEquals("60.0", f.getStringVal());   
+        f = r.getFacetList().get(1);
+        assertEquals("MinInclusive", f.getFacetKind());
+        assertEquals("0.0", f.getStringVal()); 
+    }
 
     @Test
     @DisplayName("xml:lang")
-    public void testXMLlang () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException {
+    public void testXMLlang () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/xml-lang.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
         assertEquals(3, m.getNamespaceList().size());
-        assertEquals(6, m.getComponentList().size());
+        assertEquals(7, m.getComponentList().size());
         Namespace xml = m.getNamespaceByPrefix("xml");
         assertNotNull(xml);
         Property p = m.getProperty("xml:lang");
         assertNotNull(p);
         ClassType ct = m.getClassType("nc:TextType");
-        assertEquals(ct.hasPropertyList().get(2).getProperty(), p);
+        assertEquals(ct.hasPropertyList().get(3).getProperty(), p);
     }
 }

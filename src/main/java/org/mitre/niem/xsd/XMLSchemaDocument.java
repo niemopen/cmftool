@@ -46,7 +46,8 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * A class for providing information from a schema document that is not
- * available through the Xerces XML Schema (XSModel) API:<ul>
+ * available through the Xerces XML Schema (XSModel) API.  Knows how to
+ * parse XSD document to provide:<ul>
  *
  * <li> The target namespace attribute value</li>
  * <li> All appinfo attributes in declarations, definitions, and imports </li>
@@ -99,7 +100,7 @@ public class XMLSchemaDocument {
     
     private class XSDHandler extends DefaultHandler {  
         private XMLNamespaceScope nsm = new XMLNamespaceScope();
-        private Pair<String,String> ctypeEQN = null;    // namespace and lname of complex type being parsed
+        private Pair<String,String> ctypeEN = null;    // namespace and lname of complex type being parsed
         private Locator docloc = null;                  // for document line number in log messages
         private StringBuilder chars;                    // current element simple content
         private int depth = 0;                          // root element has depth = 0
@@ -162,34 +163,25 @@ public class XMLSchemaDocument {
                 }
             }
             // Remember the QName of the complex type we are defining
-            else if (1 == depth && "complexType".equals(elname)) ctypeEQN = Pair.with(targetNS, atts.getValue("name"));
+            else if (1 == depth && "complexType".equals(elname)) ctypeEN = Pair.with(targetNS, atts.getValue("name"));
                 
-            // Look for appinfo attributes on global definitions and declarations, or on xs:element within a complex type definition
+            // Look for appinfo attributes on global definitions and declarations
             if (1 == depth && xsComponentPat.matcher(elname).lookingAt()) {   
                 for (int i = 0; i < atts.getLength(); i++) {
                     if (atts.getURI(i).startsWith(APPINFO_NS_URI_PREFIX)) {
-                        var eqn = Pair.with(targetNS, atts.getValue("name"));
-                        appinfo.add(new Appinfo(targetNS, atts.getLocalName(i), atts.getValue(i), eqn, null));
+                        var een = Pair.with(targetNS, atts.getValue("name"));
+                        appinfo.add(new Appinfo(atts.getLocalName(i), atts.getValue(i), een, null));
                     }
                 } 
             }
-            // Look for appinfo attributes on element declarations within complex type definition
-            if (null != ctypeEQN && "element".equals(elname)) {
+            // Look for appinfo attributes on element references within complex type definition
+            String eref = atts.getValue("ref");
+            Pair<String,String> een = nsm.expandQName(eref);
+            if (null != ctypeEN && "element".equals(elname) && null != eref && null != een) {
                 for (int i = 0; i < atts.getLength(); i++) {
                     if (atts.getURI(i).startsWith(APPINFO_NS_URI_PREFIX)) {
-                        String eref = atts.getValue("ref");
-                        if (null != eref) {
-                            Pair<String,String> eqn;
-                            try {
-                                eqn = nsm.resolve(eref);
-                                if (null == eqn.getValue0()) eqn.setAt0(targetNS);
-                                Appinfo a = new Appinfo(targetNS, atts.getLocalName(i), atts.getValue(i), ctypeEQN, eqn);
-                                appinfo.add(a);                                
-                            } catch (XMLNamespaceScope.XMLNamespaceMapException ex) {
-                                LOG.warn(String.format("%s, line %d: unable to resolve %s", 
-                                        docloc.getSystemId(), docloc.getLineNumber(), eref));
-                            }
-                        }
+                        Appinfo a = new Appinfo(atts.getLocalName(i), atts.getValue(i), ctypeEN, een);
+                        appinfo.add(a);                                
                     }
                 }
             }
@@ -200,7 +192,7 @@ public class XMLSchemaDocument {
         public void endElement (String ens, String elname, String eQN) {
             depth--;
             nsm.onEndElement();
-            if (1 == depth && "complexType".equals(elname)) ctypeEQN = null;    // finished global type defn
+            if (1 == depth && "complexType".equals(elname)) ctypeEN = null;    // finished global type defn
             
             // The first <documentation> element in document order at depth 2 
             // has to be the schema documentation string

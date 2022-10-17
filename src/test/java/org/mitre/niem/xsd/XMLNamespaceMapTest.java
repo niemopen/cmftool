@@ -47,49 +47,49 @@ public class XMLNamespaceMapTest {
         var nsm = new XMLNamespaceScope();
         nsm.onStartPrefixMapping("p1", "foo");
         nsm.onStartPrefixMapping("p2", "bar");
-        assertEquals(Pair.with("foo", "fred"), nsm.resolve("p1:fred"));
-        assertEquals(Pair.with("bar", "dick"), nsm.resolve("p2:dick"));
+        assertEquals(Pair.with("foo", "fred"), nsm.expandQName("p1:fred"));
+        assertEquals(Pair.with("bar", "dick"), nsm.expandQName("p2:dick"));
         nsm.onStartElement();
-        assertEquals(Pair.with("foo", "fred"), nsm.resolve("p1:fred"));
-        assertEquals(Pair.with("bar", "dick"), nsm.resolve("p2:dick")); 
+        assertEquals(Pair.with("foo", "fred"), nsm.expandQName("p1:fred"));
+        assertEquals(Pair.with("bar", "dick"), nsm.expandQName("p2:dick")); 
         
         nsm.onStartPrefixMapping("p1", "xyz");
-        assertEquals(Pair.with("xyz", "fred"), nsm.resolve("p1:fred"));
-        assertEquals(Pair.with("bar", "dick"), nsm.resolve("p2:dick"));        
+        assertEquals(Pair.with("xyz", "fred"), nsm.expandQName("p1:fred"));
+        assertEquals(Pair.with("bar", "dick"), nsm.expandQName("p2:dick"));        
         
         nsm.onStartElement();
-        assertEquals(Pair.with("xyz", "fred"), nsm.resolve("p1:fred"));
-        assertEquals(Pair.with("bar", "dick"), nsm.resolve("p2:dick"));   
+        assertEquals(Pair.with("xyz", "fred"), nsm.expandQName("p1:fred"));
+        assertEquals(Pair.with("bar", "dick"), nsm.expandQName("p2:dick"));   
         
         nsm.onEndElement();
-        assertEquals(Pair.with("xyz", "fred"), nsm.resolve("p1:fred"));
-        assertEquals(Pair.with("bar", "dick"), nsm.resolve("p2:dick"));   
+        assertEquals(Pair.with("xyz", "fred"), nsm.expandQName("p1:fred"));
+        assertEquals(Pair.with("bar", "dick"), nsm.expandQName("p2:dick"));   
         
         nsm.onEndElement();
-        assertEquals(Pair.with("foo", "fred"), nsm.resolve("p1:fred"));
-        assertEquals(Pair.with("bar", "dick"), nsm.resolve("p2:dick"));   
+        assertEquals(Pair.with("foo", "fred"), nsm.expandQName("p1:fred"));
+        assertEquals(Pair.with("bar", "dick"), nsm.expandQName("p2:dick"));   
     }
     
     @Test
     public void testException () throws XMLNamespaceScope.XMLNamespaceMapException {
       var nsm = new XMLNamespaceScope();  
       
-      Pair<String,String> res = nsm.resolve("unprefixed");
+      Pair<String,String> res = nsm.expandQName("unprefixed");
       assertEquals(null, res.getValue0());
       assertEquals("unprefixed", res.getValue1());
       
       var thrown = Assertions.assertThrows(XMLNamespaceScope.XMLNamespaceMapException.class, () -> {
-           Pair<String,String> eqn = nsm.resolve("pr:");
+           Pair<String,String> eqn = nsm.expandQName("pr:");
       });
       assertThat(thrown.getMessage()).contains("not a valid QName");      
       
       thrown = Assertions.assertThrows(XMLNamespaceScope.XMLNamespaceMapException.class, () -> {
-           Pair<String,String> eqn = nsm.resolve("nc:foo:bzr");
+           Pair<String,String> eqn = nsm.expandQName("nc:foo:bzr");
       });
       assertThat(thrown.getMessage()).contains("not a valid QName"); 
       
       thrown = Assertions.assertThrows(XMLNamespaceScope.XMLNamespaceMapException.class, () -> {
-           Pair<String,String> eqn = nsm.resolve("pr:name");
+           Pair<String,String> eqn = nsm.expandQName("pr:name");
       });
       assertThat(thrown.getMessage()).contains("no binding in scope"); 
     }

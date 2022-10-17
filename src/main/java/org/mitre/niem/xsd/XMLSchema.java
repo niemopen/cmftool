@@ -96,7 +96,7 @@ public class XMLSchema {
      * constructor's arguments.
      * @return the list of file URIs
      */
-    public List<String> schemaDocs ()        { return schemaDocs; }
+    public List<String> initialSchemaDocs () { return schemaDocs; }
     /**
      * Returns the list of namespace URIs found in the constructor's arguments.
      * @return list of namespace URIs
@@ -366,18 +366,35 @@ public class XMLSchema {
     // Schema pile parsing info is created on demand and cached
     private Map<String,XMLSchemaDocument> sdocs = null;
     private String pileRoot;
-    
+       
+    /**
+     * Returns a map of namespace URIs to the SchemaDocument object having that
+     * target namespace URI.  
+     * @return map(nsuri) -> SchemaDocument
+     * @throws SAXException
+     * @throws ParserConfigurationException
+     * @throws IOException
+     * @throws org.mitre.niem.xsd.XMLSchema.XMLSchemaException 
+     */
     public Map<String,XMLSchemaDocument> schemaDocuments () throws SAXException, ParserConfigurationException, IOException, XMLSchemaException { 
         parseSchemaPile(); 
         return sdocs; 
     }
     
+    /**
+     * Returns the file: URI of the root directory of the schema document pile.
+     * @return root directory URI
+     * @throws SAXException
+     * @throws ParserConfigurationException
+     * @throws IOException
+     * @throws org.mitre.niem.xsd.XMLSchema.XMLSchemaException 
+     */
     public String pileRoot () throws SAXException, ParserConfigurationException, IOException, XMLSchemaException {
         parseSchemaPile();
         return pileRoot;
     }
     
-    public void parseSchemaPile () throws SAXException, ParserConfigurationException, IOException, XMLSchemaException {
+    private void parseSchemaPile () throws SAXException, ParserConfigurationException, IOException, XMLSchemaException {
         if (null != sdocs ) return;     // already done
         if (null == xs) xsmodel();      // generate the XSModel object if necessary
         if (null == xs) {               // can't create XSModel object!

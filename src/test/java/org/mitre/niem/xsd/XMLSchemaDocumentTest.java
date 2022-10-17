@@ -117,4 +117,10 @@ public class XMLSchemaDocumentTest {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/niem/external/xml.xsd", "");
         assertEquals(6, sd.schemaKind());
     }
+
+    @Test
+    public void testNoPrefix () throws Exception {
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/noprefix.xsd", "");
+        assertEquals("http://example.com/noprefix/", sd.targetNamespace());
+    }
 }

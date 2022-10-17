@@ -27,15 +27,35 @@ import org.javatuples.Pair;
 
 /**
  * A record for appinfo attributes found on global declarations and definitions,
- * or on xs:element declarations found within a complex type definition
- * 
+ * or on xs:element references found within a complex type definition.
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
+
+// From a document like this:
+// 
+// <xs:schema
+//   xmlns:appinfo=""
+//   xmlns:foo="http://example.com/foo/"
+//   targetNamespace="http://example.com/bar/">
+//   <xs:complexType name="ctype" appinfo:deprecated="true">
+//     <xs:complexContent>
+//       <xs:extension base="foo:basetype">
+//         <xs:sequence>
+//           <xs:element ref="foo:element" maxOccurs="3" appinfo:orderedPropertyIndicator="true"/>
+// 
+// you would see two Appinfo records:
+// 
+// Appinfo("deprecated", "true", 
+//     Pair<"http://example.com/bar/","ctype">, null)
+//
+// Appinfo("orderedPropertyIndicator", "true", 
+//     Pair<"http://example.com/bar/","ctype">,  
+//     Pair<"http://example.com/foo/","element">)
+ 
 public record Appinfo (
-    String nsuri,                       // namespace containing the appinfo attribute
-    String attLname,                    // attribute local name (in appinfo namespace)
-    String attValue,                    // attribute value
-    Pair<String,String> componentEQN,   // namespace and lname of global decl/defn with the appinfo
-    Pair<String,String> elementEQN      // namespace and lname of element within complex type defn (or null)
+    String attLname,                    // appinfo attribute local name (in appinfo namespace)
+    String attValue,                    // appinfo attribute value
+    Pair<String,String> componentEQN,   // namespace and lname of global decl/defn with this appinfo attribute
+    Pair<String,String> elementEQN      // namespace and lname of element with appinfo within complex type defn (or null)
     ) { }
