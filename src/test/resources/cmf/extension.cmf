@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.5/"
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.6/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.5/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.6/">
   <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixName>nc</NamespacePrefixName>
@@ -20,6 +20,11 @@
     <DefinitionText>A first name of a person.</DefinitionText>
     <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Property structures:id="nc.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </Property>
   <Property structures:id="nc.partialIndicator">
     <Name>partialIndicator</Name>
@@ -56,7 +61,11 @@
     <Name>TextType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for a character string.</DefinitionText>
-    <HasValue structures:ref="xs.string" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:ref="nc.TextLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
     <HasProperty>
       <Property structures:ref="nc.partialIndicator" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
@@ -77,12 +86,14 @@
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
     <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>5.0</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
@@ -90,5 +101,6 @@
     <DocumentFilePathText>extension.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
 </Model>

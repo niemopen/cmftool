@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.5/"
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.6/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.5/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.6/">
   <Namespace structures:id="geo">
     <NamespaceURI>http://release.niem.gov/niem/adapters/geospatial/5.0/</NamespaceURI>
     <NamespacePrefixName>geo</NamespacePrefixName>
@@ -41,11 +41,6 @@
     <SubPropertyOf structures:ref="nc.LocationGeospatialCoordinateAbstract" xsi:nil="true"/>
     <Class structures:ref="geo.PointType" xsi:nil="true"/>
   </Property>
-  <Property structures:id="gml.Point">
-    <Name>Point</Name>
-    <Namespace structures:ref="gml" xsi:nil="true"/>
-    <DefinitionText>A Point is defined by a single coordinate tuple. The direct position of a point is specified by the pos element which is of type DirectPositionType.</DefinitionText>
-  </Property>
   <Property structures:id="nc.LocationGeospatialCoordinateAbstract">
     <Name>LocationGeospatialCoordinateAbstract</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
@@ -62,16 +57,11 @@
     <Namespace structures:ref="geo" xsi:nil="true"/>
     <DefinitionText>A data type for a 2D or 3D geometric point. A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DefinitionText>
     <ExternalAdapterTypeIndicator>true</ExternalAdapterTypeIndicator>
-    <HasProperty structures:sequenceID="1">
-      <Property structures:ref="gml.Point" xsi:nil="true"/>
-      <MinOccursQuantity>1</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-    </HasProperty>
   </Class>
   <Class structures:id="ns.TrackPointType">
     <Name>TrackPointType</Name>
     <Namespace structures:ref="ns" xsi:nil="true"/>
-    <HasProperty structures:sequenceID="1">
+    <HasProperty>
       <Property structures:ref="geo.LocationGeospatialPoint" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
@@ -83,6 +73,7 @@
     <DocumentFilePathText>externals-niem/adapters/geospatial.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
     <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
@@ -90,6 +81,7 @@
     <DocumentFilePathText>externals-niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
     <NamespaceURI>http://example.com/external-content/</NamespaceURI>
@@ -97,6 +89,7 @@
     <DocumentFilePathText>externals.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
     <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
@@ -113,6 +106,7 @@
     <DocumentFilePathText>externals-niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>5.0</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
@@ -120,5 +114,6 @@
     <DocumentFilePathText>externals-niem/niem-core.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
 </Model>

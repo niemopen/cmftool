@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/CrossNSTest/1.0/"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:test="http://example.com/CrossNSTest/1.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>
+      Test handling of simple types across namespaces
+    </xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="niem/crossNSstype.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:complexType name="AngularMinuteType">
+    <xs:simpleContent>
+      <xs:extension base="nc:AngularMinuteSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="AttributedAngularMinuteType">
+    <xs:simpleContent>
+      <xs:extension base="nc:AngularMinuteSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+        <xs:attribute ref="test:SomeAtt"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:element name="AngMinute" type="test:AngularMinuteType"/>
+  <xs:attribute name="SomeAtt" type="xs:token"/>
+</xs:schema>

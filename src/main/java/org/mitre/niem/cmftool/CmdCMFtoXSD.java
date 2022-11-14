@@ -39,7 +39,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.Model;
-import org.mitre.niem.xsd.ModelExtension;
 import org.mitre.niem.xsd.ModelToXSD;
 import org.mitre.niem.xsd.ModelXMLReader;
 import org.mitre.niem.xsd.ParserBootstrap;

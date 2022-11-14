@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.5/"
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.6/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.5/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.6/">
   <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixName>nc</NamespacePrefixName>
@@ -40,12 +40,14 @@
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
     <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>5.0</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
@@ -53,5 +55,6 @@
     <DocumentFilePathText>listOf.xsd</DocumentFilePathText>
     <NIEMVersionText>5.0</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
 </Model>

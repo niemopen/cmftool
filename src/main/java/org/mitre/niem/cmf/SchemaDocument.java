@@ -36,27 +36,31 @@ public class SchemaDocument extends ObjectType {
     private String filepath = null;
     private String niemVersion = null;
     private String schemaVersion = null;
+    private String language = null;
     
-    public void setTargetNS (String s)         { targetNS = s; }
+    public void setTargetNS (String s)      { targetNS = s; }
     public void setConfTargets (String s)   { confTargs = s; }
     public void setFilePath (String s)      { filepath = s; }
     public void setNIEMversion (String s)   { niemVersion = s; }
     public void setSchemaVersion (String s) { schemaVersion = s; }
+    public void setLanguage (String s)      { language = s; }
     
-    public String targetNS( )                  { return targetNS; }
+    public String targetNS( )               { return targetNS; }
     public String confTargets ()            { return confTargs; }
     public String filePath ()               { return filepath; }
     public String niemVersion ()            { return niemVersion; }
     public String schemaVersion ()          { return schemaVersion; }
+    public String language ()               { return language; }
     
     public SchemaDocument () { super(); }
     
-    public SchemaDocument (String ns, String ct, String fp, String nv, String sv) {
+    public SchemaDocument (String ns, String ct, String fp, String nv, String sv, String lang) {
         super();
         targetNS = ns;
         confTargs = ct;
         filepath = fp;
         niemVersion = nv;
         schemaVersion = sv;
+        language = lang;
     }
 }

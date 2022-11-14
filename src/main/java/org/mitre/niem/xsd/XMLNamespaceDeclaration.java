@@ -31,10 +31,10 @@ import static org.mitre.niem.cmf.NamespaceKind.namespaceKind2Code;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class XMLNamespaceDeclaration implements Comparable<XMLNamespaceDeclaration>  {
-    private String decPrefix;           // xmlns:decPrefix="decURI"
-    private String decURI;              // xmlns:decPrefix="decURI"
-    private int lineNumber;             // line number of dec in schema document
-    private int elementDepth;           // dec in root element has depth 0
+    private final String decPrefix;           // xmlns:decPrefix="decURI"
+    private final String decURI;              // xmlns:decPrefix="decURI"
+    private final int lineNumber;             // line number of dec in schema document
+    private final int elementDepth;           // dec in root element has depth 0
     private String targetNS;            // declaration appears in schema with this target namespace
     private int targetKind;             // kind of schema containg declaration
     

@@ -68,14 +68,24 @@ public class ModelToXSDTest {
             "complexContent.xsd",
             "deprecated.xsd",
 //            "externals.xsd",          // can't automate this one; m2x doesn't generate external documents (gml.xsd)
-            "hasValue.xsd",
             "list.xsd",
-            "nameinfo.xsd",
-            "namespace-1.xsd",
+            "literal-0.xsd",
+            "literal-1.xsd",
+            "literal-2.xsd",
+            "literal-3.xsd",
+            "literal-4.xsd",
+            "literal-5.xsd",
+            "literal-6.xsd",      
+            "literal-7.xsd",
+//            "nameinfo.xsd",
+//            "namespace-1.xsd",        // can't automate this one; prefixes are changed in created XSD
+//            "noprefix.xsd",
             "proxy.xsd",
             "restriction.xsd",
-//            "twoversions-0.xsd",      // can't automate this one; m2x doesn't create unneeded imports
+            //"twoversions-0.xsd",      // can't automate this one; prefixes are changed in created XSD
+            "schemadoc.xsd",
             "union.xsd",
+            "whitespace.xsd",
             "xml-lang.xsd"
         })
     public void testRoundTrip(String sourceXSD) throws Exception {
@@ -114,6 +124,7 @@ public class ModelToXSDTest {
             assertEquals(n2,n3);
             assertTrue(FileUtils.contentEquals(f2, f3));
         }
+        int i = 0;
     }
     
     private void createCMF (String[] schemaArgs, File modelFP) throws Exception {      

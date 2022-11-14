@@ -1,8 +1,6 @@
 # NIEM XSD and CMF equivalents
 
-There are now two ways to represent a data model in NIEM:  as an XML Schema, or as a Common Model Format file.  We intend for these to be equivalent:  anything you can express in NIEM XSD can also be expressed in CMF, and vice versa.
-
-A round-trip translation requires a lot of information that is not properly part of the data model; for example, the directory structure and names of the XML schema documents.  That stuff goes in a separate, CMF-XSD extension file.
+There are now two ways to represent a data model in NIEM:  as an XML Schema, or as a Common Model Format  (CMF) file.  We intend for these to be equivalent:  anything you can express in NIEM XSD can also be expressed in CMF, and vice versa.
 
 In general:
 
@@ -25,9 +23,9 @@ Specific aspects of the XSD-CMF equivalence are described below:
 
 An XML schema is constructed from any number of schema documents.  Those documents may assign many different namespace prefixes to the same namespace identifier.  They may assign a single namespace prefix to many different namespace identifiers.  As a result, you can't tell what a QName like `ns:Foo` means without the whole schema document for context.
 
-In a CMF model, each namespace has exactly one namespace prefix, and so each QName identifies exactly one model component.
+In a CMF model, each namespace has exactly one namespace prefix, and each prefix is mapped to exactly one namespace, and so each QName identifies exactly one model component.  Supporting that CMF guarantee requires a fair amount of complexity in the XSD-to-CMF transformation.  We have to look at all the namespace assignments and decide which ones to keep, which ones to change.
 
-Supporting that CMF guarantee requires a fair amount of complexity in the XSD-to-CMF transformation.  The assignment of each namespace prefix is made in the following order:
+The assignment of each namespace prefix is made in the following order:
 
 1. Some namespace prefixes are predefined.  They can't be used for anything else in a CMF model:
 
@@ -52,7 +50,7 @@ Supporting that CMF guarantee requires a fair amount of complexity in the XSD-to
 
 6. The losing namespace prefix is munged; for example, `nc_1:`, then `nc_2:`, instead of `nc:`.
 
-6. Prefixes for the built-in namespaces (appinfo, cli, clsi, ct, xs-proxy, and structures) are also guaranteed to be unique with each other and with namespaces in the model.  This becomes interesting when a model includes components from different NIEM versions.
+6. Prefixes for the built-in namespaces (appinfo, cli, clsi, ct, xs-proxy, and structures) are also guaranteed to be unique with each other and with namespaces in the model.  This becomes interesting when a model includes components from different NIEM versions.  (Later versions are preferred over older; e.g. 5.0 beats 4.0.)
 
 ## Components from the structures namespace
 
@@ -60,20 +58,22 @@ The attributes in this namespace -- `@id, @ref, @uri, @metadata, @relationshipMe
 
 ## Appinfo
 
-Each attribute and element declared in the appinfo namespace has an equivalent element in CMF:
+The attributes and elements in the appinfo namespace have equivalent elements in CMF:
 
 | XSD                          | CMF                               |
 | :--------------------------- | --------------------------------- |
-| appliesToTypes               | *tbd*                             |
-| appliesToElements            | *tbd*                             |
+| appliesToElements            | *no equivalent*                   |
+| appliesToTypes               | *no equivalent*                   |
 | deprecated                   | DeprecatedIndicator               |
-| externalAdapterTypeIndicator | ExternalIndicator                 |
-| externalImportIndicator      | ExternalIndicator                 |
+| externalAdapterTypeIndicator | ExternalAdapterTypeIndicator      |
+| externalImportIndicator      | TBD                               |
+| metadataIndicator            | Metadata                          |
+| orderedPropertyIndicator     | OrderedPropertyIndicator          |
 | LocalTerm                    | LocalTerm *(not implemented yet)* |
 
 ## Complex content
 
-A type definition with complex content always maps to a Class object in CMF.  Note that an attribute is just another property in CMF.  The difference between an element and and attribute is an XSD thing, and is recorded in the CMF-XSD extension file.
+A type definition with complex content always maps to a Class object in CMF.  Note that an attribute is just another property in CMF. 
 
 **NIEM XSD:**
 

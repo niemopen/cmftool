@@ -24,9 +24,9 @@
 package org.mitre.niem.cmf;
 
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_NUMKINDS;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import static org.mitre.niem.cmf.NamespaceKind.namespaceCode2Kind;
+import static org.mitre.niem.cmf.NamespaceKind.isNamespaceKindInCMF;
 
 /**
  *
@@ -69,14 +69,15 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public void setDefinition (String s)      { definition = s; }
     public void setKind (int k)               { nsKind = k; }
     public void setKind (String c)            { nsKind = namespaceCode2Kind(c); }
-    
+
     public Model getModel ()                  { return model; }
     public String getNamespaceURI ()          { return namespaceURI; }
     public String getNamespacePrefix ()       { return namespacePrefix; }
     public String getDefinition ()            { return definition; }
     public int getKind ()                     { return nsKind; }
     public boolean isExternal ()              { return nsKind == NSK_EXTERNAL; }
-
+    public boolean isKindInCMF ()             { return isNamespaceKindInCMF(nsKind); }
+    
     // Enforces guarantee that each namespace in a model has a unique prefix
     @Override
     public void addToModel (Model m) throws CMFException {

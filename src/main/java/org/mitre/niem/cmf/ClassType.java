@@ -37,7 +37,6 @@ public class ClassType extends Component {
     private boolean isExternal = false;
     private boolean canHaveMD = false;
     private ClassType extensionOfClass  = null;
-    private Datatype hasValue = null;
     private final List<HasProperty> hasPropertyList = new ArrayList<>();
     
     public ClassType () { super(); type = C_CLASSTYPE; }
@@ -54,13 +53,11 @@ public class ClassType extends Component {
     public void setCanHaveMD (boolean f)          { canHaveMD = f; }
     public void setCanHaveMD (String s)           { canHaveMD = "true".equals(s); }
     public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
-    public void setHasValue (Datatype v)          { hasValue = v; }
     
     public boolean isAugmentable ()               { return isAugmentable; }
     public boolean isExternal ()                  { return isExternal; }
     public boolean canHaveMD ()                   { return canHaveMD; }
     public ClassType getExtensionOfClass ()       { return extensionOfClass; }
-    public Datatype getHasValue()                 { return hasValue; }
             
     public List<HasProperty> hasPropertyList ()   { return hasPropertyList; }
 

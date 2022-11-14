@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import org.apache.logging.log4j.LogManager;
@@ -71,6 +72,7 @@ public class XMLSchemaDocument {
     private String schemaVersion = null;
     private String documentation = null;
     private String filepath = null;
+    private String language = null;
     private int kind = NSK_UNKNOWN;
     
     public List<XMLNamespaceDeclaration> namespaceDecls ()  { return nsdels; }
@@ -82,6 +84,7 @@ public class XMLSchemaDocument {
     public String schemaVersion ()                          { return schemaVersion; }
     public String documentation ()                          { return documentation; }
     public String filepath ()                               { return filepath; }
+    public String language ()                               { return language; }
     public int schemaKind ()                                { return kind; }
     
     public void setSchemaKind (int k) { kind = k; }
@@ -135,8 +138,9 @@ public class XMLSchemaDocument {
                 targetNS = atts.getValue("targetNamespace");
                 if (null == targetNS) LOG.warn("found no target namespace while parsing {}", docloc.getSystemId());
                 
-                // Get schema version attribute
+                // Get schema version attribute and language
                 schemaVersion = atts.getValue("version");
+                language = atts.getValue(XML_NS_URI, "lang");
 
                 // Get conformance target assertion
                 for (int i = 0; i < atts.getLength(); i++) {

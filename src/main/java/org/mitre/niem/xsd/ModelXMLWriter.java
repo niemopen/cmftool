@@ -87,12 +87,12 @@ public class ModelXMLWriter {
             String line = scn.nextLine();
             if (line.startsWith("<Model ")) {
                 String[] tok = line.split("\\s+");
-                ow.println("<Model");
+                ow.print("<Model\n");
                 for (int i = 1; i < tok.length; i++) {
-                    ow.println("  " + tok[i]);
+                    ow.print("  " + tok[i] + "\n");
                 }
             }
-            else ow.println(line);
+            else ow.print(line + "\n");
         }
     }
     
@@ -118,6 +118,7 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "DocumentFilePathText", x.filePath());
         addSimpleChild(dom, e, "NIEMVersionText", x.niemVersion());
         addSimpleChild(dom, e, "SchemaVersionText", x.schemaVersion());
+        addSimpleChild(dom, e, "SchemaLanguageName", x.language());
         p.appendChild(e);
     }
  
@@ -129,9 +130,9 @@ public class ModelXMLWriter {
         if (x.isAugmentable()) addSimpleChild(dom, e, "AugmentableIndicator", "true");
         if (x.isExternal())    addSimpleChild(dom, e, "ExternalAdapterTypeIndicator", "true");
         addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
-        addComponentRef(dom, e, "HasValue", x.getHasValue());
         if (null != x.hasPropertyList()) 
-            for (HasProperty z : x.hasPropertyList()) { addHasProperty(dom, e, z); }     
+            for (HasProperty z : x.hasPropertyList()) { addHasProperty(dom, e, z); }    
+        if (x.canHaveMD()) addSimpleChild(dom, e, "MetadataIndicator", "true");
         p.appendChild(e);
     }
     

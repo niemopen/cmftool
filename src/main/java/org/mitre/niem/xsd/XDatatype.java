@@ -54,14 +54,7 @@ public class XDatatype extends XObjectType {
         child.addToDatatype(this);
         super.addAsChild(child);  
     }   
-    
-    // A datatype object added to a parent classtype object must be the result
-    // of a HasValue element
-    @Override
-    public void addToClassType (XClassType x) {
-        x.getObject().setHasValue(this.getObject());        
-    }
-    
+       
     // A datatype object added to a parent datatype object must be the result
     // of a ListOf element
     @Override

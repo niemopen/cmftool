@@ -132,7 +132,7 @@ public class ModelXMLReaderTest {
         assertNotNull(m.getNamespaceByPrefix("nc"));
         assertNotNull(m.getNamespaceByPrefix("xs"));
         
-        assertEquals(8, m.getComponentList().size());
+        assertEquals(9, m.getComponentList().size());
         ClassType c1 = m.getClassType("nc:PersonNameTextType");
         ClassType c2 = m.getClassType("nc:ProperNameTextType");
         ClassType c3 = m.getClassType("nc:TextType");
@@ -142,7 +142,7 @@ public class ModelXMLReaderTest {
         
         assertEquals(1, c1.hasPropertyList().size());
         assertEquals(0, c2.hasPropertyList().size());
-        assertEquals(1, c3.hasPropertyList().size());
+        assertEquals(2, c3.hasPropertyList().size());
         
         assertEquals(c1.getExtensionOfClass(), c2);
         assertEquals(c2.getExtensionOfClass(), c3);
@@ -227,49 +227,6 @@ public class ModelXMLReaderTest {
     }
     
     @Test
-    public void testHasvalue () {
-        FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/hasValue.cmf");
-        try {
-            cmfIS = new FileInputStream(cmfFile);
-        } catch (FileNotFoundException ex) {
-            fail("Where is my input file?");
-        }
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(cmfIS);
-        assertNotNull(m);
-        assertEquals(0, mr.getMessages().size());
-        
-        assertEquals(2, m.getNamespaceList().size());
-        assertNotNull(m.getNamespaceByPrefix("nc"));
-        assertNotNull(m.getNamespaceByPrefix("xs"));
-        
-        assertEquals(4, m.getComponentList().size());
-        
-        Datatype dt = m.getDatatype("nc:Degree90SimpleType");
-        assertNotNull(dt);
-        
-        Property p = m.getProperty("nc:errorValue");
-        assertNotNull(p);
-        
-        ClassType c = m.getClassType("nc:Degree90Type");
-        assertNotNull(c);
-        assertFalse(c.isAbstract());
-        assertFalse(c.isAugmentable());
-        assertFalse(c.isDeprecated());
-        assertFalse(c.isExternal());
-        assertNotNull(c.getDefinition());
-        assertEquals(c.getModel(), m);
-        assertEquals(c.getHasValue(), dt);
-        assertEquals(1, c.hasPropertyList().size());
-        HasProperty hp = c.hasPropertyList().get(0);
-        assertNotNull(hp);
-        assertEquals(hp.getProperty(), p);
-        assertEquals(0, hp.minOccurs());
-        assertEquals(1, hp.maxOccurs());
-    }
-    
-    @Test
     public void testFacets () {
         FileInputStream cmfIS = null;
         File cmfFile = new File(testDirPath, "cmf/facets.cmf");
@@ -349,6 +306,28 @@ public class ModelXMLReaderTest {
         assertNull(dt.getUnionOf());
         assertNull(dt.getRestrictionOf());
         assertEquals(dt.getListOf(), m.getDatatype("xs:token"));       
+    }
+    
+    @Test
+    public void testLanguage () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "cmf/externals.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        assertEquals(0, mr.getMessages().size());
+        
+        assertEquals(7, m.schemadoc().size());   
+        for (var sd : m.schemadoc().values()) {
+            if ("http://www.opengis.net/gml/3.2".equals(sd.targetNS())) assertNull(sd.language());
+            else if ("http://www.w3.org/1999/xlink".equals(sd.targetNS())) assertNull(sd.language());
+            else assertEquals("en-US", sd.language());
+        }
     }
 
     @Test
@@ -460,7 +439,7 @@ public class ModelXMLReaderTest {
         assertEquals(0, mr.getMessages().size());
         
         assertEquals(4, m.getNamespaceList().size());
-        assertEquals(11, m.getComponentList().size());
+        assertEquals(12, m.getComponentList().size());
         
         ClassType ct = m.getClassType("nc:AddressType");
         assertNotNull(ct);

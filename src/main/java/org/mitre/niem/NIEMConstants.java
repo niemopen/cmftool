@@ -36,8 +36,7 @@ public final class NIEMConstants {
     public static final String CONFORMANCE_TARGET_NS_URI = "http://release.niem.gov/niem/conformanceTargets/3.0/";
     public static final String CONFORMANCE_TARGET_NS_URI_PREFIX = "http://release.niem.gov/niem/conformanceTargets/";
     public static final String CMF_NS_URI_PREFIX = "http://reference.niem.gov/specification/cmf/";    
-    public static final String CMF_NS_URI = "http://reference.niem.gov/specification/cmf/0.5/";
-    public static final String CMFX_NS_URI = "http://reference.niem.gov/specification/cmf/XSD/0.4/";
+    public static final String CMF_NS_URI = "http://reference.niem.gov/specification/cmf/0.6/";
     public static final String DEFAULT_NIEM_VERSION = "5.0";
     public static final String NDR_CT_URI_PREFIX = "http://reference.niem.gov/niem/specification/naming-and-design-rules/";   
     public static final String NIEM_CORE_PATTERN = "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/";

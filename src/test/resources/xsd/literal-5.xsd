@@ -9,22 +9,17 @@
   version="1"
   xml:lang="en-US">
   <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
-  <xs:simpleType name="EmploymentPositionBasisCodeSimpleType">
-    <xs:restriction base="xs:token">
-      <xs:enumeration value="contractor"/>
-      <xs:enumeration value="non-permanent"/>
-      <xs:enumeration value="permanent"/>
+  <xs:simpleType name="AngularMinuteSimpleType">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+      <xs:maxExclusive value="60"/>
     </xs:restriction>
   </xs:simpleType>
-  <xs:complexType name="EmploymentPositionBasisCodeType">
+  <xs:complexType name="AngularMinuteType">
     <xs:simpleContent>
-      <xs:extension base="nc:EmploymentPositionBasisCodeSimpleType">
+      <xs:extension base="nc:AngularMinuteSimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
-        <xs:attribute ref="nc:foo" use="required"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:element name="EmploymentPositionBasisAbstract" abstract="true"/>
-  <xs:element name="EmploymentPositionBasisCode" type="nc:EmploymentPositionBasisCodeType" substitutionGroup="nc:EmploymentPositionBasisAbstract" nillable="true"/>
-  <xs:attribute name="foo" type="xs:token"/>
 </xs:schema>

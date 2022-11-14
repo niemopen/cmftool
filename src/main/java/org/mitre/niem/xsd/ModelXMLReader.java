@@ -226,7 +226,6 @@ public class ModelXMLReader {
                 case "Datatype":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "ExtensionOfClass":    o = new XClassType(m, p, ens, eln, atts, lineNum); break;
                 case "HasProperty":         o = new XHasProperty(m, p, ens, eln, atts, lineNum); break;
-                case "HasValue":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "ListOf":              o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "Model":               o = new XModel(m, p, ens, eln, atts, lineNum); break;
                 case "Namespace":           o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
@@ -271,6 +270,7 @@ public class ModelXMLReader {
                 case "OrderedPropertyIndicator":
                 case "PositiveValue":
                 case "ReferenceableIndicator":
+                case "SchemaLanguageName":
                 case "SchemaVersionText":
                 case "StringValue":        
                 case "WhiteSpaceValueCode":

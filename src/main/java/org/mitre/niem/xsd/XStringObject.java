@@ -133,6 +133,7 @@ public class XStringObject extends XObjectType {
             case "DocumentFilePathText":     xsd.getObject().setFilePath(val); break;
             case "NamespaceURI":             xsd.getObject().setTargetNS(val); break;
             case "NIEMVersionText":          xsd.getObject().setNIEMversion(val); break;
+            case "SchemaLanguageName":       xsd.getObject().setLanguage(val); break;
             case "SchemaVersionText":        xsd.getObject().setSchemaVersion(val); break;
             default:
                 break;

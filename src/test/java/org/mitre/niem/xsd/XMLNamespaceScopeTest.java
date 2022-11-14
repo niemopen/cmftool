@@ -23,11 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
-import java.io.IOException;
-import org.apache.xerces.util.XMLCatalogResolver;
-import static org.assertj.core.api.Assertions.assertThat;
 import org.javatuples.Pair;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,9 +32,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class XMLNamespaceMapTest {
+public class XMLNamespaceScopeTest {
     
-    public XMLNamespaceMapTest() {
+    public XMLNamespaceScopeTest() {
     }
     
 
@@ -72,25 +68,19 @@ public class XMLNamespaceMapTest {
     
     @Test
     public void testException () throws XMLNamespaceScope.XMLNamespaceMapException {
-      var nsm = new XMLNamespaceScope();  
-      
-      Pair<String,String> res = nsm.expandQName("unprefixed");
-      assertEquals(null, res.getValue0());
-      assertEquals("unprefixed", res.getValue1());
-      
-      var thrown = Assertions.assertThrows(XMLNamespaceScope.XMLNamespaceMapException.class, () -> {
-           Pair<String,String> eqn = nsm.expandQName("pr:");
-      });
-      assertThat(thrown.getMessage()).contains("not a valid QName");      
-      
-      thrown = Assertions.assertThrows(XMLNamespaceScope.XMLNamespaceMapException.class, () -> {
-           Pair<String,String> eqn = nsm.expandQName("nc:foo:bzr");
-      });
-      assertThat(thrown.getMessage()).contains("not a valid QName"); 
-      
-      thrown = Assertions.assertThrows(XMLNamespaceScope.XMLNamespaceMapException.class, () -> {
-           Pair<String,String> eqn = nsm.expandQName("pr:name");
-      });
-      assertThat(thrown.getMessage()).contains("no binding in scope"); 
+        var nsm = new XMLNamespaceScope();
+
+        Pair<String, String> res = nsm.expandQName("unprefixed");
+        assertEquals(null, res.getValue0());
+        assertEquals("unprefixed", res.getValue1());
+
+        Pair<String, String> eqn1 = nsm.expandQName("pr:");
+        assertNull(eqn1);
+
+        Pair<String, String> eqn2 = nsm.expandQName("nc:foo:bzr");
+        assertNull(eqn2);
+
+        Pair<String, String> eqn3 = nsm.expandQName("pr:name");
+        assertNull(eqn3);
     }
 }

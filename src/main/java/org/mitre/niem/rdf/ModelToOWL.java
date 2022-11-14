@@ -26,7 +26,6 @@ package org.mitre.niem.rdf;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import static org.mitre.niem.NIEMConstants.CMF_NS_URI;
 import static org.mitre.niem.NIEMConstants.OWL_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDFS_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDF_NS_URI;

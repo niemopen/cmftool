@@ -26,11 +26,13 @@ package org.mitre.niem.xsd;
 import java.io.IOException;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.HasProperty;
@@ -173,7 +175,7 @@ public class ModelFromXSDTest {
        
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(7, m.getComponentList().size());
-        Datatype dt = m.getDatatype("nc:EmploymentPositionBasisCodeLiteralType");
+        Datatype dt = m.getDatatype("nc:EmploymentPositionBasisCodeDatatype");
         assertNotNull(dt);
         RestrictionOf r = dt.getRestrictionOf();
         assertNotNull(r);
@@ -218,7 +220,7 @@ public class ModelFromXSDTest {
         assertEquals(p2.getClassType(), ct);
         assertNull(p2.getDatatype());
         assertNotNull(m.getDatatype("xs:token"));
-        assertNotNull(m.getDatatype("nc:EmploymentPositionBasisCodeLiteralType"));
+        assertNotNull(m.getDatatype("nc:EmploymentPositionBasisCodeDatatype"));
     }
     
     @Test
@@ -249,7 +251,7 @@ public class ModelFromXSDTest {
         Model m = mfact.createModel(args);
        
         assertEquals(2, m.getNamespaceList().size());
-        assertEquals(15, m.getComponentList().size());
+        assertEquals(13, m.getComponentList().size());
         ClassType ct = m.getClassType("nc:PersonNameType");
         assertNotNull(ct);
         List<HasProperty> hpl = ct.hasPropertyList();
@@ -279,7 +281,27 @@ public class ModelFromXSDTest {
         assertNotNull(m.getClassType("nc:ProperNameTextType"));
         assertNotNull(m.getClassType("nc:TextType"));        
     }
+
+    @Test
+    public void testCrossNSstype () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/crossNSstype.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
         
+        assertEquals(3, m.getNamespaceList().size());
+        assertThat(m.getComponentList())
+                .hasSize(9)
+                .extracting(Component::getQName)
+                .contains(
+                        "nc:AngMin", "test:AngMinute", "test:AttributedAngularMinuteLiteral",
+                        "test:SomeAtt", "test:AttributedAngularMinuteType", "nc:AngularMinuteType", 
+                        "test:AngularMinuteType", "xs:decimal", "xs:token");
+        assertEquals("nc:AngularMinuteType",   m.getProperty("nc:AngMin").getDatatype().getQName());
+        assertEquals("test:AngularMinuteType", m.getProperty("test:AngMinute").getDatatype().getQName());
+        assertEquals("nc:AngularMinuteType",   m.getProperty("test:AttributedAngularMinuteLiteral").getDatatype().getQName());        
+        assertEquals("xs:token",               m.getProperty("test:SomeAtt").getDatatype().getQName());
+    }
+    
     @Test
     @DisplayName("appinfo:deprecated")
     public void testDeprecated () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
@@ -316,7 +338,23 @@ public class ModelFromXSDTest {
         assertNotNull(p);
         assertFalse(p.isAttribute());
     }
-
+    
+    @Test
+    @DisplayName("Complex content")
+    public void testExtensionOf () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/complexContent.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+       
+        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(13, m.getComponentList().size());
+        ClassType persNT = m.getClassType("nc:PersonNameTextType");
+        ClassType propNT = m.getClassType("nc:ProperNameTextType");
+        ClassType textT  = m.getClassType("nc:TextType");
+        assertEquals(textT, propNT.getExtensionOfClass());
+        assertEquals(propNT, persNT.getExtensionOfClass());
+    }
+    
     @Test
     @DisplayName("External namespace")
     public void testExternals () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
@@ -341,6 +379,17 @@ public class ModelFromXSDTest {
     }
 
     @Test
+    @DisplayName("xml:lang")
+    public void testLanguage () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/augment-0.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        for (var sd : m.schemadoc().values()) {
+            assertEquals("en-US", sd.language());
+        }
+    }
+    
+    @Test
     @DisplayName("List type")
     public void testListType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd/list.xsd" };
@@ -357,7 +406,188 @@ public class ModelFromXSDTest {
         assertNotNull(d2);
         assertEquals(d2, m.getDatatype("xs:token"));
     }
-         
+
+    @Test
+    public void testLiteral_0 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/literal-0.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(2, m.getComponentList().size());
+        Datatype dt = m.getDatatype("nc:TextType");
+        assertNotNull(dt);  
+        assertNotNull(dt.getRestrictionOf());
+    }
+ 
+    @Test
+    public void testLiteral_1 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/literal-1.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(5, m.getComponentList().size());
+        ClassType ct = m.getClassType("nc:TextType");
+        assertNotNull(ct);  
+        assertThat(ct.hasPropertyList())
+                .hasSize(2)
+                .extracting(HasProperty::getProperty)
+                .extracting(Property::getName)
+                .contains("TextLiteral", "partialIndicator");
+        Property p = m.getProperty("nc:TextLiteral");
+        assertNotNull(p);
+        assertEquals(p.getDatatype().getName(), "string");
+        p = m.getProperty("nc:partialIndicator");
+        assertNotNull(p);
+        assertTrue(p.isAttribute());
+        assertEquals(p.getDatatype().getName(), "boolean");
+    }
+ 
+    @Test
+    public void testLiteral_2 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/literal-2.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(5, m.getComponentList().size());
+        ClassType ct = m.getClassType("nc:TextType");
+        assertNotNull(ct);  
+        assertThat(ct.hasPropertyList())
+                .hasSize(1)
+                .extracting(HasProperty::getProperty)
+                .extracting(Property::getName)
+                .contains("TextLiteral");
+        assertTrue(ct.canHaveMD());
+        Property p = m.getProperty("nc:TextLiteral");
+        assertNotNull(p);
+    }
+     
+    @Test
+    public void testLiteral_3 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/literal-3.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(8, m.getComponentList().size());
+        ClassType ct1 = m.getClassType("nc:TextType");
+        assertNotNull(ct1);  
+        assertThat(ct1.hasPropertyList())
+                .hasSize(2)
+                .extracting(HasProperty::getProperty)
+                .extracting(Property::getName)
+                .contains("TextLiteral", "partialIndicator");
+        
+        ClassType ct2 = m.getClassType("nc:ProperNameTextType");
+        assertNotNull(ct2);
+        assertEquals(ct2.getExtensionOfClass(), ct1);
+        assertThat(ct2.hasPropertyList())
+                .hasSize(0);
+        
+        ClassType ct3 = m.getClassType("nc:PersonNameTextType");
+        assertNotNull(ct3);
+        assertEquals(ct3.getExtensionOfClass(), ct2);
+        assertThat(ct3.hasPropertyList())
+                .hasSize(1)
+                .extracting(HasProperty::getProperty)
+                .extracting(Property::getName)
+                .contains("personNameInitialIndicator");
+        
+        Property p = m.getProperty("nc:TextLiteral");
+        assertNotNull(p);
+        assertEquals(p.getDatatype().getName(), "string");
+        p = m.getProperty("nc:partialIndicator");
+        assertNotNull(p);
+        assertTrue(p.isAttribute());
+        assertEquals(p.getDatatype().getName(), "boolean");
+    }
+ 
+    @Test
+    public void testLiteral_4 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/literal-4.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(7, m.getComponentList().size());
+        Datatype dt1 = m.getDatatype("nc:TextType");
+        assertNotNull(dt1);
+        
+        Datatype dt2 = m.getDatatype("nc:ProperNameTextType");
+        assertNotNull(dt2);
+        assertEquals(dt2.getRestrictionOf().getDatatype(), dt1);
+        
+        ClassType ct = m.getClassType("nc:PersonNameTextType");
+        assertNotNull(ct);
+        assertThat(ct.hasPropertyList())
+                .hasSize(2)
+                .extracting(HasProperty::getProperty)
+                .extracting(Property::getName)
+                .contains("PersonNameTextLiteral", "personNameInitialIndicator");                
+    }
+    
+    @Test
+    public void testLiteral_5 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/literal-5.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(2, m.getComponentList().size());
+        Datatype dt1 = m.getDatatype("nc:AngularMinuteType");
+        assertNotNull(dt1);
+        Datatype dt2 = m.getDatatype("xs:decimal");
+        assertNotNull(dt2);
+        RestrictionOf r = dt1.getRestrictionOf();
+        assertEquals(r.getDatatype(), dt2);
+        assertThat(r.getFacetList())
+                .hasSize(2);
+    }
+    
+    @Test
+    public void testLiteral_6 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/literal-6.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(8, m.getComponentList().size());
+        ClassType ct = m.getClassType("nc:AngularMinuteType");
+        Datatype dt  = m.getDatatype("nc:AngularMinuteDatatype");
+        Property p   = m.getProperty("nc:AngularMinuteLiteral");
+        assertThat(ct.hasPropertyList())
+                .hasSize(2)
+                .extracting(HasProperty::getProperty)
+                .extracting(Property::getName)
+                .contains("AngularMinuteLiteral", "SomeAtt");
+        assertNotNull(dt);
+        assertNotNull(p);
+        assertEquals(p.getDatatype(), dt);
+    }
+    
+    @Test
+    public void testLiteral_7 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/literal-7.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(8, m.getComponentList().size());
+        ClassType ct = m.getClassType("nc:AttributedAngularMinuteType");
+        Datatype dt  = m.getDatatype("nc:AngularMinuteType");
+        Property p   = m.getProperty("nc:AttributedAngularMinuteLiteral");
+        assertThat(ct.hasPropertyList())
+                .hasSize(2)
+                .extracting(HasProperty::getProperty)
+                .extracting(Property::getName)
+                .contains("AttributedAngularMinuteLiteral", "SomeAtt");
+        assertNotNull(dt);
+        assertNotNull(p);
+        assertEquals(p.getDatatype(), dt);
+    }
+
     @Test
     @DisplayName("Namespace prefix prioritization")
     public void testNamespace_1 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
@@ -454,7 +684,7 @@ public class ModelFromXSDTest {
         Model m = mfact.createModel(args);
        
         assertEquals(3, m.getNamespaceList().size());
-        assertEquals(19, m.getComponentList().size());
+        assertEquals(17, m.getComponentList().size());
         assertEquals("http://release.niem.gov/niem/niem-core/4.0/", m.getNamespaceByPrefix("nc_4").getNamespaceURI());
         assertEquals("http://release.niem.gov/niem/niem-core/5.0/", m.getNamespaceByPrefix("nc").getNamespaceURI());
         assertEquals("http://www.w3.org/2001/XMLSchema", m.getNamespaceByPrefix("xs").getNamespaceURI());

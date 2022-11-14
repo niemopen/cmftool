@@ -36,8 +36,8 @@ import org.javatuples.Pair;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class XMLNamespaceScope {
-    private Stack<Boolean> scopeHasMapping = new Stack<>();
-    private Stack<Map<String, String>> scopes = new Stack<>();
+    private final Stack<Boolean> scopeHasMapping = new Stack<>();
+    private final Stack<Map<String, String>> scopes = new Stack<>();
     private Map<String, String> currentMap = new HashMap<>();
     private boolean mapFlag = false;
 

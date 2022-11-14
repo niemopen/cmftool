@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema targetNamespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" version="1" xml:lang="en-US" xsi:schemaLocation="http://release.niem.gov/niem/appinfo/5.0/ ../utility/appinfo.xsd http://release.niem.gov/niem/conformanceTargets/3.0/ ../utility/conformanceTargets.xsd" ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+<xs:schema
+  targetNamespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
   xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
   xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
   xmlns:niem-xs="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+  version="1"
+  xml:lang="en-US"
+  xsi:schemaLocation="http://release.niem.gov/niem/appinfo/5.0/ ../utility/appinfo.xsd http://release.niem.gov/niem/conformanceTargets/3.0/ ../utility/conformanceTargets.xsd">
   <xs:annotation>
     <xs:documentation>Proxy types that carry dictionary metadata and have XML data type simple contents.</xs:documentation>
     <xs:appinfo>
-      <appinfo:LocalTerm term="maxInclusive" definition="An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive."/>
+      <appinfo:LocalTerm definition="An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive." term="maxInclusive"/>
     </xs:appinfo>
   </xs:annotation>
   <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="../utility/structures.xsd"/>

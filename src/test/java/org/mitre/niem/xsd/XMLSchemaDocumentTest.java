@@ -121,6 +121,6 @@ public class XMLSchemaDocumentTest {
     @Test
     public void testNoPrefix () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/noprefix.xsd", "");
-        assertEquals("http://example.com/noprefix/", sd.targetNamespace());
+        assertEquals("http://example.com/nopr#e-fix/5.0/", sd.targetNamespace());
     }
 }
