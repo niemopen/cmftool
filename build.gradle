@@ -30,12 +30,14 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
     implementation 'org.apache.logging.log4j:log4j-core:2.17.1'
     implementation 'org.javatuples:javatuples:1.2'
+    implementation 'com.google.code.gson:gson:2.7'
     
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.2'
     testImplementation 'io.github.hakky54:logcaptor:2.7.10'
     testImplementation 'org.assertj:assertj-core:3.23.1'
+    testImplementation 'com.google.code.gson:gson:2.7'
 
     // JCommander is for command-line interface; not needed for the library API
     api 'xerces:xercesImpl:2.12.2'
