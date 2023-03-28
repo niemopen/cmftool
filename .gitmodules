@@ -1,3 +1,0 @@
-[submodule "src/main/CMF-MessageSpec"]
-	path = src/main/CMF-MessageSpec
-	url = https://github.com/NIEM/CMF-MessageSpec
