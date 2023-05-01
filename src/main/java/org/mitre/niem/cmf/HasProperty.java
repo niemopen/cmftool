@@ -37,23 +37,20 @@ public class HasProperty extends ObjectType {
     private int maxQ = 1;
     private boolean maxUnbounded = false;
     private boolean orderedProperties = false;
-    private Namespace augElementNS              = null;
-    private final Set<Namespace> augTypeNS      = new HashSet<>();
+    private final Set<Namespace> augmentingNS   = new HashSet<>();              // namespaces augmenting class with this property
     
-    public void setProperty (Property p)        { property = p; }
-    public void setMinOccurs (int m)            { minQ = m; }
-    public void setMaxOccurs (int m)            { maxQ = m; }
-    public void setMaxUnbounded (boolean f)     { maxUnbounded = f; }
-    public void setOrderedProperties (boolean f)  { orderedProperties = f; }
-    public void setAugmentElementNS (Namespace n) { augElementNS = n; }
+    public void setProperty (Property p)            { property = p; }
+    public void setMinOccurs (int m)                { minQ = m; }
+    public void setMaxOccurs (int m)                { maxQ = m; }
+    public void setMaxUnbounded (boolean f)         { maxUnbounded = f; }
+    public void setOrderedProperties (boolean f)    { orderedProperties = f; }
     
-    public Property getProperty ()              { return property; }
-    public int minOccurs ()                     { return minQ; }
-    public int maxOccurs ()                     { return maxQ; } 
-    public boolean maxUnbounded ()              { return maxUnbounded; }
-    public boolean orderedProperties ()         { return orderedProperties; }
-    public Namespace augmentElementNS ()        { return augElementNS; }
-    public Set<Namespace> augmentTypeNS ()      { return augTypeNS; }
+    public Property getProperty ()                  { return property; }
+    public int minOccurs ()                         { return minQ; }
+    public int maxOccurs ()                         { return maxQ; } 
+    public boolean maxUnbounded ()                  { return maxUnbounded; }
+    public boolean orderedProperties ()             { return orderedProperties; }
+    public Set<Namespace> augmentingNS ()           { return augmentingNS; }
     
     public HasProperty () { super();  }    
   

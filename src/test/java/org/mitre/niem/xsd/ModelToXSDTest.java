@@ -26,11 +26,16 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import nl.altindag.log.LogCaptor;
 import org.apache.commons.io.FileUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -44,6 +49,7 @@ import org.mitre.niem.cmf.Model;
  */
 public class ModelToXSDTest {
    static String testDir = "src/test/resources/xsd/";
+   static List<LogCaptor> logs;
       
     @TempDir
     File tempD1;
@@ -55,38 +61,67 @@ public class ModelToXSDTest {
     public ModelToXSDTest() {
     }
     
-    @AfterEach
-    public void tearDown() {
+    
+    @BeforeAll
+    public static void setupLogCaptor () {
+        logs = new ArrayList<>();
+        logs.add(LogCaptor.forClass(ModelToXSD.class));
+        logs.add(LogCaptor.forClass(XMLSchema.class));
+        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
+        logs.add(LogCaptor.forClass(ModelXMLWriter.class));
     }
-
+    
+    @AfterEach
+    public void clearLogs () {
+        for (var log : logs) log.clearLogs();;
+    }
+    
+    @AfterAll
+    public static void tearDown () {
+        for (var log : logs) log.close();
+    }
+    
+    public void assertEmptyLogs () {
+        for (var log : logs) {
+            var errors = log.getErrorLogs();
+            var warns  = log.getWarnLogs();
+            assertThat(errors.isEmpty());
+            assertThat(warns.isEmpty());
+        }
+    }    
+    
     @ParameterizedTest
     @ValueSource(strings = { 
-            "augment-0.xsd",
-            "codelist.xsd",
-            "codelistClassType.xsd",
-            "codelistUnion.xsd",
-            "complexContent.xsd",
-            "deprecated.xsd",
-//            "externals.xsd",          // can't automate this one; m2x doesn't generate external documents (gml.xsd)
-            "list.xsd",
-            "literal-0.xsd",
-            "literal-1.xsd",
-            "literal-2.xsd",
-            "literal-3.xsd",
-            "literal-4.xsd",
-            "literal-5.xsd",
-            "literal-6.xsd",      
-            "literal-7.xsd",
-//            "nameinfo.xsd",
-//            "namespace-1.xsd",        // can't automate this one; prefixes are changed in created XSD
-//            "noprefix.xsd",
-            "proxy.xsd",
-            "restriction.xsd",
-            //"twoversions-0.xsd",      // can't automate this one; prefixes are changed in created XSD
-            "schemadoc.xsd",
-            "union.xsd",
-            "whitespace.xsd",
-            "xml-lang.xsd"
+        "augment-0.xsd",
+        "augmentProp.xsd",
+        "augmentProp.xsd",
+        "cli.xsd",
+        "clsa.xsd",
+        "codelist.xsd",
+        "codelistClassType.xsd",
+        "codelistUnion.xsd",
+        "complexContent.xsd",
+        "deprecated.xsd",
+        //            "externals.xsd",          // can't automate this one; m2x doesn't generate external documents (gml.xsd)
+        "list.xsd",
+        "literal-0.xsd",
+        "literal-1.xsd",
+        "literal-2.xsd",
+        "literal-3.xsd",
+        "literal-4.xsd",
+        "literal-5.xsd",
+        "literal-6.xsd",
+        "literal-7.xsd",
+        //            "nameinfo.xsd",
+        //            "namespace-1.xsd",        // can't automate this one; prefixes are changed in created XSD
+        //            "noprefix.xsd",
+        "proxy.xsd",
+        "restriction.xsd",
+        //"twoversions-0.xsd",      // can't automate this one; prefixes are changed in created XSD
+        "schemadoc.xsd",
+        "union.xsd",
+        "whitespace.xsd",
+        "xml-lang.xsd"
         })
     public void testRoundTrip(String sourceXSD) throws Exception {
     
@@ -98,9 +133,14 @@ public class ModelToXSDTest {
         // Create schema from that CMF, write to temp directory #2
         createXSD(modelFP, tempD2);
 
-        // Now create CMF from the schema in temp directory #2
+        // Valid XSD?
         File newSchema = new File(tempD2, sourceXSD);
         schemaArgs[0] = newSchema.toString();
+        XMLSchema s = new XMLSchema(schemaArgs);
+        var xsdMsgs = s.javaXMsgs();
+        assertTrue(xsdMsgs.isEmpty());
+        
+        // Now create CMF from the schema in temp directory #2        
         File newModelFP = new File(tempD1, "newModel.cmf");
         createCMF(schemaArgs, newModelFP);
         
@@ -124,7 +164,7 @@ public class ModelToXSDTest {
             assertEquals(n2,n3);
             assertTrue(FileUtils.contentEquals(f2, f3));
         }
-        int i = 0;
+        assertEmptyLogs();
     }
     
     private void createCMF (String[] schemaArgs, File modelFP) throws Exception {      

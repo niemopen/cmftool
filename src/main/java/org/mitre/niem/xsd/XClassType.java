@@ -55,6 +55,11 @@ public class XClassType extends XObjectType {
         super.addAsChild(child);        
     }
     
+    @Override
+    public void addToAugmentRecord (XAugmentRecord xar) {
+        xar.getObject().setClassType(this.getObject());
+    }
+    
     // A classtype object added to a parent classtype object must be an extension
     // of the parent classtype.
     @Override

@@ -1,0 +1,3 @@
+[submodule "src/main/CMF"]
+	path = src/main/CMF
+	url = https://github.com/niemopen/common-model-format.git

@@ -32,6 +32,7 @@ public class Datatype extends Component {
     private RestrictionOf restrictionOf = null;
     private UnionOf unionOf = null;
     private Datatype listOf = null;
+    private CodeListBinding clb = null;
     
     public Datatype () { super(); type = C_DATATYPE; }    
     
@@ -40,13 +41,15 @@ public class Datatype extends Component {
         type = C_DATATYPE;
     }
     
-    public void setRestrictionOf (RestrictionOf r) { restrictionOf = r; }
-    public void setUnionOf (UnionOf u)             { unionOf = u; }
-    public void setListOf (Datatype d)             { listOf = d; }
+    public void setRestrictionOf (RestrictionOf r)  { restrictionOf = r; }
+    public void setUnionOf (UnionOf u)              { unionOf = u; }
+    public void setListOf (Datatype d)              { listOf = d; }
+    public void setCodeListBinding (CodeListBinding b) { clb = b; }
     
-    public RestrictionOf getRestrictionOf() { return restrictionOf; }
-    public UnionOf getUnionOf()             { return unionOf; }
-    public Datatype getListOf()             { return listOf; }
+    public RestrictionOf getRestrictionOf()         { return restrictionOf; }
+    public UnionOf getUnionOf()                     { return unionOf; }
+    public Datatype getListOf()                     { return listOf; }
+    public CodeListBinding getCodeListBinding()     { return clb; }
     
 //    public Datatype getBaseType () {
 //        if (null != restrictionOf) return restrictionOf.getDatatype().getBaseType();
@@ -59,5 +62,8 @@ public class Datatype extends Component {
     public void addToModel (Model m) {
         m.addComponent(this);
     }
- 
+    
+    public void addCodeListBinding (CodeListBinding cb) {
+        clb = cb;
+    }
 }

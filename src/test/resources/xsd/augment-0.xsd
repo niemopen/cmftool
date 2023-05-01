@@ -14,7 +14,7 @@
   version="1"
   xml:lang="en-US">
   <xs:annotation>
-    <xs:documentation>Justice domain.</xs:documentation>
+    <xs:documentation>Augmentation test schema</xs:documentation>
   </xs:annotation>
   <xs:import namespace="http://release.niem.gov/niem/domains/jxdm/7.0/" schemaLocation="augment-1.xsd"/>
   <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="augment-2.xsd"/>
@@ -33,7 +33,7 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:element name="AddressAugmentation" type="test:AddressAugmentationType" substitutionGroup="nc:AddressAugmentationPoint" nillable="true">
+  <xs:element name="AddressAugmentation" type="test:AddressAugmentationType" substitutionGroup="nc:AddressAugmentationPoint">
     <xs:annotation>
       <xs:documentation>Additional information about a Address.</xs:documentation>
     </xs:annotation>

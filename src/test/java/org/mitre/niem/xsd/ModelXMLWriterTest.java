@@ -26,13 +26,17 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import static org.mitre.niem.xsd.FileCompare.compareIgnoringTrailingWhitespace;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -44,14 +48,32 @@ public class ModelXMLWriterTest {
     public ModelXMLWriterTest() {
     }
 
-    private static final String testDirPath = "src/test/resources";     
+    private static final String testDirPath = "src/test/resources";  
+    
+    @Test
+    public void testWriteAugmentRec () throws TransformerException, SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel("src/test/resources/xsd/augment-0.xsd");     
+        
+            File outF = null;
+            PrintWriter outPW = null;
+            ModelXMLWriter mw = new ModelXMLWriter();
+            try {
+                outF = File.createTempFile("testWriteXML", ".cmf");
+                outPW = new PrintWriter(outF);
+                mw.writeXML(m, outPW);    
+                outPW.close();
+            } catch (Exception ex) {
+                fail("Can't create output model file");
+            }        
+    }
     
     @Test
     public void testWriteXML () throws TransformerException {
         FileInputStream cmfIS = null;
         File cmfDir = new File(testDirPath, "cmf");
         String[] testFiles = cmfDir.list(new SuffixFileFilter(".cmf"));
-//        String[] testFiles = { "extension.cmf" };
+//        String[] testFiles = { "externals.cmf" };
         for (String tfn : testFiles) {
             File inF = new File(cmfDir, tfn);
             try {
@@ -72,7 +94,8 @@ public class ModelXMLWriterTest {
                 mw.writeXML(m, outPW);    
                 outPW.close();
                 String result = compareIgnoringTrailingWhitespace(inF, outF);
-                outF.delete();
+                String tpath = outF.getAbsolutePath();
+                boolean del = outF.delete();
                 assertNull(result, tfn);
             } catch (Exception ex) {
                 fail("Can't create output model file");

@@ -1,30 +1,35 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.6/"
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.7/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.6/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.7/">
   <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
-    <NamespacePrefixName>nc</NamespacePrefixName>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DefinitionText>Test for proxy types</DefinitionText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
-    <NamespacePrefixName>xs</NamespacePrefixName>
+    <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="nc.toleranceNumeric">
-    <Name>toleranceNumeric</Name>
+  <Property structures:id="nc.ConfidencePercent">
+    <Name>ConfidencePercent</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>An allowable range for error on a point estimate.</DefinitionText>
-    <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
-    <AttributeIndicator>true</AttributeIndicator>
+    <DefinitionText>A value that indicates belief that content is accurate or trustworthy.</DefinitionText>
+    <Datatype structures:ref="nc.PercentType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Datatype structures:id="nc.NumericType">
-    <Name>NumericType</Name>
+  <Property structures:id="nc.SomeText">
+    <Name>SomeText</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A data type for a number value.</DefinitionText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </Property>
+  <Datatype structures:id="nc.PercentType">
+    <Name>PercentType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <RestrictionOf>
       <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
     </RestrictionOf>
@@ -33,27 +38,33 @@
     <Name>decimal</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
   <SchemaDocument>
+    <NamespacePrefixText>xs-proxy</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>5.0</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
+    <NamespacePrefixText>nc</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>proxy.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
 </Model>

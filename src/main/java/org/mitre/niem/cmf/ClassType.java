@@ -73,7 +73,6 @@ public class ClassType extends Component {
         int index = this.hasPropertyList.indexOf(op);
         if (index < 0) return;
         this.hasPropertyList.set(index, np);
-        
     }
            
     @Override

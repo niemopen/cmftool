@@ -1,13 +1,13 @@
 /*
  * NOTICE
- * 
+ *
  * This software was produced for the U. S. Government
  * under Basic Contract No. W56KGU-18-D-0004, and is
  * subject to the Rights in Noncommercial Computer Software
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
- * 
- * Copyright 2020-2021 The MITRE Corporation.
+ *
+ * Copyright 2020-2023 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,8 @@
  */
 package org.mitre.niem.xsd;
 
+import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Model;
-import org.mitre.niem.cmf.Namespace;
-import org.mitre.niem.cmf.ObjectType;
 import org.xml.sax.Attributes;
 
 /**
@@ -33,48 +32,26 @@ import org.xml.sax.Attributes;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class XNamespace extends XObjectType {
-    
-    private Namespace obj = null;
-    
-    @Override
-    public void setObject (ObjectType o) { 
-        obj = Namespace.class == o.getClass() ? (Namespace)o : null;
-    }
+public class XCodeListBinding extends XObjectType {
+    private CodeListBinding obj = null;
     
     @Override
-    public Namespace getObject () { return obj; }
+    public CodeListBinding getObject () { return obj; }
     
-    XNamespace (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+    XCodeListBinding (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new Namespace();
-    }    
+        obj = new CodeListBinding();
+        obj.setSequenceID(this.getSequenceID());       
+    }      
     
     @Override
     public void addAsChild (XObjectType child) {
-        child.addToNamespace(this);
+        child.addToCodeListBinding(this);
         super.addAsChild(child);
-    }    
-
-    @Override
-    public void addToClassType (XClassType c) {
-        c.getObject().setNamespace(this.getObject());
     }
-    
+   
     @Override
-    public void addToDatatype (XDatatype dt) {
-        dt.getObject().setNamespace(this.getObject());
-    }
-    
-    @Override
-    public void addToHasProperty (XHasProperty hp) {
-        switch(this.getComponentLname()) {
-        case "AugmentationNamespace":     hp.getObject().augmentingNS().add(this.getObject()); break;
-        }
-    }
-    
-    @Override
-    public void addToProperty (XProperty op) {
-        op.getObject().setNamespace(this.getObject());
-    }    
+    public void addToDatatype (XDatatype x) { 
+        x.getObject().addCodeListBinding(this.getObject());
+    }     
 }

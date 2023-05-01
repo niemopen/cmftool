@@ -29,8 +29,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mitre.niem.NIEMConstants.APPINFO_NS_URI_PREFIX;
 import static org.mitre.niem.NIEMConstants.OWL_NS_URI;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_APPINFO;
 
 /**
  *
@@ -84,11 +84,11 @@ public class NamespaceMapTest {
         assertEquals("frogs", nm.getURI("owl_1"));
         assertEquals(OWL_NS_URI, nm.getURI("owl"));
         
-        String a5 = APPINFO_NS_URI_PREFIX + "5.0/";
+        String a5 = NamespaceKind.getUtilityNS(NIEM_APPINFO, "5");
         p = nm.assignPrefix("appinfo", a5);
         assertEquals("appinfo", p);
         
-        String a4 = APPINFO_NS_URI_PREFIX + "4.0/";
+        String a4 = NamespaceKind.getUtilityNS(NIEM_APPINFO, "4");
         p = nm.assignPrefix("appinfo", a4);
         assertEquals("appinfo_4", p);
         assertEquals("appinfo_4", nm.getPrefix(a4));

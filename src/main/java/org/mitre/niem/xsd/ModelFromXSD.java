@@ -25,6 +25,7 @@ package org.mitre.niem.xsd;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import static java.lang.Math.max;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,21 +33,27 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import static java.util.Map.entry;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import static javax.xml.XMLConstants.XML_NS_URI;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.xerces.xs.StringList;
 import org.apache.xerces.xs.XSAnnotation;
 import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import static org.apache.xerces.xs.XSConstants.ATTRIBUTE_DECLARATION;
 import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
-import static org.apache.xerces.xs.XSConstants.FACET;
 import static org.apache.xerces.xs.XSConstants.MODEL_GROUP;
-import static org.apache.xerces.xs.XSConstants.MULTIVALUE_FACET;
 import static org.apache.xerces.xs.XSConstants.TYPE_DEFINITION;
 import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSFacet;
@@ -54,6 +61,7 @@ import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSModelGroup;
 import org.apache.xerces.xs.XSMultiValueFacet;
 import org.apache.xerces.xs.XSNamedMap;
+import org.apache.xerces.xs.XSNamespaceItem;
 import org.apache.xerces.xs.XSObject;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSParticle;
@@ -63,8 +71,7 @@ import org.apache.xerces.xs.XSTerm;
 import org.apache.xerces.xs.XSTypeDefinition;
 import static org.apache.xerces.xs.XSTypeDefinition.COMPLEX_TYPE;
 import static org.apache.xerces.xs.XSTypeDefinition.SIMPLE_TYPE;
-import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
-import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
+import org.mitre.niem.cmf.AugmentRecord;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
@@ -75,23 +82,23 @@ import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
 import org.mitre.niem.cmf.UnionOf;
-import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-import static org.mitre.niem.NIEMConstants.XML_NS_URI;
 import org.mitre.niem.cmf.CMFException;
+import org.mitre.niem.cmf.CodeListBinding;
+import org.mitre.niem.cmf.NamespaceKind;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_CLSA;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_PROXY;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XSD;
-import static org.mitre.niem.cmf.NamespaceKind.isNamespaceKindInCMF;
-import static org.mitre.niem.cmf.NamespaceKind.namespaceKindFromURI;
 import org.mitre.niem.cmf.NamespaceMap;
 import org.mitre.niem.cmf.SchemaDocument;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_PROXY;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_STRUCTURES;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinKind;
+import org.w3c.dom.Element;
+import static org.w3c.dom.Node.ELEMENT_NODE;
+
 
 /**
  * An object for constructing a CMF Model from a XML Schema document pile.
@@ -111,8 +118,8 @@ public class ModelFromXSD {
     
     // Global appinfo is a map of component QName -> list of appinfo records
     // Element ref appinfo is a double map: Complex type QName,  Element ref QName -> list of appinfo records
-    private Map<String,List<Appinfo>> globalAppinfo = null;
-    private Map<String,Map<String,List<Appinfo>>> elementRefAppinfo = null;
+    private Map<String,List<AppinfoAttribute>> globalAppinfo = null;
+    private Map<String,Map<String,List<AppinfoAttribute>>> elementRefAppinfo = null;
     
     // Remember the XS objects from which we initialized the CMF objects
     private Map<Property,XSObject> propertyXSobj = null;               // initialized CMF property paired with schema object
@@ -147,7 +154,8 @@ public class ModelFromXSD {
         hasLiteralProperty   = new HashSet<>();
          
         generateNamespaces();           // normalize namespace prefixes so we can use QNames
-        processAppinfo();               // index all the appinfo by QName for easy retrieval
+        processSchemaAnnotations();     // get documentation and local terms from schema annotations
+        processAppinfoAttributes();               // index all the appinfo attributes by QName for easy retrieval
         initializeDeclarations();       // create properties for element and attribute declarations
         initializeDefinitions();        // create class and datatype objects for type definitions
         setClassInheritance();          // establish ClassType inheritance
@@ -161,6 +169,7 @@ public class ModelFromXSD {
         // Add to the model a schema document record for each document in the pile
         sdoc.forEach((nsuri, sd) -> {
             SchemaDocument cmfsd = new SchemaDocument();
+            cmfsd.setTargetPrefix(nsmap.getPrefix(nsuri));
             cmfsd.setTargetNS(nsuri);
             cmfsd.setConfTargets(sd.conformanceTargets());
             cmfsd.setFilePath(sd.filepath());
@@ -199,32 +208,47 @@ public class ModelFromXSD {
                 nsmap.assignPrefix(prefix, nsuri);
             }
             int kind = sd.schemaKind();
-            if (NSK_XML != kind && isNamespaceKindInCMF(kind)) {
+            if (NSK_XML != kind && NamespaceKind.isKindInCMF(kind)) {
                 Namespace n = new Namespace(prefix, nsuri);
-                n.setDefinition(sd.documentation());
                 n.setKind(kind);
                 try { m.addNamespace(n); } catch (CMFException ex) { } // CAN'T HAPPEN
                 LOG.debug("Created namespace {}", nsuri);
             }
-        });
+        });        
         // Add namespace for XSD to model if it isn't already there
         // (Sometimes people import it, sometimes they don't)
-        xsdns = m.getNamespaceByURI(XSD_NS_URI);
+        xsdns = m.getNamespaceByURI(W3C_XML_SCHEMA_NS_URI);
         if (null == xsdns) {
-            xsdns = new Namespace(nsmap.getPrefix(XSD_NS_URI), XSD_NS_URI); // reserved prefix
+            xsdns = new Namespace(nsmap.getPrefix(W3C_XML_SCHEMA_NS_URI), W3C_XML_SCHEMA_NS_URI); // reserved prefix
             xsdns.setKind(NSK_XSD);
             try { m.addNamespace(xsdns); } catch (CMFException ex) { }    // CAN'T HAPPEN
-            LOG.debug("Created namespace {}", XSD_NS_URI);
+            LOG.debug("Created namespace {}", W3C_XML_SCHEMA_NS_URI);
         }
     }
     
-    // Now we have unique namespace prefixes assigned, we go through all the 
-    // appinfo records in all the schema documents and index them by global
+    // Schema-level annotations have the namespace documentation and any 
+    // local term definitions.  (FIXME: local terms not handled yet)
+    private void processSchemaAnnotations () {
+        var nsil = xs.getNamespaceItems();
+        for (int i = 0; i < nsil.getLength(); i++) {
+            var nsi   = (XSNamespaceItem)nsil.item(i);
+            var nsuri = nsi.getSchemaNamespace();
+            var ns    = m.getNamespaceByURI(nsuri);
+            if (null == ns) continue;
+            var alist = parseAnnotations(nsi);
+            var docs  = getDocumentation(alist);
+            for (var doc : docs) 
+                ns.setDefinition(doc);
+        }        
+    }
+    
+    // Now that we have unique namespace prefixes assigned, we go through all the 
+    // appinfo attribute records in all the schema documents and index them by global
     // compnent QName (and sometimes then element reference QName).  Sure would be
-    // nice if appinfo was available through XSModel, but it isn't.
-    private void processAppinfo () {
+    // nice if appinfo attributes were available through XSModel, but they aren't.
+    private void processAppinfoAttributes () {
         sdoc.forEach((ns,sd) -> {
-            for (var arec : sd.appinfo()) {
+            for (var arec : sd.appinfoAtts()) {
                 String cns = arec.componentEQN().getValue0();
                 String cln = arec.componentEQN().getValue1();
                 String cqn = m.getNamespaceByURI(cns).getNamespacePrefix() + ":" + cln;
@@ -260,44 +284,62 @@ public class ModelFromXSD {
     }
 
     // Create property placeholder objects for all the element and attribute declarations 
-    // in NIEM-conforming schema documents. Only namespace and name initialized, and
-    // attributes distingushed from elements; the rest happens later. After this 
-    // the model contains most of the property objects, but those objects are incomplete.
+    // in NIEM-conforming schema documents. Namespace, name, and documentation is 
+    // initialized here, and attributes distingushed from elements; the rest happens later. 
+    // After this the model contains most of the property objects, but those objects 
+    // are incomplete.
     private void initializeDeclarations () {
         XSNamedMap xmap = xs.getComponents(ATTRIBUTE_DECLARATION);
         for (int i = 0; i < xmap.getLength(); i++) {
-            XSObject xobj = xmap.item(i);
-            initializeOneDeclaration(xobj, true);
+            var xobj = (XSAttributeDeclaration)xmap.item(i);
+            var p    = initializeOneDeclaration(xobj, true);
+            if (null == p) continue;
+            var an   = parseAnnotation(xobj);
+            var docs = getDocumentation(an);
+            for (var doc : docs) p.setDefinition(doc);
         }
         xmap = xs.getComponents(ELEMENT_DECLARATION);
         for (int i = 0; i < xmap.getLength(); i++) {
-            XSObject xobj = xmap.item(i);
-            initializeOneDeclaration(xobj, false);
+            var xobj = (XSElementDeclaration)xmap.item(i);
+            var xet  = xobj.getTypeDefinition();
+            var xetu = NamespaceKind.utilityKind(xet.getNamespace());
+            if (NIEM_STRUCTURES == xetu) {
+                LOG.info(String.format("Discarding element %s:%s, because its type is from structures namespace",
+                        nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
+                continue;
+            }
+            var p    = initializeOneDeclaration(xobj, false);
+            if (null == p) continue;
+            var an   = parseAnnotation(xobj);
+            var docs = getDocumentation(an);
+            for (var doc : docs) p.setDefinition(doc);
         }        
     }
     
-    private void initializeOneDeclaration (XSObject xobj, boolean isAttribute) {
-        String nsuri = xobj.getNamespace();
-        String lname = xobj.getName();
-        int kind = namespaceKindFromSchema(nsuri);
-        if (kind > NSK_OTHERNIEM) return;               // FIXME code list namespace?
-        Namespace ns = m.getNamespaceByURI(nsuri);
-        Property p = new Property(ns, lname);
-        String doc = getDocumentation(xobj);
-        p.setDefinition(doc);
+    // Why can't we handle the declaration's documentation here?  Because the
+    // XSModel API is different for attribute and element declarations.  Pfui.
+    private Property initializeOneDeclaration (XSObject xobj, boolean isAttribute) {
+        var nsuri = xobj.getNamespace();
+        var lname = xobj.getName();
+        int kind  = namespaceKindFromSchema(nsuri);
+        if (kind > NSK_OTHERNIEM) return null;
+        var ns   = m.getNamespaceByURI(nsuri);
+        var p    = new Property(ns, lname);
         p.setIsAttribute(isAttribute);
         p.addToModel(m);
         propertyXSobj.put(p, xobj);
         LOG.debug("initialized property " + p.getQName());     
+        return p;
     }
     
     // Create class and datatype placeholder objects for all the type definitions in
     // NIEM-conforming schema documents. Only name and namespace initialized at
-    // this point.  Adding datatype objects to the model happens later.  We build 
-    // a separate map of QName to datatype object here, then possibly revise some
-    // mappings when we handle FooSimpleType declarations.  We don't create datatype
-    // objects for proxy types at all.  We don't create datatype objects for types
-    // in the XSD namespace until we see we need them.
+    // this point.  Handling annotations and documention happens later.  Adding 
+    // datatype objects to the model happens later.  We build a separate map of 
+    // QName to datatype object here, then possibly revise some mappings when we 
+    // handle FooSimpleType declarations.  We don't create datatype objects for 
+    // proxy types at all.  We don't create datatype objects for types in the XSD 
+    // namespace until we see we need them.
     private void initializeDefinitions () throws CMFException {
         XSNamedMap xmap = xs.getComponents(TYPE_DEFINITION);
         for (int i = 0; i < xmap.getLength(); i++) {
@@ -307,13 +349,11 @@ public class ModelFromXSD {
             var lname = xtype.getName();
             var ns    = m.getNamespaceByURI(nsuri);
             int kind  = namespaceKindFromSchema(nsuri);
-            if (kind > NSK_OTHERNIEM) continue;         // FIXME code list namespace?
+            if (kind > NSK_OTHERNIEM) continue;
 
             // Simple type is always a Datatype object
             if (SIMPLE_TYPE == xtype.getTypeCategory()) {
-                Datatype dt = new Datatype(ns, lname);
-                String doc  = getDocumentation(xtype);
-                dt.setDefinition(doc);
+                var dt   = new Datatype(ns, lname);
                 datatypeXSobj.put(dt, xtype);
                 datatypeMap.put(dt.getQName(), dt);
                 LOG.debug("initialized datatype " + dt.getQName());
@@ -329,8 +369,8 @@ public class ModelFromXSD {
                     var au    = (XSAttributeUse)atts.item(j);
                     var adecl = au.getAttrDeclaration();
                     var ans   = adecl.getNamespace();
-                    if (NIEM_STRUCTURES != getBuiltinKind(ans)) {   // attributes in structures NS don't count
-                        hasAttributes = true;                       // found a semantic attribute; we're done
+                    if (NIEM_STRUCTURES != NamespaceKind.utilityKind(ans)) {    // attributes in structures NS don't count
+                        hasAttributes = true;                                   // found a semantic attribute; we're done
                         break;
                     }
                 }
@@ -339,17 +379,15 @@ public class ModelFromXSD {
                 XSTypeDefinition ictype = xctype;
                 while (!hasMetadata && null != ictype) {
                     var icnsuri = ictype.getNamespace();
-                    int ikind = namespaceKindFromURI(icnsuri);
+                    int ikind = NamespaceKind.kind(icnsuri);
                     if (ikind > NSK_OTHERNIEM) break;
                     var icQN = getQN(ictype);
-                    hasMetadata = ("true".equals(getAppinfo(icQN, null, "metadataIndicator")));
+                    hasMetadata = ("true".equals(getAppinfoAttribute(icQN, null, "metadataIndicator")));
                     ictype = ictype.getBaseType();
                 }
                 boolean isSimple = (null != xctype.getSimpleType());
                 if (isSimple && !hasAttributes && !hasMetadata) {   // it's a Datatype
-                    Datatype dt = new Datatype(ns, lname);
-                    String doc  = getDocumentation(xctype);
-                    dt.setDefinition(doc);                    
+                    var dt   = new Datatype(ns, lname);               
                     datatypeXSobj.put(dt, xtype);
                     datatypeMap.put(dt.getQName(), dt);
                     LOG.debug("initialized datatype " + dt.getQName()); 
@@ -358,9 +396,7 @@ public class ModelFromXSD {
                 // Simple content with model attributes or metadata anywhere in derivation is a ClassType object
                 else {
                     initializeXMLattributes(xctype);
-                    ClassType ct = new ClassType(ns, lname);
-                    String doc  = getDocumentation(xctype);
-                    ct.setDefinition(doc);                       
+                    var ct   = new ClassType(ns, lname);                    
                     ct.addToModel(m);
                     classXSobj.put(ct, xctype);
                     LOG.debug("initialized class " + ct.getQName());
@@ -393,6 +429,8 @@ public class ModelFromXSD {
         }
     }
     
+    // It is much simpler to establish class inheritance after we have added
+    // all the ClassType objects to the model.
     private void setClassInheritance () {
         for (var ct : classXSobj.keySet()) {
             var xctype = classXSobj.get(ct);
@@ -471,7 +509,7 @@ public class ModelFromXSD {
                 sdt.setName(nn);           
             }
         }  
-        // Can't modify datatyhpeXSobj while iterating over it, so do replacements now
+        // Can't modify datatypeXSobj while iterating over it, so do replacements now
         replacements.forEach((dt, sdt) -> {
             var xtype = datatypeXSobj.get(sdt);
             datatypeXSobj.put(dt, xtype);
@@ -482,12 +520,12 @@ public class ModelFromXSD {
  
     // Now we have all of the properties from the schema, all of the classes, 
     // and all of the datatypes except XSD datatypes. Time to complete all
-    // the property objects.
+    // the property objects.  Documentation has already been handled
     private void processProperties () throws CMFException {
         for (var p : propertyXSobj.keySet()) {
             LOG.debug("processing property " + p.getQName());
             var xobj = propertyXSobj.get(p);
-            p.setIsDeprecated(getAppinfo(p.getQName(), null, "deprecated"));
+            p.setIsDeprecated(getAppinfoAttribute(p.getQName(), null, "deprecated"));
             if (p.isAttribute()) {
                 var xadecl = (XSAttributeDeclaration)xobj;
                 var xatype = xadecl.getTypeDefinition();
@@ -506,14 +544,14 @@ public class ModelFromXSD {
                 }
                 p.setIsAbstract(xedecl.getAbstract());
                 p.setIsReferenceable(xedecl.getNillable());
-                p.setCanHaveMD(getAppinfo(p.getQName(), null, "metadataIndicator"));
+                p.setCanHaveMD(getAppinfoAttribute(p.getQName(), null, "metadataIndicator"));
             }
         }
     }
        
-    // Time to complete all the class objects.  Special handling for simple content
-    // with attributes or metadata: we create a FooLiteral property to hold the 
-    // content of an element of FooType.
+    // Time to complete all the class objects.  Documentation is handled here.
+    // Special handling for simple content with attributes or metadata: we create 
+    // a FooLiteral property to hold the content of an element of FooType.
     private void processClassTypes () throws CMFException {
         for (var ct : classXSobj.keySet()) {
             LOG.debug("processing class " + ct.getQName());
@@ -523,11 +561,16 @@ public class ModelFromXSD {
             var xctype  = classXSobj.get(ct);               // XSComplexTypeDefinition object
             var xbase   = xctype.getBaseType();             // base type XSTypeDefinition
             var xsbase  = xctype.getSimpleType();           // base type XSSimpleTypeDefinition (possibly null)
-            ct.setCanHaveMD(getAppinfo(ct.getQName(), null, "metadataIndicator"));
+            ct.setCanHaveMD(getAppinfoAttribute(ct.getQName(), null, "metadataIndicator"));
             ct.setIsAbstract(xctype.getAbstract());
-            ct.setIsDeprecated(getAppinfo(ct.getQName(), null, "deprecated"));
-            ct.setIsExternal(getAppinfo(ct.getQName(), null, "externalAdapterTypeIndicator"));
+            ct.setIsDeprecated(getAppinfoAttribute(ct.getQName(), null, "deprecated"));
+            ct.setIsExternal(getAppinfoAttribute(ct.getQName(), null, "externalAdapterTypeIndicator"));
 
+            // Handle annotations for documentation
+            var an    = parseAnnotation(xctype);
+            var docs  = getDocumentation(an);
+            for (var doc : docs) ct.setDefinition(doc);
+            
             // Create a FooLiteral property for FooType if needed
             if (hasLiteralProperty.contains(ct)) { 
                 var basedt = getDatatype(xbase.getNamespace(), xbase.getName());
@@ -538,10 +581,15 @@ public class ModelFromXSD {
                 while (null != m.getProperty(ctnsuri, npln))  {
                     npln = npbase + "Literal" + String.format("%02d", mungct++);
                 }
-                Property np = new Property(ctns, npln);
-                LOG.debug("created literal property " + np.getQName());
+                var np   = new Property(ctns, npln);
+                var doc  = ct.getDefinition();
+                if (null != doc) {
+                    var ndoc = doc.replaceFirst("A data type", "A literal value");
+                    np.setDefinition(ndoc);
+                }
                 np.setDatatype(basedt);
                 np.addToModel(m);
+                LOG.debug("created literal property " + np.getQName());
                 var hasp = new HasProperty();
                 hasp.setProperty(np);
                 hasp.setMinOccurs(1);
@@ -567,7 +615,7 @@ public class ModelFromXSD {
                         hp.setMinOccurs(xp.getMinOccurs());
                         if (xp.getMaxOccursUnbounded()) hp.setMaxUnbounded(true);
                         else hp.setMaxOccurs(xp.getMaxOccurs());
-                        hp.setOrderedProperties("true".equals(getAppinfo(ct.getQName(), p.getQName(), "orderedPropertyIndicator")));
+                        hp.setOrderedProperties("true".equals(getAppinfoAttribute(ct.getQName(), p.getQName(), "orderedPropertyIndicator")));
                         ct.addHasProperty(hp);
                     }
                 }
@@ -586,7 +634,7 @@ public class ModelFromXSD {
             }            
         }
     }    
-    
+
     // Returns a list of attributes declared by this complex type.  The Xerces API 
     // gives us those attributes plus all attributes inherited from the base types.
     // We have to remove the inherited attributes.     
@@ -598,7 +646,8 @@ public class ModelFromXSD {
             XSAttributeUse au = (XSAttributeUse)atl.item(i);
             XSAttributeDeclaration a = au.getAttrDeclaration();
             // Don't add attributes from the structures namespace
-            if (!a.getNamespace().startsWith(STRUCTURES_NS_URI_PREFIX)) aset.add(au);
+            if (NIEM_STRUCTURES != NamespaceKind.utilityKind(a.getNamespace())) 
+                aset.add(au);
         }
         // Now remove attribute uses in the base types
         XSTypeDefinition base = xctype.getBaseType();
@@ -611,7 +660,7 @@ public class ModelFromXSD {
                     aset.remove(au);
                 }
                 base = base.getBaseType();
-                if (XSD_NS_URI.equals(base.getNamespace()) && "anyType".equals(base.getName())) break;
+                if (W3C_XML_SCHEMA_NS_URI.equals(base.getNamespace()) && "anyType".equals(base.getName())) break;
             }
         }        
         return aset;
@@ -632,9 +681,9 @@ public class ModelFromXSD {
             if (COMPLEX_TYPE != base.getTypeCategory()) break;
             XSComplexTypeDefinition bct = (XSComplexTypeDefinition)base;
             par = bct.getParticle();
-            collectElements(par, bl);
+            collectElements(par, bl); 
             base = base.getBaseType();
-            if (XSD_NS_URI.equals(base.getNamespace()) && "anyType".equals(base.getName())) break;            
+            if (W3C_XML_SCHEMA_NS_URI.equals(base.getNamespace()) && "anyType".equals(base.getName())) break;            
         }
         // Remove elements in base types from element list
         for (XSParticle p : bl) {
@@ -663,11 +712,12 @@ public class ModelFromXSD {
         }
     }
        
-    // Time to complete all the datatype objects.  The schema object is either
-    // a simple type, or a complex type with simple content and no attributes.
+    // Time to complete all the datatype objects.  Documentation and appinfo is
+    // handled here.  The schema object is either a simple type, or a complex 
+    // type with simple content and no attributes.
     private void processDatatypes () throws CMFException {
         for (var dt : datatypeXSobj.keySet()) {
-            dt.setIsDeprecated(getAppinfo(dt.getQName(), null, "deprecated"));
+            dt.setIsDeprecated(getAppinfoAttribute(dt.getQName(), null, "deprecated"));
             m.addComponent(dt);
             if (xsdns == dt.getNamespace()) continue;               // nothing more to do for XSD types
             LOG.debug("processing datatype " + dt.getQName());
@@ -689,6 +739,12 @@ public class ModelFromXSD {
             }
             else xstype = (XSSimpleTypeDefinition)xtype;
             
+            // Handle annotations -- documentation and code list schema appinfo
+            var an    = parseAnnotation(xstype);
+            var docs  = getDocumentation(an);
+            for (var doc : docs) dt.setDefinition(doc);
+            handleCLSA(dt, an);
+
             switch (xstype.getVariety()) {
                 case VARIETY_UNION:
                     dt.setUnionOf(createUnionOf(xstype));
@@ -705,7 +761,35 @@ public class ModelFromXSD {
             }
         }
     }
-       
+    
+    // Look through the children of xs:appinfo for code list schema appinfo (CLSA)
+    // elements, and apply them to the Datatype object.
+    private void handleCLSA (Datatype dt, Element an) {
+        var alist = getAppinfoElements(an);
+        if (null == alist) return;
+        var dtns = dt.getNamespaceURI();
+        var sd   = sdoc.get(dtns);
+        var nver = sd.niemVersion();
+        var clsaURI = NamespaceKind.getUtilityNS(NIEM_CLSA, nver);
+        for (var ae : alist) {
+            var clsaElements = an.getElementsByTagNameNS(clsaURI, "SimpleCodeListBinding");
+            for (int i = 0; i < clsaElements.getLength(); i++) {
+                var clsa = (Element)clsaElements.item(i);
+                var col  = clsa.getAttribute("columnName");
+                var uri  = clsa.getAttribute("codeListURI");
+                var cons = clsa.getAttribute("constrainingIndicator");
+                if (uri.isEmpty()) continue;
+                var clb = new CodeListBinding();
+                if (col.isEmpty()) clb.setColumm("#code");  // see code list specification rule 4-11
+                else clb.setColumm(col);
+                clb.setURI(uri);
+                clb.setIsConstraining("true".equals(cons));
+                dt.setCodeListBinding(clb);
+                return;
+            }
+        }
+    }
+           
     // Construct a UnionOf object from a schema simple type definition.  Member types
     // are already in the model, or are XSD types.
     private UnionOf createUnionOf (XSSimpleTypeDefinition st) throws CMFException {
@@ -737,50 +821,45 @@ public class ModelFromXSD {
         r.setDatatype(bt);
         XSObjectList flist = xstype.getFacets();
         for (int i = 0; i < flist.getLength(); i++) {
-            XSFacet f   = (XSFacet)flist.item(i);
-            String fval = f.getLexicalFacetValue();
-            Facet fo    = new Facet();
-            fo.setFacetKind(facetKind(f));
-            fo.setStringVal(f.getLexicalFacetValue());
-            fo.setDefinition(getDocumentation(f));            
-            // Include a whitespace facet only for types derived from xs:string or xs:normalizedString,
-            // and only when the value is not the default
-            if (FACET_WHITESPACE == f.getFacetKind()) {
-                var atombase = getAtomicBaseType(xstype);
-                var ablname  = atombase.getName();
-                switch (ablname) {
-                    case "string":           if ("preserve".equals(fval))  fo = null; break;
-                    case "normalizedString": if (!"collapse".equals(fval)) fo = null; break;
-                    default: fo = null; break;
-                }
-            }
+            var f    = (XSFacet)flist.item(i);
+            if (isXercesDefaultFacet(xbase, f.getFacetKind(), f.getLexicalFacetValue())) continue;
+            var fval = f.getLexicalFacetValue();
+            var fo   = new Facet();
+            var an   = parseAnnotation(f);
+            var docs = getDocumentation (an);
+            for (var doc : docs) fo.setDefinition(doc);
+            fo.setFacetKind(facetKind2Code(f.getFacetKind()));
+            fo.setStringVal(f.getLexicalFacetValue());         
             if (null != fo) r.addFacet(fo);
         }
+        // Pattern and Extension facets are different.  We get parallel lists, one of
+        // facet values, the other of facet annotations.
         flist = xstype.getMultiValueFacets();
         for (int i = 0; i < flist.getLength(); i++) {
-            XSMultiValueFacet f = (XSMultiValueFacet)flist.item(i);
-            String fkind = FACET_PATTERN == f.getFacetKind() ? "Pattern" : "Enumeration";
-            XSObjectList annl = f.getAnnotations();
-            StringList   vals = f.getLexicalFacetValues();
+            var f     = (XSMultiValueFacet)flist.item(i);
+            var fkind = FACET_PATTERN == f.getFacetKind() ? "Pattern" : "Enumeration";
+            var vals  = f.getLexicalFacetValues();
+            var anns  = parseAnnotations(f);
             for (int j = 0; j < vals.getLength(); j++) {
-                String val = vals.item(j);
-                String def = null;
-                if (j < annl.getLength()) {
-                    XSAnnotation an = (XSAnnotation)annl.item(j);
-                    if (null != an) def = parseDefinition((XSAnnotation)annl.item(j));
+                var val = vals.item(j);
+                var fo = new Facet();
+                if (isXercesDefaultFacet(xbase, f.getFacetKind(), val)) continue;
+                if (j < anns.size()) {
+                    var an = anns.get(j);
+                    var docs = getDocumentation(an);
+                    for (var doc : docs) fo.setDefinition(doc);
                 }
-                Facet fo = new Facet();
                 fo.setFacetKind(fkind);
                 fo.setStringVal(val);
-                fo.setDefinition(def);
                 r.addFacet(fo);
             }
         }
         return r;
     }
     
-    private String facetKind (XSFacet f) {
-        switch (f.getFacetKind()) {
+    // Convert Xerces facet kind value to CMF facet kind code.
+    private String facetKind2Code (short kind) {
+        switch (kind) {
             case FACET_ENUMERATION:     return "Enumeration";
             case FACET_FRACTIONDIGITS:  return "FractionDigits";
             case FACET_LENGTH:          return "Length";
@@ -794,9 +873,171 @@ public class ModelFromXSD {
             case FACET_TOTALDIGITS:     return "TotalDigits";
             case FACET_WHITESPACE:      return "WhiteSpace";
             default: 
-                LOG.error("Unknown facet kind {}", f.getFacetKind());
+                LOG.error("Unknown facet kind {}", kind);
                 return "";
         }
+    }
+    
+    // Convert CMF facet kind code to Xerces facet kind value.
+
+    private final static Map<String,Short> fCode2Kind = Map.ofEntries(
+        entry("Enumeration", FACET_ENUMERATION),
+        entry("FractionDigits", FACET_FRACTIONDIGITS),
+        entry("Length", FACET_LENGTH),
+        entry("MaxExclusive", FACET_MAXEXCLUSIVE),
+        entry("MaxInclusive", FACET_MAXINCLUSIVE),
+        entry("MaxLength", FACET_MAXLENGTH),
+        entry("MinExclusive", FACET_MINEXCLUSIVE),
+        entry("MinInclusive", FACET_MININCLUSIVE),
+        entry("MinLength", FACET_MINLENGTH),
+        entry("Pattern", FACET_PATTERN),
+        entry("TotalDigits", FACET_TOTALDIGITS),
+        entry("WhiteSpace", FACET_WHITESPACE)
+    );
+    private short facetCode2Kind (String code) throws CMFException {
+        Short rv = fCode2Kind.get(code);
+        if (null != rv) return rv;
+        throw new CMFException(String.format("unknown facet type '%s'", code));
+    }
+
+    // The Xerces schema model object includes facets that do not appear in 
+    // the schema document.  These default facets are presumably used to enforce 
+    // bultin datatype constraints in a validating parser.  For example
+    //    <xs:restriction base="xs:byte">
+    // will create four default facets in the schema type definition. We don't
+    // want those default facets in the CMF representation.  The following 
+    // table and function are used to identify Xerces default facets so that 
+    // they can be omitted from CMF.
+    private static final String[] xercesFacetData =  {
+        "ENTITIES",           "MinLength",             "1",
+        "ENTITIES",           "WhiteSpace",            "collapse",
+        "ENTITY",             "WhiteSpace",            "collapse",
+        "ID",                 "WhiteSpace",            "collapse",
+        "IDREF",              "WhiteSpace",            "collapse",
+        "IDREFS",             "MinLength",             "1",
+        "IDREFS",             "WhiteSpace",            "collapse",
+        "NCName",             "Pattern",               "\\i\\c*\"\"[\\i-[:]][\\c-[:]]*",
+        "NCName",             "WhiteSpace",            "collapse",
+        "NMTOKEN",            "Pattern",               "\\c+",
+        "NMTOKEN",            "WhiteSpace",            "collapse",
+        "NMTOKENS",           "MinLength",             "1",
+        "NMTOKENS",           "WhiteSpace",            "collapse",
+        "NOTATION",           "WhiteSpace",            "collapse",
+        "Name",               "Pattern",               "\\i\\c*",
+        "Name",               "WhiteSpace",            "collapse",
+        "QName",              "WhiteSpace",            "collapse",
+        "anyURI",             "WhiteSpace",            "collapse",
+        "base64Binary",       "WhiteSpace",            "collapse",
+        "boolean",            "WhiteSpace",            "collapse",
+        "byte",               "FractionDigits",        "0",
+        "byte",               "MaxInclusive",          "127",
+        "byte",               "MinInclusive",          "-128",
+        "byte",               "Pattern",               "[\\-+]?[0-9]+",
+        "byte",               "WhiteSpace",            "collapse",
+        "date",               "WhiteSpace",            "collapse",
+        "dateTime",           "WhiteSpace",            "collapse",
+        "decimal",            "WhiteSpace",            "collapse",
+        "double",             "WhiteSpace",            "collapse",
+        "duration",           "WhiteSpace",            "collapse",
+        "float",              "WhiteSpace",            "collapse",
+        "gDay",               "WhiteSpace",            "collapse",
+        "gMonth",             "WhiteSpace",            "collapse",
+        "gMonthDay",          "WhiteSpace",            "collapse",
+        "gYear",              "WhiteSpace",            "collapse",
+        "gYearMonth",         "WhiteSpace",            "collapse",
+        "hexBinary",          "WhiteSpace",            "collapse",
+        "int",                "FractionDigits",        "0",
+        "int",                "MaxInclusive",          "2147483647",
+        "int",                "MinInclusive",          "-2147483648",
+        "int",                "Pattern",               "[\\-+]?[0-9]+",
+        "int",                "WhiteSpace",            "collapse",
+        "integer",            "FractionDigits",        "0",
+        "integer",            "Pattern",               "[\\-+]?[0-9]+",
+        "integer",            "WhiteSpace",            "collapse",
+        "language",           "Pattern",               "([a-zA-Z]{1,8})(-[a-zA-Z0-9]{1,8})*",
+        "language",           "WhiteSpace",            "collapse",
+        "long",               "FractionDigits",        "0",
+        "long",               "MaxInclusive",          "9223372036854775807",
+        "long",               "MinInclusive",          "-9223372036854775808",
+        "long",               "Pattern",               "[\\-+]?[0-9]+",
+        "long",               "WhiteSpace",            "collapse",
+        "negativeInteger",    "FractionDigits",        "0",
+        "negativeInteger",    "MaxInclusive",          "-1",
+        "negativeInteger",    "Pattern",               "[\\-+]?[0-9]+",
+        "negativeInteger",    "WhiteSpace",            "collapse",
+        "nonNegativeInteger", "FractionDigits",        "0",
+        "nonNegativeInteger", "MinInclusive",          "0",
+        "nonNegativeInteger", "Pattern",               "[\\-+]?[0-9]+",
+        "nonNegativeInteger", "WhiteSpace",            "collapse",
+        "nonPositiveInteger", "FractionDigits",        "0",
+        "nonPositiveInteger", "MaxInclusive",          "0",
+        "nonPositiveInteger", "Pattern",               "[\\-+]?[0-9]+",
+        "nonPositiveInteger", "WhiteSpace",            "collapse",
+        "normalizedString",   "WhiteSpace",            "replace",
+        "positiveInteger",    "FractionDigits",        "0",
+        "positiveInteger",    "MinInclusive",          "1",
+        "positiveInteger",    "Pattern",               "[\\-+]?[0-9]+",
+        "positiveInteger",    "WhiteSpace",            "collapse",
+        "short",              "FractionDigits",        "0",
+        "short",              "MaxInclusive",          "32767",
+        "short",              "MinInclusive",          "-32768",
+        "short",              "Pattern",               "[\\-+]?[0-9]+",
+        "short",              "WhiteSpace",            "collapse",
+        "string",             "WhiteSpace",            "preserve",
+        "time",               "WhiteSpace",            "collapse",
+        "token",              "WhiteSpace",            "collapse",
+        "unsignedByte",       "FractionDigits",        "0",
+        "unsignedByte",       "MaxInclusive",          "255",
+        "unsignedByte",       "MinInclusive",          "0",
+        "unsignedByte",       "Pattern",               "[\\-+]?[0-9]+",
+        "unsignedByte",       "WhiteSpace",            "collapse",
+        "unsignedInt",        "FractionDigits",        "0",
+        "unsignedInt",        "MaxInclusive",          "4294967295",
+        "unsignedInt",        "MinInclusive",          "0",
+        "unsignedInt",        "Pattern",               "[\\-+]?[0-9]+",
+        "unsignedInt",        "WhiteSpace",            "collapse",
+        "unsignedLong",       "FractionDigits",        "0",
+        "unsignedLong",       "MaxInclusive",          "18446744073709551615",
+        "unsignedLong",       "MinInclusive",          "0",
+        "unsignedLong",       "Pattern",               "[\\-+]?[0-9]+",
+        "unsignedLong",       "WhiteSpace",            "collapse",
+        "unsignedShort",      "FractionDigits",        "0",
+        "unsignedShort",      "MaxInclusive",          "65535",
+        "unsignedShort",      "MinInclusive",          "0",
+        "unsignedShort",      "Pattern",               "[\\-+]?[0-9]+",
+        "unsignedShort",      "WhiteSpace",            "collapse",
+};
+
+    private record DefFacet (short kind, String val) { }
+    private static Map<String,List<DefFacet>> xercesFacet = null;
+    
+    private boolean isXercesDefaultFacet (XSTypeDefinition bt, short fk, String fv) throws CMFException {
+        if (null == xercesFacet) {
+            xercesFacet = new HashMap<>();
+            for (int i = 0; i < xercesFacetData.length; i += 3) {
+                var btype  = xercesFacetData[i];
+                var fkcode = xercesFacetData[i+1];
+                var fval   = xercesFacetData[i+2];
+                var flst   = xercesFacet.get(btype);
+                if (null == flst) {
+                    flst = new ArrayList<>();
+                    xercesFacet.put(btype, flst);
+                }
+                var fkind = facetCode2Kind(fkcode);
+                var frec = new DefFacet(fkind, fval);
+                flst.add(frec);
+            }
+        }
+        var btname = bt.getName();
+        while (!xercesFacet.containsKey(btname)) {
+            bt = bt.getBaseType();
+            btname = bt.getName();
+        }
+        var deflist = xercesFacet.get(btname);
+        for (var dfr : deflist) {
+            if (fk == dfr.kind && fv.equals(dfr.val)) return true;
+        }
+        return false;
     }
 
     // Special handling for augmentations.  Augmentation types do not appear in 
@@ -809,7 +1050,7 @@ public class ModelFromXSD {
             if (null == p || null == p.getSubPropertyOf()) continue;
             if (!p.getSubPropertyOf().getName().endsWith("AugmentationPoint")) continue;
             
-            // Property p is subsitutable for an augmentation point; find the augmented type
+            // Property p is substitutable for an augmentation point; find the augmented type
             String atqn = new String(p.getSubPropertyOf().getQName()).replace("AugmentationPoint", "Type");
             ClassType augmented = m.getClassType(atqn);
             if (null == augmented) {
@@ -821,12 +1062,15 @@ public class ModelFromXSD {
                 continue;
             }
             LOG.debug("{} augments {}", p.getQName(), augmented.getQName());
+            
             // If Property p has an augmentation type, add type children to the augmented type
             ClassType ptype = p.getClassType();
             if (null != ptype && ptype.getName().endsWith("AugmentationType")) {
                 LOG.debug("Augmenting {} with augmentation type {}", augmented.getQName(), ptype.getQName());
+                int index = 0;
                 for (HasProperty hp : ptype.hasPropertyList()) {
-                    addAugmentPropertyToClass(augmented, p.getNamespace(), hp, true);
+                    addAugmentPropertyToClass(augmented, p.getNamespace(), hp);
+                    addAugmentRecord(ptype.getNamespace(), augmented, hp, index++);
                 }
                 LOG.debug("Done with augmentation type {}", ptype.getQName());
             }
@@ -836,7 +1080,8 @@ public class ModelFromXSD {
                 ahp.setProperty(p);
                 ahp.setMinOccurs(0);
                 ahp.setMaxUnbounded(true); 
-                addAugmentPropertyToClass(augmented, p.getNamespace(), ahp, false);
+                addAugmentPropertyToClass(augmented, p.getNamespace(), ahp);
+                addAugmentRecord(p.getNamespace(), augmented, ahp, -1);
                 p.setSubPropertyOf(null);    // remove AugmentationPoint subpropertyOf
             }         
         }
@@ -857,7 +1102,7 @@ public class ModelFromXSD {
     // ans = namespace of the augmentation property
     // ahp = augmentation property, with min/max occurs
     // fromAugType = true if ahp is member of an augmentation type
-    private void addAugmentPropertyToClass (ClassType aug, Namespace ans, HasProperty ahp, boolean fromAugType) {
+    private void addAugmentPropertyToClass (ClassType aug, Namespace ans, HasProperty ahp) {
         // See if augmentation property is already a class member
         HasProperty augHP = null;
         for (HasProperty hp : aug.hasPropertyList()) {
@@ -880,8 +1125,22 @@ public class ModelFromXSD {
             if (ahp.maxUnbounded()) augHP.setMaxUnbounded(true);
             else if (!augHP.maxUnbounded()) augHP.setMaxOccurs(max(augHP.maxOccurs(), ahp.maxOccurs()));
         }
-        if (fromAugType) augHP.augmentTypeNS().add(ans);
-        else augHP.setAugmentElementNS(ans);
+        augHP.augmentingNS().add(ans);
+    }
+    
+    // Adds an Augmenting element to the Property object, recording that
+    // Property hp.getProperty() is a useful augmentation for Class ct,
+    // according to the owner of Namespace augn.
+    private void addAugmentRecord (Namespace augn, ClassType ct, HasProperty hp, int index) {
+        var ar = new AugmentRecord();
+        ar.setClassType(ct);
+        ar.setProperty(hp.getProperty());
+        ar.setIndexInType(index);
+        ar.setMinOccurs(hp.minOccurs());
+        ar.setMaxOccurs(hp.maxOccurs());
+        ar.setMaxUnbounded(hp.maxUnbounded());
+        augn.addAugmentRecord(ar);
+        LOG.debug(String.format("namespace %s augments %s with %s", augn.getNamespacePrefix(), ct.getQName(), hp.getProperty().getQName()));
     }
  
     // Retrieve appinfo attribute value for a global component or element reference.
@@ -890,7 +1149,7 @@ public class ModelFromXSD {
     //     getAppinfo("nc:ThingType", null, "deprecated")
     // For <xs:element ref="nc:Thing" appinfo:orderedPropertyIndicator="true", do
     //     getAppinfo("nc:ThingType", "nc:Prop", "orderedPropertyIndicator")
-    private String getAppinfo (String compQN, String erefQN, String alname) {
+    private String getAppinfoAttribute (String compQN, String erefQN, String alname) {
         if (null == erefQN) {
             var arlist = globalAppinfo.get(compQN);
             if (null == arlist) return "";
@@ -910,18 +1169,17 @@ public class ModelFromXSD {
     }
     
     // Retrieve an intialized datatype object by uri and local name.
-    // If you ask for 
     // If you ask for a proxy type, you get the underlying XSD type.  
     // If you ask for an XSD type, it's added to the model and then returned to you.  
     // If you ask for any type in the XML namespace, you get xs:string.  
     // If you ask for xs:anyType or xs:anySimpleType, you get null.
     private Datatype getDatatype (String nsuri, String lname) throws CMFException {
-        if (NIEM_PROXY == getBuiltinKind(nsuri)) nsuri = XSD_NS_URI;    // replace proxy types with XSD
+        if (NIEM_PROXY == NamespaceKind.utilityKind(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
         var dtqn = getQN(nsuri, lname);
         var res  = datatypeMap.get(dtqn);
         if (null != res)                   return res;
-        if (XML_NS_URI.equals(nsuri))      return getDatatype(XSD_NS_URI, "string");
-        if (!XSD_NS_URI.equals(nsuri))     throw new CMFException(String.format("no datatype for %s#%s", nsuri, lname));
+        if (XML_NS_URI.equals(nsuri))      return getDatatype(W3C_XML_SCHEMA_NS_URI, "string");
+        if (!W3C_XML_SCHEMA_NS_URI.equals(nsuri))     throw new CMFException(String.format("no datatype for %s#%s", nsuri, lname));
         if ("anyType".equals(lname))       return null;
         if ("anySimpleType".equals(lname)) return null;
         res = new Datatype(xsdns, lname);
@@ -944,14 +1202,14 @@ public class ModelFromXSD {
     }
     
     private String getQN (String nsuri, String lname) throws CMFException {
-        if (NIEM_PROXY == getBuiltinKind(nsuri)) nsuri = XSD_NS_URI;    // replace proxy types with XSD
+        if (NIEM_PROXY == NamespaceKind.utilityKind(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
         var ns = m.getNamespaceByURI(nsuri);
         if (null == ns) 
             throw new CMFException(String.format("no namespace object for %s", nsuri));
         return ns.getNamespacePrefix() + ":" + lname;        
     }
     
-    // replaceEnding("FooSimpleType", "SimpleType", "Datatype") -> "FooDatatype"
+    // replaceSuffix("FooSimpleType", "SimpleType", "Datatype") -> "FooDatatype"
     private String replaceSuffix (String s, String ending, String replacement) {
         if (!s.endsWith(ending)) return s;
         int slen = s.length();
@@ -980,78 +1238,144 @@ public class ModelFromXSD {
         return sd.schemaKind();
     }
     
-    // Component definitions are provided in the annotations.  Annotations are 
-    // provided as XML text.  Parse these text strings and return the content of
-    // the first xs:documentation element encountered.
-    private String getDocumentation (XSObject o) {
-        XSObjectList alist = getAnnotations(o);
-        if (null == alist) return null;
-        for (int i = 0; i < alist.getLength(); i++) {           
-            XSAnnotation a = (XSAnnotation)alist.item(i);
-            String ds = parseDefinition(a);
-            if (null != ds) return ds.trim();
-        }
-        return null;
+    // Annotations are available from the XSModel as an XML string.
+    // We parse those XML strings into DOM elements to extract documentation
+    // and appinfo.  The XSModel API is funky.  You might think that XSObject
+    // would provide a list of annotations, but no.  Instead the different
+    // schema object types have their own annotation API.
+    //
+    // parseAnnotation returns null if the parsing fails, or if getAnnotation
+    // returns null.
+    private Element parseAnnotation (XSAttributeDeclaration o) {
+        return parseAnnotation(o.getAnnotation());
     }
     
-    // Sure would be nice if XSObject returned a list of annotations.
-    // Instead we have to figure out what kind of schema object we have, and
-    // call the appropriate function.
-    private XSObjectList getAnnotations (XSObject o) {
-        XSObjectList alist = null;
-        short otype = o.getType();
-        switch (otype) {
-            case TYPE_DEFINITION:
-                if (SIMPLE_TYPE == ((XSTypeDefinition)o).getTypeCategory())
-                    alist = ((XSSimpleTypeDefinition)o).getAnnotations();
-                else alist = ((XSComplexTypeDefinition)o).getAnnotations();                
-                break;
-            case ATTRIBUTE_DECLARATION: alist = ((XSAttributeDeclaration)o).getAnnotations(); break;
-            case ELEMENT_DECLARATION:   alist = ((XSElementDeclaration)o).getAnnotations(); break;
-            case FACET:                 alist = ((XSFacet)o).getAnnotations(); break;
-            case MULTIVALUE_FACET:      alist = ((XSMultiValueFacet)o).getAnnotations(); break;
-        }
-        return alist;
-    }    
+    private Element parseAnnotation (XSElementDeclaration o) {
+        return parseAnnotation(o.getAnnotation());
+    }
     
-    private String parseDefinition (XSAnnotation a) {
-        String ds = null;
+    private Element parseAnnotation (XSFacet o) {
+        return parseAnnotation(o.getAnnotation());
+    }
+    
+    // Type definitions can only have one annotation, but the API returns
+    // a list with one member.
+    private Element parseAnnotation (XSTypeDefinition o) {
+        XSObjectList alist;
+        if (SIMPLE_TYPE == o.getTypeCategory())
+             alist = ((XSSimpleTypeDefinition)o).getAnnotations();
+        else alist = ((XSComplexTypeDefinition)o).getAnnotations();
+        if (alist.isEmpty()) return null;
+        return parseAnnotation((XSAnnotation)alist.item(0));
+    }
+    
+    // DOM parsing happens here, turning the annotation XML string into a DOM element
+    private Element parseAnnotation (XSAnnotation an) {
+        if (null == an) return null;
+        var as = an.getAnnotationString();
+        var sr = new StringReader(as);
+        var is = new InputSource(sr);
         try {
-            SAXParser saxp = ParserBootstrap.sax2Parser();
-            AnnotationHandler h = new AnnotationHandler();
-            String as = a.getAnnotationString();
-            StringReader sr = new StringReader(as);
-            InputSource is = new InputSource(sr);
-            saxp.parse(is, h);
-            ds = h.getDocumentation();
-        } catch (SAXException | IOException | ParserConfigurationException ex) {
-            LOG.error("Parsing annotation string: {}", ex.getMessage());
+            var db  = ParserBootstrap.docBuilder();
+            var doc = db.parse(is);
+            var res = doc.getDocumentElement();
+            return res;
         }
-        return ds;
+        catch (Exception ex) { return null; }    // IGNORE, return null
     }
     
-    private class AnnotationHandler extends DefaultHandler {
-        private StringBuilder dsb = null;
-        private String ds = null;
-        public String getDocumentation () { return ds; }       
-        @Override
-        public void startElement(String ns, String ln, String qn, Attributes atts) {  
-            if (null != ds) return;                     // already finished a documentation element
-            if (!"documentation".equals(ln)) return;    // this isn't a documentation element
-            if (!XSD_NS_URI.equals(ns)) return;         // this isn't one either
-            dsb = new StringBuilder();                  // OK, start remembering characters
-        }      
-        @Override
-        public void endElement(String ns, String ln, String qn) {
-            if (null != dsb) {
-                ds = dsb.toString();                    // documentation is the chars remembered
-                dsb = null;                             // now stop remembering forever
-            }
-        }        
-        @Override
-        public void characters (char[] ch, int start, int length) {
-            if (null != dsb) dsb.append(ch, start, length);
-        }        
+    // Returns a list of annotation elements for enumerations and patterns.
+    private List<Element> parseAnnotations (XSMultiValueFacet o) {
+        var res   = new ArrayList<Element>();
+        var alist = o.getAnnotations();
+        for (int i = 0; i < alist.getLength(); i++) {
+            var an = (XSAnnotation)alist.item(i);
+            var ae = parseAnnotation(an);
+            if (null != ae) res.add(ae);
+        }
+        return res;
     }
+    
+    // Returns a list of annotations for the schema element.
+    private List<Element> parseAnnotations (XSNamespaceItem o) {
+        var res   = new ArrayList<Element>();
+        var alist = o.getAnnotations();
+        for (int i = 0; i < alist.getLength(); i++) {
+            var an = (XSAnnotation)alist.item(i);
+            var ae = parseAnnotation(an);
+            if (null != ae) res.add(ae);
+        }
+        return res;
+    }
+    
+    // Iterate through a list of annotation elements and return a list of
+    // all the appinfo elements found therein.
+    private List<Element> getAppinfoElements (List<Element> annotations) {
+        List<Element> result = null;
+        for (var ae : annotations) {
+            if (null == result) result = getAppinfoElements(ae);
+            else result.addAll(getAppinfoElements(ae));
+        }
+        if (null == result) result = new ArrayList<>();
+        return result;
+    }
+    
+    // Return a list of appinfo elements in an annotation element.
+    // Returns an empty list if annotation == null.
+    private List<Element> getAppinfoElements (Element annotation) {
+        if (null == annotation) return new ArrayList<Element>();
+        var result = new ArrayList<Element>();
+        var cl = annotation.getChildNodes();
+        for (int i = 0; i < cl.getLength(); i++) {
+            var node = cl.item(i);
+            if (ELEMENT_NODE != node.getNodeType()) continue;
+            if ("appinfo".equals(node.getLocalName()) && W3C_XML_SCHEMA_NS_URI.equals(node.getNamespaceURI())) 
+                result.add((Element)node);
+        }
+        return result;        
+    }
+    
+    // Types, elements, and attributes provide a list of annotations of size = 1.
+    private List<String> getDocumentation (List<Element> annotations) {
+        List<String> result = null;
+        for (var ae : annotations) {
+            if (null == result) result = getDocumentation(ae);
+            else result.addAll(getDocumentation(ae));
+        }
+        if (null == result) result = new ArrayList<>();
+        return result;
+    }
+    
+    private List<String> getDocumentation (Element annotation) {
+        if (null == annotation) return new ArrayList<String>();
+        var result = new ArrayList<String>();
+        var nlist = annotation.getElementsByTagNameNS(W3C_XML_SCHEMA_NS_URI, "documentation");
+        for (int i = 0; i < nlist.getLength(); i++) {
+            var de = (Element) nlist.item(i);
+            var ds = de.getTextContent();
+            result.add(ds.trim());
+        }
+        return result;
+    }
+    
+    
+//    // debug tool
+//    private String elementToString (Element e) {  
+//        String result = "";
+//        try {
+//            Transformer tr = TransformerFactory.newInstance().newTransformer();
+//            tr.setOutputProperty(OutputKeys.INDENT, "yes");
+//            tr.setOutputProperty(OutputKeys.METHOD, "xml");
+//            tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+//            tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+//            StringWriter ostr = new StringWriter();
+//            tr.transform(new DOMSource(e), new StreamResult(ostr));
+//            result = ostr.toString();
+//            int i = 0;
+//        } catch (TransformerException ex) {
+//            java.util.logging.Logger.getLogger(ModelToXSD.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        return result;
+//    }    
 
 }

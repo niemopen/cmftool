@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -54,6 +55,9 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
+import static javax.xml.XMLConstants.XML_NS_URI;
 import static org.apache.commons.io.FileUtils.copyFile;
 import static org.apache.commons.io.FileUtils.createParentDirectories;
 import org.apache.commons.io.FilenameUtils;
@@ -61,8 +65,9 @@ import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
-import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
+import org.mitre.niem.cmf.AugmentRecord;
 import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
@@ -73,19 +78,16 @@ import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import static org.mitre.niem.NIEMConstants.XMLNS_URI;
-import static org.mitre.niem.NIEMConstants.XML_NS_URI;
-import org.mitre.niem.cmf.SchemaDocument;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_APPINFO;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_BUILTINS_COUNT;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_CONFORMANCE_TARGETS;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_PROXY;
-import static org.mitre.niem.xsd.NIEMBuiltins.NIEM_STRUCTURES;
-import static org.mitre.niem.xsd.NIEMBuiltins.defaultBuiltinFilename;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinDefaultPrefix;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinDocumentFile;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinKind;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinURI;
+import org.mitre.niem.cmf.NamespaceKind;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_APPINFO;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_CLI;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_CLSA;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_CTAS;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTUTILITY;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_PROXY;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_UTILITY_COUNT;
+
 
 /**
  * A class for writing a Model as a NIEM XML schema pile.
@@ -97,62 +99,42 @@ public class ModelToXSD {
     static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
         
     private final Model m;
-    private final Map<String,Namespace> builtinNSmap;           // map nsURI of a correct version built-in -> its Namespace object
-    private final HashMap<ClassType,Property> augPoint;         // map of ClassType -> augmentation point Property
-    private final HashMap<Property,ClassType> augElement;       // map of property -> ClassType with augmentation point it substitutes for
-    private final ArrayList<AugmentRec> hasAugType;             // list of (Namespace, ClassType for which this namespace has an augmentation) pairs
-    private final HashMap<String, List<Namespace>> subpropDeps; // map nsURI -> list of subproperty Namespace dependencies
-    private final HashSet<ClassType> litTypes;                  // set of ClassType objects that will become complex type, simple content
-    private final HashSet<Property> litProps;                   // set of literal properties not needed in XSD
-    private final HashSet<Datatype> needSimpleType;             // Union, list, or non-empty restriction datatypes
+    private final Map<String, String> ns2file;              // map nsURI -> absolute schema document file path
+    private final Set<String> nsfiles;                      // set of schema document file paths
+    private final Set<String> utilityNSuri;                 // set of utility namespaces needed in schema document pile
+    private final Map<String, List<String>> subpropDeps;    // map nsURI -> list of subproperty Namespace dependency URIs
+    private final Set<ClassType> litTypes;                  // set of ClassType objects that will become complex type, simple content
+    private final Set<Property> litProps;                   // set of literal properties not needed in XSD
+    private final Set<Datatype> needSimpleType;             // Union, list, or non-empty restriction datatypes
     
     // These change as each namespace is processed
-    private TreeMap<String,Element> nsPropdecls = null;   // map name -> schema declaration of attribute/element in a namespace
-    private TreeMap<String,Element> nsTypedefs = null;    // map name -> schema definition of type in a namespace
-    private HashSet<Namespace> nsNSdeps = null;           // Namespace objects of namespaces referenced in current namespace
-    private String nsNIEMVersion = null;                  // NIEM version of current document (eg. "5.0")
-    private Namespace nsProxyNS = null;                   // proxy namespace for NIEM version of current document
-    private Namespace nsStructNS = null;                  // structures namespace for NIEM version of current document
-    private Element root = null;                          // current document element
+    private Map<String,Element> nsPropdecls = null;         // map name -> schema declaration of attribute/element in a namespace
+    private Map<String,Element> nsTypedefs = null;          // map name -> schema definition of type in a namespace
+    private Set<String> nsNSdeps = null;                    // Namespace URIs of namespaces referenced in current namespace
+    private String nsNIEMVersion = null;                    // NIEM version of current document (eg. "5.0")
+    private String proxyPrefix = null;                      // proxy namespace prefix for NIEM version of current document
+    private String structURI = null;                        // structures namespace URI
+    private String structPrefix = null;                     // structures namespace prefix for NIEM version of current document
+    private String proxyURI = null;                         // proxy namespace URI
+    private Element root = null;                            // current document element
 
     
     public ModelToXSD (Model m) {
         this.m = m;
-        builtinNSmap = new HashMap<>();
-        augPoint     = new HashMap<>();
-        augElement   = new HashMap<>();
-        hasAugType   = new ArrayList<>();
-        subpropDeps  = new HashMap<>();
-        litTypes     = new HashSet<>();
-        litProps     = new HashSet<>(); 
+        ns2file        = new HashMap<>();
+        nsfiles        = new HashSet<>();
+        utilityNSuri   = new HashSet<>();
+        subpropDeps    = new HashMap<>();
+        litTypes       = new HashSet<>();
+        litProps       = new HashSet<>(); 
         needSimpleType = new HashSet<>();
     }
 
+    // Write the Model to an XML Schema pile in directory "od".
+    // Target directory should be empty.  If it isn't, you'll get munged
+    // file names whenever the preferred file name already exists.
     public void writeXSD (File od) throws FileNotFoundException, ParserConfigurationException, TransformerException, IOException {
-        // Remember augmentations in all namespaces
-        // Create augmentation points for augmentable types, remember for later
-        for (Component c : m.getComponentList()) {
-            ClassType ct = c.asClassType();
-            if (null == ct) continue;
-            HashSet<Namespace> augNS = new HashSet<>();
-            for (HasProperty hp : ct.hasPropertyList()) {
-                if (null != hp.augmentElementNS()) augElement.put(hp.getProperty(), ct);
-                for (Namespace ns : hp.augmentTypeNS()) {
-                    if (augNS.contains(ns)) continue; 
-                    AugmentRec augRec = new AugmentRec(ns, ct);
-                    hasAugType.add(augRec);
-                    augNS.add(ns);
-                }
-            }
-            if (ct.isAugmentable()) {
-                String apn = augmentationPointName(ct);
-                Property augP = new Property(ct.getNamespace(), apn);
-                augP.setIsAbstract(true);
-                augP.setDefinition("An augmentation point for " + ct.getName() + ".");
-                augPoint.put(ct, augP);            
-            }
-        }
-        // Remember cross-namespace subproperties; need these for import dependencies
+         // Remember cross-namespace subproperties; need these for import dependencies
         for (Namespace ns : m.getNamespaceList()) { subpropDeps.put(ns.getNamespaceURI(), new ArrayList<>()); }
         for (Component c : m.getComponentList()) {
             Property subp = c.asProperty();
@@ -161,7 +143,7 @@ public class ModelToXSD {
             Namespace subpns = subp.getNamespace();                     // namespace of subp (which is a subproperty)
             Namespace parpns =  subp.getSubPropertyOf().getNamespace(); // subp is subproperty of property in this namespace
             if (subpns != parpns)
-                subpropDeps.get(parpns.getNamespaceURI()).add(subpns);
+                subpropDeps.get(parpns.getNamespaceURI()).add(subpns.getNamespaceURI());
         }
         // Find the ClassType objects that will become CSCs with a FooLiteral property
         // First property in the type is a simple element named FooLiteral
@@ -196,63 +178,80 @@ public class ModelToXSD {
         ArrayList<String> allVers = new ArrayList<>();
         m.schemadoc().forEach((ns,sd) -> {
             String nvers = sd.niemVersion();
-            if (null != nvers && !allVers.contains(nvers)) allVers.add(nvers);
+            if (null != nvers && !nvers.isBlank() && !allVers.contains(nvers)) allVers.add(nvers);
         });
+        if (allVers.isEmpty()) allVers.add("5");
         Collections.sort(allVers);
         Collections.reverse(allVers);   // highest versions first
         for (String nv : allVers) {
-            for (int bkind = 0; bkind < NIEM_BUILTINS_COUNT; bkind++) {
-                String bprefix = getBuiltinDefaultPrefix(bkind);
-                String bnsuri  = getBuiltinURI(bkind, nv);
-                if (null != m.namespaceMap().getURI(bnsuri)) continue;      // already has a prefix
-                if (null == m.namespaceMap().getPrefix(bprefix)) {
-                    m.namespaceMap().assignPrefix(bprefix, bnsuri);         // preferred prefix is available
-                }
-                else {
-                    String vsuf = nv.replaceAll(":","");
-                    m.namespaceMap().assignPrefix(bprefix+vsuf, bnsuri);
-                }
+            for (int uk = 0; uk < NIEM_UTILITY_COUNT; uk++) {
+                if (NIEM_NOTUTILITY == uk) continue;
+                String nsuri   = NamespaceKind.getUtilityNS(uk, nv);
+                String uprefix;
+                if (null == nsuri) continue;
+                var sdoc = m.schemadoc().get(nsuri);
+                if (null != sdoc) uprefix = sdoc.targetPrefix();        // try prefix from schema document
+                else uprefix = NamespaceKind.namespaceUtil2Code(uk);    // use default prefix for this utility         
+                m.namespaceMap().assignPrefix(uprefix, nsuri);            
             }
         }
-        // Now write a schema document for each namespace
+        // Generate augmentation points for all augmentable ClassTypes in the model.
+        generateAugmentationPoints();
+        
+        // Make sure we have a new file with a unique name for all the schema documents
+        // Schema document file paths can be suggested in the Model, otherwise default
+        // paths will be created.  All this hinting and defaulting is not guaranteed 
+        // to produce a unique file path for each namespace, so we ensure that here,
+        // beginning with the model namespaces.
         for (Namespace ns : m.getNamespaceList()) {
-            if (XSD_NS_URI.equals(ns.getNamespaceURI())) continue;
-            if (XML_NS_URI.equals(ns.getNamespaceURI())) continue;
-            if (ns.isExternal()) continue;
-            String dfp = m.filePath(ns.getNamespaceURI());
-            File of = new File(od, dfp);
+            if (W3C_XML_SCHEMA_NS_URI.equals(ns.getNamespaceURI())) continue;   // no document for xs: namespace
+            if (ns.isExternal()) continue;                              // someone else's job
+            var nsuri = ns.getNamespaceURI();
+            var sdoc  = m.schemadoc().get(nsuri);
+            String fp = null;
+            if (null != sdoc) fp = sdoc.filePath();                     // use hint from Model
+            var absfp = genSchemaFile(nsuri, od, fp);
+        }
+        // Now generate new unique file names for the utility schema documents.
+        for (var vers : allVers) {
+            for (int util = 0; util < NIEM_NOTUTILITY; util++) {
+                if (NIEM_CLI == util) continue;
+                var nsuri = NamespaceKind.getUtilityNS(util, vers);
+                if (null == nsuri) continue;
+                var sdoc = m.schemadoc().get(nsuri);
+                String fp = null;
+                if (null != sdoc) fp = sdoc.filePath();
+                var absfp = genSchemaFile(nsuri, od, fp);
+            }
+        }
+        // Now write the schema document for each namespace
+        for (Namespace ns : m.getNamespaceList()) {
+            if (W3C_XML_SCHEMA_NS_URI.equals(ns.getNamespaceURI())) continue;
+            if (XML_NS_URI.equals(ns.getNamespaceURI())) continue;  // copy it later
+            if (ns.isExternal()) continue; // FIXME
+            var nsuri = ns.getNamespaceURI();
+            var ofp    = ns2file.get(nsuri);
+            var of     = new File(ofp);
             createParentDirectories(of);
             FileWriter ofw = new FileWriter(of);
             writeDocument(ns.getNamespaceURI(), ofw);
             ofw.close();
         }
-        // Next, copy the needed builtin schema documents to the destination
-        for (String uri : builtinNSmap.keySet()) {
-            String dfp = m.filePath(uri);
-            if (null == dfp) {
-                int which = getBuiltinKind(uri);
-                dfp = defaultBuiltinFilename(which);
-            }
-            File df = new File(od, dfp);
-            File sf = getBuiltinDocumentFile(uri);
+        // Next, copy the needed utility schema documents to the destination
+        for (String uri : utilityNSuri) {
+            var ofp = ns2file.get(uri);
+            var df  = new File(ofp);
+            var sf = getShareSchemaFile(uri);
             createParentDirectories(df);
             copyFile(sf, df);
         }
         // Finally, copy the XML namespace schema if needed
-        SchemaDocument xmlsd = m.schemadoc().get(XML_NS_URI);
-        String fp = m.filePath(XML_NS_URI);
-        if (null != xmlsd) {
-            File sf;
-            String sfp;
-            String appdir = NIEMBuiltins.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-            if (appdir.endsWith(".jar")) sfp = FilenameUtils.concat(appdir, "../../share/xsd");
-            else sfp = FilenameUtils.concat(appdir, "../../../../src/main/dist/share/xsd"); 
-            sfp = FilenameUtils.concat(sfp, "xml.xsd");
-            sf = new File(sfp);
-            if (null == fp) fp = "xml.xsd";
-            File df = new File(od, fp);   
+        if (null != m.getNamespaceByURI(XML_NS_URI)) {
+            var ofp = ns2file.get(XML_NS_URI);
+            var df  = new File(ofp);
+            var sf = getShareSchemaFile(XML_NS_URI);
             createParentDirectories(df);
-            copyFile(sf, df);
+            copyFile(sf, df);            
         }
     }
     
@@ -261,20 +260,27 @@ public class ModelToXSD {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document dom = db.newDocument();
-        root = dom.createElementNS(XSD_NS_URI, "xs:schema");
+        root = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:schema");
         root.setAttribute("targetNamespace", nsuri);
         dom.appendChild(root);
-        
-        nsNIEMVersion = m.niemVersion(nsuri);
+
+        nsNIEMVersion = m.niemVersion(nsuri);        
+        proxyURI      = NamespaceKind.getUtilityNS(NIEM_PROXY, nsNIEMVersion);
+        structURI     = NamespaceKind.getUtilityNS(NIEM_STRUCTURES, nsNIEMVersion);
+        proxyPrefix = m.namespaceMap().getPrefix(proxyURI);
+        structPrefix = m.namespaceMap().getPrefix(structURI);
+
         nsNSdeps    = new HashSet<>();
         nsPropdecls = new TreeMap<>();
         nsTypedefs  = new TreeMap<>();
-        nsProxyNS   = getBuiltinNamespace(NIEM_PROXY, nsNIEMVersion);
-        nsStructNS  = getBuiltinNamespace(NIEM_STRUCTURES, nsNIEMVersion);      
+        var deps    = subpropDeps.get(nsuri);
         nsNSdeps.addAll(subpropDeps.get(nsuri));
-        nsNSdeps.add(nsStructNS);
+        nsNSdeps.add(structURI);
+        utilityNSuri.add(structURI);
         
+        // Create augmentation points, types, elements
         LOG.debug("Writing schema document for {}", nsuri);
+        generateAugmentationComponents(nsuri);
         
         // Add namespace version number and language attribute, if specified
         String lang = m.schemaLanguage(nsuri);
@@ -285,16 +291,18 @@ public class ModelToXSD {
         // Add conformance target assertions, if any
         String cta = m.conformanceTargets(nsuri);
         if (null != cta) {
-            String ctns = getBuiltinURI(NIEM_CONFORMANCE_TARGETS, nsNIEMVersion);
+            String ctns = NamespaceKind.getUtilityNS(NIEM_CTAS, nsNIEMVersion);
             String ctprefix;
             ctprefix = m.namespaceMap().getPrefix(ctns);
-            root.setAttributeNS(XMLNS_URI, "xmlns:"+ctprefix, ctns);
+            root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:"+ctprefix, ctns);
             root.setAttributeNS(ctns, ctprefix + ":" + CONFORMANCE_ATTRIBUTE_NAME, cta);
         }
         // Add the <xs:annotation> element with namespace definition
         Namespace ns = m.getNamespaceByURI(nsuri);
-        addDefinition(dom, root, ns.getDefinition());
-        nsNSdeps.add(ns);       // always define prefix for target namespace
+        var ae = addDocAnnotation(dom, root, ns.getDefinition());
+        nsNSdeps.add(nsuri);       // always define prefix for target namespace
+        
+        // Local term appinfo handled here, someday
         
         // Create type definitions for ClassType objects
         // Then create typedefs for Datatype objects (when not already created)
@@ -305,51 +313,27 @@ public class ModelToXSD {
         
         // Create elements and attributes for Property objects
         for (Component c : m.getComponentList()) createDeclaration(dom, nsuri, c.asProperty());
-        
-        // Generate augmentation types and elements for this namespace
-        for (AugmentRec ar : hasAugType) {
-            if (ar.nsWithAug != ns) continue;
-            ClassType targCT  = ar.augmentedType();
-            String targCTName = targCT.getName();
-            String targName   = targCTName.substring(0, targCTName.length()-4);
-            String augElName  = targName + "Augmentation";
-            String augTpName  = augElName + "Type";
-            
-            // Create the augmentation type
-            ClassType augCT = new ClassType(ns, augTpName);
-            for (HasProperty hp : targCT.hasPropertyList()) augCT.addHasProperty(hp);
-            augCT.setDefinition("A data type for additional information about a " + targName);
-            createComplexTypeFromClass(dom, nsuri, augCT);
-            
-            // Create the augmentation element
-            Property augP = new Property(ns, augElName);
-            augP.setDefinition("Additional information about a " + targName);
-            augP.setClassType(augCT);
-            augP.setSubPropertyOf(augPoint.get(targCT));
-            createDeclaration(dom, nsuri, augP);
-        }
+
         // Add a namespace declaration and import element for each namespace dependency
-        List<Namespace> orderedDeps = new ArrayList<>();
+        List<String> orderedDeps = new ArrayList<>();
         orderedDeps.addAll(nsNSdeps);
-        Collections.sort(orderedDeps, 
-                Comparator.comparing(Namespace::getKind)
-                .thenComparing(Namespace::getNamespaceURI));
-        for (Namespace dns : orderedDeps) {
-            String dnspre = dns.getNamespacePrefix();
-            String dnsuri = dns.getNamespaceURI();
-            root.setAttributeNS(XMLNS_URI, "xmlns:" + dnspre, dnsuri);
-            if (XSD_NS_URI.equals(dnsuri)) continue;   // don't import XSD
-            if (nsuri.equals(dnsuri)) continue;        // don't import current namespace
-            Path thisDoc   = Paths.get(m.filePath(nsuri));
-            Path importDoc = Paths.get(m.filePath(dnsuri));
+        Collections.sort(orderedDeps);
+        for (String dnsuri : orderedDeps) {
+            Namespace dns = m.getNamespaceByURI(dnsuri);
+            String dnspre = m.namespaceMap().getPrefix(dnsuri);
+            root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:" + dnspre, dnsuri);
+            if (W3C_XML_SCHEMA_NS_URI.equals(dnsuri)) continue;     // don't import XSD
+            if (nsuri.equals(dnsuri)) continue;                     // don't import current namespace
+            Path thisDoc   = Paths.get(ns2file.get(nsuri));
+            Path importDoc = Paths.get(ns2file.get(dnsuri));
             Path toImportDoc;
             if (null != thisDoc.getParent()) toImportDoc = thisDoc.getParent().relativize(importDoc);
             else toImportDoc = importDoc;
             String sloc = separatorsToUnix(toImportDoc.toString());
-            Element ie = dom.createElementNS(XSD_NS_URI, "xs:import");
+            Element ie = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:import");
             ie.setAttribute("namespace", dnsuri);
             ie.setAttribute("schemaLocation", sloc);
-            if (dns.isExternal()) addAppinfo(dom, ie, nsuri, "externalImportIndicator", "true");
+            if (null != dns && dns.isExternal()) addAppinfoAttribute(dom, ie, nsuri, "externalImportIndicator", "true");
             root.appendChild(ie);
         }
         // Now add the type definitions and element/attribute declarations to the document
@@ -362,16 +346,108 @@ public class ModelToXSD {
         writeDom(dom, ofw);
     }
     
+    // Iterate through all the ClassType objects in the model; create an
+    // augmentation point property for each augmentable ClassType.  Need to 
+    // do this for the whole model before trying to create augmentation elements.
+    private void generateAugmentationPoints () {
+        for (var c : m.getComponentList()) {
+            var targCT = c.asClassType();
+            if (null == targCT) continue;               // not a ClassType
+            if (!targCT.isAugmentable()) continue;      // not augmentable
+            var targCTns   = targCT.getNamespace();
+            var targCTName = targCT.getName();                                      // FooType
+            var targName   = targCTName.substring(0, targCTName.length()-4);        // FooType -> Foo
+            var augPtName  = targName + "AugmentationPoint";                        // FooType -> FooAugmentationPoint
+            var augPoint = new Property(targCTns, augPtName);
+            augPoint.setDefinition("An augmentation point for " + targCTName + ".");
+            augPoint.setIsAbstract(true);
+            m.addComponent(augPoint);
+            var hp = new HasProperty();
+            hp.setProperty(augPoint);
+            hp.setMinOccurs(0);
+            hp.setMaxUnbounded(true);
+            targCT.addHasProperty(hp);        
+        }        
+    }
+    
+    // Use the augmentation info in each Namespace to generate augmentation 
+    // types, and elements required for this namespace.
+    private void generateAugmentationComponents (String nsuri) {
+        var class2Aug = new HashMap<ClassType,List<AugmentRecord>>();
+        var ns = m.getNamespaceByURI(nsuri);
+
+        // Create map from Class to list of its augmentations in this namespace
+        for (AugmentRecord ar : ns.augmentList()) {
+            var targCT = ar.getClassType();
+            var arlist = class2Aug.get(targCT);
+            if (null == arlist) {
+                arlist = new ArrayList<>();
+                class2Aug.put(targCT, arlist);
+            }
+            arlist.add(ar);
+        }
+        // Handle augmentations for each class augmented in this namespace
+        for (var targCT : class2Aug.keySet()) {
+            var targNS     = targCT.getNamespace();
+            var targNSuri  = targNS.getNamespaceURI();
+            var targCTName = targCT.getName();                                      // FooType
+            var targName   = targCTName.substring(0, targCTName.length()-4);        // FooType -> Foo
+            var augElName  = targName + "Augmentation";                             // fooType -> FooAugmentation
+            var augTpName  = augElName + "Type";                                    // FooType => FooAugmentationType
+            var augPtName  = targName + "AugmentationPoint";                        // FooType -> FooAugmentationPoint
+            var augPoint   = m.getProperty(targNSuri, augPtName);                       // augmentation point Property
+          
+            // Create ordered list of augmenting properties
+            var arlist = class2Aug.get(targCT);
+            Collections.sort(arlist, Comparator.comparing(AugmentRecord::indexInType));
+            
+            // Handle augmentation elements (not part of an augmentation type
+            int indx;
+            for (indx = 0; indx < arlist.size(); indx++) {
+                var ar = arlist.get(indx);
+                if (ar.indexInType() >= 0) break;
+                var augp = ar.getProperty();
+                augp.setSubPropertyOf(augPoint);
+            }
+            // If no properties left, we're done; don't need an augmentation type or element
+            if (indx >= arlist.size()) continue;
+            
+            // Otherwise create augmentation type for remaining properties
+            ClassType augCT = new ClassType(ns, augTpName);
+            augCT.setDefinition("A data type for additional information about a " + targName + ".");
+            while (indx < arlist.size()) {
+                var ar = arlist.get(indx++);
+                var hp = new HasProperty();
+                hp.setProperty(ar.getProperty());
+                hp.setMinOccurs(ar.minOccurs());
+                hp.setMaxOccurs(ar.maxOccurs());
+                hp.setMaxUnbounded(ar.maxUnbounded());
+                hp.setOrderedProperties(ar.orderedProperties());
+                augCT.addHasProperty(hp);
+            }
+            m.addComponent(augCT);
+          
+            // Create an augmentation element
+            var augP = new Property(ns, augElName);
+            augP.setDefinition("Additional information about a " + targName + ".");
+            augP.setClassType(augCT);
+            augP.setSubPropertyOf(augPoint);
+            m.addComponent(augP);
+        }        
+
+    }
+    
     // Add @appinfo:appatt="value" to an element.  Get the right namespace prefix and URI
     // for the current document.  Add the namespace declaration for appinfo, but
     // don't import it.
-    private void addAppinfo (Document dom, Element e, String nsuri, String appatt, String value) {
+    private void addAppinfoAttribute (Document dom, Element e, String nsuri, String appatt, String value) {
         String niemVersion = m.niemVersion(nsuri);
-        String appinfoNS = getBuiltinURI(NIEM_APPINFO, niemVersion);
+        String appinfoNS = NamespaceKind.getUtilityNS(NIEM_APPINFO, niemVersion);
         String appinfoPR = m.namespaceMap().getPrefix(appinfoNS);
         String appinfoQName = appinfoPR + ":" + appatt;
-        root.setAttributeNS(XMLNS_URI, "xmlns:"+appinfoPR, appinfoNS);
+        root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:"+appinfoPR, appinfoNS);
         e.setAttributeNS(appinfoNS, appinfoQName, value);
+        utilityNSuri.add(appinfoNS);
     }
     
     // Create a complex type declaration from a ClassType object
@@ -382,18 +458,18 @@ public class ModelToXSD {
         String cname = ct.getName();
         if (nsTypedefs.containsKey(cname)) return;              // already created
         if (!nsuri.equals(ct.getNamespaceURI())) return;        // different namespace
-        Element cte = dom.createElementNS(XSD_NS_URI, "xs:complexType");
-        Element exe = dom.createElementNS(XSD_NS_URI, "xs:extension");
+        Element cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
+        Element exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
         cte.setAttribute("name", cname);
-        addDefinition(dom, cte, ct.getDefinition());
-        if (ct.canHaveMD())    addAppinfo(dom, cte, nsuri, "metadataIndicator", "true");
-        if (ct.isDeprecated()) addAppinfo(dom, cte, nsuri, "deprecated", "true");
-        if (ct.isExternal())   addAppinfo(dom, cte, nsuri, "externalAdapterTypeIndicator", "true");
+        var ae = addDocAnnotation(dom, cte, ct.getDefinition());
+        if (ct.canHaveMD())    addAppinfoAttribute(dom, cte, nsuri, "metadataIndicator", "true");
+        if (ct.isDeprecated()) addAppinfoAttribute(dom, cte, nsuri, "deprecated", "true");
+        if (ct.isExternal())   addAppinfoAttribute(dom, cte, nsuri, "externalAdapterTypeIndicator", "true");
         nsTypedefs.put(cname, cte);
         
         // Create simple content for class with FooLiteral property
         if (litTypes.contains(ct)) {
-            var sce   = dom.createElementNS(XSD_NS_URI, "xs:simpleContent");
+            var sce   = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
             var plist = ct.hasPropertyList();
             var lp    = plist.get(0).getProperty();     // FooLiteral property
             var lpt   = lp.getDatatype();               // datatype for FooLiteral
@@ -404,9 +480,8 @@ public class ModelToXSD {
             }
             exe.setAttribute("base", lptqn);
             if (lptqn.endsWith("SimpleType")) {         // need simpleObjectAttributeGroup
-                var spr  = nsStructNS.getNamespacePrefix();
-                var agqn = spr + ":SimpleObjectAttributeGroup";
-                var age = dom.createElementNS(XSD_NS_URI, "xs:attributeGroup");
+                var agqn = structPrefix + ":SimpleObjectAttributeGroup";
+                var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
                 age.setAttribute("ref", agqn);
                 exe.appendChild(age);                
             }
@@ -417,45 +492,25 @@ public class ModelToXSD {
         }
         // Otherwise create complex content with sequence of element refs
         else {
-            boolean isAugType = false;
-            var cce    = dom.createElementNS(XSD_NS_URI, "xs:complexContent");
-            var sqe    = dom.createElementNS(XSD_NS_URI, "xs:sequence");
+            var cce    = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
+            var sqe    = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");
             var basect = ct.getExtensionOfClass();
             if (null == basect) {
-                String spr = nsStructNS.getNamespacePrefix();
-                if (cname.endsWith("AssociationType"))        exe.setAttribute("base", spr + ":AssociationType");
-                else if (cname.endsWith("MetadataType"))      exe.setAttribute("base", spr + ":MetadataType");
-                else if (!cname.endsWith("AugmentationType")) exe.setAttribute("base", spr + ":ObjectType");
-                else {
-                    exe.setAttribute("base", spr + ":AugmentationType");
-                    isAugType = true;
-                }
+                if (cname.endsWith("AssociationType"))        exe.setAttribute("base", structPrefix + ":AssociationType");
+                else if (cname.endsWith("MetadataType"))      exe.setAttribute("base", structPrefix + ":MetadataType");
+                else if (!cname.endsWith("AugmentationType")) exe.setAttribute("base", structPrefix + ":ObjectType");
+                else exe.setAttribute("base", structPrefix + ":AugmentationType");
+                
             } 
             else {
                 exe.setAttribute("base", basect.getQName());
-                nsNSdeps.add(basect.getNamespace());
+                nsNSdeps.add(basect.getNamespace().getNamespaceURI());
             }
             // Add element refs for element properties
             for (HasProperty hp : ct.hasPropertyList()) {
-                // always skip augmentation elements (directly substituted for augmentation point
-                // skip augmentation properties when building the augmented type
-                // skip properties not added by this namespace when building an augmentation type
-                // add other non-attribute properties as element reference
-                if (null != hp.augmentElementNS()) continue; 
-                if (!isAugType && !hp.augmentTypeNS().isEmpty()) continue;
-                if (isAugType && !hp.augmentTypeNS().contains(ct.getNamespace())) continue;
+                if (!hp.augmentingNS().isEmpty()) continue;
                 addElementRef(dom, sqe, hp);
-                nsNSdeps.add(hp.getProperty().getNamespace());
-            }
-            // Add an augmentation point?
-            if (ct.isAugmentable()) {
-                var ap  = augPoint.get(ct);     // we created the augmentation Property in advance
-                var ahp = new HasProperty();    // now build a HasProperty object for addElementRef
-                ahp.setProperty(ap);
-                ahp.setMinOccurs(0);
-                ahp.setMaxUnbounded(true);
-                addElementRef(dom, sqe, ahp);
-                createDeclaration(dom, ct.getNamespaceURI(), ap);
+                nsNSdeps.add(hp.getProperty().getNamespace().getNamespaceURI());
             }
             cte.appendChild(cce);   // xs:complexType has xs:complexContent
             cce.appendChild(exe);   // xs:complexContent has xs:extension
@@ -466,18 +521,18 @@ public class ModelToXSD {
         for (HasProperty hp : ct.hasPropertyList()) {
             Property p = hp.getProperty();
             if (!p.isAttribute()) continue;
-            var ate = dom.createElementNS(XSD_NS_URI, "xs:attribute");
+            var ate = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
             ate.setAttribute("ref", p.getQName());
             if (0 != hp.minOccurs()) ate.setAttribute("use", "required");
             exe.appendChild(ate);
-            nsNSdeps.add(p.getNamespace());
+            nsNSdeps.add(p.getNamespace().getNamespaceURI());
         }
     }
     
     // Create <xs:element ref="foo">, append it to some <xs:sequence>
     private void addElementRef (Document dom, Element sqe, HasProperty hp) {
         if (hp.getProperty().isAttribute()) return;
-        var hpe = dom.createElementNS(XSD_NS_URI, "xs:element");
+        var hpe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
         if (1 != hp.minOccurs()) hpe.setAttribute("minOccurs", "" + hp.minOccurs());
         if (hp.maxUnbounded())   hpe.setAttribute("maxOccurs", "unbounded");
         else if (1 != hp.maxOccurs()) hpe.setAttribute("maxOccurs", "" + hp.maxOccurs());
@@ -494,14 +549,14 @@ public class ModelToXSD {
         if (nsTypedefs.containsKey(cname)) return;                  // already created
         if (nsTypedefs.containsKey(bname)) return;                  // already have FooType complex type
         if (!nsuri.equals(dt.getNamespaceURI())) return;            // not in this namespace
-        if (XSD_NS_URI.equals(dt.getNamespaceURI())) return;        // don't create XSD builtins
+        if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) return;        // don't create XSD builtins
         
-        var cte = dom.createElementNS(XSD_NS_URI, "xs:complexType");
-        var sce = dom.createElementNS(XSD_NS_URI, "xs:simpleContent");
-        var exe = dom.createElementNS(XSD_NS_URI, "xs:extension");
+        var cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
+        var sce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
+        var exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
         cte.setAttribute("name", cname);        
-        addDefinition(dom, cte, dt.getDefinition());
-        if (dt.isDeprecated()) addAppinfo(dom, cte, nsuri, "deprecated", "true");
+        var ae = addDocAnnotation(dom, cte, dt.getDefinition());
+        if (dt.isDeprecated()) addAppinfoAttribute(dom, cte, nsuri, "deprecated", "true");
 
         // Restriction without facets becomes an empty xs:extension
         // Replace XSD primitive with proxy type
@@ -523,9 +578,8 @@ public class ModelToXSD {
         
         // If extension base is a FooSimpleType, we must add SimpleObjectAttributeGroup
         if (btqn.endsWith("SimpleType")) {
-            var spr  = nsStructNS.getNamespacePrefix();
-            var agqn = spr + ":SimpleObjectAttributeGroup";
-            var age = dom.createElementNS(XSD_NS_URI, "xs:attributeGroup");
+            var agqn = structPrefix + ":SimpleObjectAttributeGroup";
+            var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
             age.setAttribute("ref", agqn);
             exe.appendChild(age);
         }
@@ -545,18 +599,23 @@ public class ModelToXSD {
         if (!nsuri.equals(dt.getNamespaceURI())) return;    // not in this namespace
         if (nsTypedefs.containsKey(cname)) return;   // already created
 
-        var ste   = dom.createElementNS(XSD_NS_URI, "xs:simpleType");
-        ste.setAttribute("name", cname);
-        addDefinition(dom, ste, dt.getDefinition());
+        var ste   = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleType");
+        var ae = addDocAnnotation(dom, ste, dt.getDefinition());
+        if (null != dt.getCodeListBinding()) {
+            if (null == ae) ae = addAnnotation(dom,ste);
+            var ap = addAppinfo(dom, ae);
+            var cb = addCodeListBinding(dom, ap, nsuri, dt.getCodeListBinding());
+        }
         if (null != dt.getUnionOf()) addUnionElement(dom, ste, dt);
         else if (null != dt.getListOf()) addListElement(dom, ste, dt);
         else if (null != dt.getRestrictionOf()) addRestrictionElement(dom, ste, dt);
+        ste.setAttribute("name", cname);
         nsTypedefs.put(cname, ste);   
-        nsNSdeps.add(dt.getNamespace());        
+        nsNSdeps.add(dt.getNamespace().getNamespaceURI());        
     }
     
     private void addUnionElement (Document dom, Element ste, Datatype bdt) {
-        Element une = dom.createElementNS(XSD_NS_URI, "xs:union");
+        Element une = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:union");
         StringBuilder members = new StringBuilder();
         String sep = "";
         for (Datatype udt : bdt.getUnionOf().getDatatypeList()) {
@@ -569,21 +628,21 @@ public class ModelToXSD {
     }
     
     private void addListElement (Document dom, Element ste, Datatype bdt) {
-        Element lse = dom.createElementNS(XSD_NS_URI, "xs:list");
+        Element lse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:list");
         lse.setAttribute("itemType", maybeSimpleTypeQName(bdt.getListOf()));
         ste.appendChild(lse);
     }
     
     private void addRestrictionElement (Document dom, Element ste, Datatype bdt) {
         RestrictionOf r = bdt.getRestrictionOf();
-        Element rse = dom.createElementNS(XSD_NS_URI, "xs:restriction");
+        Element rse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:restriction");
         rse.setAttribute("base", maybeSimpleTypeQName(r.getDatatype()));
         for (Facet f : r.getFacetList()) {
             String fk = f.getFacetKind();
             String ename = "xs:" + toLowerCase(fk.charAt(0)) + fk.substring(1);
-            Element fce = dom.createElementNS(XSD_NS_URI, ename);
+            Element fce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, ename);
             fce.setAttribute("value", f.getStringVal());
-            addDefinition(dom, fce, f.getDefinition());
+            addDocAnnotation(dom, fce, f.getDefinition());
             rse.appendChild(fce);
         }
         ste.appendChild(rse);
@@ -601,9 +660,10 @@ public class ModelToXSD {
     // Convert "xs:foo" to "xs-proxy:foo"
     private String proxifiedDatatypeQName (Datatype dt) {
         String dtqn = dt.getQName();
-        if (XSD_NS_URI.equals(dt.getNamespaceURI())) {
-            dtqn = nsProxyNS.getNamespacePrefix() + ":" + dt.getName();
-            nsNSdeps.add(nsProxyNS);
+        if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) {
+            dtqn = proxyPrefix + ":" + dt.getName();
+            nsNSdeps.add(proxyURI);
+            utilityNSuri.add(proxyURI);
         }
         return dtqn;
     }
@@ -618,16 +678,16 @@ public class ModelToXSD {
         Element pe;
         if (!nsuri.equals(p.getNamespaceURI())) return;   
         LOG.debug("Creating {} for {}", (p.isAttribute() ? "attribute" : "element"), p.getQName());
-        if (isAttribute) pe = dom.createElementNS(XSD_NS_URI, "xs:attribute");
-        else pe = dom.createElementNS(XSD_NS_URI, "xs:element");
-        addDefinition(dom, pe, p.getDefinition());
+        if (isAttribute) pe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
+        else pe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
         pe.setAttribute("name", p.getName());
         if (p.isReferenceable()) pe.setAttribute("nillable", "true");
         if (p.isAbstract())      pe.setAttribute("abstract", "true");
-        if (p.isDeprecated())    addAppinfo(dom, pe, nsuri, "deprecated", "true");
+        if (p.isDeprecated())    addAppinfoAttribute(dom, pe, nsuri, "deprecated", "true");
+        var ae = addDocAnnotation(dom, pe, p.getDefinition());
         if (null != pct) {
             pe.setAttribute("type", pct.getQName());
-            nsNSdeps.add(pct.getNamespace());
+            nsNSdeps.add(pct.getNamespace().getNamespaceURI());
         }
         // Attribute declarations can use XSD types
         // Replace x:FooDatatype and x:FooType with x:FooSimpleType
@@ -636,64 +696,92 @@ public class ModelToXSD {
             pdtQN = pdtQN.replaceFirst("Type$", "SimpleType");
             pdtQN = pdtQN.replaceFirst("Datatype$", "SimpleType");            
             pe.setAttribute("type", pdtQN);
-            nsNSdeps.add(pdt.getNamespace());
+            nsNSdeps.add(pdt.getNamespace().getNamespaceURI());
         }
         // Element declarations use proxy types instead of XSD types
         else if (!isAttribute && null != pdt) {
             var pdtQN = proxifiedDatatypeQName(pdt);
             var pdtNS = pdt.getNamespace();
             pe.setAttribute("type", pdtQN);
-            nsNSdeps.add(pdtNS);
+            nsNSdeps.add(pdtNS.getNamespaceURI());
         }
         if (null != p.getSubPropertyOf()) {
-            pe.setAttribute("substitutionGroup", p.getSubPropertyOf().getQName());
-            nsNSdeps.add(p.getSubPropertyOf().getNamespace());
-        }
-        // Handle ordinary element substituting for augmentation point
-        else if (augElement.containsKey(p)) {
-            ClassType augType   = augElement.get(p);
-            Namespace augTypeNS = augType.getNamespace();
-            String augPQN = augmentationPointQName(augType);
-            pe.setAttribute("substitutionGroup", augPQN);
-            nsNSdeps.add(augTypeNS);
+            var subp   = p.getSubPropertyOf();
+            var subpQN = subp.getQName();
+            pe.setAttribute("substitutionGroup", subpQN);
+            nsNSdeps.add(subp.getNamespace().getNamespaceURI());
         }
         nsPropdecls.put(p.getName(), pe);
     }
     
-    private void addDefinition (Document dom, Element e, String def) {
-        if (null == def || def.isBlank()) return;
-        Element ae = dom.createElementNS(XSD_NS_URI, "xs:annotation");
-        Element de = dom.createElementNS(XSD_NS_URI, "xs:documentation");
-        de.setTextContent(def);
+    // Use this to add annotation and documentation elements to a schema component.
+    // Returns the annotation element (to add appinfo, later).
+    // Returns null (and does nothing) if the documentation string is null or blank.
+    private Element addDocAnnotation (Document dom, Element e, String s) {
+        if (null == s || s.isBlank()) return null;
+        var ae = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
+        var de = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:documentation");
+        de.setTextContent(s);
         ae.appendChild(de);
         e.appendChild(ae);
-    }
-
-    // debug tool
-    private void domToString (Document dom) {
-        nsTypedefs.forEach((name,element) -> {
-            root.appendChild(element);
-        });
-        nsPropdecls.forEach((name,element) -> {
-            root.appendChild(element);
-        });        
-        try {
-            Transformer tr = TransformerFactory.newInstance().newTransformer();
-            tr.setOutputProperty(OutputKeys.INDENT, "yes");
-            tr.setOutputProperty(OutputKeys.METHOD, "xml");
-            tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            StringWriter ostr = new StringWriter();
-            tr.transform(new DOMSource(dom), new StreamResult(ostr));
-            String buf = ostr.toString();
-            int i = 0;
-        } catch (TransformerException ex) {
-            java.util.logging.Logger.getLogger(ModelToXSD.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        return ae;
     }
     
+    private Element addAnnotation (Document dom, Element e) {
+        var ae = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
+        e.appendChild(ae);
+        return ae;
+    }
+    
+    private Element addDocumentation (Document dom, Element e) {
+        var de = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:documentation");
+        e.appendChild(de);
+        return de;
+    }
+    
+    private Element addAppinfo (Document dom, Element e) {
+        var ai = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:appinfo");
+        e.appendChild(ai);
+        return ai;
+    }
+    
+    private Element addCodeListBinding (Document dom, Element e, String nsuri, CodeListBinding clb) {
+        var vers = m.niemVersion(nsuri);
+        var clsauri = NamespaceKind.getUtilityNS(NIEM_CLSA, vers);
+        var clsapre = m.namespaceMap().getPrefix(clsauri);
+        Element cbe = dom.createElementNS(clsauri, clsapre + ":" + "SimpleCodeListBinding");
+        cbe.setAttribute("columnName", clb.getColumn());
+        cbe.setAttribute("codeListURI", clb.getURI());
+        if (clb.getIsConstraining()) cbe.setAttribute("constrainingIndicator", "true");
+        e.appendChild(cbe);
+        return cbe;
+    }
+
+//    // debug tool
+//    private void domToString (Document dom) {
+//        nsTypedefs.forEach((name,element) -> {
+//            root.appendChild(element);
+//        });
+//        nsPropdecls.forEach((name,element) -> {
+//            root.appendChild(element);
+//        });        
+//        try {
+//            Transformer tr = TransformerFactory.newInstance().newTransformer();
+//            tr.setOutputProperty(OutputKeys.INDENT, "yes");
+//            tr.setOutputProperty(OutputKeys.METHOD, "xml");
+//            tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+//            tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+//            StringWriter ostr = new StringWriter();
+//            tr.transform(new DOMSource(dom), new StreamResult(ostr));
+//            String buf = ostr.toString();
+//            int i = 0;
+//        } catch (TransformerException ex) {
+//            java.util.logging.Logger.getLogger(ModelToXSD.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }
+    
     // Writes the XSD document model.  Post-processing of XSLT output to do
-    // what XSLT should do, but doesn't.  You can't process arbitrary XML in
+    // what we wish XSLT would do, but doesn't.  You can't process arbitrary XML in
     // this way, but we know what the XSLT output is going to be, so it works.
     private void writeDom (Document dom, Writer w) throws TransformerConfigurationException, TransformerException, IOException {
         Transformer tr = TransformerFactory.newInstance().newTransformer();
@@ -721,7 +809,6 @@ public class ModelToXSD {
         while (scn.hasNextLine()) {           
             line = scn.nextLine();
             Matcher lineM = linePat.matcher(line);
-//            System.out.print(String.format("line:   '%s'\n", line));
             if (!lineM.matches()) w.write(line);
             else {
                 String indent = lineM.group(1);
@@ -732,10 +819,6 @@ public class ModelToXSD {
                 if (res.endsWith("/>")) end = "/>";
                 else end = ">";
                 res = res.substring(0, res.length() - end.length());
-//                System.out.print(String.format("indent: '%s'\n", indent));
-//                System.out.print(String.format("tag:    '%s'\n", tag));
-//                System.out.print(String.format("rest:   '%s'\n", res));
-//                System.out.print(String.format("end:    '%s'\n", end));
                 for (int i = 0; i < reorder.length; i++) {
                     if (tag.equals(reorder[i][0])) {
                         w.write(indent);
@@ -790,34 +873,53 @@ public class ModelToXSD {
         return kvm;
     }
     
-    // Returns a Namespace object with the right prefix and URI for the
-    // specified builtin and NIEM version.  Mungs the prefix if necessary.
-    // Creates a Namespace object if necessary -- but doesn't add it to the
-    // model.
-    private Namespace getBuiltinNamespace (int kind, String niemVersion) {
-        String bnsuri = getBuiltinURI(kind, niemVersion);  // eg. gimme the URI for structures in NIEM 4.0
-        Namespace bns = builtinNSmap.get(bnsuri);                   // do we already have a Namespace for that
-        if (null != bns) return bns;                                // if so, return it
-        String bprefix = m.namespaceMap().getPrefix(bnsuri);        // get prefix; munged if necessary to make unique
-        bns = new Namespace(bprefix, bnsuri);                       // create Namespace object for this built-in
-        builtinNSmap.put(bnsuri, bns);                              // remember it if we need it again
-        return bns;                                                 // and return the Namespace; ta da!
+    // Returns a File object for the proper schema document in the "share" directory
+    // for utility and XML namespaces.
+    private static File getShareSchemaFile (String nsuri) {
+        // Path to share directory is different when running from IDE
+        var sdirfn = ModelToXSD.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        if (sdirfn.endsWith(".jar")) sdirfn = FilenameUtils.concat(sdirfn, "../../share/xsd");
+        else sdirfn = FilenameUtils.concat(sdirfn, "../../../../src/main/dist/share/xsd");
+        var sdir = new File(sdirfn);
+        
+        if (XML_NS_URI.equals(nsuri)) return new File(sdir, "xml.xsd");
+        
+        var vers = NamespaceKind.version(nsuri) + ".0";
+        int util = NamespaceKind.utilityKind(nsuri);
+        var bfn  = NamespaceKind.defaultUtilityFN(util);
+        bfn = FilenameUtils.concat(vers, bfn);
+        return new File(sdir, bfn);
     }
     
-    // Returns the name of the augmentation point element for a ClassType
-    private static String augmentationPointName (ClassType ct) {
-        String qn = ct.getName();
-        String rv = qn.substring(0, qn.length()-4) + "AugmentationPoint";
-        return rv;        
+    // Generate a file path for thie namespace schema document
+    // Use a default relative path if no hint provided.
+    // Mung the file path as needed to make path unique and not existing
+    // Return the path to the created file (including outputDir)
+    private static Pattern nsnamePat = Pattern.compile("/(\\w+)/\\d(\\.\\d+)*(/#)?$");
+    private String genSchemaFile (String nsuri, File outputDir, String hint) throws IOException {
+        if (null == hint) {
+            if (XML_NS_URI.equals(nsuri)) hint = "xml.xsd";
+            else {
+                int util = NamespaceKind.utilityKind(nsuri);
+                if (util < NIEM_NOTUTILITY) hint = NamespaceKind.defaultUtilityFN(util);
+                else {
+                    var m = nsnamePat.matcher(nsuri);
+                    if (m.find()) hint = m.group(1);
+                    else hint = "schema";                    
+                }
+            }
+        }
+        var munged = hint;
+        int mungct = 0;
+        var fp = new File(outputDir, munged);
+        while (nsfiles.contains(munged) || fp.exists()) {
+            munged = String.format("%s_%d", hint, mungct++);
+            fp = new File(outputDir, munged);
+        }
+        var fpath = fp.getPath();
+        nsfiles.add(munged);
+        ns2file.put(nsuri, fpath);
+        return fpath;
     }
     
-    // Returns the name of the augmentation point element for a ClassType
-    private static String augmentationPointQName (ClassType ct) {
-        return ct.getNamespace().getNamespacePrefix() + ":" + augmentationPointName(ct);
-    }
-    
-    private record AugmentRec (
-        Namespace nsWithAug,            // Namespace with augmentation element
-        ClassType augmentedType) {};    // augmented ClassType
 }
-

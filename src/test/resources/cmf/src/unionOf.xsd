@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
   targetNamespace="http://example.com/codes/"
-  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/4.0/"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
   xmlns:ns="http://example.com/codes/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"

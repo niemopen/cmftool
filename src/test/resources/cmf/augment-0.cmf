@@ -1,30 +1,65 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.6/"
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.7/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.6/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.7/">
   <Namespace structures:id="j">
     <NamespaceURI>http://release.niem.gov/niem/domains/jxdm/7.0/</NamespaceURI>
-    <NamespacePrefixName>j</NamespacePrefixName>
+    <NamespacePrefixText>j</NamespacePrefixText>
     <DefinitionText>Justice domain.</DefinitionText>
     <NamespaceKindCode>DOMAIN</NamespaceKindCode>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <Property structures:ref="j.AddressCommentText" xsi:nil="true"/>
+      <AugmentationIndex>0</AugmentationIndex>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentRecord>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <Property structures:ref="j.AddressVerifiedDate" xsi:nil="true"/>
+      <AugmentationIndex>1</AugmentationIndex>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </AugmentRecord>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <Property structures:ref="j.AnotherAddress" xsi:nil="true"/>
+      <AugmentationIndex>-1</AugmentationIndex>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </AugmentRecord>
   </Namespace>
   <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
-    <NamespacePrefixName>nc</NamespacePrefixName>
+    <NamespacePrefixText>nc</NamespacePrefixText>
     <DefinitionText>NIEM Core.</DefinitionText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
   </Namespace>
   <Namespace structures:id="test">
     <NamespaceURI>http://example.com/dummyAugmentation/</NamespaceURI>
-    <NamespacePrefixName>test</NamespacePrefixName>
-    <DefinitionText>Justice domain.</DefinitionText>
+    <NamespacePrefixText>test</NamespacePrefixText>
+    <DefinitionText>Augmentation test schema</DefinitionText>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <Property structures:ref="test.BoogalaText" xsi:nil="true"/>
+      <AugmentationIndex>0</AugmentationIndex>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentRecord>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <Property structures:ref="j.AddressCommentText" xsi:nil="true"/>
+      <AugmentationIndex>1</AugmentationIndex>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentRecord>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
-    <NamespacePrefixName>xs</NamespacePrefixName>
+    <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
   <Property structures:id="j.AddressCommentText">
@@ -56,6 +91,7 @@
   <Property structures:id="nc.TextLiteral">
     <Name>TextLiteral</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A literal value for a character string.</DefinitionText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </Property>
   <Property structures:id="nc.partialIndicator">
@@ -64,13 +100,6 @@
     <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
     <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
-  </Property>
-  <Property structures:id="test.AddressCommentText">
-    <Name>AddressCommentText</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <DefinitionText>A comment about an address.</DefinitionText>
-    <Class structures:ref="nc.TextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
   <Property structures:id="test.BoogalaText">
     <Name>BoogalaText</Name>
@@ -93,26 +122,26 @@
       <Property structures:ref="j.AddressCommentText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationTypeNamespace structures:ref="j" xsi:nil="true"/>
-      <AugmentationTypeNamespace structures:ref="test" xsi:nil="true"/>
+      <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
+      <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
     </HasProperty>
     <HasProperty structures:sequenceID="3">
       <Property structures:ref="j.AddressVerifiedDate" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
-      <AugmentationTypeNamespace structures:ref="j" xsi:nil="true"/>
+      <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
     </HasProperty>
     <HasProperty structures:sequenceID="4">
       <Property structures:ref="j.AnotherAddress" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
-      <AugmentationElementNamespace structures:ref="j" xsi:nil="true"/>
+      <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
     </HasProperty>
     <HasProperty structures:sequenceID="5">
       <Property structures:ref="test.BoogalaText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationTypeNamespace structures:ref="test" xsi:nil="true"/>
+      <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
     </HasProperty>
   </Class>
   <Class structures:id="nc.TextType">
@@ -139,41 +168,46 @@
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
   <SchemaDocument>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
+    <NamespacePrefixText>j</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/domains/jxdm/7.0/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>augment-1.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
+    <NamespacePrefixText>test</NamespacePrefixText>
     <NamespaceURI>http://example.com/dummyAugmentation/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>augment-0.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>5.0</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
+    <NamespacePrefixText>nc</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>augment-2.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>

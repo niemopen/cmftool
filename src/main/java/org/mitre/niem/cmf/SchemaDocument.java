@@ -24,20 +24,24 @@
 package org.mitre.niem.cmf;
 
 /**
- * A class for recording some properties of an XML Schema document.  Needed for
- * the second translation in XSD -> CMF -> XSD.
+ * A class for recording some properties of an XML Schema document.
+ * We extract these values when building a Model from NIEM XSD.
+ * You can set these values as desired when building a Model from scratch.
+ * Values are used when generating NIEM XSD from a Model.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class SchemaDocument extends ObjectType {
     private String targetNS = null;
+    private String targetPrefix = null;
     private String confTargs = null;
     private String filepath = null;
     private String niemVersion = null;
     private String schemaVersion = null;
     private String language = null;
     
+    public void setTargetPrefix (String s)  { targetPrefix = s; }
     public void setTargetNS (String s)      { targetNS = s; }
     public void setConfTargets (String s)   { confTargs = s; }
     public void setFilePath (String s)      { filepath = s; }
@@ -45,7 +49,8 @@ public class SchemaDocument extends ObjectType {
     public void setSchemaVersion (String s) { schemaVersion = s; }
     public void setLanguage (String s)      { language = s; }
     
-    public String targetNS( )               { return targetNS; }
+    public String targetPrefix()            { return targetPrefix; }
+    public String targetNS()                { return targetNS; }
     public String confTargets ()            { return confTargs; }
     public String filePath ()               { return filepath; }
     public String niemVersion ()            { return niemVersion; }
@@ -54,8 +59,9 @@ public class SchemaDocument extends ObjectType {
     
     public SchemaDocument () { super(); }
     
-    public SchemaDocument (String ns, String ct, String fp, String nv, String sv, String lang) {
+    public SchemaDocument (String prefix, String ns, String ct, String fp, String nv, String sv, String lang) {
         super();
+        targetPrefix = prefix;
         targetNS = ns;
         confTargs = ct;
         filepath = fp;

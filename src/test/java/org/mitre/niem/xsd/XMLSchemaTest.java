@@ -24,12 +24,36 @@
 package org.mitre.niem.xsd;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
+import nl.altindag.log.LogCaptor;
+import org.apache.xerces.xs.XSFacet;
+import org.apache.xerces.xs.XSMultiValueFacet;
+import org.apache.xerces.xs.XSSimpleTypeDefinition;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_ENUMERATION;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_FRACTIONDIGITS;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_LENGTH;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_MAXEXCLUSIVE;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_MAXINCLUSIVE;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_MAXLENGTH;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_MINEXCLUSIVE;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_MININCLUSIVE;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_MINLENGTH;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_PATTERN;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_TOTALDIGITS;
+import static org.apache.xerces.xs.XSSimpleTypeDefinition.FACET_WHITESPACE;
+import org.apache.xerces.xs.XSTypeDefinition;
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.mitre.niem.cmf.NamespaceKind;
+import static org.mitre.niem.xsd.ModelFromXSD.LOG;
 import org.xml.sax.SAXException;
 
 /**
@@ -41,13 +65,44 @@ public class XMLSchemaTest {
     private static final String testDirPath = "src/test/resources";
     
     public XMLSchemaTest() { }
-   
+
+    
+    public static List<LogCaptor> logs;
+    
+    @BeforeAll
+    public static void setupLogCaptor () {
+        logs = new ArrayList<>();
+        logs.add(LogCaptor.forClass(XMLSchema.class));
+        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
+        logs.add(LogCaptor.forClass(NamespaceKind.class));
+    }
+    
+    @AfterEach
+    public void clearLogs () {
+        for (var log : logs) log.clearLogs();;
+    }
+    
+    @AfterAll
+    public static void tearDown () {
+        for (var log : logs) log.close();
+    }
+    
+    public void assertEmptyLogs () {
+        for (var log : logs) {
+            var errors = log.getErrorLogs();
+            var warns  = log.getWarnLogs();
+            assertThat(errors.isEmpty());
+            assertThat(warns.isEmpty());
+        }
+    }    
+    
     @Test
     public void testGGS () throws XMLSchema.XMLSchemaException, IOException, SAXException, ParserConfigurationException {
         var s = new XMLSchema(ga("cat/cat1.xml", "xsd/union.xsd", "http://example.com/external-content/"));
         assertEquals(1, s.catalogs().size());
         assertEquals(2, s.initialSchemaDocs().size());
         assertEquals(1, s.initialNS().size());   
+        assertEmptyLogs();
     }
     
     @Test
@@ -57,6 +112,7 @@ public class XMLSchemaTest {
         assertEquals(0, s.catalogs().size());
         assertEquals(1, s.initialSchemaDocs().size());
         assertEquals(0, s.initialNS().size());
+        assertEmptyLogs();
     }
     
     @Test
@@ -119,8 +175,7 @@ public class XMLSchemaTest {
         var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
            var s = new XMLSchema(ga("cat/cat1.xml", "xsd/union.xsd", "http://example.com/not-xsd/"));
         });
-        assertThat(thrown.getMessage()).contains("not a schema document"); 
-     
+        assertThat(thrown.getMessage()).contains("not a schema document");   
     }
     
     @Test
@@ -158,12 +213,13 @@ public class XMLSchemaTest {
         sd = s.schemaDocuments().get("http://www.w3.org/1999/xlink");
         assertEquals(8, sd.schemaKind());   
         assertEquals("externals-niem/external/ogc/xlink/1.0.0/xlinks.xsd", sd.filepath());
-        assertEquals(null, sd.niemVersion());
+        assertEquals("", sd.niemVersion());
         
         sd = s.schemaDocuments().get("http://www.opengis.net/gml/3.2");
         assertEquals(7, sd.schemaKind());  
         assertEquals("externals-niem/external/ogc/gml/3.2.1/gml.xsd", sd.filepath());
-        assertEquals(null, sd.niemVersion());
+        assertEquals("", sd.niemVersion());
+        assertEmptyLogs();
     }
     
     private String[] ga (String ... args) {

@@ -31,7 +31,7 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:element name="AddressAugmentation" type="j:AddressAugmentationType" substitutionGroup="nc:AddressAugmentationPoint" nillable="true">
+  <xs:element name="AddressAugmentation" type="j:AddressAugmentationType" substitutionGroup="nc:AddressAugmentationPoint">
     <xs:annotation>
       <xs:documentation>Additional information about a Address.</xs:documentation>
     </xs:annotation>

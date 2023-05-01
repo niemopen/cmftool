@@ -23,10 +23,23 @@
  */
 package org.mitre.niem.xsd;
 
+import java.util.ArrayList;
+import java.util.List;
+import nl.altindag.log.LogCaptor;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.javatuples.Pair;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.mitre.niem.cmf.NamespaceKind;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_DOMAIN;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTENSION;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_UTILITY;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
 
 
 /**
@@ -38,7 +51,35 @@ public class XMLSchemaDocumentTest {
     
     public XMLSchemaDocumentTest () {
     }
-
+    
+    public static List<LogCaptor> logs;
+    
+    @BeforeAll
+    public static void setupLogCaptor () {
+        logs = new ArrayList<>();
+        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
+        logs.add(LogCaptor.forClass(NamespaceKind.class));
+    }
+    
+    @AfterEach
+    public void clearLogs () {
+        for (var log : logs) log.clearLogs();;
+    }
+    
+    @AfterAll
+    public static void tearDown () {
+        for (var log : logs) log.close();
+    }
+    
+    public void assertEmptyLogs () {
+        for (var log : logs) {
+            var errors = log.getErrorLogs();
+            var warns  = log.getWarnLogs();
+            assertThat(errors.isEmpty());
+            assertThat(warns.isEmpty());
+        }
+    }
+    
     @Test
     public void testParse () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/xmlschemadoc/niem-core.xsd", "");
@@ -57,11 +98,11 @@ public class XMLSchemaDocumentTest {
                 .hasSize(1)
                 .containsOnly("http://www.opengis.net/gml/3.2");
         
-        assertThat(sd.appinfo())
+        assertThat(sd.appinfoAtts())
                 .hasSize(3)
                 .extracting(a -> a.attLname()).containsOnly("deprecated", "orderedPropertyIndicator")
                 ;
-        for (Appinfo a : sd.appinfo()) {
+        for (AppinfoAttribute a : sd.appinfoAtts()) {
             if ("orderedPropertyIndicator".equals(a.attLname())) {
                 var ceqn = a.componentEQN();
                 var eeqn = a.elementEQN();
@@ -76,51 +117,58 @@ public class XMLSchemaDocumentTest {
         
         assertEquals("http://release.niem.gov/niem/niem-core/5.0/", targetNS);
         assertEquals("http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument", sd.conformanceTargets());
-        assertEquals("5.0", sd.niemVersion());
+        assertEquals("5", sd.niemVersion());
         assertEquals("99", sd.schemaVersion());
-        assertEquals("documentation for NIEM Core.", sd.documentation());
         assertEquals(2, sd.schemaKind());
+        assertEmptyLogs();
     }
     
     @Test
     public void testIsCore () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/niem/niem-core.xsd", "");
-        assertEquals(2, sd.schemaKind());
+        assertEquals(NSK_CORE, sd.schemaKind());
+        assertEmptyLogs();
     }
     
     @Test
     public void testIsDomain () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/xmlschemadoc/hs.xsd", "");
-        assertEquals(1, sd.schemaKind());
+        assertEquals(NSK_DOMAIN, sd.schemaKind());
+        assertEmptyLogs();
     }
     
     @Test
     public void testIsExtension () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/xmlschemadoc/CrashDriver.xsd", "");
-        assertEquals(0, sd.schemaKind());
+        assertEquals(NSK_EXTENSION, sd.schemaKind());
+        assertEmptyLogs();
     }    
     
     @Test
-    public void testIsBuiltin () throws Exception {
+    public void testIsUtility () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/niem/utility/appinfo.xsd", "");
-        assertEquals(4, sd.schemaKind());
+        assertEquals(NSK_UTILITY, sd.schemaKind());
+        assertEmptyLogs();
     }    
     
     @Test
     public void testIsOtherNIEM () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/externals-niem/adapters/geospatial.xsd", "");
-        assertEquals(3, sd.schemaKind());
+        assertEquals(NSK_OTHERNIEM, sd.schemaKind());
+        assertEmptyLogs();
     }
     
     @Test
     public void testIsXML () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/niem/external/xml.xsd", "");
-        assertEquals(6, sd.schemaKind());
+        assertEquals(NSK_XML, sd.schemaKind());
+        assertEmptyLogs();
     }
 
     @Test
     public void testNoPrefix () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/noprefix.xsd", "");
         assertEquals("http://example.com/nopr#e-fix/5.0/", sd.targetNamespace());
+        assertEmptyLogs();
     }
 }

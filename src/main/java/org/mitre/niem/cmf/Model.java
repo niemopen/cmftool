@@ -48,7 +48,7 @@ public class Model extends ObjectType {
     static final Logger LOG = LogManager.getLogger(Model.class);
     
     // Info about schema documents needed when writing the model as XSD
-    static private final SchemaDocument none            = new SchemaDocument(null,null,null,null,null, null);
+    static private final SchemaDocument none            = new SchemaDocument(null,null,null,null,null,null,null);
     private final Map<String,SchemaDocument> schemadoc  = new HashMap<>();           // nsURI -> schema info
     
     public Map<String,SchemaDocument> schemadoc () { return schemadoc; }
@@ -56,11 +56,9 @@ public class Model extends ObjectType {
         schemadoc.put(nsuri, doc);
     }
     public String conformanceTargets (String ns)    { return schemadoc.getOrDefault(ns,none).confTargets(); }
-    public String filePath (String ns)              { return schemadoc.getOrDefault(ns,none).filePath(); }
     public String niemVersion (String ns)           { return schemadoc.getOrDefault(ns,none).niemVersion(); }
     public String schemaLanguage (String ns)        { return schemadoc.getOrDefault(ns,none).language(); }
     public String schemaVersion (String ns)         { return schemadoc.getOrDefault(ns,none).schemaVersion(); }
-
     
     // Map of namespace prefix and URI.  Includes mappings for built-in namespaces 
     // that are not part of the model (but still need to be unique).  Code for

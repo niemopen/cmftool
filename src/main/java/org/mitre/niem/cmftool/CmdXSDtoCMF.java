@@ -41,7 +41,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_DOMAIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTENSION;
@@ -57,6 +56,7 @@ import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
 import org.mitre.niem.xsd.XMLSchema;
 import org.mitre.niem.xsd.XMLSchemaDocument;
 import org.xml.sax.SAXException;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_UTILITY;
 
 /**
  *
@@ -204,7 +204,7 @@ class CmdXSDtoCMF implements JCCommand {
                     case NSK_OTHERNIEM:
                         conforming.add(nsuri);
                         break;
-                    case NSK_BUILTIN:
+                    case NSK_UTILITY:
                     case NSK_XML:
                     case NSK_XSD:
                         builtins.add(nsuri);

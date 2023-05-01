@@ -23,10 +23,11 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.ArrayList;
+import java.util.List;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import static org.mitre.niem.cmf.NamespaceKind.namespaceCode2Kind;
-import static org.mitre.niem.cmf.NamespaceKind.isNamespaceKindInCMF;
 
 /**
  *
@@ -36,6 +37,7 @@ import static org.mitre.niem.cmf.NamespaceKind.isNamespaceKindInCMF;
 public class Namespace extends ObjectType implements Comparable<Namespace> {
     
     private Model model = null;             // Namespace objects know the Model they are part of     
+    private List<AugmentRecord> augmentList = new ArrayList<>();
     private String namespaceURI = null;
     private String namespacePrefix = null;
     private String definition = null;
@@ -76,7 +78,21 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public String getDefinition ()            { return definition; }
     public int getKind ()                     { return nsKind; }
     public boolean isExternal ()              { return nsKind == NSK_EXTERNAL; }
-    public boolean isKindInCMF ()             { return isNamespaceKindInCMF(nsKind); }
+    public List<AugmentRecord> augmentList()     { return augmentList; }
+    
+    public void addAugmentRecord (AugmentRecord r) {
+        this.augmentList.add(r);
+    }
+    
+    public void removeAugmentRecord (AugmentRecord r) {
+        this.augmentList.remove(r);
+    }
+    
+    public void replaceAugmentRecord (AugmentRecord or, AugmentRecord nr) {
+        int index = this.augmentList.indexOf(or);
+        if (index < 0) return;
+        this.augmentList.set(index, nr);
+    }    
     
     // Enforces guarantee that each namespace in a model has a unique prefix
     @Override

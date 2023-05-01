@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javax.xml.XMLConstants;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLEventReader;
@@ -55,7 +56,7 @@ import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamespaceItem;
 import org.apache.xerces.xs.XSNamespaceItemList;
 import static org.mitre.niem.NIEMConstants.XML_CATALOG_NS_URI;
-import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
+import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import org.w3c.dom.DOMConfiguration;
@@ -174,7 +175,7 @@ public class XMLSchema {
                 String furi = cf.toURI().toString();
                 String dkind = getXMLDocumentNamespace(path);
                 if (XML_CATALOG_NS_URI.equals(dkind)) catalogs.add(furi);
-                else if (XSD_NS_URI.equals(dkind))    schemaDocs.add(furi);
+                else if (W3C_XML_SCHEMA_NS_URI.equals(dkind))    schemaDocs.add(furi);
                 else throw new XMLSchemaException(String.format("%s is not a schema document or XML catalog", path));
             }
         }
@@ -197,7 +198,7 @@ public class XMLSchema {
                 throw new XMLSchemaException(String.format("%s resolves to %s -- not a local URI", ns, sf));                
             }
             String dkind = getXMLDocumentNamespace(sfu.getPath());
-            if (!XSD_NS_URI.equals(dkind)) {
+            if (!W3C_XML_SCHEMA_NS_URI.equals(dkind)) {
                 throw new XMLSchemaException(String.format("%s resolves to %s -- not a schema document", ns, sf));                    
             }
             String sftns = getXSDTargetNamespace(sfu.getPath());
@@ -209,6 +210,8 @@ public class XMLSchema {
         }
     }
 
+    // Reads an XML file to obtain the namespace URI of the XML document element.
+    // Returns an empty string if the file isn't XML.
     private static String getXMLDocumentNamespace (String path) throws IOException {
         String ns = null;
         try {
@@ -229,6 +232,9 @@ public class XMLSchema {
         return ns;
     }
     
+    // Reads an XML Schema file to obtain the target namespace URI.
+    // Returns an empty string if the file isn't XSD or doesn't declare a
+    // target namespace.
     private static String getXSDTargetNamespace (String path) throws IOException {
         String tns = null;
         try {
@@ -430,7 +436,7 @@ public class XMLSchema {
                 }
                 continue;
             }
-            if (docl.size() < 1 && !XSD_NS_URI.equals(nsuri))
+            if (docl.size() < 1 && !W3C_XML_SCHEMA_NS_URI.equals(nsuri))
                 throw new XMLSchemaException(String.format("Xerces weirdness: no schema document for namespace %s", nsuri)); 
             else {
                 if (docl.size() > 1) LOG.warn("Multiple documents listed for namespace {} in XSModel?", nsuri);
@@ -454,8 +460,12 @@ public class XMLSchema {
             for (var extns : sd.externalImports()) {
                 LOG.debug(String.format("%s imported external by %s", extns, sd.targetNamespace()));
                 LOG.debug(String.format("sdocs.size() = %d", sdocs.size()));
-                var esd = sdocs.get(extns);
-                if (NSK_UNKNOWN == esd.schemaKind()) esd.setSchemaKind(NSK_EXTERNAL);
+                var esd  = sdocs.get(extns);
+                int kind = NamespaceKind.kind(extns);
+                if (NSK_UNKNOWN == kind) {
+                    esd.setSchemaKind(NSK_EXTERNAL);
+                    NamespaceKind.setKind(extns, kind);
+                }
             }
         }
     }

@@ -23,6 +23,9 @@
  */
 package org.mitre.niem.xsd;
 
+import static org.apache.commons.lang3.math.NumberUtils.toInt;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import org.xml.sax.Attributes;
@@ -37,10 +40,28 @@ import org.xml.sax.Attributes;
  */
 public class XStringObject extends XObjectType {
     
+    static final Logger LOG = LogManager.getLogger(XStringObject.class);    
+    
     XStringObject(Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
     }
-
+    
+    @Override
+    public void addToAugmentRecord (XAugmentRecord xar) {
+        String val = getStringVal();
+        switch (this.getComponentLname()) {
+            case "AugmentationIndex":  xar.getObject().setIndexInType(toInt(val)); break;
+            case "MinOccursQuantity":  xar.getObject().setMinOccurs(toInt(val)); break;
+            case "MaxOccursQuantity": 
+                if ("unbounded".equals(val)) xar.getObject().setMaxUnbounded(true);
+                else xar.getObject().setMaxOccurs(toInt(val)); 
+                break;
+            default:
+                LOG.error(String.format("can't add '%s' to AugmentRecord", this.getComponentLname()));
+                break;                
+        }
+    }
+    
     @Override
     public void addToClassType(XClassType xc) {
         String val = getStringVal();
@@ -53,7 +74,20 @@ public class XStringObject extends XObjectType {
         case "MetadataIndicator":            xc.getObject().setCanHaveMD(val); break;        
         case "Name":                         xc.getObject().setName(val); break;
         default:
-            break;
+                LOG.error(String.format("can't add '%s' to ClassType", this.getComponentLname()));
+                break;
+        }
+    }
+    
+    public void addToCodeListBinding (XCodeListBinding cb) {
+        String val = getStringVal();
+        switch (this.getComponentLname()) {
+            case "CodeListColumnName":            cb.getObject().setColumm(val); break;
+            case "CodeListConstrainingIndicator": cb.getObject().setIsConstraining("true".equals(val)); break;
+            case "CodeListURI":                   cb.getObject().setURI(val); break;
+            default:
+                LOG.error(String.format("can't add '%s' to CodeListBinding", this.getComponentLname()));
+                break;
         }
     }
     
@@ -65,7 +99,8 @@ public class XStringObject extends XObjectType {
         case "DeprecatedIndicator": xdt.getObject().setIsDeprecated(val); break;        
         case "Name":                xdt.getObject().setName(val); break;
         default:
-            break;
+                LOG.error(String.format("can't add '%s' to Datatype", this.getComponentLname()));
+                break;
         }
     } 
     
@@ -79,7 +114,8 @@ public class XStringObject extends XObjectType {
         case "StringValue":
         case "WhiteSpaceValueCode": xf.getObject().setStringVal(val); break;
         default:
-            break;
+                LOG.error(String.format("can't add '%s' to Facet", this.getComponentLname()));
+                break;
         }
     } 
     
@@ -87,13 +123,14 @@ public class XStringObject extends XObjectType {
     public void addToHasProperty (XHasProperty xhp) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "MinOccursQuantity":    xhp.getObject().setMinOccurs(Integer.parseInt(val)); break;
+        case "MinOccursQuantity":    xhp.getObject().setMinOccurs(toInt(val)); break;
         case "MaxOccursQuantity":    
             if ("unbounded".equals(val)) xhp.getObject().setMaxUnbounded(true);
-            else xhp.getObject().setMaxOccurs(Integer.parseInt(val)); 
+            else xhp.getObject().setMaxOccurs(toInt(val)); 
             break;
         default:
-            break;
+                LOG.error(String.format("can't add '%s' to HasProperty", this.getComponentLname()));
+                break;
         }        
     }
         
@@ -104,9 +141,10 @@ public class XStringObject extends XObjectType {
         case "DefinitionText":      xns.getObject().setDefinition(val) ; break;
         case "NamespaceKindCode":   xns.getObject().setKind(val); break;
         case "NamespaceURI":        try { xns.getObject().setNamespaceURI(val); }    catch (CMFException ex) { } break;
-        case "NamespacePrefixName": try { xns.getObject().setNamespacePrefix(val); } catch (CMFException ex) { } break;
+        case "NamespacePrefixText": try { xns.getObject().setNamespacePrefix(val); } catch (CMFException ex) { } break;
         default:
-            break;
+                LOG.error(String.format("can't add '%s' to Namespace", this.getComponentLname()));
+                break;
         }
      } 
     @Override
@@ -115,13 +153,15 @@ public class XStringObject extends XObjectType {
         switch (this.getComponentLname()) {
         case "AbstractIndicator":      xop.getObject().setIsAbstract(val); break;
         case "AttributeIndicator":     xop.getObject().setIsAttribute(val); break;
-        case "DefinitionText":         xop.getObject().setDefinition(val); break;
+        case "DefinitionText":         
+            xop.getObject().setDefinition(val); break;
         case "DeprecatedIndicator":    xop.getObject().setIsDeprecated(val); break;  
         case "MetadataIndicator":      xop.getObject().setCanHaveMD(val); break;
         case "ReferenceableIndicator": xop.getObject().setIsReferenceable(val); break;
         case "Name":                   xop.getObject().setName(val); break;
         default:
-            break;
+                LOG.error(String.format("can't add '%s' to Property", this.getComponentLname()));
+                break;
         }
     }
     
@@ -131,11 +171,13 @@ public class XStringObject extends XObjectType {
         switch (this.getComponentLname()) {
             case "ConformanceTargetURIList": xsd.getObject().setConfTargets(val); break;
             case "DocumentFilePathText":     xsd.getObject().setFilePath(val); break;
+            case "NamespacePrefixText":      xsd.getObject().setTargetPrefix(val); break;
             case "NamespaceURI":             xsd.getObject().setTargetNS(val); break;
             case "NIEMVersionText":          xsd.getObject().setNIEMversion(val); break;
             case "SchemaLanguageName":       xsd.getObject().setLanguage(val); break;
             case "SchemaVersionText":        xsd.getObject().setSchemaVersion(val); break;
             default:
+                LOG.error(String.format("can't add '%s' to SchemaDocument", this.getComponentLname()));
                 break;
         }
     }

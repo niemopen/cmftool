@@ -6,12 +6,12 @@
   xmlns="http://reference.niem.gov/specification/cmf/0.6/">
   <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
-    <NamespacePrefixName>nc</NamespacePrefixName>
+    <NamespacePrefixText>nc</NamespacePrefixText>
     <DefinitionText>Mismatch idref test.</DefinitionText>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
-    <NamespacePrefixName>xs</NamespacePrefixName>
+    <NamespacePrefixText>xs</NamespacePrefixText>
   </Namespace>
   <Datatype structures:id="nc.TokenListType">
     <Name>TokenListType</Name>

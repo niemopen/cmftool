@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.6/"
+  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.7/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.6/">
+  xmlns="http://reference.niem.gov/specification/cmf/0.7/">
   <Namespace structures:id="ns">
     <NamespaceURI>http://example.com/codes/</NamespaceURI>
-    <NamespacePrefixName>ns</NamespacePrefixName>
+    <NamespacePrefixText>ns</NamespacePrefixText>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
-    <NamespacePrefixName>xs</NamespacePrefixName>
+    <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
   <Property structures:id="ns.Numbers">
@@ -36,15 +36,17 @@
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
   <SchemaDocument>
+    <NamespacePrefixText>ns</NamespacePrefixText>
     <NamespaceURI>http://example.com/codes/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/4.0/#ExtensionSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>unionOf.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>4</NIEMVersionText>
   </SchemaDocument>
   <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>5.0</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>

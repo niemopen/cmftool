@@ -10,8 +10,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
   version="1"
-  xml:lang="en-US"
-  xsi:schemaLocation="http://release.niem.gov/niem/appinfo/5.0/ utility/appinfo.xsd http://release.niem.gov/niem/conformanceTargets/3.0/ utility/conformanceTargets.xsd">
+  xml:lang="en-US">
   <xs:annotation>
     <xs:documentation>NIEM Core.</xs:documentation>
     <xs:appinfo>

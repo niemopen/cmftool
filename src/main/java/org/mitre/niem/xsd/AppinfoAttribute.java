@@ -53,7 +53,7 @@ import org.javatuples.Pair;
 //     Pair<"http://example.com/bar/","ctype">,  
 //     Pair<"http://example.com/foo/","element">)
  
-public record Appinfo (
+public record AppinfoAttribute (
     String attLname,                    // appinfo attribute local name (in appinfo namespace)
     String attValue,                    // appinfo attribute value
     Pair<String,String> componentEQN,   // namespace and lname of global decl/defn with this appinfo attribute

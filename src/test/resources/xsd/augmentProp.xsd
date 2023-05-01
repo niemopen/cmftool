@@ -1,57 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
   targetNamespace="http://release.niem.gov/niem/niem-core/5.0/"
-  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
   xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
   xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
   xmlns:niem-xs="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
   version="1"
   xml:lang="en-US">
   <xs:annotation>
-    <xs:documentation>NIEM Core.</xs:documentation>
+    <xs:documentation>Augmentation point test schema</xs:documentation>
   </xs:annotation>
   <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
   <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
-  <xs:complexType name="AddressType">
+  <xs:complexType name="AmountType">
     <xs:annotation>
-      <xs:documentation>A data type for a geophysical location described by postal information.</xs:documentation>
+      <xs:documentation>A data type for an amount of money.</xs:documentation>
     </xs:annotation>
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="nc:AddressFullText"/>
-          <xs:element ref="nc:AddressAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="nc:Amount" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="nc:AmountAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="TextType">
+  <xs:complexType name="CaseDispositionDecisionType">
     <xs:annotation>
-      <xs:documentation>A data type for a character string.</xs:documentation>
+      <xs:documentation>A data type for the disposition of a case occurring as a result of some decision.</xs:documentation>
     </xs:annotation>
-    <xs:simpleContent>
-      <xs:extension base="niem-xs:string">
-        <xs:attribute ref="nc:partialIndicator" use="optional"/>
+    <xs:complexContent>
+      <xs:extension base="structures:ObjectType">
+        <xs:sequence>
+          <xs:element ref="nc:CaseDispositionDecisionText" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
       </xs:extension>
-    </xs:simpleContent>
+    </xs:complexContent>
   </xs:complexType>
-  <xs:element name="AddressAugmentationPoint" abstract="true">
+  <xs:element name="Amount" type="niem-xs:decimal" nillable="true">
     <xs:annotation>
-      <xs:documentation>An augmentation point for AddressType.</xs:documentation>
+      <xs:documentation>An amount of money.</xs:documentation>
     </xs:annotation>
   </xs:element>
-  <xs:element name="AddressFullText" type="nc:TextType" nillable="true">
+  <xs:element name="AmountAugmentationPoint" abstract="true">
     <xs:annotation>
-      <xs:documentation>A complete address.</xs:documentation>
+      <xs:documentation>An augmentation point for AmountType.</xs:documentation>
     </xs:annotation>
   </xs:element>
-  <xs:attribute name="partialIndicator" type="xs:boolean">
+  <xs:element name="CaseDispositionDecisionText" type="niem-xs:string" nillable="true">
     <xs:annotation>
-      <xs:documentation>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</xs:documentation>
+      <xs:documentation>A kind of decision made in a case disposition.</xs:documentation>
     </xs:annotation>
-  </xs:attribute>
+  </xs:element>
 </xs:schema>

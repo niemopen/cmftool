@@ -52,6 +52,8 @@ public class FileCompare {
                 line2 = br2.readLine();
                 ln++;
             }
+            fr1.close();
+            fr2.close();
             if (null != line1 || null != line2) return "files differ, line "+ln;
             return null;
         } catch (Exception ex) {

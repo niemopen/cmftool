@@ -32,14 +32,12 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import org.apache.logging.log4j.LogManager;
 import org.javatuples.Pair;
-import static org.mitre.niem.NIEMConstants.APPINFO_NS_URI_PREFIX;
 import static org.mitre.niem.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
-import static org.mitre.niem.NIEMConstants.CONFORMANCE_TARGET_NS_URI_PREFIX;
-import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
+import org.mitre.niem.cmf.NamespaceKind;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_APPINFO;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_CTAS;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTENSION;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
-import static org.mitre.niem.cmf.NamespaceKind.namespaceKindFromURI;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinVersion;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -47,11 +45,17 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * A class for providing information from a schema document that is not
- * available through the Xerces XML Schema (XSModel) API.  Knows how to
- * parse XSD document to provide:<ul>
+ * available through the Xerces XML Schema (XSModel) API. Specifically, you
+ * can't get @appinfo attributes from XSD elements like
+ *   xs:element ref="foo:bar" appinfo:deprecated="true"
+ * 
+ * So we have to parse the XSD document to get those.  We record appinfo attributes
+ * on global type definitions and component declarations, and on element references
+ * within global type definitions.
+ * 
+ * While we're at it these other things:<ul>
  *
  * <li> The target namespace attribute value</li>
- * <li> All appinfo attributes in declarations, definitions, and imports </li>
  * <li> All namespace declarations encountered in the document </li>
  * <li> NIEM conformance target assertions </li>
  * <li> NIEM version from structures namespace URI </li>
@@ -61,31 +65,29 @@ import org.xml.sax.helpers.DefaultHandler;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class XMLSchemaDocument {
-    static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(XMLSchemaDocument.class);    
+    static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(XMLSchemaDocument.class); 
     
     private final List<XMLNamespaceDeclaration> nsdels = new ArrayList<>();
     private final List<String> externalImports = new ArrayList<>();
-    private final List<Appinfo> appinfo = new ArrayList<>();
+    private final List<AppinfoAttribute> appinfo = new ArrayList<>();
     private String targetNS = null;
     private String confTargs = null;
     private String niemVersion = null;
     private String schemaVersion = null;
-    private String documentation = null;
     private String filepath = null;
     private String language = null;
     private int kind = NSK_UNKNOWN;
     
-    public List<XMLNamespaceDeclaration> namespaceDecls ()  { return nsdels; }
-    public List<String> externalImports ()                  { return externalImports; }
-    public List<Appinfo> appinfo ()                         { return appinfo; }
-    public String targetNamespace ()                        { return targetNS; }
-    public String conformanceTargets ()                     { return confTargs; }
-    public String niemVersion ()                            { return niemVersion; }
-    public String schemaVersion ()                          { return schemaVersion; }
-    public String documentation ()                          { return documentation; }
-    public String filepath ()                               { return filepath; }
-    public String language ()                               { return language; }
-    public int schemaKind ()                                { return kind; }
+    public List<XMLNamespaceDeclaration> namespaceDecls ()  { return nsdels; }              // all namespace declarations in document
+    public List<String> externalImports ()                  { return externalImports; }     // external namespaces imported in document
+    public List<AppinfoAttribute> appinfoAtts ()            { return appinfo; }             // appinfo attributes in document
+    public String targetNamespace ()                        { return targetNS; }            // target namespace URI of document
+    public String conformanceTargets ()                     { return confTargs; }           // value of @ct:conformanceTargets in <xs:schema>
+    public String niemVersion ()                            { return niemVersion; }         // derived from conformance assertions
+    public String schemaVersion ()                          { return schemaVersion; }       // from @version in <xs:schema>
+    public String filepath ()                               { return filepath; }            // path used to open document for parsing
+    public String language ()                               { return language; }            // from @xml:lang in <xs:schema>
+    public int schemaKind ()                                { return kind; }                // from namespace URI and conformance assertions
     
     public void setSchemaKind (int k) { kind = k; }
     
@@ -102,29 +104,23 @@ public class XMLSchemaDocument {
       }
     
     private class XSDHandler extends DefaultHandler {  
-        private XMLNamespaceScope nsm = new XMLNamespaceScope();
-        private Pair<String,String> ctypeEN = null;    // namespace and lname of complex type being parsed
+        private final XMLNamespaceScope nsm = new XMLNamespaceScope();
+        private Pair<String,String> ctypeEN = null;     // namespace and lname of complex type being parsed
         private Locator docloc = null;                  // for document line number in log messages
-        private StringBuilder chars;                    // current element simple content
         private int depth = 0;                          // root element has depth = 0
         
-        XSDHandler () { 
-            chars = new StringBuilder();
-        } 
+        XSDHandler () { } 
         
-        @Override
         // Do two things with prefix maps.  Keep a list of all mappings in the document
-        // for a later prefix normalization.  Also keep a stack of the current mappings
-        // to interpret QName in <xs:element ref="q:name" appinfo:foo="bar"/>
+        // for prefix normalization occuring later.  Also keep a stack of the current 
+        // mappings to interpret QName in <xs:element ref="q:name" appinfo:foo="bar"/>
+        @Override
         public void startPrefixMapping (String prefix, String uri) {
             if (prefix.isEmpty()) return;
             nsm.onStartPrefixMapping(prefix, uri);
             int line = docloc.getLineNumber();
             var nsd = new XMLNamespaceDeclaration(prefix, uri, line, depth, null, NSK_UNKNOWN);  // don't know target NS or kind yet
             nsdels.add(nsd);
-            if (uri.startsWith(STRUCTURES_NS_URI_PREFIX)) {
-                niemVersion = getBuiltinVersion(uri);   // import of structures namespace determines NIEM version of this doc
-            }
         }        
         
         private static final Pattern xsComponentPat = Pattern.compile("(attribute)|(element)|(complexType)");
@@ -136,45 +132,59 @@ public class XMLSchemaDocument {
             nsm.onStartElement();
             if ("schema".equals(elname)) {
                 targetNS = atts.getValue("targetNamespace");
+                String tns = targetNS;
                 if (null == targetNS) LOG.warn("found no target namespace while parsing {}", docloc.getSystemId());
                 
                 // Get schema version attribute and language
                 schemaVersion = atts.getValue("version");
                 language = atts.getValue(XML_NS_URI, "lang");
+                
+                // Get schema kind and niem version (maybe)
+                kind = NamespaceKind.kind(targetNS);
+                niemVersion = NamespaceKind.version(targetNS);
 
                 // Get conformance target assertion
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (atts.getURI(i).startsWith(CONFORMANCE_TARGET_NS_URI_PREFIX)) {
+                    var auri = atts.getURI(i);
+                    int util = NamespaceKind.utilityKind(auri);
+                    if (NIEM_CTAS == util) {
                         if (CONFORMANCE_ATTRIBUTE_NAME.equals(atts.getLocalName(i))) {                        
                             confTargs = atts.getValue(i);
+                            var arch = NamespaceKind.archFromCTA(confTargs);
+                            NamespaceKind.setArchitecture(targetNS, arch);
+                            if (null == niemVersion || niemVersion.isBlank()) {
+                                niemVersion = NamespaceKind.versionFromCTA(confTargs);
+                            }
                             break;
                         }
                     }
                 }
-                // What kind of schema is this?
-                kind = namespaceKindFromURI(targetNS);
-                if (NSK_UNKNOWN == kind && null != confTargs && !confTargs.isEmpty()) kind = NSK_EXTENSION;    
+                // Unknown namespace kind with conformance assertion is an extension namespace
+                if (NSK_UNKNOWN == kind && null != confTargs && !confTargs.isEmpty()) {
+                    kind = NSK_EXTENSION;
+                    NamespaceKind.setKind(targetNS, kind);
+                }    
             }
             // Handle xs:import elements
             else if ("import".equals(elname)) {
                 String importNS = atts.getValue("namespace");
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (atts.getURI(i).startsWith(APPINFO_NS_URI_PREFIX))
+                    if (NIEM_APPINFO == NamespaceKind.utilityKind(atts.getURI(i)))
                         if ("externalImportIndicator".equals(atts.getLocalName(i))) {
                             if ("true".equals(atts.getValue(i))) externalImports.add(importNS);
                             break;
                         }   
                 }
             }
-            // Remember the QName of the complex type we are defining
+            // Remember the QName of the global complex type we are defining
             else if (1 == depth && "complexType".equals(elname)) ctypeEN = Pair.with(targetNS, atts.getValue("name"));
                 
             // Look for appinfo attributes on global definitions and declarations
             if (1 == depth && xsComponentPat.matcher(elname).lookingAt()) {   
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (atts.getURI(i).startsWith(APPINFO_NS_URI_PREFIX)) {
+                    if (NIEM_APPINFO == NamespaceKind.utilityKind(atts.getURI(i))) {
                         var een = Pair.with(targetNS, atts.getValue("name"));
-                        appinfo.add(new Appinfo(atts.getLocalName(i), atts.getValue(i), een, null));
+                        appinfo.add(new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), een, null));
                     }
                 } 
             }
@@ -183,8 +193,8 @@ public class XMLSchemaDocument {
             Pair<String,String> een = nsm.expandQName(eref);
             if (null != ctypeEN && "element".equals(elname) && null != eref && null != een) {
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (atts.getURI(i).startsWith(APPINFO_NS_URI_PREFIX)) {
-                        Appinfo a = new Appinfo(atts.getLocalName(i), atts.getValue(i), ctypeEN, een);
+                    if (NIEM_APPINFO == NamespaceKind.utilityKind(atts.getURI(i))) {
+                        AppinfoAttribute a = new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), ctypeEN, een);
                         appinfo.add(a);                                
                     }
                 }
@@ -197,18 +207,6 @@ public class XMLSchemaDocument {
             depth--;
             nsm.onEndElement();
             if (1 == depth && "complexType".equals(elname)) ctypeEN = null;    // finished global type defn
-            
-            // The first <documentation> element in document order at depth 2 
-            // has to be the schema documentation string
-            if (2 == depth && null == documentation && "documentation".equals(elname)) {
-                documentation = chars.toString().trim();
-            }
-            if (chars.length() > 0) chars = new StringBuilder();
-        }    
-
-        @Override
-        public void characters (char[] ch, int start, int length) {
-            chars.append(ch, start, length);
         }
         
         @Override

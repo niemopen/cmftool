@@ -27,9 +27,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.mitre.niem.cmf.AugmentRecord;
 import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.CodeListBinding;
+import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.HasProperty;
@@ -91,26 +95,23 @@ public class ModelXMLReaderTest {
  
         var sd = m.schemadoc().get("http://release.niem.gov/niem/proxy/niem-xs/5.0/");
         assertNotNull(sd);
-        assertEquals("5.0", sd.niemVersion());
         assertEquals("http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument", sd.confTargets());
         assertEquals("niem/adapters/niem-xs.xsd", sd.filePath());
-        assertEquals("5.0", sd.niemVersion());
+        assertEquals("5", sd.niemVersion());
         assertEquals("1", sd.schemaVersion());
     
         sd = m.schemadoc().get("http://release.niem.gov/niem/structures/5.0/");
         assertNotNull(sd);
-        assertEquals("5.0", sd.niemVersion());
         assertEquals(null, sd.confTargets());
         assertEquals("niem/utility/structures.xsd", sd.filePath());
-        assertEquals("5.0", sd.niemVersion());
+        assertEquals("5", sd.niemVersion());
         assertEquals("5.0", sd.schemaVersion());
        
         sd = m.schemadoc().get("http://release.niem.gov/niem/niem-core/5.0/");
         assertNotNull(sd);
-        assertEquals("5.0", sd.niemVersion());
         assertEquals("http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument", sd.confTargets());
         assertEquals("codeType.xsd", sd.filePath());
-        assertEquals("5.0", sd.niemVersion());
+        assertEquals("5", sd.niemVersion());
         assertEquals("1", sd.schemaVersion());  
     }
     
@@ -148,6 +149,41 @@ public class ModelXMLReaderTest {
         assertEquals(c2.getExtensionOfClass(), c3);
         assertNull(c3.getExtensionOfClass());
     }
+    
+    @Test
+    public void testCLSA () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "cmf/clsa.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);        
+        assertNotNull(m);
+        assertEquals(0, mr.getMessages().size());
+
+        Datatype dt = m.getDatatype("genc:CountryAlpha2CodeType");
+        CodeListBinding clb = dt.getCodeListBinding();
+        assertNotNull(dt);
+        assertEquals("http://api.nsgreg.nga.mil/geo-political/GENC/2/3-11", clb.getURI());
+        assertEquals("foo", clb.getColumn());
+        assertTrue(clb.getIsConstraining());
+        
+        dt = m.getDatatype("genc:CountryAlpha3CodeType");
+        clb = dt.getCodeListBinding();
+        assertNotNull(dt);
+        assertEquals("http://api.nsgreg.nga.mil/geo-political/GENC/3/3-11", clb.getURI());
+        assertEquals("#code", clb.getColumn());
+        assertFalse(clb.getIsConstraining());
+        
+        var ncp = m.getProperty("nc:CountryRepresentation");
+        assertTrue(ncp.isAbstract());
+        
+        var p = m.getProperty("genc:CountryAlpha2Code");
+        assertEquals(p.getSubPropertyOf(), ncp);
+    }
 
     @Test
     public void testCodetype () {
@@ -171,6 +207,7 @@ public class ModelXMLReaderTest {
         assertNotNull(d1);
         assertFalse(d1.isAbstract());
         assertFalse(d1.isDeprecated());
+        assertNotNull(d1.getDefinition());
         RestrictionOf r = d1.getRestrictionOf();
         assertNotNull(r);
         assertEquals(r.getDatatype(), m.getDatatype("xs:token"));
@@ -222,7 +259,12 @@ public class ModelXMLReaderTest {
         ModelXMLReader mr = new ModelXMLReader();
         Model m = mr.readXML(cmfIS);
         assertNotNull(m);
-        assertTrue(m.getDatatype("nc:NumericType").isDeprecated());
+        
+        assertTrue(m.getComponent("nc:DepAtt").isDeprecated());
+        assertTrue(m.getComponent("nc:SecretPercent").isDeprecated());
+        assertTrue(m.getComponent("nc:TextType").isDeprecated());        
+        assertTrue(m.getComponent("nc:SecretPercentType").isDeprecated());
+        
         assertFalse(m.getDatatype("xs:decimal").isDeprecated());
     }
     
@@ -345,9 +387,10 @@ public class ModelXMLReaderTest {
         assertEquals(0, mr.getMessages().size());
         assertEquals(2, m.getNamespaceList().size());  
         assertNull(m.getNamespaceByURI("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
-        assertEquals(3, m.getComponentList().size());
+        assertEquals(5, m.getComponentList().size());
         assertNotNull(m.getDatatype("xs:decimal"));
-     }
+        assertNotNull(m.getDatatype("xs:string"));
+    }
     
     @Test
     public void testUnionOf () {
@@ -416,6 +459,7 @@ public class ModelXMLReaderTest {
         
         ClassType tpt = m.getClassType("ns:TrackPointType");
         assertNotNull(tpt);
+        assertNotNull(tpt.getDefinition());
         assertEquals(1, tpt.hasPropertyList().size());
         HasProperty h1 = tpt.hasPropertyList().get(0);
         assertEquals("geo:LocationGeospatialPoint", h1.getProperty().getQName());
@@ -438,9 +482,48 @@ public class ModelXMLReaderTest {
         assertNotNull(m);
         assertEquals(0, mr.getMessages().size());
         
-        assertEquals(4, m.getNamespaceList().size());
-        assertEquals(12, m.getComponentList().size());
+        var nsl = m.getNamespaceList();
+        assertThat(m.getNamespaceList())
+                .extracting(Namespace::getNamespacePrefix)
+                .containsOnly("nc", "test", "j", "xs");
         
+        assertThat(m.getComponentList())
+                .extracting(Component::getQName)
+                .containsOnly("j:AddressCommentText",
+                        "j:AddressVerifiedDate",
+                        "j:AnotherAddress",
+                        "nc:AddressFullText",
+                        "nc:TextLiteral",
+                        "nc:partialIndicator",
+                        "test:BoogalaText",
+                        "nc:AddressType",
+                        "nc:TextType",
+                        "xs:boolean",
+                        "xs:string");       
+        
+        assertThat(m.getNamespaceByPrefix("j").augmentList())
+                .hasSize(3)
+                .extracting(AugmentRecord::getClassType)
+                .containsOnly(m.getClassType("nc:AddressType"));
+        
+        assertThat(m.getNamespaceByPrefix("j").augmentList())
+                .extracting(AugmentRecord::getProperty)
+                .extracting(Property::getQName)
+                .containsOnly("j:AddressCommentText", "j:AddressVerifiedDate", "j:AnotherAddress");
+        
+        assertThat(m.getNamespaceByPrefix("test").augmentList())
+                .hasSize(2)
+                .extracting(AugmentRecord::getClassType)
+                .containsOnly(m.getClassType("nc:AddressType"));
+        
+        assertThat(m.getNamespaceByPrefix("test").augmentList())
+                .extracting(AugmentRecord::getProperty)
+                .extracting(Property::getQName)
+                .containsOnly("j:AddressCommentText", "test:BoogalaText");
+
+        assertThat(m.getNamespaceByPrefix("nc").augmentList())
+                .hasSize(0);
+
         ClassType ct = m.getClassType("nc:AddressType");
         assertNotNull(ct);
         assertTrue(ct.isAugmentable());
@@ -448,15 +531,13 @@ public class ModelXMLReaderTest {
         
         HasProperty hp = ct.hasPropertyList().get(1);
         assertEquals("j:AddressCommentText", hp.getProperty().getQName());
-        assertNull(hp.augmentElementNS());
-        assertEquals(2, hp.augmentTypeNS().size());
-        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("test")));
-        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("j")));        
+        assertEquals(2, hp.augmentingNS().size());
+        assertTrue(hp.augmentingNS().contains(m.getNamespaceByPrefix("test")));
+        assertTrue(hp.augmentingNS().contains(m.getNamespaceByPrefix("j")));        
         
         hp = ct.hasPropertyList().get(3);
         assertEquals("j:AnotherAddress", hp.getProperty().getQName());
-        assertEquals(hp.augmentElementNS(), m.getNamespaceByPrefix("j"));
-        assertEquals(0, hp.augmentTypeNS().size());
+        assertEquals(1, hp.augmentingNS().size());
     }
     
     @Test

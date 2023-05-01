@@ -55,6 +55,11 @@ public class XProperty extends XObjectType {
     } 
     
     @Override
+    public void addToAugmentRecord (XAugmentRecord xar) {
+        xar.getObject().setProperty(this.getObject());
+    }
+
+    @Override
     public void addToHasProperty(XHasProperty x) {
         x.getObject().setProperty(this.getObject());
     }    

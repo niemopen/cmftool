@@ -141,10 +141,9 @@ public class ModelXMLReader {
         public void endElement(String eNamespace, String eLocalName, String eQName) {
             XObjectType child    = objStack.pop();
             XObjectType parent   = objStack.peek();          
-            if (chars.length() > 0) {
-                child.setStringVal(chars.toString().trim());
-                chars = new StringBuilder();
-            }            
+            child.setStringVal(chars.toString().trim());
+            chars = new StringBuilder();
+                        
             // Remember elements with @id, or non-empty objects with @uri
             // Use these to handle reference placeholder elements upon endDocument
             if (null != child.getIDKey()) {
@@ -157,7 +156,8 @@ public class ModelXMLReader {
             // Not a placeholder? Remember object to be added to model at endDocument.
             else {
                 ObjectType obj = child.getObject();
-                if (null != obj && obj.isModelChild()) mObjs.add(obj);
+                if (null != obj && obj.isModelChild()) 
+                    mObjs.add(obj);
                 parent.addAsChild(child);
             }     
         }
@@ -218,22 +218,21 @@ public class ModelXMLReader {
             XObjectType o = null;
             if (ens.startsWith(CMF_NS_URI_PREFIX)) {
                 switch (eln) {
-                case "AugmentationElementNamespace": 
-                    o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
-                case "AugmentationTypeNamespace":    
-                    o = new XNamespace(m, p, ens, eln, atts, lineNum); break;                
-                case "Class":               o = new XClassType(m, p, ens, eln, atts, lineNum); break;
-                case "Datatype":            o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "ExtensionOfClass":    o = new XClassType(m, p, ens, eln, atts, lineNum); break;
-                case "HasProperty":         o = new XHasProperty(m, p, ens, eln, atts, lineNum); break;
-                case "ListOf":              o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "Model":               o = new XModel(m, p, ens, eln, atts, lineNum); break;
-                case "Namespace":           o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
-                case "Property":            o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "RestrictionOf":       o = new XRestrictionOf(m, p, ens, eln, atts, lineNum); break;
-                case "SchemaDocument":      o = new XSchemaDocument(m, p, ens, eln, atts, lineNum); break;
-                case "SubPropertyOf":       o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "UnionOf":             o = new XUnionOf(m, p, ens, eln, atts, lineNum); break;
+                case "AugmentationNamespace": o = new XNamespace(m, p, ens, eln, atts, lineNum); break;                
+                case "AugmentRecord":         o = new XAugmentRecord(m, p, ens, eln, atts, lineNum); break;
+                case "Class":                 o = new XClassType(m, p, ens, eln, atts, lineNum); break;
+                case "CodeListBinding":       o = new XCodeListBinding(m, p, ens, eln, atts, lineNum); break;
+                case "Datatype":              o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "ExtensionOfClass":      o = new XClassType(m, p, ens, eln, atts, lineNum); break;
+                case "HasProperty":           o = new XHasProperty(m, p, ens, eln, atts, lineNum); break;
+                case "ListOf":                o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "Model":                 o = new XModel(m, p, ens, eln, atts, lineNum); break;
+                case "Namespace":             o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
+                case "Property":              o = new XProperty(m, p, ens, eln, atts, lineNum); break;
+                case "RestrictionOf":         o = new XRestrictionOf(m, p, ens, eln, atts, lineNum); break;
+                case "SchemaDocument":        o = new XSchemaDocument(m, p, ens, eln, atts, lineNum); break;
+                case "SubPropertyOf":         o = new XProperty(m, p, ens, eln, atts, lineNum); break;
+                case "UnionOf":               o = new XUnionOf(m, p, ens, eln, atts, lineNum); break;
 
                 case "Enumeration":
                 case "FractionDigits":
@@ -253,6 +252,10 @@ public class ModelXMLReader {
                 case "AbstractIndicator":
                 case "AttributeIndicator":
                 case "AugmentableIndicator":
+                case "AugmentationIndex":
+                case "CodeListColumnName":
+                case "CodeListConstrainingIndicator":
+                case "CodeListURI":
                 case "ConformanceTargetURIList":
                 case "DefinitionText":   
                 case "DeprecatedIndicator":
@@ -263,7 +266,7 @@ public class ModelXMLReader {
                 case "MinOccursQuantity": 
                 case "Name":          
                 case "NamespaceKindCode":
-                case "NamespacePrefixName":
+                case "NamespacePrefixText":
                 case "NamespaceURI":       
                 case "NIEMVersionText":
                 case "NonNegativeValue": 

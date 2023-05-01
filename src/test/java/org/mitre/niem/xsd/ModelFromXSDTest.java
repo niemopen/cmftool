@@ -24,14 +24,21 @@
 package org.mitre.niem.xsd;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
+import nl.altindag.log.LogCaptor;
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.mitre.niem.cmf.AugmentRecord;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
@@ -40,6 +47,7 @@ import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
+import org.mitre.niem.cmf.SchemaDocument;
 import org.mitre.niem.cmf.UnionOf;
 import org.xml.sax.SAXException;
 
@@ -50,7 +58,38 @@ import org.xml.sax.SAXException;
  */
 public class ModelFromXSDTest {
     
+    private static List<LogCaptor> logs;
+    
     public ModelFromXSDTest() {
+    }
+    
+    @BeforeAll
+    public static void setupLogCaptor () {
+        logs = new ArrayList<>();
+        logs.add(LogCaptor.forClass(ModelFromXSD.class));
+        logs.add(LogCaptor.forClass(XMLSchema.class));
+        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
+        logs.add(LogCaptor.forClass(XStringObject.class));
+        logs.add(LogCaptor.forClass(XMLCatalogResolver.class));
+    }
+    
+    @AfterEach
+    public void clearLogs () {
+        for (var log : logs) log.clearLogs();;
+    }
+    
+    @AfterAll
+    public static void tearDown () {
+        for (var log : logs) log.close();
+    }
+    
+    public void assertEmptyLogs () {
+        for (var log : logs) {
+            var errors = log.getErrorLogs();
+            var warns  = log.getWarnLogs();
+            assertThat(errors.isEmpty());
+            assertThat(warns.isEmpty());
+        }
     }
 
     @Test
@@ -59,12 +98,11 @@ public class ModelFromXSDTest {
         Model m = mfact.createModel("src/test/resources/xsd/externals.xsd");
         
         List<Namespace> nslist = m.getNamespaceList();
-        assertEquals(5, nslist.size());
-        assertEquals("geo", nslist.get(0).getNamespacePrefix());
-        assertEquals("gml", nslist.get(1).getNamespacePrefix());
-        assertEquals("nc", nslist.get(2).getNamespacePrefix());
-        assertEquals("ns", nslist.get(3).getNamespacePrefix());
-        assertEquals("xs", nslist.get(4).getNamespacePrefix());
+        assertThat(nslist)
+                .hasSize(5)
+                .extracting(Namespace::getNamespacePrefix)
+                .contains("geo", "gml", "nc", "ns", "xs");    
+        assertEmptyLogs();
     }
     
     @Test
@@ -73,17 +111,39 @@ public class ModelFromXSDTest {
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel("src/test/resources/xsd/augment-0.xsd");  
         
-        assertEquals(4, m.getNamespaceList().size());
-        assertEquals(11, m.getComponentList().size());
-        assertNotNull(m.getNamespaceByPrefix("j"));
-        assertNotNull(m.getNamespaceByPrefix("nc"));
-        assertNotNull(m.getNamespaceByPrefix("test"));
-        assertNotNull(m.getNamespaceByPrefix("xs"));             
+        assertThat(m.getNamespaceList())
+                .hasSize(4)
+                .extracting(Namespace::getNamespacePrefix)
+                .contains("j", "nc", "test", "xs");
+        assertEquals("Augmentation test schema", m.getNamespaceByPrefix("test").getDefinition());
+        assertThat(m.getNamespaceByPrefix("nc").augmentList()).hasSize(0);
+        assertThat(m.getNamespaceByPrefix("xs").augmentList()).hasSize(0);      
+        assertThat(m.getNamespaceByPrefix("j").augmentList())
+                .hasSize(3)
+                .extracting(AugmentRecord::getClassType)
+                .containsOnly(m.getClassType("nc:AddressType"));
+        assertThat(m.getNamespaceByPrefix("j").augmentList())
+                .hasSize(3)
+                .extracting(AugmentRecord::getProperty)
+                .containsExactly(m.getProperty("j:AddressCommentText"),
+                        m.getProperty("j:AddressVerifiedDate"),
+                        m.getProperty("j:AnotherAddress"));        
+        assertThat(m.getNamespaceByPrefix("test").augmentList())
+                .hasSize(2)
+                .extracting(AugmentRecord::getClassType)
+                .containsOnly(m.getClassType("nc:AddressType"));
+        assertNotNull(m.getProperty("test:BoogalaText"));
+        assertThat(m.getNamespaceByPrefix("test").augmentList())
+                .hasSize(2)
+                .extracting(AugmentRecord::getProperty)
+                .contains(m.getProperty("j:AddressCommentText"),
+                        m.getProperty("test:BoogalaText"));  
+        
         ClassType ct = m.getClassType("nc:AddressType");
         assertNotNull(ct);
         assertTrue(ct.isAugmentable());
         List<HasProperty> hpl = ct.hasPropertyList();
-        assertNotNull(hpl);
+        assertNotNull(hpl);        
         assertEquals(5, hpl.size());
         
         HasProperty hp = hpl.get(0);
@@ -91,42 +151,104 @@ public class ModelFromXSDTest {
         assertEquals(1, hp.minOccurs());
         assertEquals(1, hp.maxOccurs());
         assertFalse(hp.maxUnbounded());
-        assertNull(hp.augmentElementNS());
-        assertEquals(0, hp.augmentTypeNS().size());
+        assertEquals(0, hp.augmentingNS().size());
         
         hp = hpl.get(1);
         assertEquals(hp.getProperty(), m.getProperty("j:AddressCommentText"));
         assertEquals(0, hp.minOccurs());
         assertEquals(1, hp.maxOccurs());
         assertFalse(hp.maxUnbounded());
-        assertNull(hp.augmentElementNS());
-        assertEquals(2, hp.augmentTypeNS().size());
-        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("test")));
-        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("j")));
+        assertThat(hp.augmentingNS())
+                .hasSize(2)
+                .extracting(Namespace::getNamespacePrefix)
+                .contains("test", "j");
         
         hp = hpl.get(2);
         assertEquals(hp.getProperty(), m.getProperty("j:AddressVerifiedDate"));
         assertEquals(0, hp.minOccurs());
         assertTrue(hp.maxUnbounded());
-        assertNull(hp.augmentElementNS());
-        assertEquals(1, hp.augmentTypeNS().size());
-        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("j")));
+        assertEquals(1, hp.augmentingNS().size());
+        assertThat(hp.augmentingNS())
+                .hasSize(1)
+                .extracting(Namespace::getNamespacePrefix)
+                .contains("j");
         
         hp = hpl.get(3);
         assertEquals(hp.getProperty(), m.getProperty("j:AnotherAddress"));
         assertEquals(0, hp.minOccurs());
         assertTrue(hp.maxUnbounded());
-        assertEquals(hp.augmentElementNS(), m.getNamespaceByPrefix("j"));
-        assertEquals(0, hp.augmentTypeNS().size());
+        assertThat(hp.augmentingNS())
+                .hasSize(1)
+                .extracting(Namespace::getNamespacePrefix)
+                .contains("j");
         
         hp = hpl.get(4);
         assertEquals(hp.getProperty(), m.getProperty("test:BoogalaText"));
         assertEquals(0, hp.minOccurs());
         assertEquals(1, hp.maxOccurs());
-        assertFalse(hp.maxUnbounded());
-        assertNull(hp.augmentElementNS());
-        assertEquals(1, hp.augmentTypeNS().size());        
-        assertTrue(hp.augmentTypeNS().contains(m.getNamespaceByPrefix("test")));
+        assertFalse(hp.maxUnbounded());     
+        assertThat(hp.augmentingNS())
+                .hasSize(1)
+                .extracting(Namespace::getNamespacePrefix)
+                .contains("test");
+        assertEmptyLogs();
+    }
+    
+    @Test
+    public void testAugmentProp () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/augmentProp.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        assertTrue(m.getClassType("nc:AmountType").isAugmentable());
+        assertFalse(m.getClassType("nc:CaseDispositionDecisionType").isAugmentable());
+        assertNull(m.getProperty("nc:AmountAugmentationPoint"));
+        assertNull(m.getProperty("nc:CaseDispositionDecisionAugmentationPoint"));
+    }
+            
+    
+    @Test
+    @DisplayName("CLI")
+    public void testCodeListInstance () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/cli.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        var ct = m.getClassType("nc:CodeType");
+        var p1 = m.getProperty("nc:CodeLiteral");
+        var c1 = m.getProperty("cli:codeListColumnName");
+        var c2 = m.getProperty("cli:codeListConstrainingIndicator");
+        var c3 = m.getProperty("cli:codeListURI");
+        assertThat(ct.hasPropertyList())
+                .hasSize(4)
+                .extracting(HasProperty::getProperty)
+                .contains(p1, c1, c2, c3); 
+        assertEmptyLogs();
+    }
+    
+    @Test
+    @DisplayName("CLSA")
+    public void testCodeListSchemaAppinfo () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/clsa.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        Datatype dt = m.getDatatype("genc:CountryAlpha2CodeType");
+        CodeListBinding clb = dt.getCodeListBinding();
+        assertNotNull(dt);
+        assertNotNull(clb);
+        assertEquals("http://api.nsgreg.nga.mil/geo-political/GENC/2/3-11", clb.getURI());
+        assertEquals("foo", clb.getColumn());
+        assertTrue(clb.getIsConstraining());
+        
+        dt = m.getDatatype("genc:CountryAlpha3CodeType");
+        clb = dt.getCodeListBinding();
+        assertNotNull(dt);
+        assertNotNull(clb);
+        assertEquals("http://api.nsgreg.nga.mil/geo-political/GENC/3/3-11", clb.getURI());
+        assertEquals("#code", clb.getColumn());
+        assertFalse(clb.getIsConstraining());
+        assertEmptyLogs();
     }
 
     @Test
@@ -140,6 +262,7 @@ public class ModelFromXSDTest {
         assertEquals(4, m.getComponentList().size());
         Datatype dt = m.getDatatype("nc:EmploymentPositionBasisCodeType");
         assertNotNull(dt);
+        assertNull(dt.getCodeListBinding());
         RestrictionOf r = dt.getRestrictionOf();
         assertNotNull(r);
         assertEquals(r.getDatatype(), m.getDatatype("xs:token"));
@@ -164,6 +287,7 @@ public class ModelFromXSDTest {
         assertNull(p2.getClassType());
         assertNotNull(m.getDatatype("xs:token"));
         assertNull(m.getDatatype("nc:EmploymentPositionBasisCodeSimpleType"));
+        assertEmptyLogs();
     }
     
     @Test
@@ -221,6 +345,7 @@ public class ModelFromXSDTest {
         assertNull(p2.getDatatype());
         assertNotNull(m.getDatatype("xs:token"));
         assertNotNull(m.getDatatype("nc:EmploymentPositionBasisCodeDatatype"));
+        assertEmptyLogs();
     }
     
     @Test
@@ -241,6 +366,7 @@ public class ModelFromXSDTest {
         assertTrue(dtl.contains(c));
         assertTrue(dtl.contains(w));
         assertNotNull(m.getDatatype("xs:token"));
+        assertEmptyLogs();
     }
     
     @Test
@@ -249,6 +375,10 @@ public class ModelFromXSDTest {
         String[] args = { "src/test/resources/xsd/complexContent.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
+        
+        assertThat(m.schemadoc().values())
+                .extracting(SchemaDocument::niemVersion)
+                .containsOnly("5");
        
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(13, m.getComponentList().size());
@@ -280,6 +410,7 @@ public class ModelFromXSDTest {
         assertNotNull(m.getClassType("nc:PersonNameTextType"));
         assertNotNull(m.getClassType("nc:ProperNameTextType"));
         assertNotNull(m.getClassType("nc:TextType"));        
+        assertEmptyLogs();
     }
 
     @Test
@@ -300,6 +431,22 @@ public class ModelFromXSDTest {
         assertEquals("test:AngularMinuteType", m.getProperty("test:AngMinute").getDatatype().getQName());
         assertEquals("nc:AngularMinuteType",   m.getProperty("test:AttributedAngularMinuteLiteral").getDatatype().getQName());        
         assertEquals("xs:token",               m.getProperty("test:SomeAtt").getDatatype().getQName());
+        assertEmptyLogs();
+    }
+    
+    @Test
+    public void testDefaultFacets () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/defaultFacets.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        for (var c : m.getComponentList()) {
+            var dt = c.asDatatype();
+            if (null == dt) continue;
+            if (null == dt.getRestrictionOf()) continue;
+            assertThat(dt.getRestrictionOf().getFacetList())
+                    .hasSizeBetween(0,1);
+        }
+        int i = 0;
     }
     
     @Test
@@ -337,6 +484,20 @@ public class ModelFromXSDTest {
         p = m.getProperty("nc:SecretPercent");
         assertNotNull(p);
         assertFalse(p.isAttribute());
+        assertEmptyLogs();
+    }
+    
+    @Test
+    @DisplayName("documenation")
+    public void testDocumentation () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd/complexContent.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        for (var c : m.getComponentList()) {
+            if ("http://release.niem.gov/niem/niem-core/5.0/".equals(c.getNamespaceURI())) 
+                assertNotNull(c.getDefinition());        
+        }
     }
     
     @Test
@@ -353,6 +514,7 @@ public class ModelFromXSDTest {
         ClassType textT  = m.getClassType("nc:TextType");
         assertEquals(textT, propNT.getExtensionOfClass());
         assertEquals(propNT, persNT.getExtensionOfClass());
+        assertEmptyLogs();
     }
     
     @Test
@@ -361,8 +523,12 @@ public class ModelFromXSDTest {
         String[] args = { "src/test/resources/xsd/externals.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
-       
-        assertEquals(5, m.getNamespaceList().size());
+
+        assertThat(m.getNamespaceList())
+                .hasSize(5)
+                .extracting(Namespace::getNamespacePrefix)
+                .contains("geo", "gml", "nc", "ns", "xs"); 
+        
         assertEquals(5, m.getComponentList().size());
         Namespace n = m.getNamespaceByPrefix("ns");
         assertNotNull(n);
@@ -376,6 +542,7 @@ public class ModelFromXSDTest {
         ct = m.getClassType("ns:TrackPointType");
         assertNotNull(ct);
         assertFalse(ct.isExternal());
+        assertEmptyLogs();
     }
 
     @Test
@@ -387,6 +554,7 @@ public class ModelFromXSDTest {
         for (var sd : m.schemadoc().values()) {
             assertEquals("en-US", sd.language());
         }
+        assertEmptyLogs();
     }
     
     @Test
@@ -405,6 +573,7 @@ public class ModelFromXSDTest {
         Datatype d2 = dt.getListOf();
         assertNotNull(d2);
         assertEquals(d2, m.getDatatype("xs:token"));
+        assertEmptyLogs();
     }
 
     @Test
@@ -418,6 +587,7 @@ public class ModelFromXSDTest {
         Datatype dt = m.getDatatype("nc:TextType");
         assertNotNull(dt);  
         assertNotNull(dt.getRestrictionOf());
+        assertEmptyLogs();
     }
  
     @Test
@@ -442,6 +612,7 @@ public class ModelFromXSDTest {
         assertNotNull(p);
         assertTrue(p.isAttribute());
         assertEquals(p.getDatatype().getName(), "boolean");
+        assertEmptyLogs();
     }
  
     @Test
@@ -462,6 +633,7 @@ public class ModelFromXSDTest {
         assertTrue(ct.canHaveMD());
         Property p = m.getProperty("nc:TextLiteral");
         assertNotNull(p);
+        assertEmptyLogs();
     }
      
     @Test
@@ -502,6 +674,7 @@ public class ModelFromXSDTest {
         assertNotNull(p);
         assertTrue(p.isAttribute());
         assertEquals(p.getDatatype().getName(), "boolean");
+        assertEmptyLogs();
     }
  
     @Test
@@ -526,6 +699,7 @@ public class ModelFromXSDTest {
                 .extracting(HasProperty::getProperty)
                 .extracting(Property::getName)
                 .contains("PersonNameTextLiteral", "personNameInitialIndicator");                
+        assertEmptyLogs();
     }
     
     @Test
@@ -544,6 +718,7 @@ public class ModelFromXSDTest {
         assertEquals(r.getDatatype(), dt2);
         assertThat(r.getFacetList())
                 .hasSize(2);
+        assertEmptyLogs();
     }
     
     @Test
@@ -565,6 +740,7 @@ public class ModelFromXSDTest {
         assertNotNull(dt);
         assertNotNull(p);
         assertEquals(p.getDatatype(), dt);
+        assertEmptyLogs();
     }
     
     @Test
@@ -586,6 +762,7 @@ public class ModelFromXSDTest {
         assertNotNull(dt);
         assertNotNull(p);
         assertEquals(p.getDatatype(), dt);
+        assertEmptyLogs();
     }
 
     @Test
@@ -598,6 +775,7 @@ public class ModelFromXSDTest {
         assertEquals(3, m.getNamespaceList().size());
         assertEquals("nc", m.getNamespaceByURI("http://example.com/Foo/1.0/").getNamespacePrefix());
         assertEquals("bar", m.getNamespaceByURI("http://release.niem.gov/niem/niem-core/5.0/").getNamespacePrefix());
+        assertEmptyLogs();
     }
 
     @Test
@@ -610,6 +788,7 @@ public class ModelFromXSDTest {
         assertEquals(3, m.getNamespaceList().size());
         assertEquals("nc", m.getNamespaceByURI("http://example.com/Foo/1.0/").getNamespacePrefix());
         assertEquals("nc_5", m.getNamespaceByURI("http://release.niem.gov/niem/niem-core/5.0/").getNamespacePrefix());
+        assertEmptyLogs();
     }
 
     @Test
@@ -626,6 +805,7 @@ public class ModelFromXSDTest {
         p = m.getProperty("nc:SomeText");
         assertNotNull(p);
         assertFalse(p.isReferenceable());     
+        assertEmptyLogs();
     }
     
     @Test
@@ -650,6 +830,7 @@ public class ModelFromXSDTest {
         assertNotNull(p);
         assertEquals(p.getDatatype(), m.getDatatype("xs:string"));
         assertNull(p.getClassType());
+        assertEmptyLogs();
     }
 
     @Test
@@ -674,6 +855,7 @@ public class ModelFromXSDTest {
         f = fl.get(1);
         assertEquals("MinInclusive", f.getFacetKind());
         assertEquals("0.0", f.getStringVal());        
+        assertEmptyLogs();
     }
 
     @Test
@@ -683,13 +865,12 @@ public class ModelFromXSDTest {
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
-        assertEquals(3, m.getNamespaceList().size());
-        assertEquals(17, m.getComponentList().size());
         assertEquals("http://release.niem.gov/niem/niem-core/4.0/", m.getNamespaceByPrefix("nc_4").getNamespaceURI());
         assertEquals("http://release.niem.gov/niem/niem-core/5.0/", m.getNamespaceByPrefix("nc").getNamespaceURI());
         assertEquals("http://www.w3.org/2001/XMLSchema", m.getNamespaceByPrefix("xs").getNamespaceURI());
         assertNotNull(m.getProperty("nc_4:ConfidencePercent"));
         assertNotNull(m.getProperty("nc:PersonGivenName"));
+        assertEmptyLogs();
     }
   
     @Test
@@ -712,6 +893,7 @@ public class ModelFromXSDTest {
         assertEquals(2, ul.size());
         assertEquals(ul.get(0), m.getDatatype("xs:decimal"));
         assertEquals(ul.get(1), m.getDatatype("xs:float"));        
+        assertEmptyLogs();
     }
     
     @Test
@@ -746,6 +928,7 @@ public class ModelFromXSDTest {
         f = r.getFacetList().get(1);
         assertEquals("MinInclusive", f.getFacetKind());
         assertEquals("0.0", f.getStringVal()); 
+        assertEmptyLogs();
     }
 
     @Test
@@ -763,5 +946,6 @@ public class ModelFromXSDTest {
         assertNotNull(p);
         ClassType ct = m.getClassType("nc:TextType");
         assertEquals(ct.hasPropertyList().get(3).getProperty(), p);
+        assertEmptyLogs();
     }
 }
