@@ -70,8 +70,7 @@ public class XStringObject extends XObjectType {
         case "AugmentableIndicator":         xc.getObject().setIsAugmentable(val); break;
         case "DefinitionText":               xc.getObject().setDefinition(val); break;
         case "DeprecatedIndicator":          xc.getObject().setIsDeprecated(val); break;
-        case "ExternalAdapterTypeIndicator": xc.getObject().setIsExternal(val); break;
-        case "MetadataIndicator":            xc.getObject().setCanHaveMD(val); break;        
+        case "ExternalAdapterTypeIndicator": xc.getObject().setIsExternal(val); break;      
         case "Name":                         xc.getObject().setName(val); break;
         default:
                 LOG.error(String.format("can't add '%s' to ClassType", this.getComponentLname()));
@@ -151,14 +150,14 @@ public class XStringObject extends XObjectType {
     public void addToProperty (XProperty xop) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "AbstractIndicator":      xop.getObject().setIsAbstract(val); break;
-        case "AttributeIndicator":     xop.getObject().setIsAttribute(val); break;
-        case "DefinitionText":         
-            xop.getObject().setDefinition(val); break;
-        case "DeprecatedIndicator":    xop.getObject().setIsDeprecated(val); break;  
-        case "MetadataIndicator":      xop.getObject().setCanHaveMD(val); break;
-        case "ReferenceableIndicator": xop.getObject().setIsReferenceable(val); break;
-        case "Name":                   xop.getObject().setName(val); break;
+        case "AbstractIndicator":             xop.getObject().setIsAbstract(val); break;
+        case "AttributeIndicator":            xop.getObject().setIsAttribute(val); break;
+        case "DefinitionText":                xop.getObject().setDefinition(val); break;
+        case "DeprecatedIndicator":           xop.getObject().setIsDeprecated(val); break;  
+        case "RefAttributeIndicator":         xop.getObject().setIsRefAttribute(val); break;
+        case "ReferenceableIndicator":        xop.getObject().setIsReferenceable(val); break;
+        case "RelationshipPropertyIndicator": xop.getObject().setIsRelationship(val); break;
+        case "Name":                          xop.getObject().setName(val); break;
         default:
                 LOG.error(String.format("can't add '%s' to Property", this.getComponentLname()));
                 break;

@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
@@ -98,25 +97,25 @@ import static org.mitre.niem.cmf.NamespaceKind.NIEM_UTILITY_COUNT;
 public class ModelToXSD {
     static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
         
-    private final Model m;
-    private final Map<String, String> ns2file;              // map nsURI -> absolute schema document file path
-    private final Set<String> nsfiles;                      // set of schema document file paths
-    private final Set<String> utilityNSuri;                 // set of utility namespaces needed in schema document pile
-    private final Map<String, List<String>> subpropDeps;    // map nsURI -> list of subproperty Namespace dependency URIs
-    private final Set<ClassType> litTypes;                  // set of ClassType objects that will become complex type, simple content
-    private final Set<Property> litProps;                   // set of literal properties not needed in XSD
-    private final Set<Datatype> needSimpleType;             // Union, list, or non-empty restriction datatypes
+    protected final Model m;
+    protected final Map<String, String> ns2file;              // map nsURI -> absolute schema document file path
+    protected final Set<String> nsfiles;                      // set of schema document file paths
+    protected final Set<String> utilityNSuri;                 // set of utility namespaces needed in schema document pile
+    protected final Map<String, List<String>> subpropDeps;    // map nsURI -> list of subproperty Namespace dependency URIs
+    protected final Set<ClassType> litTypes;                  // set of ClassType objects that will become complex type, simple content
+    protected final Set<Property> litProps;                   // set of literal properties not needed in XSD
+    protected final Set<Datatype> needSimpleType;             // Union, list, or non-empty restriction datatypes
     
     // These change as each namespace is processed
-    private Map<String,Element> nsPropdecls = null;         // map name -> schema declaration of attribute/element in a namespace
-    private Map<String,Element> nsTypedefs = null;          // map name -> schema definition of type in a namespace
-    private Set<String> nsNSdeps = null;                    // Namespace URIs of namespaces referenced in current namespace
-    private String nsNIEMVersion = null;                    // NIEM version of current document (eg. "5.0")
-    private String proxyPrefix = null;                      // proxy namespace prefix for NIEM version of current document
-    private String structURI = null;                        // structures namespace URI
-    private String structPrefix = null;                     // structures namespace prefix for NIEM version of current document
-    private String proxyURI = null;                         // proxy namespace URI
-    private Element root = null;                            // current document element
+    protected Map<String,Element> nsPropdecls = null;         // map name -> schema declaration of attribute/element in a namespace
+    protected Map<String,Element> nsTypedefs = null;          // map name -> schema definition of type in a namespace
+    protected Set<String> nsNSdeps = null;                    // Namespace URIs of namespaces referenced in current namespace
+    protected String nsNIEMVersion = null;                    // NIEM version of current document (eg. "5.0")
+    protected String proxyPrefix = null;                      // proxy namespace prefix for NIEM version of current document
+    protected String structURI = null;                        // structures namespace URI
+    protected String structPrefix = null;                     // structures namespace prefix for NIEM version of current document
+    protected String proxyURI = null;                         // proxy namespace URI
+    protected Element root = null;                            // current document element
 
     
     public ModelToXSD (Model m) {
@@ -151,7 +150,7 @@ public class ModelToXSD {
         for (Component c : m.getComponentList()) {
             ClassType ct = c.asClassType();
             if (null == ct) continue;
-            if (!ct.canHaveMD() && ct.hasPropertyList().size() < 2) continue;
+            if (ct.hasPropertyList().size() < 2) continue;
             var plist = ct.hasPropertyList();
             var prop  = plist.get(0).getProperty();
             boolean cscflag = (null != prop.getDatatype() && prop.getName().endsWith("Literal"));
@@ -256,7 +255,7 @@ public class ModelToXSD {
     }
     
     // Write the schema document for the specified namespace
-    private void writeDocument (String nsuri, Writer ofw) throws ParserConfigurationException, TransformerConfigurationException, TransformerException, IOException {
+    protected void writeDocument (String nsuri, Writer ofw) throws ParserConfigurationException, TransformerConfigurationException, TransformerException, IOException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document dom = db.newDocument();
@@ -349,7 +348,7 @@ public class ModelToXSD {
     // Iterate through all the ClassType objects in the model; create an
     // augmentation point property for each augmentable ClassType.  Need to 
     // do this for the whole model before trying to create augmentation elements.
-    private void generateAugmentationPoints () {
+    protected void generateAugmentationPoints () {
         for (var c : m.getComponentList()) {
             var targCT = c.asClassType();
             if (null == targCT) continue;               // not a ClassType
@@ -372,7 +371,7 @@ public class ModelToXSD {
     
     // Use the augmentation info in each Namespace to generate augmentation 
     // types, and elements required for this namespace.
-    private void generateAugmentationComponents (String nsuri) {
+    protected void generateAugmentationComponents (String nsuri) {
         var class2Aug = new HashMap<ClassType,List<AugmentRecord>>();
         var ns = m.getNamespaceByURI(nsuri);
 
@@ -440,7 +439,7 @@ public class ModelToXSD {
     // Add @appinfo:appatt="value" to an element.  Get the right namespace prefix and URI
     // for the current document.  Add the namespace declaration for appinfo, but
     // don't import it.
-    private void addAppinfoAttribute (Document dom, Element e, String nsuri, String appatt, String value) {
+    protected void addAppinfoAttribute (Document dom, Element e, String nsuri, String appatt, String value) {
         String niemVersion = m.niemVersion(nsuri);
         String appinfoNS = NamespaceKind.getUtilityNS(NIEM_APPINFO, niemVersion);
         String appinfoPR = m.namespaceMap().getPrefix(appinfoNS);
@@ -453,7 +452,7 @@ public class ModelToXSD {
     // Create a complex type declaration from a ClassType object
     // This can have simpleContent if the ClassType has a literal property
     // Otherwise it has complexContent
-    private void createComplexTypeFromClass (Document dom, String nsuri, ClassType ct) { 
+    protected void createComplexTypeFromClass (Document dom, String nsuri, ClassType ct) { 
         if (null == ct) return;
         String cname = ct.getName();
         if (nsTypedefs.containsKey(cname)) return;              // already created
@@ -462,7 +461,6 @@ public class ModelToXSD {
         Element exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
         cte.setAttribute("name", cname);
         var ae = addDocAnnotation(dom, cte, ct.getDefinition());
-        if (ct.canHaveMD())    addAppinfoAttribute(dom, cte, nsuri, "metadataIndicator", "true");
         if (ct.isDeprecated()) addAppinfoAttribute(dom, cte, nsuri, "deprecated", "true");
         if (ct.isExternal())   addAppinfoAttribute(dom, cte, nsuri, "externalAdapterTypeIndicator", "true");
         nsTypedefs.put(cname, cte);
@@ -492,15 +490,14 @@ public class ModelToXSD {
         }
         // Otherwise create complex content with sequence of element refs
         else {
-            var cce    = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
-            var sqe    = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");
-            var basect = ct.getExtensionOfClass();
+            Element sqe = null;
+            var cce     = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
+            var basect  = ct.getExtensionOfClass();
             if (null == basect) {
                 if (cname.endsWith("AssociationType"))        exe.setAttribute("base", structPrefix + ":AssociationType");
                 else if (cname.endsWith("MetadataType"))      exe.setAttribute("base", structPrefix + ":MetadataType");
                 else if (!cname.endsWith("AugmentationType")) exe.setAttribute("base", structPrefix + ":ObjectType");
                 else exe.setAttribute("base", structPrefix + ":AugmentationType");
-                
             } 
             else {
                 exe.setAttribute("base", basect.getQName());
@@ -509,12 +506,13 @@ public class ModelToXSD {
             // Add element refs for element properties
             for (HasProperty hp : ct.hasPropertyList()) {
                 if (!hp.augmentingNS().isEmpty()) continue;
+                if (null == sqe) sqe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");
                 addElementRef(dom, sqe, hp);
                 nsNSdeps.add(hp.getProperty().getNamespace().getNamespaceURI());
             }
-            cte.appendChild(cce);   // xs:complexType has xs:complexContent
-            cce.appendChild(exe);   // xs:complexContent has xs:extension
-            exe.appendChild(sqe);   // xs:extension has xs:sequence
+            cte.appendChild(cce);                   // xs:complexType has xs:complexContent
+            cce.appendChild(exe);                   // xs:complexContent has xs:extension
+            if (null != sqe) exe.appendChild(sqe);  // xs:extension has xs:sequence
         }
         // Now add attribute properties in hasProperty list to the xs:extension element
         // Do this for simple content or complex content
@@ -530,7 +528,7 @@ public class ModelToXSD {
     }
     
     // Create <xs:element ref="foo">, append it to some <xs:sequence>
-    private void addElementRef (Document dom, Element sqe, HasProperty hp) {
+    protected void addElementRef (Document dom, Element sqe, HasProperty hp) {
         if (hp.getProperty().isAttribute()) return;
         var hpe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
         if (1 != hp.minOccurs()) hpe.setAttribute("minOccurs", "" + hp.minOccurs());
@@ -541,7 +539,7 @@ public class ModelToXSD {
     }
     
     // Create a complex type declaration from a Datatype object (FooType)
-    private void createComplexTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
+    protected void createComplexTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
         if (null == dt) return;
 //        if (needSimpleType.contains(dt)) return;                    // create xs:simpleType instead
         var cname = dt.getName().replaceFirst("Datatype$", "SimpleType");
@@ -590,7 +588,7 @@ public class ModelToXSD {
     } 
     
     // Create a simple type declaration from a Datatype object
-    private void createSimpleTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
+    protected void createSimpleTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
         if (null == dt) return;
         var cname = dt.getName();
         if (cname.endsWith("Datatype")) 
@@ -614,7 +612,7 @@ public class ModelToXSD {
         nsNSdeps.add(dt.getNamespace().getNamespaceURI());        
     }
     
-    private void addUnionElement (Document dom, Element ste, Datatype bdt) {
+    protected void addUnionElement (Document dom, Element ste, Datatype bdt) {
         Element une = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:union");
         StringBuilder members = new StringBuilder();
         String sep = "";
@@ -627,13 +625,13 @@ public class ModelToXSD {
         ste.appendChild(une);        
     }
     
-    private void addListElement (Document dom, Element ste, Datatype bdt) {
+    protected void addListElement (Document dom, Element ste, Datatype bdt) {
         Element lse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:list");
         lse.setAttribute("itemType", maybeSimpleTypeQName(bdt.getListOf()));
         ste.appendChild(lse);
     }
     
-    private void addRestrictionElement (Document dom, Element ste, Datatype bdt) {
+    protected void addRestrictionElement (Document dom, Element ste, Datatype bdt) {
         RestrictionOf r = bdt.getRestrictionOf();
         Element rse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:restriction");
         rse.setAttribute("base", maybeSimpleTypeQName(r.getDatatype()));
@@ -649,7 +647,7 @@ public class ModelToXSD {
     }
     
     // Returns QName for FooSimpleType if that type exists, otherwise QName for FooType
-    private String maybeSimpleTypeQName (Datatype dt) {
+    protected String maybeSimpleTypeQName (Datatype dt) {
         String dtqn   = dt.getQName();
         String dtbase = dtqn.replaceFirst("Type$", "");
         String dtsqn  = dtbase + "SimpleType";
@@ -658,7 +656,7 @@ public class ModelToXSD {
     }
     
     // Convert "xs:foo" to "xs-proxy:foo"
-    private String proxifiedDatatypeQName (Datatype dt) {
+    protected String proxifiedDatatypeQName (Datatype dt) {
         String dtqn = dt.getQName();
         if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) {
             dtqn = proxyPrefix + ":" + dt.getName();
@@ -669,7 +667,7 @@ public class ModelToXSD {
     }
     
     // Create an element or attribute declaration from a Property object
-    private void createDeclaration(Document dom, String nsuri, Property p) {
+    protected void createDeclaration(Document dom, String nsuri, Property p) {
         if (null == p) return;
         if (litProps.contains(p)) return;
         boolean isAttribute = p.isAttribute();
@@ -684,6 +682,8 @@ public class ModelToXSD {
         if (p.isReferenceable()) pe.setAttribute("nillable", "true");
         if (p.isAbstract())      pe.setAttribute("abstract", "true");
         if (p.isDeprecated())    addAppinfoAttribute(dom, pe, nsuri, "deprecated", "true");
+        if (p.isRefAttribute())  addAppinfoAttribute(dom, pe, nsuri, "referenceAttributeIndicator", "true");
+        if (p.isRelationship())  addAppinfoAttribute(dom, pe, nsuri, "relationshipPropertyIndicator", "true");
         var ae = addDocAnnotation(dom, pe, p.getDefinition());
         if (null != pct) {
             pe.setAttribute("type", pct.getQName());
@@ -717,7 +717,7 @@ public class ModelToXSD {
     // Use this to add annotation and documentation elements to a schema component.
     // Returns the annotation element (to add appinfo, later).
     // Returns null (and does nothing) if the documentation string is null or blank.
-    private Element addDocAnnotation (Document dom, Element e, String s) {
+    protected Element addDocAnnotation (Document dom, Element e, String s) {
         if (null == s || s.isBlank()) return null;
         var ae = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
         var de = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:documentation");
@@ -727,25 +727,25 @@ public class ModelToXSD {
         return ae;
     }
     
-    private Element addAnnotation (Document dom, Element e) {
+    protected Element addAnnotation (Document dom, Element e) {
         var ae = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
         e.appendChild(ae);
         return ae;
     }
     
-    private Element addDocumentation (Document dom, Element e) {
+    protected Element addDocumentation (Document dom, Element e) {
         var de = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:documentation");
         e.appendChild(de);
         return de;
     }
     
-    private Element addAppinfo (Document dom, Element e) {
+    protected Element addAppinfo (Document dom, Element e) {
         var ai = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:appinfo");
         e.appendChild(ai);
         return ai;
     }
     
-    private Element addCodeListBinding (Document dom, Element e, String nsuri, CodeListBinding clb) {
+    protected Element addCodeListBinding (Document dom, Element e, String nsuri, CodeListBinding clb) {
         var vers = m.niemVersion(nsuri);
         var clsauri = NamespaceKind.getUtilityNS(NIEM_CLSA, vers);
         var clsapre = m.namespaceMap().getPrefix(clsauri);

@@ -155,36 +155,50 @@ public class NamespaceKind {
 
     // Definitions for all the utility namespaces in all known versions
     private final static String[] utility = { 
-      "NIEM", "UTILITY",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   
-      "NIEM", "OTHERNIEM", "cli",        "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
-      "NIEM", "UTILITY",   "clsa",       "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
-      "NIEM", "UTILITY",   "ct",         "5", "http://release.niem.gov/niem/conformanceTargets/3.0/",
-      "NIEM", "UTILITY",   "xs-proxy",   "5", "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
-      "NIEM", "UTILITY",   "structures", "5", "http://release.niem.gov/niem/structures/5.0/",
-      "NIEM", "UTILITY",   "appinfo",    "4", "http://release.niem.gov/niem/appinfo/4.0/",   
-      "NIEM", "OTHERNIEM", "cli",        "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
-      "NIEM", "UTILITY",   "clsa",       "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
-      "NIEM", "UTILITY",   "ct",         "4", "http://release.niem.gov/niem/conformanceTargets/3.0/",
-      "NIEM", "UTILITY",   "xs-proxy",   "4", "http://release.niem.gov/niem/proxy/niem-xs/4.0/",
-      "NIEM", "UTILITY",   "structures", "4", "http://release.niem.gov/niem/structures/4.0/",            
-      "NIEM", "UTILITY",   "appinfo",    "3", "http://release.niem.gov/niem/appinfo/3.0/",   
-      "NIEM", "OTHERNIEM", "cli",        "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-instance/",
-      "NIEM", "UTILITY",   "clsa",       "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-schema-appinfo/",
-      "NIEM", "UTILITY",   "ct",         "3", "http://release.niem.gov/niem/conformanceTargets/3.0/",
-      "NIEM", "UTILITY",   "xs-proxy",   "3", "http://release.niem.gov/niem/proxy/niem-xs3.0/",
-      "NIEM", "UTILITY",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/"             
+      "NIEM6", "UTILITY",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/appinfo/6.0/#",   
+      "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/specification/code-lists/6.0/code-lists-instance/#",
+      "NIEM6", "UTILITY",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/specification/code-lists/6.0/code-lists-schema-appinfo/#",
+      "NIEM6", "UTILITY",   "ct",         "6", "https://docs.oasis-open.org/niemopen/conformanceTargets/3.0/#",
+      "NIEM6", "UTILITY",   "xs-proxy",   "6", "https://docs.oasis-open.org/niemopen/proxy/niem-xs/6.0/#",
+      "NIEM6", "UTILITY",   "structures", "6", "https://docs.oasis-open.org/niemopen/structures/6.0/#",
+      
+      "NIEM5", "UTILITY",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   
+      "NIEM5", "OTHERNIEM", "cli",        "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
+      "NIEM5", "UTILITY",   "clsa",       "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
+      "NIEM5", "UTILITY",   "ct",         "5", "http://release.niem.gov/niem/conformanceTargets/3.0/",
+      "NIEM5", "UTILITY",   "xs-proxy",   "5", "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
+      "NIEM5", "UTILITY",   "structures", "5", "http://release.niem.gov/niem/structures/5.0/",
+
+      "NIEM5", "UTILITY",   "appinfo",    "4", "http://release.niem.gov/niem/appinfo/4.0/",   
+      "NIEM5", "OTHERNIEM", "cli",        "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
+      "NIEM5", "UTILITY",   "clsa",       "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
+      "NIEM5", "UTILITY",   "ct",         "4", "http://release.niem.gov/niem/conformanceTargets/3.0/",
+      "NIEM5", "UTILITY",   "xs-proxy",   "4", "http://release.niem.gov/niem/proxy/niem-xs/4.0/",
+      "NIEM5", "UTILITY",   "structures", "4", "http://release.niem.gov/niem/structures/4.0/",    
+      
+      "NIEM5", "UTILITY",   "appinfo",    "3", "http://release.niem.gov/niem/appinfo/3.0/",   
+      "NIEM5", "OTHERNIEM", "cli",        "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-instance/",
+      "NIEM5", "UTILITY",   "clsa",       "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-schema-appinfo/",
+      "NIEM5", "UTILITY",   "ct",         "3", "http://release.niem.gov/niem/conformanceTargets/3.0/",
+      "NIEM5", "UTILITY",   "xs-proxy",   "3", "http://release.niem.gov/niem/proxy/niem-xs3.0/",
+      "NIEM5", "UTILITY",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/"             
     };
     
     // Patterns for recognizing NIEM model namespaces
     private final static String[] nspats = {
-      "NIEM", "DOMAIN",     "http://((publication)|(release))\\.niem\\.gov/niem/domains/.*/[\\d]+([\\d.]+)/#?",
-      "NIEM", "CORE",       "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/[\\d]+([\\d.]+)/#?",
-      "NIEM", "OTHERNIEM",  "http://((publication)|(release))\\.niem\\.gov/niem/.*/[\\d]+([\\d.]+)/#?",
+      "NIEM6", "DOMAIN",     "https://docs\\.oasis-open\\.org/niemopen/domains/.*/[\\d]+([\\d.]+)/#?",
+      "NIEM6", "CORE",       "https://docs\\.oasis-open\\.org/niemopen/niem-core/[\\d]+([\\d.]+)/#?",
+      "NIEM6", "OTHERNIEM",  "https://docs\\.oasis-open\\.org/niemopen/.*/[\\d]+([\\d.]+)/#?",
+
+      "NIEM5", "DOMAIN",     "http://((publication)|(release))\\.niem\\.gov/niem/domains/.*/[\\d]+([\\d.]+)/#?",
+      "NIEM5", "CORE",       "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/[\\d]+([\\d.]+)/#?",
+      "NIEM5", "OTHERNIEM",  "http://((publication)|(release))\\.niem\\.gov/niem/.*/[\\d]+([\\d.]+)/#?",
     };
 
     // Patterns for recognizing architecture from conformance target assertions
     private final static String[] arches = {
-        "NIEM", "http://reference.niem.gov/niem/specification/naming-and-design-rules"
+        "NIEM6", "https://docs.oasis-open.org/niemopen/specification/naming-and-design-rules",
+        "NIEM5", "http://reference.niem.gov/niem/specification/naming-and-design-rules"
     };
     
     private record NSuridat (String arch, int kind, int util, String version) {};

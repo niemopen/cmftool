@@ -26,7 +26,11 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -324,6 +328,44 @@ public class ModelXMLReaderTest {
     }
     
     @Test
+    public void testIsRefAtt () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "cmf/isRefAtt.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        assertEquals(0, mr.getMessages().size());
+        Property p = m.getProperty("ira:categoryRef");
+        assertTrue(p.isRefAttribute());
+        p = m.getProperty("ira:partialIndicator");
+        assertFalse(p.isRefAttribute());
+    }
+        
+    @Test
+    public void testIsRelProp () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "cmf/relProp.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        assertEquals(0, mr.getMessages().size());
+        Property p = m.getProperty("ira:classification");
+        assertTrue(p.isRelationship());
+        p = m.getProperty("ira:partialIndicator");
+        assertFalse(p.isRefAttribute());
+    }
+    
+    @Test
     public void testListOf () {
         FileInputStream cmfIS = null;
         File cmfFile = new File(testDirPath, "cmf/listOf.cmf");
@@ -571,5 +613,58 @@ public class ModelXMLReaderTest {
         assertEquals(1, mr.getMessages().size());
         assertTrue(mr.getMessages().get(0).contains("IDREF/URI type mismatch"));
     }
+
+//    // Not really a test, just some scaffolding for processing a Model object    
+//    @Test
+//    public void processModel () {
+//        FileInputStream cmfIS = null;
+//        File cmfFile = new File("tmp/niem52.cmf");
+//        try {
+//            cmfIS = new FileInputStream(cmfFile);
+//        } catch (FileNotFoundException ex) {
+//            fail("Where is my input file?");
+//        }
+//        ModelXMLReader mr = new ModelXMLReader();
+//        Model m = mr.readXML(cmfIS);  
+//        Map<String,List<ClassType>> hasRole = new HashMap<>();
+//        for (var c : m.getComponentList()) {
+//            var cl   = c.asClassType();
+//            if (null == cl) continue;
+//            var clqn = cl.getQName();
+//            if (null == cl) return;
+//            for (var hp : cl.hasPropertyList()) {
+//                var p   = hp.getProperty();
+//                var pn  = p.getName();
+//                var pqn = p.getQName();
+//                if (pn.startsWith("RoleOf")) {
+//                    var list = hasRole.get(pqn);
+//                    if (null == list) {
+//                        list = new ArrayList<>();
+//                        hasRole.put(pqn, list);
+//                    }
+//                    list.add(cl);
+//                }
+//            }
+//        }
+//        var roleProps = new ArrayList<String>();
+//        for (var pqn : hasRole.keySet()) roleProps.add(pqn);
+//        Collections.sort(roleProps);
+//        for (var pqn : roleProps) {
+//            var p  = m.getProperty(pqn);
+//            if (p.isAbstract()) System.out.print(String.format("%s (abstract)\n", pqn));
+//            else {
+//                var pt = p.getClassType();
+//                var ptqn = pt.getQName();
+//                System.out.print(String.format("%s (type: %s)\n", pqn, ptqn));
+//            }
+//            for (var cl : hasRole.get(pqn)) {
+//                var clbase = cl.getExtensionOfClass();
+//                System.out.print(String.format("  in class %s", cl.getQName()));
+//                if (null != clbase) 
+//                    System.out.print(String.format("  (base %s)", clbase.getQName()));
+//                System.out.println("");
+//            }
+//        }  
+//    }
 
 }

@@ -272,7 +272,9 @@ public class ModelXMLReader {
                 case "NonNegativeValue": 
                 case "OrderedPropertyIndicator":
                 case "PositiveValue":
+                case "RefAttributeIndicator":
                 case "ReferenceableIndicator":
+                case "RelationshipPropertyIndicator":
                 case "SchemaLanguageName":
                 case "SchemaVersionText":
                 case "StringValue":        

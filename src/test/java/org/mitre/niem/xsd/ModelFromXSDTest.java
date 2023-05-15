@@ -622,17 +622,9 @@ public class ModelFromXSDTest {
         Model m = mfact.createModel(args);
         
         assertEquals(2, m.getNamespaceList().size());
-        assertEquals(5, m.getComponentList().size());
+        assertEquals(4, m.getComponentList().size());
         ClassType ct = m.getClassType("nc:TextType");
-        assertNotNull(ct);  
-        assertThat(ct.hasPropertyList())
-                .hasSize(1)
-                .extracting(HasProperty::getProperty)
-                .extracting(Property::getName)
-                .contains("TextLiteral");
-        assertTrue(ct.canHaveMD());
-        Property p = m.getProperty("nc:TextLiteral");
-        assertNotNull(p);
+        assertNull(ct);  
         assertEmptyLogs();
     }
      

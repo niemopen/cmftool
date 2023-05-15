@@ -56,22 +56,22 @@ public class NamespaceKindTest {
     }
 
     @Test
-    public void testSomeMethod() {
+    public void testNIEM5() {
         assertEquals("UNKNOWN", NamespaceKind.architecture("http://example.com/foo"));
         assertEquals("UNKNOWN", NamespaceKind.architecture("http://example.com/foo/5.0/#"));
         assertEquals("UNKNOWN", NamespaceKind.architecture(XML_NS_URI));
         assertEquals("UNKNOWN", NamespaceKind.architecture(W3C_XML_SCHEMA_NS_URI));
-        assertEquals("NIEM", NamespaceKind.architecture("http://release.niem.gov/niem/niem-core/5.0/"));
-        assertEquals("NIEM", NamespaceKind.architecture("http://release.niem.gov/niem/domains/humanServices/5.2/"));
-        assertEquals("NIEM", NamespaceKind.architecture("http://release.niem.gov/niem/auxiliary/cui/5.1/"));
-        assertEquals("NIEM", NamespaceKind.architecture("http://release.niem.gov/niem/codes/genc/5.0/"));        
-        assertEquals("NIEM", NamespaceKind.architecture("http://release.niem.gov/niem/codes/genc/5.0/"));   
-        assertEquals("NIEM", NamespaceKind.architecture("http://release.niem.gov/niem/appinfo/5.0/"));   
-        assertEquals("NIEM", NamespaceKind.architecture("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/"));   
-        assertEquals("NIEM", NamespaceKind.architecture("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/")); 
-        assertEquals("NIEM", NamespaceKind.architecture("http://release.niem.gov/niem/conformanceTargets/3.0/"));
-        assertEquals("NIEM", NamespaceKind.architecture("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
-        assertEquals("NIEM", NamespaceKind.architecture("http://release.niem.gov/niem/structures/5.0/"));   
+        assertEquals("NIEM5", NamespaceKind.architecture("http://release.niem.gov/niem/niem-core/5.0/"));
+        assertEquals("NIEM5", NamespaceKind.architecture("http://release.niem.gov/niem/domains/humanServices/5.2/"));
+        assertEquals("NIEM5", NamespaceKind.architecture("http://release.niem.gov/niem/auxiliary/cui/5.1/"));
+        assertEquals("NIEM5", NamespaceKind.architecture("http://release.niem.gov/niem/codes/genc/5.0/"));        
+        assertEquals("NIEM5", NamespaceKind.architecture("http://release.niem.gov/niem/codes/genc/5.0/"));   
+        assertEquals("NIEM5", NamespaceKind.architecture("http://release.niem.gov/niem/appinfo/5.0/"));   
+        assertEquals("NIEM5", NamespaceKind.architecture("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/"));   
+        assertEquals("NIEM5", NamespaceKind.architecture("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/")); 
+        assertEquals("NIEM5", NamespaceKind.architecture("http://release.niem.gov/niem/conformanceTargets/3.0/"));
+        assertEquals("NIEM5", NamespaceKind.architecture("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
+        assertEquals("NIEM5", NamespaceKind.architecture("http://release.niem.gov/niem/structures/5.0/"));   
         
         assertEquals(NIEM_NOTUTILITY, NamespaceKind.utilityKind("http://example.com/foo"));
         assertEquals(NIEM_NOTUTILITY, NamespaceKind.utilityKind("http://example.com/foo/5.0/#"));
@@ -119,8 +119,8 @@ public class NamespaceKindTest {
         assertEquals("5", NamespaceKind.version("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
         assertEquals("5", NamespaceKind.version("http://release.niem.gov/niem/structures/5.0/"));
         
-        NamespaceKind.set("http://example.com/foo", "NIEM", NSK_EXTENSION, NIEM_NOTUTILITY, "4");
-        assertEquals("NIEM", NamespaceKind.architecture("http://example.com/foo"));
+        NamespaceKind.set("http://example.com/foo", "NIEM5", NSK_EXTENSION, NIEM_NOTUTILITY, "4");
+        assertEquals("NIEM5", NamespaceKind.architecture("http://example.com/foo"));
         assertEquals(NSK_EXTENSION, NamespaceKind.kind("http://example.com/foo"));
         assertEquals(NIEM_NOTUTILITY, NamespaceKind.utilityKind("http://example.com/foo"));
         assertEquals("4", NamespaceKind.version("http://example.com/foo"));

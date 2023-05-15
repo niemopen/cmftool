@@ -33,8 +33,9 @@ public class Property extends Component {
     private ClassType classType = null;
     private Datatype datatype = null;
     private boolean isAttribute = false; 
+    private boolean isRefAttribute = false;
     private boolean isReferenceable = false;
-    private boolean canHaveMD = false;
+    private boolean isRelationship = false;
 
     public Property () { super(); type = C_OBJECTPROPERTY; }
     
@@ -48,17 +49,20 @@ public class Property extends Component {
     public void setDatatype (Datatype d)          { datatype = d; }
     public void setIsAttribute (boolean f)        { isAttribute = f; }
     public void setIsAttribute (String s)         { isAttribute = null != s && "true".equals(s); }
+    public void setIsRefAttribute (boolean f)     { isRefAttribute = f; }
+    public void setIsRefAttribute (String s)      { isRefAttribute = null != s && "true".equals(s); }
     public void setIsReferenceable (boolean f)    { isReferenceable = f; }
-    public void setIsReferenceable (String s)     { isReferenceable = "true".equals(s); }    
-    public void setCanHaveMD (boolean f)          { canHaveMD = f; }
-    public void setCanHaveMD (String s)           { canHaveMD = null != s && "true".equals(s); }    
-
+    public void setIsReferenceable (String s)     { isReferenceable = "true".equals(s); }     
+    public void setIsRelationship (boolean f)     { isRelationship = f; }
+    public void setIsRelationship (String s)      { isRelationship = "true".equals(s); } 
+    
     public Property getSubPropertyOf ()           { return subPropertyOf; }
     public ClassType getClassType ()              { return classType; }
     public Datatype getDatatype()                 { return datatype; }
     public boolean isAttribute()                  { return isAttribute; }
-    public boolean isReferenceable()              { return isReferenceable; }
-    public boolean canHaveMD ()                   { return canHaveMD; }    
+    public boolean isRefAttribute()               { return isRefAttribute; }
+    public boolean isReferenceable()              { return isReferenceable; }  
+    public boolean isRelationship()               { return isRelationship; } 
     
     @Override
     public void addToModel (Model m) {

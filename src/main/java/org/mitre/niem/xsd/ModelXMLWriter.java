@@ -135,7 +135,6 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
         if (null != x.hasPropertyList()) 
             for (HasProperty z : x.hasPropertyList()) { addHasProperty(dom, e, z); }    
-        if (x.canHaveMD()) addSimpleChild(dom, e, "MetadataIndicator", "true");
         p.appendChild(e);
     }
     
@@ -245,8 +244,9 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "Class", x.getClassType());
         addComponentRef(dom, e, "Datatype", x.getDatatype());
         if (x.isAttribute())     addSimpleChild(dom, e, "AttributeIndicator", "true");
-        if (x.canHaveMD())       addSimpleChild(dom, e, "MetadataIndicator", "true");
+        if (x.isRefAttribute())  addSimpleChild(dom, e, "RefAttributeIndicator", "true");
         if (x.isReferenceable()) addSimpleChild(dom, e, "ReferenceableIndicator", "true");
+        if (x.isRelationship())  addSimpleChild(dom, e, "RelationshipPropertyIndicator", "true");
         p.appendChild(e);
     }
           

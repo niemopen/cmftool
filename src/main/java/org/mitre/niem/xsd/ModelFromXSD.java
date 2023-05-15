@@ -25,7 +25,6 @@ package org.mitre.niem.xsd;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import static java.lang.Math.max;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,16 +34,9 @@ import java.util.List;
 import java.util.Map;
 import static java.util.Map.entry;
 import java.util.Set;
-import java.util.logging.Level;
 import javax.xml.parsers.ParserConfigurationException;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.xerces.xs.XSAnnotation;
@@ -155,7 +147,7 @@ public class ModelFromXSD {
          
         generateNamespaces();           // normalize namespace prefixes so we can use QNames
         processSchemaAnnotations();     // get documentation and local terms from schema annotations
-        processAppinfoAttributes();               // index all the appinfo attributes by QName for easy retrieval
+        processAppinfoAttributes();     // index all the appinfo attributes by QName for easy retrieval
         initializeDeclarations();       // create properties for element and attribute declarations
         initializeDefinitions();        // create class and datatype objects for type definitions
         setClassInheritance();          // establish ClassType inheritance
@@ -360,7 +352,7 @@ public class ModelFromXSD {
             }
             else {
                 // Complex type can be a class or a datatype object.
-                // Simple content without model attributes or metadata is a Datatype object
+                // Simple content without model attributes is a Datatype object
                 boolean hasAttributes = false;
                 var qname  = ns.getNamespacePrefix() + ":" + lname;
                 var xctype = (XSComplexTypeDefinition)xtype;
@@ -374,19 +366,8 @@ public class ModelFromXSD {
                         break;
                     }
                 }
-                // Walk the inheritance chain, looking for metadata
-                boolean hasMetadata = false;
-                XSTypeDefinition ictype = xctype;
-                while (!hasMetadata && null != ictype) {
-                    var icnsuri = ictype.getNamespace();
-                    int ikind = NamespaceKind.kind(icnsuri);
-                    if (ikind > NSK_OTHERNIEM) break;
-                    var icQN = getQN(ictype);
-                    hasMetadata = ("true".equals(getAppinfoAttribute(icQN, null, "metadataIndicator")));
-                    ictype = ictype.getBaseType();
-                }
                 boolean isSimple = (null != xctype.getSimpleType());
-                if (isSimple && !hasAttributes && !hasMetadata) {   // it's a Datatype
+                if (isSimple && !hasAttributes) {   // it's a Datatype
                     var dt   = new Datatype(ns, lname);               
                     datatypeXSobj.put(dt, xtype);
                     datatypeMap.put(dt.getQName(), dt);
@@ -526,6 +507,8 @@ public class ModelFromXSD {
             LOG.debug("processing property " + p.getQName());
             var xobj = propertyXSobj.get(p);
             p.setIsDeprecated(getAppinfoAttribute(p.getQName(), null, "deprecated"));
+            p.setIsRefAttribute(getAppinfoAttribute(p.getQName(), null, "referenceAttributeIndicator"));
+            p.setIsRelationship(getAppinfoAttribute(p.getQName(), null, "relationshipPropertyIndicator"));            
             if (p.isAttribute()) {
                 var xadecl = (XSAttributeDeclaration)xobj;
                 var xatype = xadecl.getTypeDefinition();
@@ -544,7 +527,6 @@ public class ModelFromXSD {
                 }
                 p.setIsAbstract(xedecl.getAbstract());
                 p.setIsReferenceable(xedecl.getNillable());
-                p.setCanHaveMD(getAppinfoAttribute(p.getQName(), null, "metadataIndicator"));
             }
         }
     }
@@ -561,7 +543,6 @@ public class ModelFromXSD {
             var xctype  = classXSobj.get(ct);               // XSComplexTypeDefinition object
             var xbase   = xctype.getBaseType();             // base type XSTypeDefinition
             var xsbase  = xctype.getSimpleType();           // base type XSSimpleTypeDefinition (possibly null)
-            ct.setCanHaveMD(getAppinfoAttribute(ct.getQName(), null, "metadataIndicator"));
             ct.setIsAbstract(xctype.getAbstract());
             ct.setIsDeprecated(getAppinfoAttribute(ct.getQName(), null, "deprecated"));
             ct.setIsExternal(getAppinfoAttribute(ct.getQName(), null, "externalAdapterTypeIndicator"));
