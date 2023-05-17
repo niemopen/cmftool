@@ -189,40 +189,66 @@ public class Model extends ObjectType {
 //    }
     
     // Must be called by a component when namespace or local name is changed
-    public void childChanged (Component c) {
+    public void componentChange (Component c) {
         components.values().removeIf(v -> c == v);  // remove old mapping QName->Component
         components.put(c.getQName(), c);            // add new mapping
         orderedComponents = null;                   // now we need to regenerate sorted component list
     }
     
-    // Must be called by a namespace object when its prefix or URI is changed.
-    // Enforces unique prefix mapping.
-    public void childChanged (Namespace n, String oldPrefix) throws CMFException {
-        String newPrefix  = n.getNamespacePrefix();
-        String nsuri      = n.getNamespaceURI();
-        String currentURI = nsmap.getURI(newPrefix);
-        if (null != currentURI && !currentURI.equals(nsuri)) {
-             throw new CMFException(
-                String.format("Can't add namespace %s=%s to model (prefix already assigned to %s)",
-                        newPrefix, nsuri, currentURI));            
-        }
-        uri2NS.values().removeIf(v -> n == v);      // remove old mapping prefix->Namespace
-        uri2NS.put(n.getNamespaceURI(), n);         // add new mapping prefix->Namespace
-        nsmap.changePrefix(newPrefix, nsuri);
+    // Must be called by a namespace object when changing its prefix
+    // Enforces unique prefix <-> URI mapping, maintains QName->component map
+    public void namespacePrefixChange (String nsuri, String opre, String npre) throws CMFException {
         
-        // If the prefix changes, a lot of QNames may also change
-        // We rebuild the QName->component map from scratch
-        if (null != oldPrefix && !oldPrefix.equals(n.getNamespacePrefix())) {
-            prefix2NS.remove(oldPrefix);
-            prefix2NS.put(n.getNamespacePrefix(), n);
-            Map<String,Component> nc = new HashMap<>();
-            components.values().forEach((Component c) -> {
-                nc.put(c.getQName(), c);
-            });
-            components = nc;
-        }
-        orderedNamespaces = null;   // now we need to regenerate sorted namespace list
+        // Nothing to do if old and new prefix are the same
+        if (opre.equals(npre)) return;
+        
+        // Fail if new prefix currently bound to a different URI
+        var npreURI = nsmap.getURI(npre);
+        if (null != npreURI && !npreURI.equals(nsuri)) {
+             throw new CMFException(
+                String.format("Can't assign prefix %s to %s (already assigned to URI %s)",
+                        npre, nsuri, npreURI));        
+        }     
+        // Update the prefix map and the namespace map object
+        var ns = getNamespaceByURI(nsuri);
+        prefix2NS.remove(opre);
+        prefix2NS.put(npre, ns);
+        nsmap.changePrefix(npre, nsuri);    // and update the namespace map object
+        
+        // When the prefix changes, a lot of QNames may also change
+        // Rebuild the QName->component map from scratch and regenerate 
+        // the sorted namespace list
+        Map<String,Component> nc = new HashMap<>();
+        components.values().forEach((Component c) -> {
+            var nqn = npre + ":" + c.getName();
+            nc.put(nqn, c);
+        });
+        components = nc;
+        orderedNamespaces = null;
     }
+  
+    // Must be called by a namespace object when changing its URI
+    // Enforces unique prefix <-> URI mapping
+    public void namespaceURIChange (String prefix, String ouri, String nuri) throws CMFException {
+        
+        // Nothing to do if old and new URI are the same
+        if (ouri.equals(nuri)) return;
+        
+        // Fail if new URI is currently bound to a different prefix
+        var nuriPre = nsmap.getPrefix(nuri);
+        if (null != nuriPre && !nuriPre.equals(prefix)) {
+             throw new CMFException(
+                String.format("Can't change URI for prefix %s to %s (already has prefix %s)",
+                        prefix, nuri, nuriPre));                
+        }
+        // Update the URI map and the namespace map object
+        var ns = getNamespaceByPrefix(prefix);
+        uri2NS.remove(ouri);
+        uri2NS.put(nuri, ns);
+        nsmap.removePrefix(prefix);
+        nsmap.assignPrefix(prefix, nuri);
+    }
+
     
 }
  

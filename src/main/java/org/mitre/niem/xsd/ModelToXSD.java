@@ -97,7 +97,7 @@ import static org.mitre.niem.cmf.NamespaceKind.NIEM_UTILITY_COUNT;
 public class ModelToXSD {
     static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
         
-    protected final Model m;
+    protected Model m = null;
     protected final Map<String, String> ns2file;              // map nsURI -> absolute schema document file path
     protected final Set<String> nsfiles;                      // set of schema document file paths
     protected final Set<String> utilityNSuri;                 // set of utility namespaces needed in schema document pile
@@ -118,8 +118,7 @@ public class ModelToXSD {
     protected Element root = null;                            // current document element
 
     
-    public ModelToXSD (Model m) {
-        this.m = m;
+    public ModelToXSD () {
         ns2file        = new HashMap<>();
         nsfiles        = new HashSet<>();
         utilityNSuri   = new HashSet<>();
@@ -128,6 +127,13 @@ public class ModelToXSD {
         litProps       = new HashSet<>(); 
         needSimpleType = new HashSet<>();
     }
+    
+    public ModelToXSD (Model m) {
+        this();
+        this.m = m;
+    }
+    
+    public void setModel (Model m) { this.m = m; }
 
     // Write the Model to an XML Schema pile in directory "od".
     // Target directory should be empty.  If it isn't, you'll get munged

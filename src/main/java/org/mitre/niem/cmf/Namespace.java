@@ -54,17 +54,16 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     @Override
     public boolean isModelChild ()            { return true; }      // Namespace objects are model children
     
-    public void setNamespaceURI (String s) throws CMFException { 
-        namespaceURI = s;
-        if (null != getModel()) getModel().childChanged(this, namespacePrefix);
+    public void setNamespaceURI (String nuri) throws CMFException {
+        var m = getModel();
+        if (null != m) m.namespaceURIChange(namespacePrefix, namespaceURI, nuri);
+        namespaceURI = nuri;
     }
     
-    public void setNamespacePrefix (String s) throws CMFException { 
-        String oldPrefix = namespacePrefix;
-        namespacePrefix = s;
-        if (null != getModel()) {
-            getModel().childChanged(this, oldPrefix);
-        }
+    public void setNamespacePrefix (String npre) throws CMFException { 
+        var m = getModel();
+        if (null != m) m.namespacePrefixChange(namespaceURI, namespacePrefix, npre);
+        namespacePrefix = npre;
     }
     
     void setModel (Model m)                   { model = m; }
@@ -78,7 +77,7 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public String getDefinition ()            { return definition; }
     public int getKind ()                     { return nsKind; }
     public boolean isExternal ()              { return nsKind == NSK_EXTERNAL; }
-    public List<AugmentRecord> augmentList()     { return augmentList; }
+    public List<AugmentRecord> augmentList()  { return augmentList; }
     
     public void addAugmentRecord (AugmentRecord r) {
         this.augmentList.add(r);

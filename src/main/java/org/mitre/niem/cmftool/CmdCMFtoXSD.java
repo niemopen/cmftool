@@ -39,6 +39,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.xsd.ModelToMsgXSD;
+import org.mitre.niem.xsd.ModelToN5XSD;
+import org.mitre.niem.xsd.ModelToRefXSD;
 import org.mitre.niem.xsd.ModelToXSD;
 import org.mitre.niem.xsd.ModelXMLReader;
 import org.mitre.niem.xsd.ParserBootstrap;
@@ -63,7 +66,7 @@ class CmdCMFtoXSD implements JCCommand {
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "model.cmf [modelExt.cmx]")
+    @Parameter(description = "model.cmf")
     private List<String> mainArgs;
     
     CmdCMFtoXSD () {
@@ -82,18 +85,31 @@ class CmdCMFtoXSD implements JCCommand {
         JCommander jc = new JCommander(this);
         CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("generateXSD");
+//        jc.setProgramName("generateXSD");
         jc.parse(args);
         run(jc);
     }
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool m2x");
+//        cob.setProgramName("cmftool m2x");
         run(cob);
     }    
     
-    private void run (JCommander cob) {
+    protected void run (JCommander cob) {
+        // Figure out what kind of XSD we're generating
+        ModelToXSD mw = null;
+        String cmdName = cob.getProgramName();
+        switch (cmdName) {
+            case "m2n5x":  mw = new ModelToN5XSD(); break;
+            case "m2xref": mw = new ModelToRefXSD(); break;
+            case "m2xmsg": mw = new ModelToMsgXSD(); break;
+            default:
+                System.err.println("unknown command: cmftool " + cmdName);
+                System.exit(1);
+        }
+        cob.setProgramName("cmftool " + cmdName);
+        
         if (help) {
             cob.usage();
             System.exit(0);
@@ -116,7 +132,9 @@ class CmdCMFtoXSD implements JCCommand {
                 cob.usage();
                 System.exit(1);
             }
-        }       
+        }      
+
+        
         // If output directory exists, make sure it's empty
         File od = new File(outputDir);
         try {
@@ -168,7 +186,7 @@ class CmdCMFtoXSD implements JCCommand {
             }
         }
         // Write the NIEM model instance to the output stream
-        ModelToXSD mw = new ModelToXSD(m);
+        mw.setModel(m);
         try {
             mw.writeXSD(od);
         } catch (FileNotFoundException ex) {

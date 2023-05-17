@@ -128,4 +128,10 @@ public class NamespaceMap {
         return assignPrefix(newPrefix, nsuri);
     }
     
+    public void removePrefix (String prefix) {
+        var oldURI = prefix2URI.get(prefix);
+        prefix2URI.remove(prefix);
+        uri2Prefix.remove(oldURI);
+    }
+    
 }

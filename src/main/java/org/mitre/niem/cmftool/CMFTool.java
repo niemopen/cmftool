@@ -47,6 +47,7 @@ public class CMFTool {
      
     String xtd = "src/test/resources/xsd/";
     if (0 == args.length) {
+        args = new String[]{"m2xref", "-d", "-o", xtd+"out", xtd+"twoversions-0.cmf"};
 //        args = new String[]{"x2m", "-d", "tmp/52rel/domains/biom.xsd" };
 //        args = new String[]{"x2m", "-d", xtd+"createdProp.xsd"};
 //        args = new String[]{"xval", "-d", "-s", "examples/Claim-iepd/extension/claim.xsd", "examples/Claim-iepd/xml-catalog.xml"};
@@ -61,22 +62,28 @@ public class CMFTool {
         jc.setUsageFormatter(uf);
         jc.setProgramName("cmftool");
         
-        CmdCMFtoCMF cmfToCmfCmd = new CmdCMFtoCMF(jc);
-        CmdCMFtoOWL cmfToOwlCmd = new CmdCMFtoOWL(jc);
-        CmdCMFtoXSD cmfToXsdCmd = new CmdCMFtoXSD(jc);
-        CmdXSDtoCMF xsdToCmfCmd = new CmdXSDtoCMF(jc);       
-        CmdXSDcanonicalize xsdCanon = new CmdXSDcanonicalize(jc);
-        CmdXSDcmp xsdCmpCmd         = new CmdXSDcmp(jc);
-        CmdXSDvalidate xsValCmd     = new CmdXSDvalidate(jc);
-        CommandHelp helpCmd         = new CommandHelp(jc);    
+        var cmfToCmfCmd    = new CmdCMFtoCMF(jc);
+        var cmfToN5XsdCmd  = new CmdCMFtoN5XSD(jc);
+        var cmfToMsgXsdCmd = new CmdCMFtoMsgXSD(jc);
+        var cmfToRefXsdCmd = new CmdCMFtoRefXSD(jc);
+        var cmfToOwlCmd    = new CmdCMFtoOWL(jc);
+        var n5To6Cmd       = new CmdN5To6(jc);
+        var xsdToCmfCmd    = new CmdXSDtoCMF(jc);       
+        var xsdCanon       = new CmdXSDcanonicalize(jc);
+        var xsdCmpCmd      = new CmdXSDcmp(jc);
+        var xsValCmd       = new CmdXSDvalidate(jc);
+        var helpCmd        = new CommandHelp(jc);    
         jc.addCommand("m2m", cmfToCmfCmd);
         jc.addCommand("m2o", cmfToOwlCmd);
-        jc.addCommand("m2x", cmfToXsdCmd);
+        jc.addCommand("m2xref", cmfToRefXsdCmd);
+        jc.addCommand("m2xmsg", cmfToMsgXsdCmd);
+        jc.addCommand("m2n5x", cmfToN5XsdCmd);
+        jc.addCommand("n5to6", n5To6Cmd);
         jc.addCommand("x2m", xsdToCmfCmd);  
         jc.addCommand("xcanon", xsdCanon);
         jc.addCommand("xcmp", xsdCmpCmd);
         jc.addCommand("xval", xsValCmd);
-        jc.addCommand("help", helpCmd, "usage");
+        jc.addCommand("help", helpCmd);
         
         if (args.length < 1) {
             System.out.println("Version: " + CMFTool.class.getPackage().getImplementationVersion());
@@ -101,7 +108,7 @@ public class CMFTool {
         cmd.runCommand(cob);               
     }    
     
-    @Parameters(commandDescription = "list of cmftool commands")
+    @Parameters(commandDescription = "this list of cmftool commands")
     private class CommandHelp implements JCCommand {
         
         @Parameter(description = "display help for this command")
@@ -128,8 +135,7 @@ public class CMFTool {
                 JCCommand cmd = (JCCommand) objs.get(0);  
                 CMFUsageFormatter cobuf = new CMFUsageFormatter(cob);        
                 cob.setUsageFormatter(cobuf);    
-                String[] ha = {"--help"};
-                cmd.runMain(ha);
+                cmd.runCommand(cob);
             }
             else {
                 jc.usage();

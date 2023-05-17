@@ -55,12 +55,12 @@ public abstract class Component extends ObjectType implements Comparable<Compone
 
     public void setName (String s) { 
         name = s;
-        if (null != getModel()) getModel().childChanged(this);
+        if (null != getModel()) getModel().componentChange(this);
     }
     
     public void setNamespace (Namespace ns) { 
         namespace = ns; 
-        if (null != getModel()) getModel().childChanged(this);
+        if (null != getModel()) getModel().componentChange(this);
     }
     
     void setModel (Model m)                 { model = m; }    

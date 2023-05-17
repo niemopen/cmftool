@@ -1,13 +1,13 @@
 /*
  * NOTICE
- * 
+ *
  * This software was produced for the U. S. Government
  * under Basic Contract No. W56KGU-18-D-0004, and is
  * subject to the Rights in Noncommercial Computer Software
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
- * 
- * Copyright 2020-2022 The MITRE Corporation.
+ *
+ * Copyright 2020-2023 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,21 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
-import org.mitre.niem.xsd.CanonicalXSD;
+import org.mitre.niem.cmf.CMFException;
+import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.ModelToN6;
+import org.mitre.niem.xsd.ModelFromXSD;
+import org.mitre.niem.xsd.ModelXMLReader;
+import org.mitre.niem.xsd.ModelXMLWriter;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
+import org.mitre.niem.xsd.XMLSchema;
+import org.mitre.niem.xsd.XMLSchemaDocument;
 import org.xml.sax.SAXException;
 
 /**
@@ -47,26 +55,26 @@ import org.xml.sax.SAXException;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "canonicalize an XML Schema document")
+@Parameters(commandDescription = "convert model to NIEM 6 architecture")
 
-public class CmdXSDcanonicalize implements JCCommand {
+public class CmdN5To6 implements JCCommand {
     @Parameter(names = "-o", description = "file for converter output")
     private String objFile = "";
      
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "schemaDoc.xsd")
+    @Parameter(description = "modelFile.cmf")
     private List<String> mainArgs;
     
-    CmdXSDcanonicalize () {
+    CmdN5To6 () {
     }
   
-    CmdXSDcanonicalize (JCommander jc) {
+    CmdN5To6 (JCommander jc) {
     }
 
     public static void main (String[] args) {       
-        CmdXSDcanonicalize obj = new CmdXSDcanonicalize();
+        CmdN5To6 obj = new CmdN5To6();
         obj.runMain(args);
     }
     
@@ -75,19 +83,19 @@ public class CmdXSDcanonicalize implements JCCommand {
         JCommander jc = new JCommander(this);
         CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("XSDcanonicalize");
+        jc.setProgramName("N5to6");
         jc.parse(args);
         run(jc);
     }
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool xcanon");
+        cob.setProgramName("cmftool n5to6");
         run(cob);
-    }    
+    }        
+    
     
     private void run (JCommander cob) {
-
         if (help) {
             cob.usage();
             System.exit(0);
@@ -106,7 +114,7 @@ public class CmdXSDcanonicalize implements JCCommand {
                 cob.usage();
                 System.exit(1);
             }
-        }       
+        } 
         // Make sure output file is writable
         PrintWriter ow = new PrintWriter(System.out);
         if (!"".equals(objFile)) {
@@ -125,27 +133,67 @@ public class CmdXSDcanonicalize implements JCCommand {
             System.err.println(ex.getMessage());
             System.exit(1);
         }
-        // Single argument should be the XML Schema document
-        if (mainArgs.size() != 1) {
-            cob.usage();
-        }
-        //
-        File ifile = new File(mainArgs.get(0));
-        FileInputStream is = null;
+        // See if we can construct a schema object from arguments
+        String[] aa = mainArgs.toArray(new String[0]);
+        XMLSchema s = null;
+        Model m = null;
         try {
-            is = new FileInputStream(ifile);
-        } catch (FileNotFoundException ex) {
-            System.err.println(String.format("Error reading model file: %s", ex.getMessage()));
+            ModelFromXSD mfact = new ModelFromXSD();
+            s = new XMLSchema(aa);
+            m = mfact.createModel(s);
+        } catch (IOException ex) {
+            System.err.println(String.format("IO error reading input documents: %s", ex.getMessage()));
+            System.exit(1);
+        } catch (ParserConfigurationException ex) {
+            System.err.println("Parser configuration error: " + ex.getMessage());
+            System.exit(1);
+        } catch (CMFException | SAXException ex) {
+            System.err.println(String.format("Error building XML schema: %s", ex.getMessage()));
+            System.exit(1);
+        } catch (XMLSchema.XMLSchemaException ex) {
+            // IGNORE -- arguments aren't XSD or catalog files
+        }           
+        // Not XSD?  Maybe CMF
+        if (null == s) {
+            File ifile = new File(mainArgs.get(0));
+            FileInputStream is = null;
+            try {
+                is = new FileInputStream(ifile);
+            } catch (FileNotFoundException ex) {
+                System.err.println(String.format("Error reading input file %s: %s", ifile.toString(), ex.getMessage()));
+                System.exit(1);
+            }
+            ModelXMLReader mr = new ModelXMLReader();
+            m = mr.readXML(is);
+            if (null == m) {
+                List<String> msgs = mr.getMessages();
+                System.err.print(String.format("Could not construct model object from %s:", ifile.toString()));
+                if (1 == msgs.size()) System.err.print(msgs.get(0));
+                else msgs.forEach((xm) -> { System.err.print("\n  "+xm); });
+                System.err.println();
+                System.exit(1);         
+            }            
+        }
+        // At this point we should have a Model object
+        var converter = new ModelToN6();
+        try {
+            converter.convert(m);
+        } catch (CMFException ex) {
+            System.err.println("Could not convert: %s" + ex.getMessage());
             System.exit(1);
         }
-        try {
-            CanonicalXSD.canonicalize(is, ow);
-        } catch (ParserConfigurationException | SAXException | IOException | TransformerException ex) {
-            System.err.println(String.format("%s error: %s", ex.getClass().getName(), ex.getMessage()));
+        
+        // Write the NIEM model instance to the output stream
+        ModelXMLWriter mw = new ModelXMLWriter();
+        try {            
+            mw.writeXML(m, ow);
+            ow.close();
+        } catch (TransformerException ex) {
+            System.err.println(String.format("Output error: %s", ex.getMessage()));
             System.exit(1);
-            Logger.getLogger(CmdXSDcanonicalize.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParserConfigurationException ex) {
+            // CAN'T HAPPEN
         }
-        ow.close();
         System.exit(0);
-    }    
+    }
 }
