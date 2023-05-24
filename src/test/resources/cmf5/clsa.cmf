@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#">
+  <Namespace structures:id="genc">
+    <NamespaceURI>http://release.niem.gov/niem/codes/genc/5.0/</NamespaceURI>
+    <NamespacePrefixText>genc</NamespacePrefixText>
+    <NamespaceKindCode>OTHERNIEM</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DefinitionText>NIEM Core.</DefinitionText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <Property structures:id="genc.CountryAlpha2Code">
+    <Name>CountryAlpha2Code</Name>
+    <Namespace structures:ref="genc" xsi:nil="true"/>
+    <DefinitionText>A country, territory, dependency, or other such geopolitical subdivision of a location.</DefinitionText>
+    <SubPropertyOf structures:ref="nc.CountryRepresentation" xsi:nil="true"/>
+    <Datatype structures:ref="genc.CountryAlpha2CodeType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Property structures:id="genc.CountryAlpha3Code">
+    <Name>CountryAlpha3Code</Name>
+    <Namespace structures:ref="genc" xsi:nil="true"/>
+    <DefinitionText>A country, territory, dependency, or other such geopolitical subdivision of a location.</DefinitionText>
+    <SubPropertyOf structures:ref="nc.CountryRepresentation" xsi:nil="true"/>
+    <Datatype structures:ref="genc.CountryAlpha3CodeType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Property structures:id="nc.CountryRepresentation">
+    <Name>CountryRepresentation</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data concept for a representation of a country.</DefinitionText>
+    <AbstractIndicator>true</AbstractIndicator>
+  </Property>
+  <Property structures:id="nc.Date">
+    <Name>Date</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A full date.</DefinitionText>
+    <SubPropertyOf structures:ref="nc.DateRepresentation" xsi:nil="true"/>
+    <Datatype structures:ref="xs.date" xsi:nil="true"/>
+  </Property>
+  <Property structures:id="nc.DateRepresentation">
+    <Name>DateRepresentation</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data concept for a representation of a date.</DefinitionText>
+    <AbstractIndicator>true</AbstractIndicator>
+  </Property>
+  <Property structures:id="nc.PersonBirthDate">
+    <Name>PersonBirthDate</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A date a person was born.</DefinitionText>
+    <Class structures:ref="nc.DateType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Property structures:id="nc.PersonFullName">
+    <Name>PersonFullName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A complete name of a person.</DefinitionText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Property structures:id="nc.PersonName">
+    <Name>PersonName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A combination of names and/or titles by which a person is known.</DefinitionText>
+    <Class structures:ref="nc.PersonNameType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Property structures:id="nc.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A literal value for a character string.</DefinitionText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </Property>
+  <Property structures:id="nc.partialIndicator">
+    <Name>partialIndicator</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </Property>
+  <Property structures:id="nc.truncationIndicator">
+    <Name>truncationIndicator</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>True if the length of a string is greater than the length of the field within which the string was stored in the exporting system; false otherwise.</DefinitionText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </Property>
+  <Class structures:id="nc.DateType">
+    <Name>DateType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a calendar date.</DefinitionText>
+    <HasProperty>
+      <Property structures:ref="nc.DateRepresentation" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </HasProperty>
+  </Class>
+  <Class structures:id="nc.PersonNameTextType">
+    <Name>PersonNameTextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a name by which a person is known, referred, or addressed.</DefinitionText>
+    <ExtensionOfClass structures:ref="nc.ProperNameTextType" xsi:nil="true"/>
+  </Class>
+  <Class structures:id="nc.PersonNameType">
+    <Name>PersonNameType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a combination of names and/or titles by which a person is known.</DefinitionText>
+    <HasProperty>
+      <Property structures:ref="nc.PersonFullName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </HasProperty>
+  </Class>
+  <Class structures:id="nc.PersonType">
+    <Name>PersonType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a human being.</DefinitionText>
+    <HasProperty>
+      <Property structures:ref="nc.PersonBirthDate" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <Property structures:ref="nc.PersonName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </HasProperty>
+  </Class>
+  <Class structures:id="nc.ProperNameTextType">
+    <Name>ProperNameTextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a word or phrase by which a person or thing is known, referred, or addressed.</DefinitionText>
+    <ExtensionOfClass structures:ref="nc.TextType" xsi:nil="true"/>
+  </Class>
+  <Class structures:id="nc.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a character string.</DefinitionText>
+    <HasProperty>
+      <Property structures:ref="nc.TextLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <Property structures:ref="nc.partialIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <Property structures:ref="nc.truncationIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+  </Class>
+  <Datatype structures:id="genc.CountryAlpha2CodeType">
+    <Name>CountryAlpha2CodeType</Name>
+    <Namespace structures:ref="genc" xsi:nil="true"/>
+    <DefinitionText>A data type for country codes.</DefinitionText>
+    <RestrictionOf>
+      <Datatype structures:ref="xs.token" xsi:nil="true"/>
+      <Enumeration>
+        <StringValue>GB</StringValue>
+        <DefinitionText>UNITED KINGDOM</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>US</StringValue>
+        <DefinitionText>UNITED STATES</DefinitionText>
+      </Enumeration>
+    </RestrictionOf>
+    <CodeListBinding>
+      <CodeListURI>http://api.nsgreg.nga.mil/geo-political/GENC/2/3-11</CodeListURI>
+      <CodeListColumnName>foo</CodeListColumnName>
+      <CodeListConstrainingIndicator>true</CodeListConstrainingIndicator>
+    </CodeListBinding>
+  </Datatype>
+  <Datatype structures:id="genc.CountryAlpha3CodeType">
+    <Name>CountryAlpha3CodeType</Name>
+    <Namespace structures:ref="genc" xsi:nil="true"/>
+    <DefinitionText>A data type for country codes.</DefinitionText>
+    <RestrictionOf>
+      <Datatype structures:ref="xs.token" xsi:nil="true"/>
+      <Enumeration>
+        <StringValue>GBR</StringValue>
+        <DefinitionText>UNITED KINGDOM</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>USA</StringValue>
+        <DefinitionText>UNITED STATES</DefinitionText>
+      </Enumeration>
+    </RestrictionOf>
+    <CodeListBinding>
+      <CodeListURI>http://api.nsgreg.nga.mil/geo-political/GENC/3/3-11</CodeListURI>
+      <CodeListColumnName>#code</CodeListColumnName>
+    </CodeListBinding>
+  </Datatype>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.date">
+    <Name>date</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <SchemaDocument>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>genc</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/codes/genc/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>clsa.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/niem-core.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+</Model>

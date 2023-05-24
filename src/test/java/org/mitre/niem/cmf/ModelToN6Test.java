@@ -26,14 +26,13 @@ package org.mitre.niem.cmf;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.mitre.niem.xsd.ModelXMLReader;
-import org.mitre.niem.xsd.ModelXMLWriter;
 
 /**
  *
@@ -50,7 +49,7 @@ public class ModelToN6Test {
     @Test
     public void testConvert() throws CMFException, FileNotFoundException, TransformerException, TransformerConfigurationException, ParserConfigurationException {
         FileInputStream cmfIS = null;
-        var cmfFile = new File(testDirPath, "cmf/complexContent.cmf");
+        var cmfFile = new File(testDirPath, "cmf5/complexContent.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -60,11 +59,11 @@ public class ModelToN6Test {
         var m = mr.readXML(cmfIS);   
         var m5to6 = new ModelToN6();
         m5to6.convert(m);
-        var mw = new ModelXMLWriter();
-        var outF  = new File(testDirPath, "new.cmf");
-        var outPW = new PrintWriter(outF);
-        mw.writeXML(m, outPW);
-        outPW.close();
+        assertThat(m.getNamespaceByPrefix("nc").getNamespaceURI()).startsWith("https://docs.oasis-open.org/niemopen/");
+        for (var sd : m.schemadoc().values()) {
+            assertThat(sd.targetNS()).startsWith("https://docs.oasis-open.org/niemopen/");
+        }               
+        int i = 0;
     }
     
 }

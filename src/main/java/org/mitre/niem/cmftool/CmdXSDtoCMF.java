@@ -68,18 +68,9 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_UTILITY;
 
 class CmdXSDtoCMF implements JCCommand {
 
-    @Parameter(names = "-o", description = "output directory for model files")
-    private String outputDir = ".";
-    
-    @Parameter(names = "-m", description = "base name for model files")
-    private String obase = null;
-    
-    @Parameter(names = "--cmf", description = "output model file")
+    @Parameter(names = "-o", description = "output model file")
     private String modelFN = null;
-    
-    @Parameter(names = "--cmx", description = "output model extension file")
-    private String mextFN = null;
-    
+
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
     
@@ -145,22 +136,19 @@ class CmdXSDtoCMF implements JCCommand {
             }
         }       
         // Figure out file names for model and extension
-        if (null == modelFN || null == mextFN) {
-            if (null == obase) {
-                obase = "Model";
-                for (String a : mainArgs) {
-                    if (a.endsWith(".xsd")) { obase = FilenameUtils.getBaseName(a); break; }
-                }
+        if (null == modelFN) {
+            var obase = "Model";
+            for (String a : mainArgs) {
+                if (a.endsWith(".xsd")) { obase = FilenameUtils.getBaseName(a); break; }
             }
-            if (null == modelFN) modelFN = obase + ".cmf";
+            modelFN = obase + ".cmf";
         }
         // Make sure output files are writable
-        String modelFP = String.format("%s/%s", outputDir, modelFN); 
         PrintWriter modelPW = null;
         try {
-            modelPW = new PrintWriter(modelFP);
+            modelPW = new PrintWriter(modelFN);
         } catch (FileNotFoundException ex) {
-            System.err.println(String.format("Can't write output file %s: %s", modelFP, ex.getMessage()));
+            System.err.println(String.format("Can't write output file %s: %s", modelFN, ex.getMessage()));
             System.exit(1);
         }        
         // Make sure the Xerces parsers can be initialized

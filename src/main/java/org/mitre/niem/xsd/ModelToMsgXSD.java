@@ -23,11 +23,22 @@
  */
 package org.mitre.niem.xsd;
 
+import org.mitre.niem.cmf.Model;
+
 /**
- *
+ * A class to generate a NIEM 6 message schema from a Model
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelToMsgXSD extends ModelToXSD {
     
+    public ModelToMsgXSD () { super(); }
+    public ModelToMsgXSD (Model m) { super(m); }
+
+    @Override
+    protected String getArchitecture ()       { return "NIEM6"; }
+
+    @Override
+    protected String getShareVersionSuffix () { return ".0-msg"; }    
 }

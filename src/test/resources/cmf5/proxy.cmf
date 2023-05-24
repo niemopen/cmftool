@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#">
+  <Namespace structures:id="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DefinitionText>Test for proxy types</DefinitionText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <Property structures:id="nc.ConfidencePercent">
+    <Name>ConfidencePercent</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A value that indicates belief that content is accurate or trustworthy.</DefinitionText>
+    <Datatype structures:ref="nc.PercentType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Property structures:id="nc.SomeText">
+    <Name>SomeText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </Property>
+  <Datatype structures:id="nc.PercentType">
+    <Name>PercentType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <RestrictionOf>
+      <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:id="xs.decimal">
+    <Name>decimal</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <SchemaDocument>
+    <NamespacePrefixText>xs-proxy</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>proxy.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+  </SchemaDocument>
+</Model>

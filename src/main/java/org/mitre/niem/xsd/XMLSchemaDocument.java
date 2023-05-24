@@ -53,12 +53,13 @@ import org.xml.sax.helpers.DefaultHandler;
  * on global type definitions and component declarations, and on element references
  * within global type definitions.
  * 
- * While we're at it these other things:<ul>
+ * While we're at it, we collect these other things:<ul>
  *
  * <li> The target namespace attribute value</li>
  * <li> All namespace declarations encountered in the document </li>
  * <li> NIEM conformance target assertions </li>
- * <li> NIEM version from structures namespace URI </li>
+ * <li> NIEM architecture (eg. NIEM5, NIEM6)</li>
+ * <li> NIEM version (eg. 4, 5, 6)</li>
  * <li> xs:schema @version attribute </li></ul>
  * 
  * @author Scott Renner
@@ -72,22 +73,24 @@ public class XMLSchemaDocument {
     private final List<AppinfoAttribute> appinfo = new ArrayList<>();
     private String targetNS = null;
     private String confTargs = null;
+    private String niemArch = null;
     private String niemVersion = null;
     private String schemaVersion = null;
     private String filepath = null;
     private String language = null;
     private int kind = NSK_UNKNOWN;
     
-    public List<XMLNamespaceDeclaration> namespaceDecls ()  { return nsdels; }              // all namespace declarations in document
-    public List<String> externalImports ()                  { return externalImports; }     // external namespaces imported in document
-    public List<AppinfoAttribute> appinfoAtts ()            { return appinfo; }             // appinfo attributes in document
-    public String targetNamespace ()                        { return targetNS; }            // target namespace URI of document
-    public String conformanceTargets ()                     { return confTargs; }           // value of @ct:conformanceTargets in <xs:schema>
-    public String niemVersion ()                            { return niemVersion; }         // derived from conformance assertions
-    public String schemaVersion ()                          { return schemaVersion; }       // from @version in <xs:schema>
-    public String filepath ()                               { return filepath; }            // path used to open document for parsing
-    public String language ()                               { return language; }            // from @xml:lang in <xs:schema>
-    public int schemaKind ()                                { return kind; }                // from namespace URI and conformance assertions
+    public List<XMLNamespaceDeclaration> namespaceDecls ()  { return nsdels; }          // all namespace declarations in document
+    public List<String> externalImports ()                  { return externalImports; } // external namespaces imported in document
+    public List<AppinfoAttribute> appinfoAtts ()            { return appinfo; }         // appinfo attributes in document
+    public String targetNamespace ()                        { return targetNS; }        // target namespace URI of document
+    public String conformanceTargets ()                     { return confTargs; }       // value of @ct:conformanceTargets in <xs:schema>
+    public String niemArch ()                               { return niemArch; }        // derived from conformance assertions or target NS
+    public String niemVersion ()                            { return niemVersion; }     // derived from conformance assertions or target NS
+    public String schemaVersion ()                          { return schemaVersion; }   // from @version in <xs:schema>
+    public String filepath ()                               { return filepath; }        // path used to open document for parsing
+    public String language ()                               { return language; }        // from @xml:lang in <xs:schema>
+    public int schemaKind ()                                { return kind; }            // from namespace URI and conformance assertions
     
     public void setSchemaKind (int k) { kind = k; }
     
@@ -140,22 +143,26 @@ public class XMLSchemaDocument {
                 language = atts.getValue(XML_NS_URI, "lang");
                 
                 // Get schema kind and niem version (maybe)
-                kind = NamespaceKind.kind(targetNS);
+                kind        = NamespaceKind.kind(targetNS);
+                niemArch    = NamespaceKind.architecture(targetNS);
                 niemVersion = NamespaceKind.version(targetNS);
 
                 // Get conformance target assertion
                 for (int i = 0; i < atts.getLength(); i++) {
                     var auri = atts.getURI(i);
-                    int util = NamespaceKind.utilityKind(auri);
+                    int util = NamespaceKind.builtin(auri);
                     if (NIEM_CTAS == util) {
                         if (CONFORMANCE_ATTRIBUTE_NAME.equals(atts.getLocalName(i))) {                        
                             confTargs = atts.getValue(i);
-                            var arch = NamespaceKind.archFromCTA(confTargs);
-                            NamespaceKind.setArchitecture(targetNS, arch);
-                            if (null == niemVersion || niemVersion.isBlank()) {
-                                niemVersion = NamespaceKind.versionFromCTA(confTargs);
+                            if (niemArch.isBlank() || niemVersion.isBlank()) {
+                                var ctlist = confTargs.split("\\s+");
+                                for (int j = 0; j < ctlist.length; j++) {
+                                    var ct = ctlist[j];
+                                    if (niemArch.isBlank())    niemArch = NamespaceKind.archFromCTA(ct);
+                                    if (niemVersion.isBlank()) niemVersion = NamespaceKind.versionFromCTA(ct);
+                                    if (!niemArch.isBlank() && !niemVersion.isBlank()) break;
+                                }                               
                             }
-                            break;
                         }
                     }
                 }
@@ -169,7 +176,7 @@ public class XMLSchemaDocument {
             else if ("import".equals(elname)) {
                 String importNS = atts.getValue("namespace");
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (NIEM_APPINFO == NamespaceKind.utilityKind(atts.getURI(i)))
+                    if (NIEM_APPINFO == NamespaceKind.builtin(atts.getURI(i)))
                         if ("externalImportIndicator".equals(atts.getLocalName(i))) {
                             if ("true".equals(atts.getValue(i))) externalImports.add(importNS);
                             break;
@@ -182,7 +189,7 @@ public class XMLSchemaDocument {
             // Look for appinfo attributes on global definitions and declarations
             if (1 == depth && xsComponentPat.matcher(elname).lookingAt()) {   
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (NIEM_APPINFO == NamespaceKind.utilityKind(atts.getURI(i))) {
+                    if (NIEM_APPINFO == NamespaceKind.builtin(atts.getURI(i))) {
                         var een = Pair.with(targetNS, atts.getValue("name"));
                         appinfo.add(new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), een, null));
                     }
@@ -193,7 +200,7 @@ public class XMLSchemaDocument {
             Pair<String,String> een = nsm.expandQName(eref);
             if (null != ctypeEN && "element".equals(elname) && null != eref && null != een) {
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (NIEM_APPINFO == NamespaceKind.utilityKind(atts.getURI(i))) {
+                    if (NIEM_APPINFO == NamespaceKind.builtin(atts.getURI(i))) {
                         AppinfoAttribute a = new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), ctypeEN, een);
                         appinfo.add(a);                                
                     }

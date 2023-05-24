@@ -23,6 +23,11 @@
  */
 package org.mitre.niem.xsd;
 
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import org.mitre.niem.cmf.Model;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 /**
  *
  * @author Scott Renner
@@ -30,4 +35,20 @@ package org.mitre.niem.xsd;
  */
 public class ModelToN5XSD extends ModelToXSD {
     
+    public ModelToN5XSD () { super(); }
+    public ModelToN5XSD (Model m) { super(m); }
+
+    @Override
+    protected String getArchitecture ()       { return "NIEM5"; }
+
+    @Override
+    protected String getShareVersionSuffix () { return ".0"; }   
+        
+    @Override
+    protected void addSimpleTypeExtension (Document dom, Element exe) {
+        var agqn = structPrefix + ":SimpleObjectAttributeGroup";
+        var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
+        age.setAttribute("ref", agqn);
+        exe.appendChild(age);          
+    }
 }

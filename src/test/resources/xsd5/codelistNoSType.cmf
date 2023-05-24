@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#">
+  <Namespace structures:id="cmf">
+    <NamespaceURI>http://reference.niem.gov/specification/cmf/0.7/</NamespaceURI>
+    <NamespacePrefixText>cmf</NamespacePrefixText>
+    <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <Datatype structures:id="cmf.NamespaceKindCodeType">
+    <Name>NamespaceKindCodeType</Name>
+    <Namespace structures:ref="cmf" xsi:nil="true"/>
+    <RestrictionOf>
+      <Datatype structures:ref="xs.token" xsi:nil="true"/>
+      <Enumeration>
+        <StringValue>EXTENSION</StringValue>
+        <DefinitionText>An extension namespace.</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>DOMAIN</StringValue>
+        <DefinitionText>A namespace for a NIEM domain.</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>CORE</StringValue>
+        <DefinitionText>The namespace for the NIEM core.</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>OTHERNIEM</StringValue>
+        <DefinitionText>A namespace in the publication or release domain, but not core, domain, or builtin.</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>BUILTIN</StringValue>
+        <DefinitionText>A builtin namespace (appinfo, code-lists, conformance, proxy, structures).</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>XSD</StringValue>
+        <DefinitionText>http://www.w3.org/2001/XMLSchema</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>XML</StringValue>
+        <DefinitionText>http://www.w3.org/XML/1998/namespace</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>EXTERNAL</StringValue>
+        <DefinitionText>A non-conforming namespace.</DefinitionText>
+      </Enumeration>
+      <Enumeration>
+        <StringValue>UNKNOWN</StringValue>
+        <DefinitionText>A namespace of an unknown kind.</DefinitionText>
+      </Enumeration>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <SchemaDocument>
+    <NamespacePrefixText>xs-proxy</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>cmf</NamespacePrefixText>
+    <NamespaceURI>http://reference.niem.gov/specification/cmf/0.7/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ExtensionSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>codelistNoSType.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+</Model>

@@ -40,10 +40,27 @@ import org.javatuples.Triplet;
  * A class to determine facts about a CMF namespace from a namespace URI
  * (and possibly also from parsing a schema document pile).
  * Or to generate a namespace URI from known facts.
- * Those facts are: architecture, kind, utilityKind, and version.
+ * Those facts are: architecture, kind, builtin, and version.
  * 
  * Architecture is about the differences in model XSD documents
- * for NIEM2, NIEM5, NIEM6, and NCDF.  Something we'll need later.
+ * for NIEM2, NIEM5, NIEM6, and NCDF.  CMF is the same, but the XSD is 
+ * different.  This is something we'll need later.
+ * 
+ * Kind: Extension, Domain, Core, OtherNIEM, Utility, XSD, XML, External, Unknown
+ * This is determined from
+ * - target namespace URI gives you Domain, Core, OtherNIEM, Utility, XSD, and XML
+ * - conformance target assertion gives you External (must parse schema document)
+ * - appinfo:externalImportIndicator gives you External (must parse whole pile)
+ * 
+ * Builtin: appinfo, cli, clsa, ct, xs-proxy, structures
+ * Determined by namespace URI
+ * Note that while CLI is a builtin, it has kind == OtherNIEM
+ *
+ * Version: The NIEM version for this namespace
+ * Determined by namespace URI (for builtins) or from conformance target assertion
+ *
+ * Everything is static. If you need to work with two models or schema piles at
+ * once, this must be rewritten.
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -64,7 +81,7 @@ public class NamespaceKind {
     public final static int NSK_EXTENSION  = 0;     // has conformance assertion, not in NIEM model
     public final static int NSK_DOMAIN     = 1;     // domain schema
     public final static int NSK_CORE       = 2;     // niem core schema
-    public final static int NSK_OTHERNIEM  = 3;     // other niem model; code-lists-instance, or starts with release or publication prefix
+    public final static int NSK_OTHERNIEM  = 3;     // code-lists-instance, or namespace URI starts with a model prefix 
     public final static int NSK_UTILITY    = 4;     // appinfo, code-lists-schema-attributes, conformance, proxy, structures
     public final static int NSK_XSD        = 5;     // namespace for XSD datatypes
     public final static int NSK_XML        = 6;     // namespace for xml: attributes
@@ -110,10 +127,10 @@ public class NamespaceKind {
             false           // NSK_NOTNIEM
     };
 
-    // The six kinds of utility namespace.  Note that while code-lists-instance is 
-    // a utility namespace, it has kind NSK_OTHERNIEM (not NSK_UTITLTY), because 
+    // The six kinds of builtin namespace.  Note that while code-lists-instance is 
+    // a builtin namespace, it has kind NSK_OTHERNIEM (not NSK_UTITLTY), because 
     // it defines components that belong in a CMF model.
-    // The code for a utility namespace is also the preferred namespace prefix.
+    // The code for a builtin namespace is also the preferred namespace prefix.
     public final static int NIEM_APPINFO = 0;
     public final static int NIEM_CLI = 1;
     public final static int NIEM_CLSA = 2;
@@ -123,16 +140,16 @@ public class NamespaceKind {
     public final static int NIEM_NOTUTILITY = 6;
     public final static int NIEM_UTILITY_COUNT = 7;
     
-    private final static Map<String,Integer> nscode2util = Map.of(
-            "appinfo",    NIEM_APPINFO,
-            "cli",        NIEM_CLI,
-            "clsa",       NIEM_CLSA,
-            "ct",         NIEM_CTAS,
-            "xs-proxy",   NIEM_PROXY,
-            "structures", NIEM_STRUCTURES,
-            "notutility", NIEM_NOTUTILITY
+    private final static Map<String,Integer> nscode2builtin = Map.of(
+        "appinfo",    NIEM_APPINFO,
+        "cli",        NIEM_CLI,
+        "clsa",       NIEM_CLSA,
+        "ct",         NIEM_CTAS,
+        "xs-proxy",   NIEM_PROXY,
+        "structures", NIEM_STRUCTURES,
+        "notutility", NIEM_NOTUTILITY
     );
-    private final static String[] nsutil2code = {
+    private final static String[] nsbuiltin2code = {
         "appinfo",      // NIEM_APPINFO,
         "cli",          // NIEM_CLI,
         "clsa",         // NIEM_CLSA,
@@ -141,9 +158,9 @@ public class NamespaceKind {
         "structures",   // NIEM_STRUCTURES,
         "notutility",   // NIEM_NOTUTILITY        
     };
-    // Default schema document filenames are property not part of CMF, but it's
+    // Default schema document filenames are properly not part of CMF, but it's
     // way too much trouble to put them anywhere else.
-    private final static String[] defUtilFN = {
+    private final static String[] defBuiltinFN = {
         "appinfo.xsd",                      //NIEM_APPINFO,
         "code-lists-instance.xsd",          // NIEM_CLI,
         "code-lists-schema-appinfo.xsd",    // NIEM_CLSA,
@@ -153,42 +170,49 @@ public class NamespaceKind {
         "notutility",                       // NIEM_NOTUTILITY        
     };
 
-    // Definitions for all the utility namespaces in all known versions
-    private final static String[] utility = { 
-      "NIEM6", "UTILITY",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/appinfo/6.0/#",   
-      "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/specification/code-lists/6.0/code-lists-instance/#",
-      "NIEM6", "UTILITY",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/specification/code-lists/6.0/code-lists-schema-appinfo/#",
-      "NIEM6", "UTILITY",   "ct",         "6", "https://docs.oasis-open.org/niemopen/conformanceTargets/3.0/#",
-      "NIEM6", "UTILITY",   "xs-proxy",   "6", "https://docs.oasis-open.org/niemopen/proxy/niem-xs/6.0/#",
-      "NIEM6", "UTILITY",   "structures", "6", "https://docs.oasis-open.org/niemopen/structures/6.0/#",
+    // Definitions for all the builtin namespaces in all known versions
+    // arch: how to generate XSD from CMF, different for NIEM 2, 3-5, 6, and NCDF
+    // kind: of namespace
+    // builtin: which builtin?
+    // vers: this URI -> this NIEM version (can't tell from CT uri)
+    private final static int BUILTIN_TAB_WIDTH = 5;
+    private final static String[] builtinTab = { 
+    // arch    kind         builtin      vers  uri
+    // ----    ----         -------      ----  ---
+      "NIEM6", "UTILITY",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/#",   
+      "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/#",
+      "NIEM6", "UTILITY",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/#",
+      "NIEM6", "UTILITY",   "xs-proxy",   "6", "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/#",
+      "NIEM6", "UTILITY",   "structures", "6", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#",
       
       "NIEM5", "UTILITY",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
       "NIEM5", "UTILITY",   "clsa",       "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
-      "NIEM5", "UTILITY",   "ct",         "5", "http://release.niem.gov/niem/conformanceTargets/3.0/",
       "NIEM5", "UTILITY",   "xs-proxy",   "5", "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
       "NIEM5", "UTILITY",   "structures", "5", "http://release.niem.gov/niem/structures/5.0/",
 
       "NIEM5", "UTILITY",   "appinfo",    "4", "http://release.niem.gov/niem/appinfo/4.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
       "NIEM5", "UTILITY",   "clsa",       "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
-      "NIEM5", "UTILITY",   "ct",         "4", "http://release.niem.gov/niem/conformanceTargets/3.0/",
       "NIEM5", "UTILITY",   "xs-proxy",   "4", "http://release.niem.gov/niem/proxy/niem-xs/4.0/",
       "NIEM5", "UTILITY",   "structures", "4", "http://release.niem.gov/niem/structures/4.0/",    
       
       "NIEM5", "UTILITY",   "appinfo",    "3", "http://release.niem.gov/niem/appinfo/3.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-instance/",
       "NIEM5", "UTILITY",   "clsa",       "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-schema-appinfo/",
-      "NIEM5", "UTILITY",   "ct",         "3", "http://release.niem.gov/niem/conformanceTargets/3.0/",
       "NIEM5", "UTILITY",   "xs-proxy",   "3", "http://release.niem.gov/niem/proxy/niem-xs3.0/",
-      "NIEM5", "UTILITY",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/"             
+      "NIEM5", "UTILITY",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/",            
+
+      // These must come at the end of the list
+      "NIEM6", "UTILITY",   "ct",         "",  "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/#",
+      "NIEM5", "UTILITY",   "ct",         "",  "http://release.niem.gov/niem/conformanceTargets/3.0/",
     };
     
     // Patterns for recognizing NIEM model namespaces
     private final static String[] nspats = {
-      "NIEM6", "DOMAIN",     "https://docs\\.oasis-open\\.org/niemopen/domains/.*/[\\d]+([\\d.]+)/#?",
-      "NIEM6", "CORE",       "https://docs\\.oasis-open\\.org/niemopen/niem-core/[\\d]+([\\d.]+)/#?",
-      "NIEM6", "OTHERNIEM",  "https://docs\\.oasis-open\\.org/niemopen/.*/[\\d]+([\\d.]+)/#?",
+      "NIEM6", "DOMAIN",     "https://docs\\.oasis-open\\.org/niemopen/ns/model/domains/.*/[\\d]+([\\d.]+)/#?",
+      "NIEM6", "CORE",       "https://docs\\.oasis-open\\.org/niemopen/ns/model/niem-core/[\\d]+([\\d.]+)/#?",
+      "NIEM6", "OTHERNIEM",  "https://docs\\.oasis-open\\.org/niemopen/ns/model/.*/[\\d]+([\\d.]+)/#?",
 
       "NIEM5", "DOMAIN",     "http://((publication)|(release))\\.niem\\.gov/niem/domains/.*/[\\d]+([\\d.]+)/#?",
       "NIEM5", "CORE",       "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/[\\d]+([\\d.]+)/#?",
@@ -197,28 +221,32 @@ public class NamespaceKind {
 
     // Patterns for recognizing architecture from conformance target assertions
     private final static String[] arches = {
-        "NIEM6", "https://docs.oasis-open.org/niemopen/specification/naming-and-design-rules",
-        "NIEM5", "http://reference.niem.gov/niem/specification/naming-and-design-rules"
+        "NIEM6", "https://docs.oasis-open.org/niemopen/ns/specification/naming-and-design-rules(?=/)",
+        "NIEM5", "http://reference.niem.gov/niem/specification/naming-and-design-rules(?=/)"
     };
     
-    private record NSuridat (String arch, int kind, int util, String version) {};
+    // Compiled regexs for recognizing namespace URIs and architecture
+    private static List<Triplet<String,Integer,Pattern>> uripat = null;     // built from nspats
+    private static List<Pair<String,Pattern>> archpat = null;               // built from arches
+
+    // Map NSURI -> its architecture, ns kind, utility kind (if any) and NIEM version (if known)
+    // May be updated during schema parsing as CTAs and external namespaces are recognized
+    private record NSuridat (String arch, int kind, int builtin, String version) {};
     private static Map<String,NSuridat> uridat = null; 
-    private static List<Triplet<String,Integer,Pattern>> uripat = null;
-    private static List<Pair<String,Pattern>> archpat = null;
-    
+      
     public static void reset () {
         uridat = new HashMap<>();
-        for (int i = 0; i < utility.length; i += 5) {
-            String arch = utility[i];
-            int kind    = namespaceCode2Kind(utility[i+1]);
-            int util    = namespaceCode2Util(utility[i+2]);
-            String vers = utility[i+3];
-            String uri  = utility[i+4];
+        for (int i = 0; i < builtinTab.length; i += BUILTIN_TAB_WIDTH) {
+            String arch = builtinTab[i];
+            int kind    = namespaceCode2Kind(builtinTab[i+1]);
+            int util    = namespaceCode2Builtin(builtinTab[i+2]);
+            String vers = builtinTab[i+3];
+            String uri  = builtinTab[i+4];
             var rec     = new NSuridat(arch, kind, util, vers);
             uridat.put(uri, rec);
         }
-        uridat.put(XML_NS_URI, new NSuridat("UNKNOWN", NSK_XML, NIEM_NOTUTILITY, ""));
-        uridat.put(W3C_XML_SCHEMA_NS_URI, new NSuridat("UNKNOWN", NSK_XSD, NIEM_NOTUTILITY, ""));
+        uridat.put(XML_NS_URI, new NSuridat("", NSK_XML, NIEM_NOTUTILITY, ""));
+        uridat.put(W3C_XML_SCHEMA_NS_URI, new NSuridat("", NSK_XSD, NIEM_NOTUTILITY, ""));
 
         uripat = new ArrayList<>();
         for (int i = 0; i < nspats.length; i += 3) {
@@ -263,11 +291,12 @@ public class NamespaceKind {
                 return rec;
             }
         }
-        var rec = new NSuridat("UNKNOWN", NSK_UNKNOWN, NIEM_NOTUTILITY, "");
+        var rec = new NSuridat("", NSK_UNKNOWN, NIEM_NOTUTILITY, "");
         uridat.put(nsuri, rec);
         return rec;
     }
     
+    // Returns "" if NIEM architecture is unknown; never returns null
     public static String architecture (String nsuri) {
         var rec = lookup(nsuri);
         return rec.arch();
@@ -278,34 +307,38 @@ public class NamespaceKind {
         return rec.kind();
     }
     
-    public static int utilityKind (String nsuri) {
+    public static int builtin (String nsuri) {
         var rec = lookup(nsuri);
-        return rec.util();
+        return rec.builtin();
     }
     
+    // Returns "" if NIEM version is unknown; never returns null
     public static String version (String nsuri) {
         var rec = lookup(nsuri);
         return rec.version();
     }
 
-    public static void set (String nsuri, String arch, int kind, int util, String version) {
+    public static void set (String nsuri, String arch, int kind, int builtin, String version) {
+        if (null == arch) arch = "";
+        if (null == version) version = "";
         var rec = lookup(nsuri);
-        if (rec.arch.equals(arch) && rec.kind == kind && rec.util == util && rec.version.equals(version)) return;
-        var nrec = new NSuridat(arch, kind, util, version);
+        if (rec.arch.equals(arch) && rec.kind == kind && rec.builtin == builtin && rec.version.equals(version)) return;
+        var nrec = new NSuridat(arch, kind, builtin, version);
         uridat.put(nsuri, nrec);
     }
     
     public static void setKind (String nsuri, int kind) {
         var rec = lookup(nsuri);
         if (rec.kind == kind) return;
-        var nrec = new NSuridat(rec.arch, kind, rec.util, rec.version);
+        var nrec = new NSuridat(rec.arch, kind, rec.builtin, rec.version);
         uridat.put(nsuri, nrec);
     }
     
     public static void setArchitecture (String nsuri, String arch) {
+        if (null == arch) arch = "";
         var rec = lookup(nsuri);
-        if (rec.arch == arch) return;
-        var nrec = new NSuridat(arch, rec.kind, rec.util, rec.version);
+        if (rec.arch.equals(arch)) return;
+        var nrec = new NSuridat(arch, rec.kind, rec.builtin, rec.version);
         uridat.put(nsuri, nrec);
     }
     
@@ -322,6 +355,7 @@ public class NamespaceKind {
     }
     
     // Determine NIEM version from conformance target assertions
+    // Returns "" if version is unknown; never returns null
     private static final Pattern versPat = Pattern.compile("/(\\d)(\\.\\d+)?/");
     public static String versionFromCTA (String cta) {
         for (var arec : archpat) {
@@ -333,7 +367,7 @@ public class NamespaceKind {
                 if (vm.find()) return vm.group(1);
             }
         }
-        return null;        
+        return "";        
     }
    
     public static int namespaceCode2Kind (String code) {
@@ -357,8 +391,8 @@ public class NamespaceKind {
         return (kind >= 0 && kind <= NSK_NUMKINDS ? nskindInCMF[kind] : false);
     }
 
-    public static int namespaceCode2Util (String code) {
-        Integer util = nscode2util.get(code);
+    public static int namespaceCode2Builtin (String code) {
+        Integer util = nscode2builtin.get(code);
         if (null == util) {
             LOG.error(String.format("invalid namespace kind code '%s'", code));
             return NSK_NOTNIEM;
@@ -366,29 +400,33 @@ public class NamespaceKind {
         return util;        
     }
     
-    public static String namespaceUtil2Code (int util) { 
+    public static String namespaceUtil2Builtin (int util) { 
         if (util < 0 || util > NSK_NUMKINDS) {
             LOG.error(String.format("invalid namespace kind '%d'", util));
             return "NOTNIEM";
         }
-        return nsutil2code[util];
+        return nsbuiltin2code[util];
     }
-      
-    public static String getUtilityNS(int util, String version) {
-        String ustr = namespaceUtil2Code(util);
-        for (int i = 0; i < utility.length; i += 5) {
-            if (utility[i + 2].equals(ustr) && utility[i + 3].equals(version))
-                return utility[i + 4];
+
+    // Returns the namespace URI for a utility namespace given the architecture
+    // and version.  
+    public static String getBuiltinNS(int util, String arch, String version) {
+        String ustr = namespaceUtil2Builtin(util);
+        for (int i = 0; i < builtinTab.length; i += BUILTIN_TAB_WIDTH) {
+            if (builtinTab[i + 0].equals(arch) 
+                    && builtinTab[i + 2].equals(ustr) 
+                    && (builtinTab[i + 3].equals(version) || builtinTab[i + 3].isBlank()))
+                return builtinTab[i + 4];
           }
         LOG.error(String.format("could not find URI for '%s' version '%s'", ustr, version));
         return null;
     }
     
-    public static String defaultUtilityFN (int util) {
+    public static String defaultBuiltinFN (int util) {
         if (util < 0 || util > NSK_NUMKINDS) {
             LOG.error(String.format("invalid namespace kind '%d'", util));
             return "NOTNIEM";
         }
-        return defUtilFN[util];        
+        return defBuiltinFN[util];        
     }
 }

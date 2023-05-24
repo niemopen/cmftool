@@ -49,7 +49,7 @@ public class NamespaceMap {
     
     public NamespaceMap () { 
         // Initialize the reserved namespace prefixes: cmf, owl, rdf, rdfs, xs, xsd, xml
-        prefix2URI.put("cmf", CMF_NS_URI);
+//        prefix2URI.put("cmf", CMF_NS_URI);
         prefix2URI.put("owl", OWL_NS_URI);
         prefix2URI.put("rdf", RDF_NS_URI);
         prefix2URI.put("rdfs", RDFS_NS_URI);
@@ -59,7 +59,7 @@ public class NamespaceMap {
 
         // Map those namespaces to their reserved prefix
         // Not quite the inverse:  W3C_XML_SCHEMA_NS_URI is only mapped to "xs"
-        uri2Prefix.put(CMF_NS_URI, "cmf");
+//        uri2Prefix.put(CMF_NS_URI, "cmf");
         uri2Prefix.put(OWL_NS_URI, "owl");
         uri2Prefix.put(RDF_NS_URI, "rdf");
         uri2Prefix.put(RDFS_NS_URI, "rdfs");

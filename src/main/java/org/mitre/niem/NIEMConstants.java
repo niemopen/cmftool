@@ -30,13 +30,13 @@ package org.mitre.niem;
  */
 public final class NIEMConstants {
     public static final String CONFORMANCE_ATTRIBUTE_NAME = "conformanceTargets";
-    public static final String CMF_NS_URI_PREFIX = "http://reference.niem.gov/specification/cmf/";    
-    public static final String CMF_NS_URI = "http://reference.niem.gov/specification/cmf/0.7/";
-    public static final String CMF_STRUCTURES_NS_URI = "http://release.niem.gov/niem/structures/5.0/";
-    public static final String DEFAULT_NIEM_VERSION = "5.0"; 
-    public static final String OWL_NS_URI = "http://www.w3.org/2002/07/owl";
-    public static final String RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns";    
-    public static final String RDFS_NS_URI = "http://www.w3.org/2000/01/rdf-schema";
+    public static final String CMF_NS_URI_PREFIX = "https://docs.oasis-open.org/niemopen/ns/specification/cmf/";    
+    public static final String CMF_NS_URI = "https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#";
+    public static final String CMF_STRUCTURES_NS_URI = "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#";
+    public static final String DEFAULT_NIEM_VERSION = "6.0"; 
+    public static final String OWL_NS_URI = "http://www.w3.org/2002/07/owl#";
+    public static final String RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";    
+    public static final String RDFS_NS_URI = "http://www.w3.org/2000/01/rdf-schema#";
     public static final String XML_CATALOG_NS_URI = "urn:oasis:names:tc:entity:xmlns:xml:catalog";
         
     private NIEMConstants () { }

@@ -84,11 +84,11 @@ public class NamespaceMapTest {
         assertEquals("frogs", nm.getURI("owl_1"));
         assertEquals(OWL_NS_URI, nm.getURI("owl"));
         
-        String a5 = NamespaceKind.getUtilityNS(NIEM_APPINFO, "5");
+        String a5 = NamespaceKind.getBuiltinNS(NIEM_APPINFO, "NIEM5", "5");
         p = nm.assignPrefix("appinfo", a5);
         assertEquals("appinfo", p);
         
-        String a4 = NamespaceKind.getUtilityNS(NIEM_APPINFO, "4");
+        String a4 = NamespaceKind.getBuiltinNS(NIEM_APPINFO, "NIEM5", "4");
         p = nm.assignPrefix("appinfo", a4);
         assertEquals("appinfo_4", p);
         assertEquals("appinfo_4", nm.getPrefix(a4));

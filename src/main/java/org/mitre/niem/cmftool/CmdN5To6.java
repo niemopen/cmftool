@@ -94,7 +94,6 @@ public class CmdN5To6 implements JCCommand {
         run(cob);
     }        
     
-    
     private void run (JCommander cob) {
         if (help) {
             cob.usage();

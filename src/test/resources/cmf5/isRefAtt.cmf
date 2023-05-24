@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#">
+  <Namespace structures:id="ira">
+    <NamespaceURI>http://example.com/isRefAtt/6.0/</NamespaceURI>
+    <NamespacePrefixText>ira</NamespacePrefixText>
+    <DefinitionText>reference attribute test case</DefinitionText>
+    <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <Property structures:id="ira.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="ira" xsi:nil="true"/>
+    <DefinitionText>A literal value for a character string.</DefinitionText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </Property>
+  <Property structures:id="ira.categoryRef">
+    <Name>categoryRef</Name>
+    <Namespace structures:ref="ira" xsi:nil="true"/>
+    <Datatype structures:ref="xs.IDREFS" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+    <RefAttributeIndicator>true</RefAttributeIndicator>
+  </Property>
+  <Property structures:id="ira.partialIndicator">
+    <Name>partialIndicator</Name>
+    <Namespace structures:ref="ira" xsi:nil="true"/>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </Property>
+  <Class structures:id="ira.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="ira" xsi:nil="true"/>
+    <DefinitionText>A data type for a character string.</DefinitionText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <HasProperty>
+      <Property structures:ref="ira.TextLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <Property structures:ref="ira.categoryRef" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+  </Class>
+  <Datatype structures:id="xs.IDREFS">
+    <Name>IDREFS</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <SchemaDocument>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>ira</NamespacePrefixText>
+    <NamespaceURI>http://example.com/isRefAtt/6.0/</NamespaceURI>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>isRefAtt.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+</Model>

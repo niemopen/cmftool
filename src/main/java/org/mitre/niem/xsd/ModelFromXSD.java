@@ -44,6 +44,8 @@ import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import static org.apache.xerces.xs.XSConstants.ATTRIBUTE_DECLARATION;
+import static org.apache.xerces.xs.XSConstants.DERIVATION_EXTENSION;
+import static org.apache.xerces.xs.XSConstants.DERIVATION_RESTRICTION;
 import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
 import static org.apache.xerces.xs.XSConstants.MODEL_GROUP;
 import static org.apache.xerces.xs.XSConstants.TYPE_DEFINITION;
@@ -142,7 +144,7 @@ public class ModelFromXSD {
         propertyXSobj        = new HashMap<>();
         datatypeXSobj        = new HashMap<>();
         classXSobj           = new HashMap<>();
-        datatypeMap             = new HashMap<>();
+        datatypeMap          = new HashMap<>();
         hasLiteralProperty   = new HashSet<>();
          
         generateNamespaces();           // normalize namespace prefixes so we can use QNames
@@ -294,7 +296,7 @@ public class ModelFromXSD {
         for (int i = 0; i < xmap.getLength(); i++) {
             var xobj = (XSElementDeclaration)xmap.item(i);
             var xet  = xobj.getTypeDefinition();
-            var xetu = NamespaceKind.utilityKind(xet.getNamespace());
+            var xetu = NamespaceKind.builtin(xet.getNamespace());
             if (NIEM_STRUCTURES == xetu) {
                 LOG.info(String.format("Discarding element %s:%s, because its type is from structures namespace",
                         nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
@@ -361,8 +363,8 @@ public class ModelFromXSD {
                     var au    = (XSAttributeUse)atts.item(j);
                     var adecl = au.getAttrDeclaration();
                     var ans   = adecl.getNamespace();
-                    if (NIEM_STRUCTURES != NamespaceKind.utilityKind(ans)) {    // attributes in structures NS don't count
-                        hasAttributes = true;                                   // found a semantic attribute; we're done
+                    if (NIEM_STRUCTURES != NamespaceKind.builtin(ans)) {    // attributes in structures NS don't count
+                        hasAttributes = true;                               // found a semantic attribute; we're done
                         break;
                     }
                 }
@@ -627,7 +629,7 @@ public class ModelFromXSD {
             XSAttributeUse au = (XSAttributeUse)atl.item(i);
             XSAttributeDeclaration a = au.getAttrDeclaration();
             // Don't add attributes from the structures namespace
-            if (NIEM_STRUCTURES != NamespaceKind.utilityKind(a.getNamespace())) 
+            if (NIEM_STRUCTURES != NamespaceKind.builtin(a.getNamespace())) 
                 aset.add(au);
         }
         // Now remove attribute uses in the base types
@@ -702,41 +704,48 @@ public class ModelFromXSD {
             m.addComponent(dt);
             if (xsdns == dt.getNamespace()) continue;               // nothing more to do for XSD types
             LOG.debug("processing datatype " + dt.getQName());
-            
-            var xtype = datatypeXSobj.get(dt);
-            XSSimpleTypeDefinition xstype = null;
-            boolean isComplex = (COMPLEX_TYPE == xtype.getTypeCategory());
+           
+            XSSimpleTypeDefinition xscontent = null;                    // build Datatype from this simple content
+            var xtype = datatypeXSobj.get(dt);                          // complex or simple type definition for this Datatype
+            var isComplex = (COMPLEX_TYPE == xtype.getTypeCategory());
             if (isComplex) {
                 var xctype = (XSComplexTypeDefinition)xtype;
-                var xbtype = xctype.getBaseType();
-                if (null != xbtype && COMPLEX_TYPE == xbtype.getTypeCategory()) {
-                    var r  = new RestrictionOf();
-                    var bt = getDatatype(xbtype.getNamespace(), xbtype.getName());
-                    r.setDatatype(bt);
-                    dt.setRestrictionOf(r);
-                    continue;
+                var xbase = xctype.getBaseType();
+                if (null != xbase) {
+                    var complexBase   = COMPLEX_TYPE == xbase.getTypeCategory();
+                    var isProxy       = NIEM_PROXY == NamespaceKind.builtin(xbase.getNamespace());
+                    var isRestriction = DERIVATION_RESTRICTION == xctype.getDerivationMethod();
+                    // Sometimes this Datatype is an empty restriction of the base type
+                    // But not for a restriction of a proxy type
+                    if (complexBase && !(isProxy && isRestriction)) {
+                        var r  = new RestrictionOf();
+                        var bt = getDatatype(xbase.getNamespace(), xbase.getName());
+                        r.setDatatype(bt);
+                        dt.setRestrictionOf(r);
+                        continue;                     
+                    }
                 }
-                else xstype = xctype.getSimpleType();
+                xscontent = xctype.getSimpleType();
             }
-            else xstype = (XSSimpleTypeDefinition)xtype;
+            else xscontent = (XSSimpleTypeDefinition)xtype;
             
             // Handle annotations -- documentation and code list schema appinfo
-            var an    = parseAnnotation(xstype);
+            var an    = parseAnnotation(xscontent);
             var docs  = getDocumentation(an);
             for (var doc : docs) dt.setDefinition(doc);
             handleCLSA(dt, an);
 
-            switch (xstype.getVariety()) {
+            switch (xscontent.getVariety()) {
                 case VARIETY_UNION:
-                    dt.setUnionOf(createUnionOf(xstype));
+                    dt.setUnionOf(createUnionOf(xscontent));
                     break;
                 case VARIETY_LIST:
-                    var xitem = xstype.getItemType();
+                    var xitem = xscontent.getItemType();
                     var listdt = getDatatype(xitem.getNamespace(), xitem.getName());
                     dt.setListOf(listdt);
                     break;
                 default:
-                    var r = createRestrictionOf(xstype);
+                    var r = createRestrictionOf(xscontent);
                     dt.setRestrictionOf(r);
                     break;
             }
@@ -750,8 +759,9 @@ public class ModelFromXSD {
         if (null == alist) return;
         var dtns = dt.getNamespaceURI();
         var sd   = sdoc.get(dtns);
+        var arch = sd.niemArch();
         var nver = sd.niemVersion();
-        var clsaURI = NamespaceKind.getUtilityNS(NIEM_CLSA, nver);
+        var clsaURI = NamespaceKind.getBuiltinNS(NIEM_CLSA, arch, nver);
         for (var ae : alist) {
             var clsaElements = an.getElementsByTagNameNS(clsaURI, "SimpleCodeListBinding");
             for (int i = 0; i < clsaElements.getLength(); i++) {
@@ -1155,7 +1165,7 @@ public class ModelFromXSD {
     // If you ask for any type in the XML namespace, you get xs:string.  
     // If you ask for xs:anyType or xs:anySimpleType, you get null.
     private Datatype getDatatype (String nsuri, String lname) throws CMFException {
-        if (NIEM_PROXY == NamespaceKind.utilityKind(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
+        if (NIEM_PROXY == NamespaceKind.builtin(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
         var dtqn = getQN(nsuri, lname);
         var res  = datatypeMap.get(dtqn);
         if (null != res)                   return res;
@@ -1183,7 +1193,7 @@ public class ModelFromXSD {
     }
     
     private String getQN (String nsuri, String lname) throws CMFException {
-        if (NIEM_PROXY == NamespaceKind.utilityKind(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
+        if (NIEM_PROXY == NamespaceKind.builtin(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
         var ns = m.getNamespaceByURI(nsuri);
         if (null == ns) 
             throw new CMFException(String.format("no namespace object for %s", nsuri));

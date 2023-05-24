@@ -48,7 +48,8 @@ public class Model extends ObjectType {
     static final Logger LOG = LogManager.getLogger(Model.class);
     
     // Info about schema documents needed when writing the model as XSD
-    static private final SchemaDocument none            = new SchemaDocument(null,null,null,null,null,null,null);
+    // Default NIEM version is 6
+    static private final SchemaDocument none            = new SchemaDocument(null,null,null,null,"6",null,"en-US");
     private final Map<String,SchemaDocument> schemadoc  = new HashMap<>();           // nsURI -> schema info
     
     public Map<String,SchemaDocument> schemadoc () { return schemadoc; }

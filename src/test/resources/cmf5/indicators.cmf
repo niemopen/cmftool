@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/#">
+  <Namespace structures:id="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <Property structures:id="nc.toleranceNumeric">
+    <Name>toleranceNumeric</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>An allowable range for error on a point estimate.</DefinitionText>
+    <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Datatype structures:id="nc.NumericType">
+    <Name>NumericType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a number value.</DefinitionText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <RestrictionOf>
+      <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:id="xs.decimal">
+    <Name>decimal</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

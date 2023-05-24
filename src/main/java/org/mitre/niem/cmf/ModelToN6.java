@@ -24,6 +24,7 @@
 package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
@@ -40,24 +41,63 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 public class ModelToN6 {
     static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(ModelToN6.class);
     
-    private static final String coreURI = "https://docs.oasis-open.org/niemopen/niem-core/6.0/#";
-    private static final String oasis   = "https://docs.oasis-open.org/niemopen/";
-    private static final Pattern nspat  = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/");
-    private static final Pattern vers   = Pattern.compile("/\\d\\.\\d/");
+    private static final List<Pattern> utilpat = new ArrayList<>();
+    private static final String[] utilpdat = {
+      "http://release.niem.gov/niem/appinfo/\\d\\.\\d/",   
+      "http://reference.niem.gov/niem/specification/code-lists/\\d\\.\\d/code-lists-instance/",
+      "http://reference.niem.gov/niem/specification/code-lists/\\d\\.\\d/code-lists-schema-appinfo/",
+      "http://release.niem.gov/niem/conformanceTargets/\\d\\.\\d/",
+      "http://release.niem.gov/niem/proxy/niem-xs/\\d\\.\\d/",
+      "http://release.niem.gov/niem/structures/\\d\\.\\d/"
+    };
+    private static final String[] utilrep = {      
+      "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/#",   
+      "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/#",
+      "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/#",
+      "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/#",
+      "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/#",
+      "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#",      
+    };
     
-    public ModelToN6 () { }
+    private static final String coreURI    = "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/#";
+    private static final String oasis      = "https://docs.oasis-open.org/niemopen/ns/model/";
+    private static final Pattern ns5pat    = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/");
+    private static final Pattern version   = Pattern.compile("/\\d\\.\\d/");
+    
+    public ModelToN6 () { 
+        for (int i = 0; i < utilpdat.length; i++) 
+            utilpat.add(Pattern.compile(utilpdat[i]));
+    }
     
     public void convert (Model m) throws CMFException {
         
-        // Change the namespace URIs
+        // Change the utility namespace URIs
         for (var ns : m.getNamespaceList()) {
             var ouri = ns.getNamespaceURI();
             var nuri = ouri;
-            Matcher match = nspat.matcher(ouri);
+            for (int i = 0; i < utilpdat.length; i++) {
+                var match = utilpat.get(i).matcher(ouri);
+                if (match.matches()) {
+                    nuri = utilrep[i];
+                    break;
+                }
+            }
+            try {
+                ns.setNamespaceURI(nuri);
+            } catch (CMFException ex) {
+                LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
+                        ouri, nuri, ex.getMessage()));
+            }
+        }
+        // Change the NIEM model namespace URIs
+        for (var ns : m.getNamespaceList()) {
+            var ouri = ns.getNamespaceURI();
+            var nuri = ouri;            
+            Matcher match = ns5pat.matcher(ouri);
             if (match.lookingAt()) {
                 nuri = match.replaceFirst(oasis);
                 if (!nuri.endsWith("#")) nuri = nuri + "#";
-                match = vers.matcher(nuri);
+                match = version.matcher(nuri);
                 if (match.find()) nuri = match.replaceFirst("/6.0/");
             }
             try {
@@ -113,8 +153,8 @@ public class ModelToN6 {
             var prefix = sd.targetPrefix();
             var nsuri  = m.namespaceMap().getURI(prefix);
             if (null == nsuri) {
-                var util = NamespaceKind.utilityKind(sd.targetNS());
-                nsuri = NamespaceKind.getUtilityNS(util, "6");
+                var util = NamespaceKind.builtin(sd.targetNS());
+                nsuri = NamespaceKind.getBuiltinNS(util, "NIEM6", "6");
             }
             m.schemadoc().remove(olduri);
             m.schemadoc().put(nsuri, sd);
@@ -127,9 +167,9 @@ public class ModelToN6 {
             var sep = "";
             for (int i = 0; i < ctl.length; i++) {
                 var ct = ctl[i];
-                var match = nspat.matcher(ct);
+                var match = ns5pat.matcher(ct);
                 if (match.lookingAt()) ct = match.replaceFirst(oasis);
-                match = vers.matcher(ct);
+                match = version.matcher(ct);
                 if (match.find()) ct = match.replaceFirst("/6.0/");
                 nct.append(sep).append(ct);
                 sep = " ";

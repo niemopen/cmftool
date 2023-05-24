@@ -101,7 +101,7 @@ class CmdCMFtoXSD implements JCCommand {
         ModelToXSD mw = null;
         String cmdName = cob.getProgramName();
         switch (cmdName) {
-            case "m2n5x":  mw = new ModelToN5XSD(); break;
+            case "m2xn5":  mw = new ModelToN5XSD(); break;
             case "m2xref": mw = new ModelToRefXSD(); break;
             case "m2xmsg": mw = new ModelToMsgXSD(); break;
             default:

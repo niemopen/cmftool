@@ -47,13 +47,12 @@ public class CMFTool {
      
     String xtd = "src/test/resources/xsd/";
     if (0 == args.length) {
-        args = new String[]{"m2xref", "-d", "-o", xtd+"out", xtd+"twoversions-0.cmf"};
 //        args = new String[]{"x2m", "-d", "tmp/52rel/domains/biom.xsd" };
 //        args = new String[]{"x2m", "-d", xtd+"createdProp.xsd"};
 //        args = new String[]{"xval", "-d", "-s", "examples/Claim-iepd/extension/claim.xsd", "examples/Claim-iepd/xml-catalog.xml"};
 //        args = new String[]{"xval", "-d", "-o", xtd, xtd+"twoversions-0.xsd" };
 //        args = new String[]{"xcmp", xtd+"nameinfo.xsd", xtd+"out/nameinfo.xsd"};
-//        args = new String[]{"m2x", "-d", "-o", xtd+"out", xtd+"twoversions-0.cmf", xtd+"twoversions-0.cmx"};
+//        args = new String[]{"m2xn5", "-d", "-o", "src/main/CMF/model5.xsd/tmp", "src/main/CMF/model5.xsd/model.cmf"};
     }
     
 
@@ -77,7 +76,7 @@ public class CMFTool {
         jc.addCommand("m2o", cmfToOwlCmd);
         jc.addCommand("m2xref", cmfToRefXsdCmd);
         jc.addCommand("m2xmsg", cmfToMsgXsdCmd);
-        jc.addCommand("m2n5x", cmfToN5XsdCmd);
+        jc.addCommand("m2xn5", cmfToN5XsdCmd);
         jc.addCommand("n5to6", n5To6Cmd);
         jc.addCommand("x2m", xsdToCmfCmd);  
         jc.addCommand("xcanon", xsdCanon);

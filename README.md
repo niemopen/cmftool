@@ -10,6 +10,16 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 0.7-alpha.2
+
+* Now generates CMF version 0.8, which is based on NIEM 6
+* There are NIEM 6 builtin schema documents in *src/main/dist/share*.  These are based on the Wildcard Augmentation discussions.
+* **n5to6** command converts a NIEM 5 model (CMF or XSD) to NIEM 6, rewriting namespace URIs
+* CMF to XSD command split into three
+  * **m2xn5** command generates NIEM 5 XSD
+  * **m2xref** command generates NIEM 6 reference XSD
+  * **m2xmsg** command will generate NIEM 6 message XSD (not implemented yet)
+
 ## What's new in version 0.7-alpha.1
 
 * Handling code-list-instance (CLI) properties

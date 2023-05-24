@@ -82,7 +82,7 @@ public class XMLSchemaDocumentTest {
     
     @Test
     public void testParse () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/xmlschemadoc/niem-core.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/xmlschemadoc/niem-core.xsd", "");
         
         assertEquals(8, sd.namespaceDecls().size());
         assertThat(sd.namespaceDecls())
@@ -125,49 +125,49 @@ public class XMLSchemaDocumentTest {
     
     @Test
     public void testIsCore () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/niem/niem-core.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/niem-core.xsd", "");
         assertEquals(NSK_CORE, sd.schemaKind());
         assertEmptyLogs();
     }
     
     @Test
     public void testIsDomain () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/xmlschemadoc/hs.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/xmlschemadoc/hs.xsd", "");
         assertEquals(NSK_DOMAIN, sd.schemaKind());
         assertEmptyLogs();
     }
     
     @Test
     public void testIsExtension () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/xmlschemadoc/CrashDriver.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/xmlschemadoc/CrashDriver.xsd", "");
         assertEquals(NSK_EXTENSION, sd.schemaKind());
         assertEmptyLogs();
     }    
     
     @Test
     public void testIsUtility () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/niem/utility/appinfo.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/utility/appinfo.xsd", "");
         assertEquals(NSK_UTILITY, sd.schemaKind());
         assertEmptyLogs();
     }    
     
     @Test
     public void testIsOtherNIEM () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/externals-niem/adapters/geospatial.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/externals-niem/adapters/geospatial.xsd", "");
         assertEquals(NSK_OTHERNIEM, sd.schemaKind());
         assertEmptyLogs();
     }
     
     @Test
     public void testIsXML () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/niem/external/xml.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/external/xml.xsd", "");
         assertEquals(NSK_XML, sd.schemaKind());
         assertEmptyLogs();
     }
 
     @Test
     public void testNoPrefix () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd/noprefix.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/noprefix.xsd", "");
         assertEquals("http://example.com/nopr#e-fix/5.0/", sd.targetNamespace());
         assertEmptyLogs();
     }

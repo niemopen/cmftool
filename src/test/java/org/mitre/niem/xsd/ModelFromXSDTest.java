@@ -95,7 +95,7 @@ public class ModelFromXSDTest {
     @Test
     public void testCreateModel () throws Exception {
         ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel("src/test/resources/xsd/externals.xsd");
+        Model m = mfact.createModel("src/test/resources/xsd5/externals.xsd");
         
         List<Namespace> nslist = m.getNamespaceList();
         assertThat(nslist)
@@ -109,7 +109,7 @@ public class ModelFromXSDTest {
     @DisplayName("Augmentation")
     public void testAugmentation () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel("src/test/resources/xsd/augment-0.xsd");  
+        Model m = mfact.createModel("src/test/resources/xsd5/augment-0.xsd");  
         
         assertThat(m.getNamespaceList())
                 .hasSize(4)
@@ -196,7 +196,7 @@ public class ModelFromXSDTest {
     
     @Test
     public void testAugmentProp () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/augmentProp.xsd" };
+        String[] args = { "src/test/resources/xsd5/augmentProp.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -210,7 +210,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("CLI")
     public void testCodeListInstance () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/cli.xsd" };
+        String[] args = { "src/test/resources/xsd5/cli.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -229,7 +229,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("CLSA")
     public void testCodeListSchemaAppinfo () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/clsa.xsd" };
+        String[] args = { "src/test/resources/xsd5/clsa.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -254,7 +254,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Code list")
     public void testCodelist () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/codelist.xsd" };
+        String[] args = { "src/test/resources/xsd5/codelist.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -289,11 +289,25 @@ public class ModelFromXSDTest {
         assertNull(m.getDatatype("nc:EmploymentPositionBasisCodeSimpleType"));
         assertEmptyLogs();
     }
+
+    @Test
+    @DisplayName("Code list")
+    public void testCodelistNoSType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd5/codelistNoSType.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        var xstoken  = m.getDatatype("xs:token");
+        var restrict = m.getDatatype("cmf:NamespaceKindCodeType").getRestrictionOf();
+        assertThat(restrict.getDatatype()).isEqualTo(xstoken);
+        assertThat(restrict.getFacetList())
+                .extracting(Facet::getStringVal)
+                .contains("EXTENSION", "DOMAIN");
+    }
     
     @Test
     @DisplayName("Code list ClassType")
     public void testCodelistClasstype () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/codelistClassType.xsd" };
+        String[] args = { "src/test/resources/xsd5/codelistClassType.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args); 
        
@@ -351,7 +365,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Code list Union")
     public void testCodelistUnion () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/codelistUnion.xsd" };
+        String[] args = { "src/test/resources/xsd5/codelistUnion.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -372,7 +386,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Complex content")
     public void testComplexContent () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/complexContent.xsd" };
+        String[] args = { "src/test/resources/xsd5/complexContent.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -415,7 +429,7 @@ public class ModelFromXSDTest {
 
     @Test
     public void testCrossNSstype () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/crossNSstype.xsd" };
+        String[] args = { "src/test/resources/xsd5/crossNSstype.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -436,7 +450,7 @@ public class ModelFromXSDTest {
     
     @Test
     public void testDefaultFacets () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/defaultFacets.xsd" };
+        String[] args = { "src/test/resources/xsd5/defaultFacets.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         for (var c : m.getComponentList()) {
@@ -452,7 +466,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("appinfo:deprecated")
     public void testDeprecated () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/deprecated.xsd" };
+        String[] args = { "src/test/resources/xsd5/deprecated.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -490,7 +504,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("documenation")
     public void testDocumentation () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/complexContent.xsd" };
+        String[] args = { "src/test/resources/xsd5/complexContent.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -503,7 +517,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Complex content")
     public void testExtensionOf () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/complexContent.xsd" };
+        String[] args = { "src/test/resources/xsd5/complexContent.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -520,7 +534,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("External namespace")
     public void testExternals () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/externals.xsd" };
+        String[] args = { "src/test/resources/xsd5/externals.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
 
@@ -548,7 +562,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("xml:lang")
     public void testLanguage () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/augment-0.xsd" };
+        String[] args = { "src/test/resources/xsd5/augment-0.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         for (var sd : m.schemadoc().values()) {
@@ -560,7 +574,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("List type")
     public void testListType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/list.xsd" };
+        String[] args = { "src/test/resources/xsd5/list.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -578,7 +592,7 @@ public class ModelFromXSDTest {
 
     @Test
     public void testLiteral_0 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/literal-0.xsd" };
+        String[] args = { "src/test/resources/xsd5/literal-0.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -592,7 +606,7 @@ public class ModelFromXSDTest {
  
     @Test
     public void testLiteral_1 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/literal-1.xsd" };
+        String[] args = { "src/test/resources/xsd5/literal-1.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -617,7 +631,7 @@ public class ModelFromXSDTest {
  
     @Test
     public void testLiteral_2 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/literal-2.xsd" };
+        String[] args = { "src/test/resources/xsd5/literal-2.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -630,7 +644,7 @@ public class ModelFromXSDTest {
      
     @Test
     public void testLiteral_3 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/literal-3.xsd" };
+        String[] args = { "src/test/resources/xsd5/literal-3.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -671,7 +685,7 @@ public class ModelFromXSDTest {
  
     @Test
     public void testLiteral_4 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/literal-4.xsd" };
+        String[] args = { "src/test/resources/xsd5/literal-4.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -696,7 +710,7 @@ public class ModelFromXSDTest {
     
     @Test
     public void testLiteral_5 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/literal-5.xsd" };
+        String[] args = { "src/test/resources/xsd5/literal-5.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -715,7 +729,7 @@ public class ModelFromXSDTest {
     
     @Test
     public void testLiteral_6 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/literal-6.xsd" };
+        String[] args = { "src/test/resources/xsd5/literal-6.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -737,7 +751,7 @@ public class ModelFromXSDTest {
     
     @Test
     public void testLiteral_7 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/literal-7.xsd" };
+        String[] args = { "src/test/resources/xsd5/literal-7.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -760,7 +774,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Namespace prefix prioritization")
     public void testNamespace_1 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/namespace-1.xsd" };
+        String[] args = { "src/test/resources/xsd5/namespace-1.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -773,7 +787,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Namespace prefix munging")
     public void testNamespace_2 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/namespace-2.xsd" };
+        String[] args = { "src/test/resources/xsd5/namespace-2.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -786,7 +800,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Nillable")
     public void testNillable () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/proxy.xsd" };
+        String[] args = { "src/test/resources/xsd5/proxy.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         
@@ -803,7 +817,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Proxy")
     public void testProxy () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/proxy.xsd" };
+        String[] args = { "src/test/resources/xsd5/proxy.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -828,7 +842,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Restriction")
     public void testRestriction () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/restriction.xsd" };
+        String[] args = { "src/test/resources/xsd5/restriction.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -853,7 +867,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("TwoVersions")
     public void testTwoVersions () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/twoversions-0.xsd" };
+        String[] args = { "src/test/resources/xsd5/twoversions-0.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -868,7 +882,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("Union type")
     public void testUnionType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/union.xsd" };
+        String[] args = { "src/test/resources/xsd5/union.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        
@@ -890,7 +904,7 @@ public class ModelFromXSDTest {
     
     @Test
     public void testWhitespace () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/whitespace.xsd" };
+        String[] args = { "src/test/resources/xsd5/whitespace.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);   
         
@@ -926,7 +940,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("xml:lang")
     public void testXMLlang () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd/xml-lang.xsd" };
+        String[] args = { "src/test/resources/xsd5/xml-lang.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
        

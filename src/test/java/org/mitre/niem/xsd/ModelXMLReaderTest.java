@@ -63,7 +63,7 @@ public class ModelXMLReaderTest {
  @Test
     public void testAttributeIndicator () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/extension.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/extension.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -86,7 +86,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testSchemaDocument () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/codetype.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/codetype.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -122,7 +122,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testExtensionOf () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/extension.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/extension.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -157,7 +157,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testCLSA () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/clsa.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/clsa.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -192,7 +192,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testCodetype () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/codeType.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/codeType.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -254,7 +254,7 @@ public class ModelXMLReaderTest {
    @Test
     public void testDeprecated () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/deprecated.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/deprecated.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -275,7 +275,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testFacets () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/facets.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/facets.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -330,7 +330,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testIsRefAtt () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/isRefAtt.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/isRefAtt.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -349,7 +349,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testIsRelProp () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/relProp.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/relProp.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -368,7 +368,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testListOf () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/listOf.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/list.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -383,7 +383,7 @@ public class ModelXMLReaderTest {
         assertNotNull(m.getNamespaceByPrefix("nc"));
         assertNotNull(m.getNamespaceByPrefix("xs"));
         
-        assertEquals(4, m.getComponentList().size());
+        assertEquals(2, m.getComponentList().size());
  
         Datatype dt = m.getDatatype("nc:TokenListType");
         assertNotNull(dt);
@@ -395,7 +395,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testLanguage () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/externals.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/externals.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -417,7 +417,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testProxy () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/proxy.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/proxy.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -437,7 +437,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testUnionOf () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/unionOf.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/union.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -468,7 +468,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testExternals () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/externals.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/externals.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -513,7 +513,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testAugmentations () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/augment-0.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/augment-0.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -585,7 +585,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testMissingIDREF () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/missingIDRef.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/missingIDRef.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -601,7 +601,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testMismatchIDRef () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf/mismatchIDRef.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/mismatchIDRef.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {

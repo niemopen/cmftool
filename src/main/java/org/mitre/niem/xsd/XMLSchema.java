@@ -91,7 +91,7 @@ public class XMLSchema {
      */
     public List<String> catalogs ()          { return catalogs; }
     /**
-     * Returns the list of file URIs for the intial schema documents assembled
+     * Returns the list of file URIs for the initial schema documents assembled
      * into the XML schema.  The list includes the schema document file paths, 
      * schema document file URIs, and resolved namespaced URIs found in the
      * constructor's arguments.
@@ -453,7 +453,7 @@ public class XMLSchema {
                 }
             }
         }
-        // Now we can mark the esternal namespaces
+        // Now we can mark the external namespaces
         LOG.debug("parseSchemaPile: marking externals");
         LOG.debug(String.format("sdocs.size() = %d", sdocs.size()));
         for (var sd : sdocs.values()) {

@@ -127,6 +127,7 @@ public class XStringObject extends XObjectType {
             if ("unbounded".equals(val)) xhp.getObject().setMaxUnbounded(true);
             else xhp.getObject().setMaxOccurs(toInt(val)); 
             break;
+        case "OrderedPropertyIndicator": xhp.getObject().setOrderedProperties("true".equals(val)); break;
         default:
                 LOG.error(String.format("can't add '%s' to HasProperty", this.getComponentLname()));
                 break;

@@ -51,27 +51,9 @@ public class ModelXMLWriterTest {
     private static final String testDirPath = "src/test/resources";  
     
     @Test
-    public void testWriteAugmentRec () throws TransformerException, SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel("src/test/resources/xsd/augment-0.xsd");     
-        
-            File outF = null;
-            PrintWriter outPW = null;
-            ModelXMLWriter mw = new ModelXMLWriter();
-            try {
-                outF = File.createTempFile("testWriteXML", ".cmf");
-                outPW = new PrintWriter(outF);
-                mw.writeXML(m, outPW);    
-                outPW.close();
-            } catch (Exception ex) {
-                fail("Can't create output model file");
-            }        
-    }
-    
-    @Test
     public void testWriteXML () throws TransformerException {
         FileInputStream cmfIS = null;
-        File cmfDir = new File(testDirPath, "cmf");
+        File cmfDir = new File(testDirPath, "cmf5");
         String[] testFiles = cmfDir.list(new SuffixFileFilter(".cmf"));
 //        String[] testFiles = { "externals.cmf" };
         for (String tfn : testFiles) {
@@ -97,38 +79,6 @@ public class ModelXMLWriterTest {
                 String tpath = outF.getAbsolutePath();
                 boolean del = outF.delete();
                 assertNull(result, tfn);
-            } catch (Exception ex) {
-                fail("Can't create output model file");
-            }
-        }
-    }
-
-    @Test
-    public void reWriteXML () throws TransformerException {
-        FileInputStream cmfIS = null;
-        File cmfDir = new File(testDirPath, "cmf");
-//        String[] testFiles = cmfDir.list(new SuffixFileFilter(".cmf"));
-        String[] testFiles = { "unionOf.cmf" };
-        for (String tfn : testFiles) {
-            File inF = new File(cmfDir, tfn);
-            try {
-                cmfIS = new FileInputStream(inF);
-            } catch (FileNotFoundException ex) {
-                fail("Where is my input file?");
-            }
-            ModelXMLReader mr = new ModelXMLReader();
-            Model m = mr.readXML(cmfIS);  
-            //if (!mr.getMessages().isEmpty()) continue;
-            
-            String ofn = tfn + "-new";
-            File outF = null;
-            PrintWriter outPW = null;
-            ModelXMLWriter mw = new ModelXMLWriter();
-            try {
-                outF = new File(cmfDir, ofn);
-                outPW = new PrintWriter(outF);
-                mw.writeXML(m, outPW);    
-                outPW.close();
             } catch (Exception ex) {
                 fail("Can't create output model file");
             }

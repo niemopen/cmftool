@@ -3,12 +3,12 @@
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:c="urn:oasis:names:tc:entity:xmlns:xml:catalog"
            prefer="public">
-  <c:uri name="http://example.com/external-content/" uri="../xsd/externals.xsd"/>
+  <c:uri name="http://example.com/external-content/" uri="../xsd5/externals.xsd"/>
   <c:uri name="http://example.com/remote-resource/"  uri="http://example.com/something/"/>
   <c:uri name="http://example.com/other-remote/"     uri="file://example.com/something/"/>
-  <c:uri name="http://example.com/not-xsd/"          uri="../cmf/facets.cmf"/>
+  <c:uri name="http://example.com/not-xsd/"          uri="../cmf5/facets.cmf"/>
   <c:uri name="http://example.com/no-such-file/"     uri="../nosuchfile"/>
-  <c:uri name="http://example.com/Foo/1.0/"          uri="../xsd/nameinfo.xsd"/>  <!-- wrong target namespace -->
+  <c:uri name="http://example.com/Foo/1.0/"          uri="../xsd5/nameinfo.xsd"/>  <!-- wrong target namespace -->
 </c:catalog>  
 <c:nextCatalog catalog="niem/xml-catalog.xml"/>
 </c:catalog>
