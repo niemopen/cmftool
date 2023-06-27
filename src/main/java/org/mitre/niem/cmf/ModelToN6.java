@@ -24,7 +24,9 @@
 package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
@@ -64,6 +66,8 @@ public class ModelToN6 {
     private static final Pattern ns5pat    = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/");
     private static final Pattern version   = Pattern.compile("/\\d\\.\\d/");
     
+    private Map<String,String> newURI = new HashMap<>();
+    
     public ModelToN6 () { 
         for (int i = 0; i < utilpdat.length; i++) 
             utilpat.add(Pattern.compile(utilpdat[i]));
@@ -84,6 +88,7 @@ public class ModelToN6 {
             }
             try {
                 ns.setNamespaceURI(nuri);
+                newURI.put(ouri, nuri);                
             } catch (CMFException ex) {
                 LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
                         ouri, nuri, ex.getMessage()));
@@ -102,6 +107,7 @@ public class ModelToN6 {
             }
             try {
                 ns.setNamespaceURI(nuri);
+                newURI.put(ouri, nuri);   
             } catch (CMFException ex) {
                 LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
                         ouri, nuri, ex.getMessage()));
@@ -121,15 +127,26 @@ public class ModelToN6 {
             coreNS.setDefinition("NIEM Core");
             m.addNamespace(coreNS);
         }
-        // Add nc:ObjectType and nc:AssociationType if necessary
+        // Add nc:ObjectType if necessary
         var ncObjectType = m.getClassType(coreURI, "ObjectType");
         if (null == ncObjectType) {
             ncObjectType = new ClassType(coreNS, "ObjectType");
             ncObjectType.setDefinition("a data type for a thing with its own lifespan that has some existence.");
+            ncObjectType.setIsAbstract(true);
+            ncObjectType.setIsAugmentable(true);
             m.addComponent(ncObjectType);
         }
+        // Add nc:AssociationType if there are associations and it's not there
+        var haveAssociations = false;
+        for (var c : m.getComponentList()) {
+            var cl = c.asClassType();
+            if (null != cl && cl.getName().endsWith("AssociationType")) {
+                haveAssociations = true;
+                break;
+            }
+        }
         var ncAssocType = m.getClassType(coreURI, "AssociationType");
-        if (null == ncAssocType) {
+        if (haveAssociations && null == ncAssocType) {
             ncAssocType = new ClassType(coreNS, "AssociationType");
             ncAssocType.setDefinition("A data type for a relationship between two or more objects, including any properties of that relationship.");
             m.addComponent(ncAssocType);            
@@ -151,7 +168,7 @@ public class ModelToN6 {
         for (var sd : sdocs) {
             var olduri = sd.targetNS();
             var prefix = sd.targetPrefix();
-            var nsuri  = m.namespaceMap().getURI(prefix);
+            var nsuri  = newURI.get(olduri);
             if (null == nsuri) {
                 var util = NamespaceKind.builtin(sd.targetNS());
                 nsuri = NamespaceKind.getBuiltinNS(util, "NIEM6", "6");

@@ -763,6 +763,9 @@ public abstract class ModelToXSD {
         nsPropdecls.put(p.getName(), pe);
     }
     
+    // Override when writing a message schema
+    protected void addReferenceAttributes (Document dom, Element pe, Property p) { }
+    
     // Use this to add annotation and documentation elements to a schema component.
     // Returns the annotation element (to add appinfo, later).
     // Returns null (and does nothing) if the documentation string is null or blank.

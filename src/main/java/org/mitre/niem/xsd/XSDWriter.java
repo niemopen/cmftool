@@ -113,6 +113,10 @@ public class XSDWriter {
                         i = reorder.length;
                     }
                 }
+                // Rewrite the xs:schema element to make it pretty.
+                // targetNamespace comes first
+                // then namespace declarations, in prefix order, except xs and xsi are last
+                // then everything else, in alphabetical order
                 if (null != line && "xs:schema".equals(tag)) {
                     w.write("<xs:schema");
                     Map<String,String>tmap = keyValMap(res);
@@ -120,9 +124,13 @@ public class XSDWriter {
                         w.write("\n  " + tmap.get("targetNamespace"));
                         tmap.remove("targetNamespace");
                     }
+                    var xsURI  = tmap.remove("xmlns:xs");
+                    var xsiURI = tmap.remove("xmlns:xsi");
                     for (Map.Entry<String,String>me : tmap.entrySet()) {
                         if (me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
                     }
+                    if (null != xsURI)  w.write("\n  " + xsURI);
+                    if (null != xsiURI) w.write("\n  " + xsiURI);
                     for (Map.Entry<String,String>me : tmap.entrySet()) {
                         if (!me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
                     }     
