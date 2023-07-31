@@ -30,12 +30,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTBUILTIN;
 
 /**
  * A class to convert a Model object to the NIEM 6 architecture
  * Rewrites namespace URIs to the OASIS namespaces
- * Adds nc:ObjectType, nc:AssociationType, and sets object inheritance
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -43,6 +42,8 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 public class ModelToN6 {
     static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(ModelToN6.class);
     
+    // Replacements for old NIEM builtin namespace URIs:
+    // URI matching utilpat[N] is replaced with utilrep[N]
     private static final List<Pattern> utilpat = new ArrayList<>();
     private static final String[] utilpdat = {
       "http://release.niem.gov/niem/appinfo/\\d\\.\\d/",   
@@ -53,20 +54,17 @@ public class ModelToN6 {
       "http://release.niem.gov/niem/structures/\\d\\.\\d/"
     };
     private static final String[] utilrep = {      
-      "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/#",   
-      "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/#",
-      "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/#",
-      "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/#",
-      "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/#",
-      "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#",      
+      "http://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
+      "http://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
+      "http://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
+      "http://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/",
+      "http://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
+      "http://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",      
     };
     
-    private static final String coreURI    = "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/#";
-    private static final String oasis      = "https://docs.oasis-open.org/niemopen/ns/model/";
-    private static final Pattern ns5pat    = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/");
-    private static final Pattern version   = Pattern.compile("/\\d\\.\\d/");
-    
-    private Map<String,String> newURI = new HashMap<>();
+    private static final String OASIS_PREFIX       = "http://docs.oasis-open.org/niemopen/ns/model/";
+    private static final Pattern N5URI_PATTERN     = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/");
+    private static final Pattern N5VERSION_PATTERN = Pattern.compile("/\\d\\.\\d/");
     
     public ModelToN6 () { 
         for (int i = 0; i < utilpdat.length; i++) 
@@ -75,10 +73,15 @@ public class ModelToN6 {
     
     public void convert (Model m) throws CMFException {
         
-        // Change the utility namespace URIs
-        for (var ns : m.getNamespaceList()) {
-            var ouri = ns.getNamespaceURI();
-            var nuri = ouri;
+        // Change namespace URI in model namespace objects
+        // Iterate over copied list of namespace objects 
+        // Remember URI changes, fix SchemaDocument objeccts later
+        Map<String,String> newURI = new HashMap<>();
+        List<Namespace> nslist    = new ArrayList<>();
+        nslist.addAll(m.getNamespaceList());
+        for (var ns : nslist) {
+            String ouri = ns.getNamespaceURI();
+            String nuri = null;
             for (int i = 0; i < utilpdat.length; i++) {
                 var match = utilpat.get(i).matcher(ouri);
                 if (match.matches()) {
@@ -86,97 +89,46 @@ public class ModelToN6 {
                     break;
                 }
             }
-            try {
-                ns.setNamespaceURI(nuri);
-                newURI.put(ouri, nuri);                
-            } catch (CMFException ex) {
-                LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
-                        ouri, nuri, ex.getMessage()));
+            // No match with utility NS URI, try NIEM model
+            if (null == nuri) {
+                Matcher match = N5URI_PATTERN.matcher(ouri);
+                if (match.lookingAt()) {
+                    nuri = match.replaceFirst(OASIS_PREFIX);
+                    match = N5VERSION_PATTERN.matcher(nuri);
+                    if (match.find()) nuri = match.replaceFirst("/6.0/");
+                }                
             }
-        }
-        // Change the NIEM model namespace URIs
-        for (var ns : m.getNamespaceList()) {
-            var ouri = ns.getNamespaceURI();
-            var nuri = ouri;            
-            Matcher match = ns5pat.matcher(ouri);
-            if (match.lookingAt()) {
-                nuri = match.replaceFirst(oasis);
-                if (!nuri.endsWith("#")) nuri = nuri + "#";
-                match = version.matcher(nuri);
-                if (match.find()) nuri = match.replaceFirst("/6.0/");
+            // Make the change, if any
+            if (null != nuri) {
+                try {
+                    ns.setNamespaceURI(nuri);
+                    newURI.put(ouri, nuri);                
+                } catch (CMFException ex) {
+                    LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
+                            ouri, nuri, ex.getMessage()));
+                }
             }
-            try {
-                ns.setNamespaceURI(nuri);
-                newURI.put(ouri, nuri);   
-            } catch (CMFException ex) {
-                LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
-                        ouri, nuri, ex.getMessage()));
-            }
-        }
-        // Find NIEM Core namespace object
-        Namespace coreNS = null;
-        for (var ns : m.getNamespaceList()) {
-            if (NSK_CORE == NamespaceKind.kind(ns.getNamespaceURI())) {
-                coreNS = ns;
-                break;
-            }
-        }
-        // Create NIEM Core namespace if necessary
-        if (null == coreNS) {
-            coreNS = new Namespace("nc", coreURI);
-            coreNS.setDefinition("NIEM Core");
-            m.addNamespace(coreNS);
-        }
-        // Add nc:ObjectType if necessary
-        var ncObjectType = m.getClassType(coreURI, "ObjectType");
-        if (null == ncObjectType) {
-            ncObjectType = new ClassType(coreNS, "ObjectType");
-            ncObjectType.setDefinition("a data type for a thing with its own lifespan that has some existence.");
-            ncObjectType.setIsAbstract(true);
-            ncObjectType.setIsAugmentable(true);
-            m.addComponent(ncObjectType);
-        }
-        // Add nc:AssociationType if there are associations and it's not there
-        var haveAssociations = false;
-        for (var c : m.getComponentList()) {
-            var cl = c.asClassType();
-            if (null != cl && cl.getName().endsWith("AssociationType")) {
-                haveAssociations = true;
-                break;
-            }
-        }
-        var ncAssocType = m.getClassType(coreURI, "AssociationType");
-        if (haveAssociations && null == ncAssocType) {
-            ncAssocType = new ClassType(coreNS, "AssociationType");
-            ncAssocType.setDefinition("A data type for a relationship between two or more objects, including any properties of that relationship.");
-            m.addComponent(ncAssocType);            
-        }
-        // All NIEM classes extend nc:ObjectType or nc:AssociationType
-        for (var c : m.getComponentList()) {
-            var cl = c.asClassType();
-            if (null == cl) continue;
-            if (ncObjectType == cl || ncAssocType == cl) continue;
-            if (null == cl.getExtensionOfClass()) {
-                var cname = cl.getName();
-                if (cname.endsWith("AssociationType")) cl.setExtensionOfClass(ncAssocType);
-                else cl.setExtensionOfClass(ncObjectType);
-            }   
         }
         // Fix the SchemaDocument objects
         var sdocs = new ArrayList<SchemaDocument>();
         sdocs.addAll(m.schemadoc().values());
         for (var sd : sdocs) {
             var olduri = sd.targetNS();
-            var prefix = sd.targetPrefix();
             var nsuri  = newURI.get(olduri);
+            
+            // Some SchemaDocument objects don't have corresponding Namespace objects
+            // Fix them here
             if (null == nsuri) {
-                var util = NamespaceKind.builtin(sd.targetNS());
-                nsuri = NamespaceKind.getBuiltinNS(util, "NIEM6", "6");
+                var builtin = NamespaceKind.builtin(sd.targetNS());
+                if (builtin < NIEM_NOTBUILTIN) 
+                nsuri = NamespaceKind.getBuiltinNS(builtin, "NIEM6", "6");
             }
             m.schemadoc().remove(olduri);
             m.schemadoc().put(nsuri, sd);
             sd.setTargetNS(nsuri);
             sd.setNIEMversion("6");
+            
+            // Change the conformance targets to NIEM 6
             var nct = new StringBuilder();
             var cts = sd.confTargets();
             if (null == cts) continue;
@@ -184,9 +136,9 @@ public class ModelToN6 {
             var sep = "";
             for (int i = 0; i < ctl.length; i++) {
                 var ct = ctl[i];
-                var match = ns5pat.matcher(ct);
-                if (match.lookingAt()) ct = match.replaceFirst(oasis);
-                match = version.matcher(ct);
+                var match = N5URI_PATTERN.matcher(ct);
+                if (match.lookingAt()) ct = match.replaceFirst(OASIS_PREFIX);
+                match = N5VERSION_PATTERN.matcher(ct);
                 if (match.find()) ct = match.replaceFirst("/6.0/");
                 nct.append(sep).append(ct);
                 sep = " ";

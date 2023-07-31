@@ -84,10 +84,10 @@ import static org.mitre.niem.cmf.NamespaceKind.NIEM_APPINFO;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_CLI;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_CLSA;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_CTAS;
-import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTUTILITY;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_PROXY;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
-import static org.mitre.niem.cmf.NamespaceKind.NIEM_UTILITY_COUNT;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTBUILTIN;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_BUILTIN_COUNT;
 
 
 /**
@@ -198,8 +198,8 @@ public abstract class ModelToXSD {
         Collections.reverse(allVers);   // highest versions first
         var arch = getArchitecture();
         for (String nv : allVers) {
-            for (int uk = 0; uk < NIEM_UTILITY_COUNT; uk++) {
-                if (NIEM_NOTUTILITY == uk) continue;
+            for (int uk = 0; uk < NIEM_BUILTIN_COUNT; uk++) {
+                if (NIEM_NOTBUILTIN == uk) continue;
                 String nsuri   = NamespaceKind.getBuiltinNS(uk, arch, nv);
                 String uprefix;
                 if (null == nsuri) continue;
@@ -228,7 +228,7 @@ public abstract class ModelToXSD {
         }
         // Now generate new unique file names for the utility schema documents.
         for (var vers : allVers) {
-            for (int util = 0; util < NIEM_NOTUTILITY; util++) {
+            for (int util = 0; util < NIEM_NOTBUILTIN; util++) {
                 if (NIEM_CLI == util) continue;
                 var nsuri = NamespaceKind.getBuiltinNS(util, arch, vers);
                 if (null == nsuri) continue;
@@ -954,7 +954,7 @@ public abstract class ModelToXSD {
             if (XML_NS_URI.equals(nsuri)) hint = "xml.xsd";
             else {
                 int util = NamespaceKind.builtin(nsuri);
-                if (util < NIEM_NOTUTILITY) hint = NamespaceKind.defaultBuiltinFN(util);
+                if (util < NIEM_NOTBUILTIN) hint = NamespaceKind.defaultBuiltinFN(util);
                 else {
                     var m = nsnamePat.matcher(nsuri);
                     if (m.find()) hint = m.group(1);

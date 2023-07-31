@@ -137,17 +137,16 @@ public class NamespaceKind {
     public final static int NIEM_CTAS = 3;
     public final static int NIEM_PROXY = 4;
     public final static int NIEM_STRUCTURES = 5;
-    public final static int NIEM_NOTUTILITY = 6;
-    public final static int NIEM_UTILITY_COUNT = 7;
+    public final static int NIEM_NOTBUILTIN = 6;
+    public final static int NIEM_BUILTIN_COUNT = 7;
     
-    private final static Map<String,Integer> nscode2builtin = Map.of(
-        "appinfo",    NIEM_APPINFO,
+    private final static Map<String,Integer> nscode2builtin = Map.of("appinfo",    NIEM_APPINFO,
         "cli",        NIEM_CLI,
         "clsa",       NIEM_CLSA,
         "ct",         NIEM_CTAS,
         "xs-proxy",   NIEM_PROXY,
         "structures", NIEM_STRUCTURES,
-        "notutility", NIEM_NOTUTILITY
+        "notbuiltin", NIEM_NOTBUILTIN
     );
     private final static String[] nsbuiltin2code = {
         "appinfo",      // NIEM_APPINFO,
@@ -156,7 +155,7 @@ public class NamespaceKind {
         "ct",           // NIEM_CTAS,
         "xs-proxy",     // NIEM_PROXY,
         "structures",   // NIEM_STRUCTURES,
-        "notutility",   // NIEM_NOTUTILITY        
+        "notbuiltin",   // NIEM_NOTBUILTIN 
     };
     // Default schema document filenames are properly not part of CMF, but it's
     // way too much trouble to put them anywhere else.
@@ -167,7 +166,7 @@ public class NamespaceKind {
         "conformanceTargets.xsd",           // NIEM_CTAS,
         "niem-xs.xsd",                      // NIEM_PROXY,
         "structures.xsd",                   // NIEM_STRUCTURES,
-        "notutility",                       // NIEM_NOTUTILITY        
+        "notbuiltin",                       // NIEM_NOTBUILTIN     
     };
 
     // Definitions for all the builtin namespaces in all known versions
@@ -179,11 +178,11 @@ public class NamespaceKind {
     private final static String[] builtinTab = { 
     // arch    kind         builtin      vers  uri
     // ----    ----         -------      ----  ---
-      "NIEM6", "UTILITY",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/#",   
-      "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/#",
-      "NIEM6", "UTILITY",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/#",
-      "NIEM6", "UTILITY",   "xs-proxy",   "6", "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/#",
-      "NIEM6", "UTILITY",   "structures", "6", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#",
+      "NIEM6", "UTILITY",   "appinfo",    "6", "http://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
+      "NIEM6", "OTHERNIEM", "cli",        "6", "http://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
+      "NIEM6", "UTILITY",   "clsa",       "6", "http://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
+      "NIEM6", "UTILITY",   "xs-proxy",   "6", "http://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
+      "NIEM6", "UTILITY",   "structures", "6", "http://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
       
       "NIEM5", "UTILITY",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
@@ -204,15 +203,15 @@ public class NamespaceKind {
       "NIEM5", "UTILITY",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/",            
 
       // These must come at the end of the list
-      "NIEM6", "UTILITY",   "ct",         "",  "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/#",
+      "NIEM6", "UTILITY",   "ct",         "",  "http://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/",
       "NIEM5", "UTILITY",   "ct",         "",  "http://release.niem.gov/niem/conformanceTargets/3.0/",
     };
     
     // Patterns for recognizing NIEM model namespaces
     private final static String[] nspats = {
-      "NIEM6", "DOMAIN",     "https://docs\\.oasis-open\\.org/niemopen/ns/model/domains/.*/[\\d]+([\\d.]+)/#?",
-      "NIEM6", "CORE",       "https://docs\\.oasis-open\\.org/niemopen/ns/model/niem-core/[\\d]+([\\d.]+)/#?",
-      "NIEM6", "OTHERNIEM",  "https://docs\\.oasis-open\\.org/niemopen/ns/model/.*/[\\d]+([\\d.]+)/#?",
+      "NIEM6", "DOMAIN",     "http://docs\\.oasis-open\\.org/niemopen/ns/model/domains/.*/[\\d]+([\\d.]+)/",
+      "NIEM6", "CORE",       "http://docs\\.oasis-open\\.org/niemopen/ns/model/niem-core/[\\d]+([\\d.]+)/",
+      "NIEM6", "OTHERNIEM",  "http://docs\\.oasis-open\\.org/niemopen/ns/model/.*/[\\d]+([\\d.]+)/",
 
       "NIEM5", "DOMAIN",     "http://((publication)|(release))\\.niem\\.gov/niem/domains/.*/[\\d]+([\\d.]+)/#?",
       "NIEM5", "CORE",       "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/[\\d]+([\\d.]+)/#?",
@@ -221,7 +220,7 @@ public class NamespaceKind {
 
     // Patterns for recognizing architecture from conformance target assertions
     private final static String[] arches = {
-        "NIEM6", "https://docs.oasis-open.org/niemopen/ns/specification/naming-and-design-rules(?=/)",
+        "NIEM6", "http://docs.oasis-open.org/niemopen/ns/specification/naming-and-design-rules(?=/)",
         "NIEM5", "http://reference.niem.gov/niem/specification/naming-and-design-rules(?=/)"
     };
     
@@ -245,8 +244,8 @@ public class NamespaceKind {
             var rec     = new NSuridat(arch, kind, util, vers);
             uridat.put(uri, rec);
         }
-        uridat.put(XML_NS_URI, new NSuridat("", NSK_XML, NIEM_NOTUTILITY, ""));
-        uridat.put(W3C_XML_SCHEMA_NS_URI, new NSuridat("", NSK_XSD, NIEM_NOTUTILITY, ""));
+        uridat.put(XML_NS_URI, new NSuridat("", NSK_XML, NIEM_NOTBUILTIN, ""));
+        uridat.put(W3C_XML_SCHEMA_NS_URI, new NSuridat("", NSK_XSD, NIEM_NOTBUILTIN, ""));
 
         uripat = new ArrayList<>();
         for (int i = 0; i < nspats.length; i += 3) {
@@ -286,12 +285,12 @@ public class NamespaceKind {
             if (m.matches()) {
                 var arch = prec.getValue0();
                 int kind = prec.getValue1();
-                var rec   = new NSuridat(arch, kind, NIEM_NOTUTILITY, "");
+                var rec   = new NSuridat(arch, kind, NIEM_NOTBUILTIN, "");
                 uridat.put(nsuri, rec);
                 return rec;
             }
         }
-        var rec = new NSuridat("", NSK_UNKNOWN, NIEM_NOTUTILITY, "");
+        var rec = new NSuridat("", NSK_UNKNOWN, NIEM_NOTBUILTIN, "");
         uridat.put(nsuri, rec);
         return rec;
     }

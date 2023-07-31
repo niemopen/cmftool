@@ -216,7 +216,7 @@ public class ModelXMLReader {
         
         private XObjectType newObject (Model m, XObjectType p, String ens, String eln, Attributes atts, int lineNum) {
             XObjectType o = null;
-            if (ens.startsWith(CMF_NS_URI_PREFIX)) {
+            if (ens.startsWith(CMF_NS_URI_PREFIX)) {    // try to read any version of CMF
                 switch (eln) {
                 case "AugmentationNamespace": o = new XNamespace(m, p, ens, eln, atts, lineNum); break;                
                 case "AugmentRecord":         o = new XAugmentRecord(m, p, ens, eln, atts, lineNum); break;
