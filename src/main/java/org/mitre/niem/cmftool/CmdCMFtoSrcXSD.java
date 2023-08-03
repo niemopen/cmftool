@@ -32,11 +32,11 @@ import com.beust.jcommander.Parameters;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "write a NIEM model instance as a NIEM 6 reference schema")
+@Parameters(commandDescription = "write a NIEM model as a NIEM 6 source schema (REF, EXT, SUB)")
 
-public class CmdCMFtoRefXSD extends CmdCMFtoXSD {
+public class CmdCMFtoSrcXSD extends CmdCMFtoXSD {
 
-    CmdCMFtoRefXSD(JCommander jc) {
+    CmdCMFtoSrcXSD(JCommander jc) {
         super(jc);
     }
     
@@ -45,7 +45,7 @@ public class CmdCMFtoRefXSD extends CmdCMFtoXSD {
         JCommander jc = new JCommander(this);
         CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("cmf2refXSD");
+        jc.setProgramName("cmf2srcXSD");
         jc.parse(args);
         run(jc);
     }

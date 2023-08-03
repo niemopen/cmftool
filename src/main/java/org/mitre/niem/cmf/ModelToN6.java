@@ -62,9 +62,10 @@ public class ModelToN6 {
       "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",      
     };
     
-    private static final String OASIS_PREFIX       = "https://docs.oasis-open.org/niemopen/ns/model/";
-    private static final Pattern N5URI_PATTERN     = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/");
-    private static final Pattern N5VERSION_PATTERN = Pattern.compile("/\\d\\.\\d/");
+    private static final String OASIS_PREFIX   = "https://docs.oasis-open.org/niemopen/ns/";
+    private static final Pattern N5SPEC_PAT    = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/specification/");
+    private static final Pattern N5MODEL_PAT   = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/");
+    private static final Pattern N5VERSION_PAT = Pattern.compile("/5\\.0/");
     
     public ModelToN6 () { 
         for (int i = 0; i < utilpdat.length; i++) 
@@ -89,12 +90,21 @@ public class ModelToN6 {
                     break;
                 }
             }
-            // No match with utility NS URI, try NIEM model
+            // No match with utility NS URI, try NIEM specification
             if (null == nuri) {
-                Matcher match = N5URI_PATTERN.matcher(ouri);
+                Matcher match = N5SPEC_PAT.matcher(ouri);
                 if (match.lookingAt()) {
-                    nuri = match.replaceFirst(OASIS_PREFIX);
-                    match = N5VERSION_PATTERN.matcher(nuri);
+                    nuri = match.replaceFirst(OASIS_PREFIX+"specification/");
+                    match = N5VERSION_PAT.matcher(nuri);
+                    if (match.find()) nuri = match.replaceFirst("/6.0/");
+                }                
+            }
+            // Finally, try NIEM model
+            if (null == nuri) {
+                Matcher match = N5MODEL_PAT.matcher(ouri);
+                if (match.lookingAt()) {
+                    nuri = match.replaceFirst(OASIS_PREFIX+"model/");
+                    match = N5VERSION_PAT.matcher(nuri);
                     if (match.find()) nuri = match.replaceFirst("/6.0/");
                 }                
             }
@@ -107,6 +117,7 @@ public class ModelToN6 {
                     LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
                             ouri, nuri, ex.getMessage()));
                 }
+                LOG.debug(String.format("%-40s -> %s\n", ouri, nuri));
             }
         }
         // Fix the SchemaDocument objects
@@ -122,11 +133,12 @@ public class ModelToN6 {
                 var builtin = NamespaceKind.builtin(sd.targetNS());
                 if (builtin < NIEM_NOTBUILTIN) 
                 nsuri = NamespaceKind.getBuiltinNS(builtin, "NIEM6", "6");
+                LOG.debug(String.format("%-40s -> %s\n", olduri, nsuri));                
             }
-            m.schemadoc().remove(olduri);
-            m.schemadoc().put(nsuri, sd);
             sd.setTargetNS(nsuri);
             sd.setNIEMversion("6");
+            m.schemadoc().remove(olduri);
+            m.schemadoc().put(nsuri, sd);
             
             // Change the conformance targets to NIEM 6
             var nct = new StringBuilder();
@@ -136,9 +148,9 @@ public class ModelToN6 {
             var sep = "";
             for (int i = 0; i < ctl.length; i++) {
                 var ct = ctl[i];
-                var match = N5URI_PATTERN.matcher(ct);
+                var match = N5MODEL_PAT.matcher(ct);
                 if (match.lookingAt()) ct = match.replaceFirst(OASIS_PREFIX);
-                match = N5VERSION_PATTERN.matcher(ct);
+                match = N5VERSION_PAT.matcher(ct);
                 if (match.find()) ct = match.replaceFirst("/6.0/");
                 nct.append(sep).append(ct);
                 sep = " ";

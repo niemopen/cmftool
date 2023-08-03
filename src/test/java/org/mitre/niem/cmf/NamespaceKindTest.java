@@ -43,6 +43,7 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_UTILITY;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XSD;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTBUILTIN;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_XML;
 
 /**
  *
@@ -81,7 +82,6 @@ public class NamespaceKindTest {
         
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin("http://example.com/foo"));
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin("http://example.com/foo/5.0/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin(XML_NS_URI));
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin(W3C_XML_SCHEMA_NS_URI));
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin("http://release.niem.gov/niem/niem-core/5.0/"));
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin("http://release.niem.gov/niem/domains/humanServices/5.2/"));
@@ -93,7 +93,8 @@ public class NamespaceKindTest {
         assertEquals(NIEM_CTAS, NamespaceKind.builtin("http://release.niem.gov/niem/conformanceTargets/3.0/"));
         assertEquals(NIEM_PROXY, NamespaceKind.builtin("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
         assertEquals(NIEM_STRUCTURES, NamespaceKind.builtin("http://release.niem.gov/niem/structures/5.0/")); 
-
+        assertEquals(NIEM_XML, NamespaceKind.builtin(XML_NS_URI));
+        
         assertEquals(NSK_UNKNOWN, NamespaceKind.kind("http://example.com/foo"));
         assertEquals(NSK_UNKNOWN, NamespaceKind.kind("http://example.com/foo/5.0/"));
         assertEquals(NSK_XML, NamespaceKind.kind(XML_NS_URI));
@@ -151,7 +152,6 @@ public class NamespaceKindTest {
         
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin("http://example.com/foo"));
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin("http://example.com/foo/6.0/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin(XML_NS_URI));
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin(W3C_XML_SCHEMA_NS_URI));
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"));
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/model/domains/humanServices/6.0/"));
@@ -163,7 +163,8 @@ public class NamespaceKindTest {
         assertEquals(NIEM_CTAS, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/"));
         assertEquals(NIEM_PROXY, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/"));
         assertEquals(NIEM_STRUCTURES, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/")); 
-
+        assertEquals(NIEM_XML, NamespaceKind.builtin(XML_NS_URI));
+        
         assertEquals(NSK_UNKNOWN, NamespaceKind.kind("http://example.com/foo"));
         assertEquals(NSK_UNKNOWN, NamespaceKind.kind("http://example.com/foo/6.0/"));
         assertEquals(NSK_XML, NamespaceKind.kind(XML_NS_URI));

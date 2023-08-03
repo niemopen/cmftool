@@ -44,7 +44,7 @@ import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "convert a NIEM model instance to OWL")
+@Parameters(commandDescription = "convert a NIEM model to OWL")
         
 class CmdCMFtoOWL implements JCCommand {
     

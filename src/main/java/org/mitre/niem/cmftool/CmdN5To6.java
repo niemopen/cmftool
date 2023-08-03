@@ -32,11 +32,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelToN6;
@@ -46,7 +45,6 @@ import org.mitre.niem.xsd.ModelXMLWriter;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
 import org.mitre.niem.xsd.XMLSchema;
-import org.mitre.niem.xsd.XMLSchemaDocument;
 import org.xml.sax.SAXException;
 
 /**
@@ -58,6 +56,10 @@ import org.xml.sax.SAXException;
 @Parameters(commandDescription = "convert model to NIEM 6 architecture")
 
 public class CmdN5To6 implements JCCommand {
+    
+    @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
+    private boolean debugFlag = false;
+    
     @Parameter(names = "-o", description = "file for converter output")
     private String objFile = "";
      
@@ -103,6 +105,10 @@ public class CmdN5To6 implements JCCommand {
             cob.usage();
             System.exit(1);
         }
+        // Set debug logging
+        if (debugFlag) {
+            Configurator.setAllLevels(LogManager.getRootLogger().getName(), org.apache.logging.log4j.Level.DEBUG);
+        } 
         // Argument of "-" signals end of arguments, allows "-foo" filenames
         String na = mainArgs.get(0);
         if (na.startsWith("-")) {
@@ -113,7 +119,7 @@ public class CmdN5To6 implements JCCommand {
                 cob.usage();
                 System.exit(1);
             }
-        } 
+        }          
         // Make sure output file is writable
         PrintWriter ow = new PrintWriter(System.out);
         if (!"".equals(objFile)) {

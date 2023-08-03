@@ -73,10 +73,10 @@ public class NamespaceKind {
     // priority when normalizing namespace prefix assignment: extension, niem-model, builtin,
     // XSD, XML, external, unknown.
     //
-    // Namespace kinds EXTENSION and EXTERNAL cannot be determined without parsing 
+    // Namespace kinds EXTENSION and EXTERNAL cannot be determined without parsing all the
     // schema documents, because they depend on a conformance assertion or an xs:import
     // with appinfo.  The others can be determined from the namespaced URI alone.
-    // So a namespace kind UNKNOWN may change after parsing.
+    // So a namespace kind UNKNOWN may change after all the documents are parsed.
     
     public final static int NSK_EXTENSION  = 0;     // has conformance assertion, not in NIEM model
     public final static int NSK_DOMAIN     = 1;     // domain schema
@@ -127,9 +127,10 @@ public class NamespaceKind {
             false           // NSK_NOTNIEM
     };
 
-    // The six kinds of builtin namespace.  Note that while code-lists-instance is 
+    // The seven kinds of builtin namespace.  Note that while code-lists-instance is 
     // a builtin namespace, it has kind NSK_OTHERNIEM (not NSK_UTITLTY), because 
-    // it defines components that belong in a CMF model.
+    // it defines components that belong in a CMF model. The xml namespace isn't
+    // defined by NIEM, but we treat it as a builtin anyway.
     // The code for a builtin namespace is also the preferred namespace prefix.
     public final static int NIEM_APPINFO = 0;
     public final static int NIEM_CLI = 1;
@@ -137,15 +138,18 @@ public class NamespaceKind {
     public final static int NIEM_CTAS = 3;
     public final static int NIEM_PROXY = 4;
     public final static int NIEM_STRUCTURES = 5;
-    public final static int NIEM_NOTBUILTIN = 6;
-    public final static int NIEM_BUILTIN_COUNT = 7;
+    public final static int NIEM_XML = 6;
+    public final static int NIEM_NOTBUILTIN = 7;
+    public final static int NIEM_BUILTIN_COUNT = 8;
     
-    private final static Map<String,Integer> nscode2builtin = Map.of("appinfo",    NIEM_APPINFO,
+    private final static Map<String,Integer> nscode2builtin = Map.of(
+        "appinfo",    NIEM_APPINFO,
         "cli",        NIEM_CLI,
         "clsa",       NIEM_CLSA,
         "ct",         NIEM_CTAS,
         "xs-proxy",   NIEM_PROXY,
         "structures", NIEM_STRUCTURES,
+        "xml",        NIEM_XML,
         "notbuiltin", NIEM_NOTBUILTIN
     );
     private final static String[] nsbuiltin2code = {
@@ -155,18 +159,20 @@ public class NamespaceKind {
         "ct",           // NIEM_CTAS,
         "xs-proxy",     // NIEM_PROXY,
         "structures",   // NIEM_STRUCTURES,
+        "xml",          // NIEM_XML,
         "notbuiltin",   // NIEM_NOTBUILTIN 
     };
     // Default schema document filenames are properly not part of CMF, but it's
     // way too much trouble to put them anywhere else.
-    private final static String[] defBuiltinFN = {
-        "appinfo.xsd",                      //NIEM_APPINFO,
-        "code-lists-instance.xsd",          // NIEM_CLI,
-        "code-lists-schema-appinfo.xsd",    // NIEM_CLSA,
-        "conformanceTargets.xsd",           // NIEM_CTAS,
-        "niem-xs.xsd",                      // NIEM_PROXY,
-        "structures.xsd",                   // NIEM_STRUCTURES,
-        "notbuiltin",                       // NIEM_NOTBUILTIN     
+    private final static String[] defBuiltinPath = {
+        "utility/appinfo.xsd",                      //NIEM_APPINFO,
+        "utility/code-lists-instance.xsd",          // NIEM_CLI,
+        "utility/code-lists-schema-appinfo.xsd",    // NIEM_CLSA,
+        "utility/conformanceTargets.xsd",           // NIEM_CTAS,
+        "adapters/niem-xs.xsd",                     // NIEM_PROXY,
+        "utility/structures.xsd",                   // NIEM_STRUCTURES,
+        "external/xml.xsd",                         // NIEM_XML,
+        "notbuiltin",                               // NIEM_NOTBUILTIN     
     };
 
     // Definitions for all the builtin namespaces in all known versions
@@ -201,7 +207,7 @@ public class NamespaceKind {
       "NIEM5", "UTILITY",   "clsa",       "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-schema-appinfo/",
       "NIEM5", "UTILITY",   "xs-proxy",   "3", "http://release.niem.gov/niem/proxy/niem-xs3.0/",
       "NIEM5", "UTILITY",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/",            
-
+      
       // These must come at the end of the list
       "NIEM6", "UTILITY",   "ct",         "",  "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/",
       "NIEM5", "UTILITY",   "ct",         "",  "http://release.niem.gov/niem/conformanceTargets/3.0/",
@@ -244,7 +250,7 @@ public class NamespaceKind {
             var rec     = new NSuridat(arch, kind, util, vers);
             uridat.put(uri, rec);
         }
-        uridat.put(XML_NS_URI, new NSuridat("", NSK_XML, NIEM_NOTBUILTIN, ""));
+        uridat.put(XML_NS_URI, new NSuridat("", NSK_XML, NIEM_XML, ""));
         uridat.put(W3C_XML_SCHEMA_NS_URI, new NSuridat("", NSK_XSD, NIEM_NOTBUILTIN, ""));
 
         uripat = new ArrayList<>();
@@ -410,6 +416,7 @@ public class NamespaceKind {
     // Returns the namespace URI for a utility namespace given the architecture
     // and version.  
     public static String getBuiltinNS(int util, String arch, String version) {
+        if (NIEM_XML == util) return XML_NS_URI;
         String ustr = namespaceUtil2Builtin(util);
         for (int i = 0; i < builtinTab.length; i += BUILTIN_TAB_WIDTH) {
             if (builtinTab[i + 0].equals(arch) 
@@ -421,11 +428,11 @@ public class NamespaceKind {
         return null;
     }
     
-    public static String defaultBuiltinFN (int util) {
+    public static String defaultBuiltinPath (int util) {
         if (util < 0 || util > NSK_NUMKINDS) {
             LOG.error(String.format("invalid namespace kind '%d'", util));
             return "NOTNIEM";
         }
-        return defBuiltinFN[util];        
+        return defBuiltinPath[util];        
     }
 }

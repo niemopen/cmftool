@@ -47,12 +47,13 @@ public class CMFTool {
      
     String xtd = "src/test/resources/xsd/";
     if (0 == args.length) {
+        args = new String[]{"m2xsrc", "-o", "src/main/CMF/tmp", "src/main/cmf/model6.cmf"};
 //        args = new String[]{"x2m", "-d", "tmp/52rel/domains/biom.xsd" };
 //        args = new String[]{"x2m", "-d", xtd+"createdProp.xsd"};
 //        args = new String[]{"xval", "-d", "-s", "examples/Claim-iepd/extension/claim.xsd", "examples/Claim-iepd/xml-catalog.xml"};
 //        args = new String[]{"xval", "-d", "-o", xtd, xtd+"twoversions-0.xsd" };
 //        args = new String[]{"xcmp", xtd+"nameinfo.xsd", xtd+"out/nameinfo.xsd"};
-//        args = new String[]{"m2xn5", "-d", "-o", "src/main/CMF/model5.xsd/tmp", "src/main/CMF/model5.xsd/model.cmf"};
+//        args = new String[]{"n5to6", "-d", "-o", "src/main/CMF/out", "src/main/CMF/model5.cmf"};
     }
     
 
@@ -64,7 +65,7 @@ public class CMFTool {
         var cmfToCmfCmd    = new CmdCMFtoCMF(jc);
         var cmfToN5XsdCmd  = new CmdCMFtoN5XSD(jc);
         var cmfToMsgXsdCmd = new CmdCMFtoMsgXSD(jc);
-        var cmfToRefXsdCmd = new CmdCMFtoRefXSD(jc);
+        var cmfToSrcXsdCmd = new CmdCMFtoSrcXSD(jc);
         var cmfToOwlCmd    = new CmdCMFtoOWL(jc);
         var n5To6Cmd       = new CmdN5To6(jc);
         var xsdToCmfCmd    = new CmdXSDtoCMF(jc);       
@@ -74,7 +75,7 @@ public class CMFTool {
         var helpCmd        = new CommandHelp(jc);    
         jc.addCommand("m2m", cmfToCmfCmd);
         jc.addCommand("m2o", cmfToOwlCmd);
-        jc.addCommand("m2xref", cmfToRefXsdCmd);
+        jc.addCommand("m2xsrc", cmfToSrcXsdCmd);
         jc.addCommand("m2xmsg", cmfToMsgXsdCmd);
         jc.addCommand("m2xn5", cmfToN5XsdCmd);
         jc.addCommand("n5to6", n5To6Cmd);

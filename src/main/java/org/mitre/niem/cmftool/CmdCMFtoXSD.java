@@ -41,7 +41,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.xsd.ModelToMsgXSD;
 import org.mitre.niem.xsd.ModelToN5XSD;
-import org.mitre.niem.xsd.ModelToRefXSD;
+import org.mitre.niem.xsd.ModelToSrcXSD;
 import org.mitre.niem.xsd.ModelToXSD;
 import org.mitre.niem.xsd.ModelXMLReader;
 import org.mitre.niem.xsd.ParserBootstrap;
@@ -53,7 +53,7 @@ import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "write a NIEM model instance as a NIEM schema")
+@Parameters(commandDescription = "write a NIEM model as a NIEM schema")
         
 class CmdCMFtoXSD implements JCCommand {
     
@@ -102,7 +102,7 @@ class CmdCMFtoXSD implements JCCommand {
         String cmdName = cob.getProgramName();
         switch (cmdName) {
             case "m2xn5":  mw = new ModelToN5XSD(); break;
-            case "m2xref": mw = new ModelToRefXSD(); break;
+            case "m2xsrc": mw = new ModelToSrcXSD(); break;
             case "m2xmsg": mw = new ModelToMsgXSD(); break;
             default:
                 System.err.println("unknown command: cmftool " + cmdName);

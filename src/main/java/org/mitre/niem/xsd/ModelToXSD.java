@@ -205,7 +205,7 @@ public abstract class ModelToXSD {
                 if (null == nsuri) continue;
                 var sdoc = m.schemadoc().get(nsuri);
                 if (null != sdoc) uprefix = sdoc.targetPrefix();        // try prefix from schema document
-                else uprefix = NamespaceKind.namespaceUtil2Builtin(uk);    // use default prefix for this utility         
+                else uprefix = NamespaceKind.namespaceUtil2Builtin(uk); // use default prefix for this utility         
                 m.namespaceMap().assignPrefix(uprefix, nsuri);            
             }
         }
@@ -227,15 +227,15 @@ public abstract class ModelToXSD {
             var absfp = genSchemaFile(nsuri, od, fp);
         }
         // Now generate new unique file names for the utility schema documents.
+        if (null != m.getNamespaceByURI(XML_NS_URI)) utilityNSuri.add(XML_NS_URI);
         for (var vers : allVers) {
             for (int util = 0; util < NIEM_NOTBUILTIN; util++) {
                 if (NIEM_CLI == util) continue;
                 var nsuri = NamespaceKind.getBuiltinNS(util, arch, vers);
                 if (null == nsuri) continue;
                 var sdoc = m.schemadoc().get(nsuri);
-                String fp = null;
-                if (null != sdoc) fp = sdoc.filePath();
-                var absfp = genSchemaFile(nsuri, od, fp);
+                if (null != sdoc) genSchemaFile(nsuri, od, sdoc.filePath());
+                else genSchemaFile(nsuri, od, null);
             }
         }
         // Now write the schema document for each namespace
@@ -260,14 +260,14 @@ public abstract class ModelToXSD {
             if (NIEM_PROXY == NamespaceKind.builtin(uri)) writeProxyDocument(uri, sf, df);
             else copyFile(sf, df);
         }
-        // Finally, copy the XML namespace schema if needed
-        if (null != m.getNamespaceByURI(XML_NS_URI)) {
-            var ofp = ns2file.get(XML_NS_URI);
-            var df  = new File(ofp);
-            var sf = getShareSchemaFile(XML_NS_URI);
-            createParentDirectories(df);
-            copyFile(sf, df);            
-        }
+//        // Finally, copy the XML namespace schema if needed
+//        if (null != m.getNamespaceByURI(XML_NS_URI)) {
+//            var ofp = ns2file.get(XML_NS_URI);
+//            var df  = new File(ofp);
+//            var sf = getShareSchemaFile(XML_NS_URI);
+//            createParentDirectories(df);
+//            copyFile(sf, df);            
+//        }
     }
     
     // The proxy schema imports structures, and we don't know where the structures
@@ -936,8 +936,10 @@ public abstract class ModelToXSD {
         var vsuf = getShareVersionSuffix();
         var vers = NamespaceKind.version(nsuri) + vsuf;
         int util = NamespaceKind.builtin(nsuri);
-        var bfn  = NamespaceKind.defaultBuiltinFN(util);
-        bfn = FilenameUtils.concat(vers, bfn);
+        var bfp  = NamespaceKind.defaultBuiltinPath(util);  // eg. "utility/structures.xsd"
+        var bf   = new File(bfp);
+        var bfn  = bf.getName();                            // eg. "structures.xsd"
+        bfn = FilenameUtils.concat(vers, bfn);              // eg. "6.0-src/structures.xsd"
         return new File(sdir, bfn);
     }
     
@@ -950,16 +952,14 @@ public abstract class ModelToXSD {
     // Return the path to the created file (including outputDir)
     private static Pattern nsnamePat = Pattern.compile("/(\\w+)/\\d(\\.\\d+)*(/#)?$");
     private String genSchemaFile (String nsuri, File outputDir, String hint) throws IOException {
+        if (ns2file.containsKey(nsuri)) return ns2file.get(nsuri);
         if (null == hint) {
-            if (XML_NS_URI.equals(nsuri)) hint = "xml.xsd";
+            int util = NamespaceKind.builtin(nsuri);
+            if (util < NIEM_NOTBUILTIN) hint = NamespaceKind.defaultBuiltinPath(util);
             else {
-                int util = NamespaceKind.builtin(nsuri);
-                if (util < NIEM_NOTBUILTIN) hint = NamespaceKind.defaultBuiltinFN(util);
-                else {
-                    var m = nsnamePat.matcher(nsuri);
-                    if (m.find()) hint = m.group(1);
-                    else hint = "schema";                    
-                }
+                var m = nsnamePat.matcher(nsuri);
+                if (m.find()) hint = m.group(1);
+                else hint = "schema";                    
             }
         }
         if (hint.endsWith(".xsd")) hint = hint.substring(0, hint.length()-4);
@@ -973,6 +973,7 @@ public abstract class ModelToXSD {
         var fpath = fp.getPath();
         nsfiles.add(munged);
         ns2file.put(nsuri, fpath);
+        LOG.debug(String.format("%s -> %s", nsuri, fpath));
         return fpath;
     }
     

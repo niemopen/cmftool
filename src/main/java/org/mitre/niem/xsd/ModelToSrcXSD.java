@@ -33,15 +33,15 @@ import org.w3c.dom.Element;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ModelToRefXSD extends ModelToXSD {
-    public ModelToRefXSD () { super(); }
-    public ModelToRefXSD (Model m) { super(m); }
+public class ModelToSrcXSD extends ModelToXSD {
+    public ModelToSrcXSD () { super(); }
+    public ModelToSrcXSD (Model m) { super(m); }
 
     @Override
     protected String getArchitecture ()       { return "NIEM6"; }
     
     @Override
-    protected String getShareVersionSuffix () { return ".0-ref"; }   
+    protected String getShareVersionSuffix () { return ".0-src"; }   
     
     @Override
     protected void addSimpleTypeExtension (Document dom, Element exe) {

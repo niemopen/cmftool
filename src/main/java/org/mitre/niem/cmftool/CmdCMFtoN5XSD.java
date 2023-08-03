@@ -32,7 +32,7 @@ import com.beust.jcommander.Parameters;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "write a NIEM model instance as a NIEM 5 XML schema")
+@Parameters(commandDescription = "write a NIEM model as a NIEM 5 XML schema")
 
 public class CmdCMFtoN5XSD extends CmdCMFtoXSD {
     
