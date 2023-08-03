@@ -598,7 +598,10 @@ public class ModelFromXSD {
                         hp.setMinOccurs(xp.getMinOccurs());
                         if (xp.getMaxOccursUnbounded()) hp.setMaxUnbounded(true);
                         else hp.setMaxOccurs(xp.getMaxOccurs());
-                        hp.setOrderedProperties("true".equals(getAppinfoAttribute(ct.getQName(), p.getQName(), "orderedPropertyIndicator")));
+                        
+                        var pqn = p.getQName();                        
+                        var opi = getAppinfoAttribute(ctqn, pqn, "orderedPropertyIndicator");
+                        hp.setOrderedProperties("true".equals(opi));
                         ct.addHasProperty(hp);
                     }
                 }

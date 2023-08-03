@@ -197,6 +197,7 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "Property", x.getProperty());
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());            
         addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs()); 
+        if (x.orderedProperties()) addSimpleChild(dom, e, "OrderedPropertyIndicator", "true");
         x.augmentingNS().stream().sorted().forEach((ns) -> {
             addNamespaceRef(dom, e, "AugmentationNamespace", ns);
         });        
