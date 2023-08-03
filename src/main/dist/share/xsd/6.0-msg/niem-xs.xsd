@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
-  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/#"
-  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/#"
-  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/#"
-  xmlns:xs-proxy="https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/#"
-  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/#"
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/"
+  xmlns:xs-proxy="https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/specification/naming-and-design-rules/3.0/#ReferenceSchemaDocument"
-  version="1"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/naming-and-design-rules/3.0/#MessageSchemaDocument"
+  version="6.0-message"
   xml:lang="en-US">
   <xs:annotation>
     <xs:documentation>Proxy types that carry dictionary metadata and have XML data type simple contents.</xs:documentation>
@@ -16,7 +15,7 @@
       <appinfo:LocalTerm definition="An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive." term="maxInclusive"/>
     </xs:appinfo>
   </xs:annotation>
-  <xs:import namespace="https://docs.oasis-open.org/niemopen/structures/6.0/#" schemaLocation="structures.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="structures.xsd"/>
   <xs:complexType name="anyURI">
     <xs:annotation>
       <xs:documentation>A data type for a Uniform Resource Identifier Reference (URI).  A value can be absolute or relative, and may have an optional fragment identifier (i.e., it may be a URI Reference).</xs:documentation>

@@ -178,11 +178,11 @@ public class NamespaceKind {
     private final static String[] builtinTab = { 
     // arch    kind         builtin      vers  uri
     // ----    ----         -------      ----  ---
-      "NIEM6", "UTILITY",   "appinfo",    "6", "http://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
-      "NIEM6", "OTHERNIEM", "cli",        "6", "http://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
-      "NIEM6", "UTILITY",   "clsa",       "6", "http://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
-      "NIEM6", "UTILITY",   "xs-proxy",   "6", "http://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
-      "NIEM6", "UTILITY",   "structures", "6", "http://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
+      "NIEM6", "UTILITY",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
+      "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
+      "NIEM6", "UTILITY",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
+      "NIEM6", "UTILITY",   "xs-proxy",   "6", "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
+      "NIEM6", "UTILITY",   "structures", "6", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
       
       "NIEM5", "UTILITY",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
@@ -203,15 +203,15 @@ public class NamespaceKind {
       "NIEM5", "UTILITY",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/",            
 
       // These must come at the end of the list
-      "NIEM6", "UTILITY",   "ct",         "",  "http://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/",
+      "NIEM6", "UTILITY",   "ct",         "",  "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/",
       "NIEM5", "UTILITY",   "ct",         "",  "http://release.niem.gov/niem/conformanceTargets/3.0/",
     };
     
     // Patterns for recognizing NIEM model namespaces
     private final static String[] nspats = {
-      "NIEM6", "DOMAIN",     "http://docs\\.oasis-open\\.org/niemopen/ns/model/domains/.*/[\\d]+([\\d.]+)/",
-      "NIEM6", "CORE",       "http://docs\\.oasis-open\\.org/niemopen/ns/model/niem-core/[\\d]+([\\d.]+)/",
-      "NIEM6", "OTHERNIEM",  "http://docs\\.oasis-open\\.org/niemopen/ns/model/.*/[\\d]+([\\d.]+)/",
+      "NIEM6", "DOMAIN",     "https://docs\\.oasis-open\\.org/niemopen/ns/model/domains/.*/[\\d]+([\\d.]+)/",
+      "NIEM6", "CORE",       "https://docs\\.oasis-open\\.org/niemopen/ns/model/niem-core/[\\d]+([\\d.]+)/",
+      "NIEM6", "OTHERNIEM",  "https://docs\\.oasis-open\\.org/niemopen/ns/model/.*/[\\d]+([\\d.]+)/",
 
       "NIEM5", "DOMAIN",     "http://((publication)|(release))\\.niem\\.gov/niem/domains/.*/[\\d]+([\\d.]+)/#?",
       "NIEM5", "CORE",       "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/[\\d]+([\\d.]+)/#?",
@@ -220,7 +220,7 @@ public class NamespaceKind {
 
     // Patterns for recognizing architecture from conformance target assertions
     private final static String[] arches = {
-        "NIEM6", "http://docs.oasis-open.org/niemopen/ns/specification/naming-and-design-rules(?=/)",
+        "NIEM6", "https://docs.oasis-open.org/niemopen/ns/specification/naming-and-design-rules(?=/)",
         "NIEM5", "http://reference.niem.gov/niem/specification/naming-and-design-rules(?=/)"
     };
     

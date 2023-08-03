@@ -59,9 +59,9 @@ public class ModelToN6Test {
         var m = mr.readXML(cmfIS);   
         var m5to6 = new ModelToN6();
         m5to6.convert(m);
-        assertThat(m.getNamespaceByPrefix("nc").getNamespaceURI()).startsWith("http://docs.oasis-open.org/niemopen/ns/model/");
+        assertThat(m.getNamespaceByPrefix("nc").getNamespaceURI()).startsWith("https://docs.oasis-open.org/niemopen/ns/model/");
         for (var sd : m.schemadoc().values()) {
-            assertThat(sd.targetNS()).startsWith("http://docs.oasis-open.org/niemopen/ns/");
+            assertThat(sd.targetNS()).startsWith("https://docs.oasis-open.org/niemopen/ns/");
         }               
         int i = 0;
     }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
-  targetNamespace="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/#"
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:attribute name="conformanceTargets">
     <xs:simpleType>

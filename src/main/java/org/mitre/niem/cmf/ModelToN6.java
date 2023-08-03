@@ -54,15 +54,15 @@ public class ModelToN6 {
       "http://release.niem.gov/niem/structures/\\d\\.\\d/"
     };
     private static final String[] utilrep = {      
-      "http://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
-      "http://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
-      "http://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
-      "http://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/",
-      "http://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
-      "http://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",      
+      "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
+      "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
+      "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
+      "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/",
+      "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
+      "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",      
     };
     
-    private static final String OASIS_PREFIX       = "http://docs.oasis-open.org/niemopen/ns/model/";
+    private static final String OASIS_PREFIX       = "https://docs.oasis-open.org/niemopen/ns/model/";
     private static final Pattern N5URI_PATTERN     = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/");
     private static final Pattern N5VERSION_PATTERN = Pattern.compile("/\\d\\.\\d/");
     
