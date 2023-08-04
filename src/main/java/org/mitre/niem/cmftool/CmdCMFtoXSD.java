@@ -57,6 +57,12 @@ import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
         
 class CmdCMFtoXSD implements JCCommand {
     
+    @Parameter(names = "-c", description = "generate xml-catalog.xml file")
+    private boolean catFlag = false;
+    
+    @Parameter(names = "--catalog", description = "name of generated XML catalog file")
+    private String catPath = null;
+
     @Parameter(names = "-o", description = "output directory for schema pile")
     private String outputDir = "";
     
@@ -133,7 +139,12 @@ class CmdCMFtoXSD implements JCCommand {
                 System.exit(1);
             }
         }      
-
+        // Sanity checking
+        if (catFlag && null != catPath && !"xml-catalog.xml".equals(catPath)) {
+            System.err.println("-c and --catalog options are in conflict");
+            System.exit(1);
+        }
+        if (catFlag) catPath = "xml-catalog.xml";
         
         // If output directory exists, make sure it's empty
         File od = new File(outputDir);
@@ -187,6 +198,7 @@ class CmdCMFtoXSD implements JCCommand {
         }
         // Write the NIEM model instance to the output stream
         mw.setModel(m);
+        mw.setCatalog(catPath);
         try {
             mw.writeXSD(od);
         } catch (FileNotFoundException ex) {

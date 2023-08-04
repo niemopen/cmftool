@@ -100,6 +100,7 @@ public abstract class ModelToXSD {
     static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
         
     protected Model m = null;
+    protected String catPath = null;                          // path to created XML catalog file, if one is wanted
     protected final Map<String, String> ns2file;              // map nsURI -> absolute schema document file path
     protected final Set<String> nsfiles;                      // set of schema document file paths
     protected final Set<String> utilityNSuri;                 // set of utility namespaces needed in schema document pile
@@ -142,6 +143,8 @@ public abstract class ModelToXSD {
     }
     
     public void setModel (Model m) { this.m = m; }
+    
+    public void setCatalog (String cp) { catPath = cp; }
 
     // Write the Model to an XML Schema pile in directory "od".
     // Target directory should be empty.  If it isn't, you'll get munged
@@ -260,14 +263,12 @@ public abstract class ModelToXSD {
             if (NIEM_PROXY == NamespaceKind.builtin(uri)) writeProxyDocument(uri, sf, df);
             else copyFile(sf, df);
         }
-//        // Finally, copy the XML namespace schema if needed
-//        if (null != m.getNamespaceByURI(XML_NS_URI)) {
-//            var ofp = ns2file.get(XML_NS_URI);
-//            var df  = new File(ofp);
-//            var sf = getShareSchemaFile(XML_NS_URI);
-//            createParentDirectories(df);
-//            copyFile(sf, df);            
-//        }
+        // Write the XML Catalog file if one is desired
+        if (null != catPath) {
+            var cf  = new File(od, catPath);
+            var xcc = new XMLCatalogCreator(ns2file);
+            xcc.writeCatalog(cf);
+        }
     }
     
     // The proxy schema imports structures, and we don't know where the structures
@@ -302,6 +303,13 @@ public abstract class ModelToXSD {
         }
         dfr.close();
         sfr.close();
+    }
+    
+    protected void writeCatalogFile (File od) throws IOException {
+        if (null == catPath) return;
+        var cf  = new File(od, catPath);
+        var cfw = new FileWriter(cf);
+        
     }
     
     
