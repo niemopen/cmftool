@@ -727,6 +727,14 @@ public class ModelFromXSD {
                         dt.setRestrictionOf(r);
                         continue;                     
                     }
+                    // An extension of an XSD base type is allowed in message schemas
+                    if (!complexBase && !isRestriction && W3C_XML_SCHEMA_NS_URI.equals(xbase.getNamespace())) {
+                        var r  = new RestrictionOf();
+                        var bt = getDatatype(xbase.getNamespace(), xbase.getName());
+                        r.setDatatype(bt);
+                        dt.setRestrictionOf(r);
+                        continue;                           
+                    }
                 }
                 xscontent = xctype.getSimpleType();
             }

@@ -24,6 +24,7 @@
 package org.mitre.niem.xsd;
 
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Property;
 import org.w3c.dom.Document;
@@ -52,5 +53,11 @@ public class ModelToMsgXSD extends ModelToXSD {
         var e = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
         e.setAttribute("ref", "structures:ReferenceableObjectAttributeGroup");
         pe.appendChild(e);
+    }    
+    
+    // Don't convert "xs:foo" to "xs-proxy:foo" in message schema documents
+    @Override
+    protected String proxifiedDatatypeQName (Datatype dt) {
+        return dt.getQName();
     }    
 }

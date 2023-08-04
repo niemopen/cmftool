@@ -46,8 +46,9 @@ public class CMFTool {
     // Uncomment arguments for debugging:
      
     String xtd = "src/test/resources/xsd/";
+    String dir = "tmp/02-NoAug/";
     if (0 == args.length) {
-        args = new String[]{"x2m", "-o", "src/main/CMF/model5.cmf", "src/main/CMF/model5.xsd/cmf.xsd", "src/main/CMF/model5.xsd/xml-catalog.xml"};
+        args = new String[]{"x2m", "-d", "-o", dir+"foo", dir+"messageModel.xsd"};
 //        args = new String[]{"x2m", "-d", "tmp/52rel/domains/biom.xsd" };
 //        args = new String[]{"x2m", "-d", xtd+"createdProp.xsd"};
 //        args = new String[]{"xval", "-d", "-s", "examples/Claim-iepd/extension/claim.xsd", "examples/Claim-iepd/xml-catalog.xml"};
