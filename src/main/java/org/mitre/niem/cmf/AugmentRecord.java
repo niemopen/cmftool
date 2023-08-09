@@ -33,9 +33,9 @@ package org.mitre.niem.cmf;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class AugmentRecord extends ObjectType {
-    private ClassType classType = null;
-    private Property property = null;
-    private int indexInType = -1;
+    private ClassType classType = null;         // the augmented Class
+    private Property property = null;           // the agumenting Property
+    private int indexInType = -1;               // index of Property in augmentation type; -1 for direct subsitution
     private int minQ = 0;
     private int maxQ = 0;
     private boolean maxUnbounded = false;

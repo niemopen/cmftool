@@ -10,6 +10,13 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 0.7-alpha.3 (9 August)
+
+* New features in CMF to XSD commands
+  * Option to generate xml-catalog.xsd file
+  * Option to specify name of generated XML Catalog file
+  * Option to specify message schema "root namespace" with all needed import elements
+
 ## What's new in version 0.7-alpha.2
 
 * Now generates CMF version 0.8, which is based on NIEM 6

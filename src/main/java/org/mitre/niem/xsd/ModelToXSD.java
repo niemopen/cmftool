@@ -88,6 +88,7 @@ import static org.mitre.niem.cmf.NamespaceKind.NIEM_PROXY;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTBUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_BUILTIN_COUNT;
+import org.mitre.niem.cmf.ReferenceGraph;
 
 
 /**
@@ -101,6 +102,8 @@ public abstract class ModelToXSD {
         
     protected Model m = null;
     protected String catPath = null;                          // path to created XML catalog file, if one is wanted
+    protected String messageNSuri = null;                     // URI of message schema "root namespace"
+    protected ReferenceGraph refGraph = null;                 // what namespaces XYZ will be transitively imported by FOO?
     protected final Map<String, String> ns2file;              // map nsURI -> absolute schema document file path
     protected final Set<String> nsfiles;                      // set of schema document file paths
     protected final Set<String> utilityNSuri;                 // set of utility namespaces needed in schema document pile
@@ -142,10 +145,23 @@ public abstract class ModelToXSD {
         this.m = m;
     }
     
-    public void setModel (Model m) { this.m = m; }
-    
+    /**
+     * Causes an XML Catalog file for the schema to be generated in the
+     * specified file.  A null parameter results in no catalog file.
+     * @param cp -- relative path from schema pile root to catalog file
+     */
     public void setCatalog (String cp) { catPath = cp; }
-
+    
+    /**
+     * Designates a "root" schema document for additional import elements so that
+     * a schema constructed from the root document will have all required components.
+     * If namespace FOO has an augmentation, or a substitution for another namespace,
+     * and FOO is not imported by any other schema document in the pile, then the
+     * root schema document imports FOO.
+     * @param uri -- namespace URI of root schema document
+     */
+    public void setMessageNamespace (String uri) { messageNSuri = uri; }
+    
     // Write the Model to an XML Schema pile in directory "od".
     // Target directory should be empty.  If it isn't, you'll get munged
     // file names whenever the preferred file name already exists.
@@ -179,6 +195,9 @@ public abstract class ModelToXSD {
             }
             if (cscflag) litTypes.add(ct);
         }
+        // Build a graph of namespaces referenced by components
+        if (null != messageNSuri) refGraph = new ReferenceGraph(m.getComponentList());
+        
         // Collect all Datatype objects for which we must create a simpleType declaration
         // Those are unions, or lists, or restrictions with facets
         for (Component c : m.getComponentList()) {
@@ -270,7 +289,7 @@ public abstract class ModelToXSD {
             xcc.writeCatalog(cf);
         }
     }
-    
+       
     // The proxy schema imports structures, and we don't know where the structures
     // schema document will be before runtime, so we can't just copy a file like
     // we do for the other builtins.  There's only one import element, and we know
@@ -303,15 +322,7 @@ public abstract class ModelToXSD {
         }
         dfr.close();
         sfr.close();
-    }
-    
-    protected void writeCatalogFile (File od) throws IOException {
-        if (null == catPath) return;
-        var cf  = new File(od, catPath);
-        var cfw = new FileWriter(cf);
-        
-    }
-    
+    }    
     
     // Write the schema document for the specified namespace
     protected void writeDocument (String nsuri, Writer ofw) throws ParserConfigurationException, TransformerConfigurationException, TransformerException, IOException {
@@ -375,15 +386,29 @@ public abstract class ModelToXSD {
         
         // Create elements and attributes for Property objects
         for (Component c : m.getComponentList()) createDeclaration(dom, nsuri, c.asProperty());
-
-        // Add a namespace declaration and import element for each namespace dependency
+        
+        // Construct a list of all the namespaces to be imported
+        // If this is the message root namespaces, add imports for everything in the schema
+        // that is not already transitively imported.
         List<String> orderedDeps = new ArrayList<>();
         orderedDeps.addAll(nsNSdeps);
+        if (null != messageNSuri && nsuri.equals(messageNSuri)) {
+            var rset = refGraph.reachableFrom(ns);
+            for (var ons : m.getNamespaceList()) {
+                if (!rset.contains(ons))
+                    orderedDeps.add(ons.getNamespaceURI());
+            }
+        }
         Collections.sort(orderedDeps);
+        
+        // Add a namespace declaration for namespace dependencies
+        // Add an import element for all of the namespace dependencies
         for (String dnsuri : orderedDeps) {
             Namespace dns = m.getNamespaceByURI(dnsuri);
-            String dnspre = m.namespaceMap().getPrefix(dnsuri);
-            root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:" + dnspre, dnsuri);
+            if (nsNSdeps.contains(dnsuri)) {
+                String dnspre = m.namespaceMap().getPrefix(dnsuri);
+                root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:" + dnspre, dnsuri);                
+            }
             if (W3C_XML_SCHEMA_NS_URI.equals(dnsuri)) continue;     // don't import XSD
             if (nsuri.equals(dnsuri)) continue;                     // don't import current namespace
             Path thisDoc   = Paths.get(ns2file.get(nsuri));

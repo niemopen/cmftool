@@ -24,22 +24,12 @@
 package org.mitre.niem.xsd;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import nl.altindag.log.LogCaptor;
 import org.apache.commons.io.FileUtils;
-import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mitre.niem.cmf.Model;
 
 
 /**
@@ -47,48 +37,12 @@ import org.mitre.niem.cmf.Model;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ModelToN5XSDTest {
+public class ModelToN5XSDTest extends ModelToXSDTest {
    static String testDir = "src/test/resources/xsd5/";
-   static List<LogCaptor> logs;
-      
-    @TempDir
-    File tempD1;
-    @TempDir
-    File tempD2;
-    @TempDir
-    File tempD3;
+
     
     public ModelToN5XSDTest() {
     }
-    
-    
-    @BeforeAll
-    public static void setupLogCaptor () {
-        logs = new ArrayList<>();
-        logs.add(LogCaptor.forClass(ModelToXSD.class));
-        logs.add(LogCaptor.forClass(XMLSchema.class));
-        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
-        logs.add(LogCaptor.forClass(ModelXMLWriter.class));
-    }
-    
-    @AfterEach
-    public void clearLogs () {
-        for (var log : logs) log.clearLogs();;
-    }
-    
-    @AfterAll
-    public static void tearDown () {
-        for (var log : logs) log.close();
-    }
-    
-    public void assertEmptyLogs () {
-        for (var log : logs) {
-            var errors = log.getErrorLogs();
-            var warns  = log.getWarnLogs();
-            assertThat(errors.isEmpty());
-            assertThat(warns.isEmpty());
-        }
-    }    
     
     @ParameterizedTest
     @ValueSource(strings = { 
@@ -135,10 +89,7 @@ public class ModelToN5XSDTest {
 
         // Valid XSD?
         File newSchema = new File(tempD2, sourceXSD);
-        schemaArgs[0] = newSchema.toString();
-        XMLSchema s = new XMLSchema(schemaArgs);
-        var xsdMsgs = s.javaXMsgs();
-        assertTrue(xsdMsgs.isEmpty());
+        assertTrue(isValidXSD(newSchema));
         
         // Now create CMF from the schema in temp directory #2        
         File newModelFP = new File(tempD1, "newModel.cmf");
@@ -165,23 +116,6 @@ public class ModelToN5XSDTest {
             assertTrue(FileUtils.contentEquals(f2, f3));
         }
         assertEmptyLogs();
-    }
-    
-    private void createCMF (String[] schemaArgs, File modelFP) throws Exception {      
-        PrintWriter modelPW = new PrintWriter(modelFP);
-        ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel(schemaArgs);     
-        ModelXMLWriter mw = new ModelXMLWriter();
-        mw.writeXML(m, modelPW); 
-        modelPW.close();   
-    }
-    
-    private void createXSD (File modelFP, File outDir) throws Exception {
-        FileInputStream mis = new FileInputStream(modelFP);
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(mis);
-        ModelToXSD mw = new ModelToN5XSD(m);
-        mw.writeXSD(outDir);
     }
     
     

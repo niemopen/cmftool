@@ -57,14 +57,17 @@ import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
         
 class CmdCMFtoXSD implements JCCommand {
     
-    @Parameter(names = "-c", description = "generate xml-catalog.xml file")
+    @Parameter(order = 0, names = "-o", description = "write schema pile into this directory")
+    private String outputDir = "";
+
+    @Parameter(order = 1, names = "-c", description = "generate xml-catalog.xml file")
     private boolean catFlag = false;
     
-    @Parameter(names = "--catalog", description = "name of generated XML catalog file")
+    @Parameter(order = 2, names = "--catalog", description = "write XML catalog into this file")
     private String catPath = null;
-
-    @Parameter(names = "-o", description = "output directory for schema pile")
-    private String outputDir = "";
+    
+    @Parameter(order = 3, names = "--msgNS", description = "set this URI as message schema root namespace")
+    private String messageNSuri = null;
     
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
@@ -72,7 +75,7 @@ class CmdCMFtoXSD implements JCCommand {
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "model.cmf")
+    @Parameter(description = "modelFile.cmf")
     private List<String> mainArgs;
     
     CmdCMFtoXSD () {
@@ -103,13 +106,12 @@ class CmdCMFtoXSD implements JCCommand {
     }    
     
     protected void run (JCommander cob) {
-        // Figure out what kind of XSD we're generating
-        ModelToXSD mw = null;
+        // Make sure the command is valid
         String cmdName = cob.getProgramName();
         switch (cmdName) {
-            case "m2xn5":  mw = new ModelToN5XSD(); break;
-            case "m2xsrc": mw = new ModelToSrcXSD(); break;
-            case "m2xmsg": mw = new ModelToMsgXSD(); break;
+            case "m2xn5":           // model to N5 schema
+            case "m2xsrc":          // model to N6 source schema (ref or ext)
+            case "m2xmsg": break;   // model to N6 message schema
             default:
                 System.err.println("unknown command: cmftool " + cmdName);
                 System.exit(1);
@@ -196,9 +198,19 @@ class CmdCMFtoXSD implements JCCommand {
                 System.exit(1);
             }
         }
-        // Write the NIEM model instance to the output stream
-        mw.setModel(m);
+        // Write the proper kind of NIEM model XSD to the output stream
+        ModelToXSD mw = null;
+        switch (cmdName) {
+            case "m2xn5"  -> mw = new ModelToN5XSD(m);
+            case "m2xsrc" -> mw = new ModelToSrcXSD(m);
+            case "m2xmsg" -> mw = new ModelToMsgXSD(m);
+            default -> {
+                System.err.println("unknown command: cmftool " + cmdName);
+                System.exit(1);
+            }        
+        }
         mw.setCatalog(catPath);
+        mw.setMessageNamespace(messageNSuri);
         try {
             mw.writeXSD(od);
         } catch (FileNotFoundException ex) {
