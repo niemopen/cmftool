@@ -13,6 +13,7 @@ General questions about OASIS Open Projects may be directed to OASIS staff at [p
 ## What's new in version 0.7-alpha.3 (9 August)
 
 * New features in CMF to XSD commands
+  * `cmftool m2xref` renamed to `cmftool m2xsrc`
   * Option to generate xml-catalog.xsd file
   * Option to specify name of generated XML Catalog file
   * Option to specify message schema "root namespace" with all needed import elements
