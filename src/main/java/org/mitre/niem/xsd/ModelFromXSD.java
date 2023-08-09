@@ -1119,7 +1119,6 @@ public class ModelFromXSD {
             augHP.setMaxOccurs(ahp.maxOccurs());    // maxOccurs from aug type (assume aug element not repeated)
             augHP.setMinOccurs(0);                  // augmentation properties always optional
             aug.addHasProperty(augHP);
-            augHP.setSequenceID(""+aug.hasPropertyList().size());
         }
         // Already there?  Perhaps adjust max occurs
         else {
