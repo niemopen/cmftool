@@ -357,12 +357,12 @@ public abstract class ModelToXSD {
         
         // Add namespace version number and language attribute, if specified
         String lang = m.schemaLanguage(nsuri);
-        String nsv  = m.schemaVersion(nsuri);
+        String nsv  = getSchemaVersion(nsuri);
         if (null != lang && !lang.isBlank()) root.setAttributeNS(XML_NS_URI, "lang", lang);
         if (null != nsv && !nsv.isBlank())   root.setAttribute("version", nsv);
         
         // Add conformance target assertions, if any
-        String cta = m.conformanceTargets(nsuri);
+        String cta = getConformanceTargets(nsuri);
         if (null != cta) {
             String ctns = NamespaceKind.getBuiltinNS(NIEM_CTAS, arch, nsNIEMVersion);
             String ctprefix;
@@ -494,7 +494,7 @@ public abstract class ModelToXSD {
                 var ar = arlist.get(indx);
                 if (ar.indexInType() >= 0) break;
                 var augp = ar.getProperty();
-                augp.setSubPropertyOf(augPoint);
+                if (!augp.isAttribute()) augp.setSubPropertyOf(augPoint);
             }
             // If no properties left, we're done; don't need an augmentation type or element
             if (indx >= arlist.size()) continue;
@@ -604,6 +604,16 @@ public abstract class ModelToXSD {
             var ate = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
             ate.setAttribute("ref", p.getQName());
             if (0 != hp.minOccurs()) ate.setAttribute("use", "required");
+            if (!hp.augmentingNS().isEmpty()) {
+                var ulist = new StringBuilder();
+                var sep = "";
+                for (var ns : hp.augmentingNS()) {
+                    ulist.append(sep);
+                    ulist.append(ns.getNamespaceURI());
+                    sep = " ";                            
+                }
+                addAppinfoAttribute(dom, ate, "augmentingNamespace", ulist.toString());
+            }
             exe.appendChild(ate);
             nsNSdeps.add(p.getNamespace().getNamespaceURI());
         }
@@ -796,9 +806,6 @@ public abstract class ModelToXSD {
         nsPropdecls.put(p.getName(), pe);
     }
     
-    // Override when writing a message schema
-    protected void addReferenceAttributes (Document dom, Element pe, Property p) { }
-    
     // Use this to add annotation and documentation elements to a schema component.
     // Returns the annotation element (to add appinfo, later).
     // Returns null (and does nothing) if the documentation string is null or blank.
@@ -883,7 +890,7 @@ public abstract class ModelToXSD {
                 { "xs:element", "name", "ref", "type", "minOccurs", "maxOccurs", "substitutionGroup" },
                 { "xs:import", "namespace", "schemaLocation" },
                 { "xs:complexType", "name", "type" },
-                { "xs:attribute", "name", "type" }
+                { "xs:attribute", "name", "ref", "type" }
         };
         Scanner scn = new Scanner(ostr.toString());
         String line = scn.nextLine();
@@ -976,9 +983,6 @@ public abstract class ModelToXSD {
         return new File(sdir, bfn);
     }
     
-    protected String getArchitecture ()       { return "NIEM5"; }
-    protected String getShareVersionSuffix () { return ".0"; }
-    
     // Generate a file path for thie namespace schema document
     // Use a default relative path if no hint provided.
     // Mung the file path as needed to make path unique and not existing
@@ -1010,4 +1014,17 @@ public abstract class ModelToXSD {
         return fpath;
     }
     
+    // Difference between subset schemas and message schemas is implemented by 
+    // overriding these subroutines
+    
+    protected String getArchitecture ()       { return "NIEM5"; }
+    protected String getShareVersionSuffix () { return ".0"; }   
+    
+    protected String getConformanceTargets (String nsuri) {
+        return m.conformanceTargets(nsuri);
+    }
+    
+    protected String getSchemaVersion (String nsuri) {
+        return m.schemaVersion(nsuri);
+    }
 }

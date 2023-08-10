@@ -26,6 +26,8 @@ package org.mitre.niem.xsd;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.NamespaceKind;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 import org.mitre.niem.cmf.Property;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -45,14 +47,27 @@ public class ModelToMsgXSD extends ModelToXSD {
     protected String getArchitecture ()       { return "NIEM6"; }
 
     @Override
-    protected String getShareVersionSuffix () { return ".0-msg"; }    
+    protected String getShareVersionSuffix () { return ".0-msg"; }   
     
     @Override
-    protected void addReferenceAttributes (Document dom, Element pe, Property p) { 
-        if (!p.isReferenceable()) return;
-        var e = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
-        e.setAttribute("ref", "structures:ReferenceableObjectAttributeGroup");
-        pe.appendChild(e);
+    protected String getConformanceTargets (String nsuri) {
+        var rv = m.conformanceTargets(nsuri);
+        rv = rv.replaceAll("ReferenceSchemaDocument", "MessageSchemaDocument");
+        rv = rv.replaceAll("ExtensionSchemaDocument", "MessageSchemaDocument");
+        rv = rv.replaceAll("SubsetSchemaDocument", "MessageSchemaDocument");               
+        return rv;
+    }    
+    
+    @Override
+    protected String getSchemaVersion (String nsuri) {
+        var ns = m.getNamespaceByURI(nsuri);
+        var kind = ns.getKind();
+        var rv   = m.schemaVersion(nsuri);
+        if (kind > NSK_CORE) return rv;
+        if (rv.startsWith("source")) rv = rv.substring(6);
+        else if (rv.startsWith("subset"))rv = rv.substring(6);
+        else if (rv.startsWith("message")) rv = rv.substring(7);
+        return "message"+rv;
     }    
     
     // Don't convert "xs:foo" to "xs-proxy:foo" in message schema documents

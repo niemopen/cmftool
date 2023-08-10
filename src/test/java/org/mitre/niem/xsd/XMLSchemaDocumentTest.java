@@ -88,7 +88,7 @@ public class XMLSchemaDocumentTest {
         assertThat(sd.namespaceDecls())
                 .hasSize(8)
                 .extracting(XMLNamespaceDeclaration::decPrefix)
-                .contains("appinfo", "ct", "nc", "niem-xs", "structures", "xs", "xsi", "foo");
+                .containsOnly("appinfo", "ct", "nc", "niem-xs", "structures", "xs", "xsi", "foo");
         assertThat(sd.namespaceDecls())
                 .filteredOn(nsd -> nsd.decPrefix().equals("foo"))
                 .extracting(nsd -> nsd.elementDepth())

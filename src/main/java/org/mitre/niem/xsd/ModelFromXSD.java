@@ -111,9 +111,9 @@ public class ModelFromXSD {
     private Map<String,XMLSchemaDocument> sdoc = null;      // map nsURI -> XMLSchemaDocument object from XMLSchema object
     
     // Global appinfo is a map of component QName -> list of appinfo records
-    // Element ref appinfo is a double map: Complex type QName,  Element ref QName -> list of appinfo records
+    // Reference appinfo is a double map: Complex type QName,  Element/Attribute ref QName -> list of appinfo records
     private Map<String,List<AppinfoAttribute>> globalAppinfo = null;
-    private Map<String,Map<String,List<AppinfoAttribute>>> elementRefAppinfo = null;
+    private Map<String,Map<String,List<AppinfoAttribute>>> refAppinfo = null;
     
     // Remember the XS objects from which we initialized the CMF objects
     private Map<Property,XSObject> propertyXSobj = null;               // initialized CMF property paired with schema object
@@ -140,7 +140,7 @@ public class ModelFromXSD {
         sdoc   = s.schemaDocuments();   // so let's get it over with here and now
         
         globalAppinfo        = new HashMap<>();
-        elementRefAppinfo    = new HashMap<>();
+        refAppinfo    = new HashMap<>();
         propertyXSobj        = new HashMap<>();
         datatypeXSobj        = new HashMap<>();
         classXSobj           = new HashMap<>();
@@ -256,15 +256,15 @@ public class ModelFromXSD {
                     }
                     arlist.add(arec);
                 }
-                // Element reference appinfo; add arec to list for this component and element ref
+                // Element or attribute reference appinfo; add arec to list for this component and element ref
                 else {
                     String ens = arec.elementEQN().getValue0();
                     String eln = arec.elementEQN().getValue1();
                     String eqn = m.getNamespaceByURI(ens).getNamespacePrefix() + ":" + eln;
-                    var eqnmap = elementRefAppinfo.get(cqn);
+                    var eqnmap = refAppinfo.get(cqn);
                     if (null == eqnmap) {
                         eqnmap = new HashMap<>();
-                        elementRefAppinfo.put(cqn, eqnmap);
+                        refAppinfo.put(cqn, eqnmap);
                     }
                     var arlist = eqnmap.get(eqn);
                     if (null == arlist) {
@@ -617,6 +617,14 @@ public class ModelFromXSD {
                 if (xatt.getRequired()) hp.setMinOccurs(1);
                 else hp.setMinOccurs(0);
                 ct.addHasProperty(hp);
+                
+                // Handle appinfo:augmentingNamespace
+                var augNSuri = getAppinfoAttribute(ct.getQName(), p.getQName(), "augmentingNamespace");
+                if (!augNSuri.isEmpty()) {
+                    var augNS = m.getNamespaceByURI(augNSuri);
+                    hp.augmentingNS().add(augNS);
+                    addAugmentRecord(augNS, ct, hp, -1);                   
+                }
             }            
         }
     }    
@@ -1042,9 +1050,9 @@ public class ModelFromXSD {
         return false;
     }
 
-    // Special handling for augmentations.  Augmentation types do not appear in 
-    // the model.  Instead, their properties are added to the property list of
-    // the augmented type.
+    // Special handling for element augmentations.  Augmentation types do not 
+    // appear in the model.  Instead, their properties are added to the property 
+    // list of the augmented type.
     private void processAugmentations () {
         // Find all elements substitutable for an augmentation point
         for (Component c : m.getComponentList()) {
@@ -1159,7 +1167,7 @@ public class ModelFromXSD {
             }
             return "";
         }
-        var eqnmap = elementRefAppinfo.get(compQN);
+        var eqnmap = refAppinfo.get(compQN);
         if (null == eqnmap) return "";
         var arlist = eqnmap.get(erefQN);
         if (null == arlist) return "";

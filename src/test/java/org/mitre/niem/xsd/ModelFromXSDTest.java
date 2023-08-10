@@ -954,4 +954,11 @@ public class ModelFromXSDTest {
         assertEquals(ct.hasPropertyList().get(3).getProperty(), p);
         assertEmptyLogs();
     }
+    
+    @Test
+    public void doit () throws Exception {
+        String[] args = { "tmp/04-AugCCWithA/messageModel.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+    }
 }

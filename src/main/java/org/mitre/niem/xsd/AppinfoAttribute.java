@@ -38,21 +38,32 @@ import org.javatuples.Pair;
 //   xmlns:appinfo=""
 //   xmlns:foo="http://example.com/foo/"
 //   targetNamespace="http://example.com/bar/">
-//   <xs:complexType name="ctype" appinfo:deprecated="true">
+//   <xs:complexType name="MyComplexType" appinfo:deprecated="true">
 //     <xs:complexContent>
 //       <xs:extension base="foo:basetype">
 //         <xs:sequence>
-//           <xs:element ref="foo:element" maxOccurs="3" appinfo:orderedPropertyIndicator="true"/>
+//           <xs:element ref="foo:PropertyText" maxOccurs="3" appinfo:orderedPropertyIndicator="true"/>
+//         <xs:sequence>
+//         <xs:attribute ref="foo:someAttribute" appinfo:augmentingNamespace="http://example.com/N6AugEx/1.0/"/>
 // 
-// you would see two Appinfo records:
+// you would see three Appinfo records:
 // 
-// Appinfo("deprecated", "true", 
-//     Pair<"http://example.com/bar/","ctype">, null)
+// Appinfo("deprecated", 
+//     "true", 
+//     Pair<"http://example.com/bar/","MyComplexType">, 
+//     null)
 //
-// Appinfo("orderedPropertyIndicator", "true", 
-//     Pair<"http://example.com/bar/","ctype">,  
-//     Pair<"http://example.com/foo/","element">)
- 
+// Appinfo("orderedPropertyIndicator", 
+//     "true", 
+//     Pair<"http://example.com/bar/","MyComplexType">,  
+//     Pair<"http://example.com/foo/","PropertyText">)
+//
+// Appinfo("augmentingNamespace", 
+//     "http://example.com/N6AugEx/1.0/",
+//     Pair<"http://example.com/bar/","MyComplexType">,
+//     Pair<"http://example.com/foo/","someAttribute">) 
+
+
 public record AppinfoAttribute (
     String attLname,                    // appinfo attribute local name (in appinfo namespace)
     String attValue,                    // appinfo attribute value

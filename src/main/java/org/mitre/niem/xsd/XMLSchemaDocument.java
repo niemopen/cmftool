@@ -195,14 +195,16 @@ public class XMLSchemaDocument {
                     }
                 } 
             }
-            // Look for appinfo attributes on element references within complex type definition
-            String eref = atts.getValue("ref");
-            Pair<String,String> een = nsm.expandQName(eref);
-            if (null != ctypeEN && "element".equals(elname) && null != eref && null != een) {
-                for (int i = 0; i < atts.getLength(); i++) {
-                    if (NIEM_APPINFO == NamespaceKind.builtin(atts.getURI(i))) {
-                        AppinfoAttribute a = new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), ctypeEN, een);
-                        appinfo.add(a);                                
+            // Look for appinfo attributes on attribute and element references within complex type definition
+            if ("element".equals(elname) || "attribute".equals(elname)) {
+                String eref = atts.getValue("ref");
+                Pair<String, String> een = nsm.expandQName(eref);
+                if (null != ctypeEN && null != eref && null != een) {
+                    for (int i = 0; i < atts.getLength(); i++) {
+                        if (NIEM_APPINFO == NamespaceKind.builtin(atts.getURI(i))) {
+                            AppinfoAttribute a = new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), ctypeEN, een);
+                            appinfo.add(a);
+                        }
                     }
                 }
             }
