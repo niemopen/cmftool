@@ -10,12 +10,18 @@
   xml:lang="en-US">
   <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
   <xs:simpleType name="AngularMinuteSimpleType">
+    <xs:annotation>
+      <xs:documentation>Documentation</xs:documentation>
+    </xs:annotation>
     <xs:restriction base="xs:decimal">
       <xs:minInclusive value="0"/>
       <xs:maxExclusive value="60"/>
     </xs:restriction>
   </xs:simpleType>
   <xs:complexType name="AngularMinuteType">
+    <xs:annotation>
+      <xs:documentation>Documentation</xs:documentation>
+    </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="nc:AngularMinuteSimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
@@ -23,7 +29,19 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:element name="AngMinute" type="nc:AngularMinuteType"/>
-  <xs:attribute name="SimpleAtt" type="nc:AngularMinuteSimpleType"/>
-  <xs:attribute name="SomeAtt" type="xs:token"/>
+  <xs:element name="AngMinute" type="nc:AngularMinuteType">
+    <xs:annotation>
+      <xs:documentation>Documentation</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:attribute name="SimpleAtt" type="nc:AngularMinuteSimpleType">
+    <xs:annotation>
+      <xs:documentation>Documentation</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+  <xs:attribute name="SomeAtt" type="xs:token">
+    <xs:annotation>
+      <xs:documentation>Documentation</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
 </xs:schema>

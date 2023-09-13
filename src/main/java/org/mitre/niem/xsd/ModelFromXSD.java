@@ -718,42 +718,42 @@ public class ModelFromXSD {
            
             XSSimpleTypeDefinition xscontent = null;                    // build Datatype from this simple content
             var xtype = datatypeXSobj.get(dt);                          // complex or simple type definition for this Datatype
+            var an    = parseAnnotation(xtype);
+            var docs  = getDocumentation(an);
+            for (var doc : docs) dt.setDefinition(doc);
+            handleCLSA(dt, an); 
+            
             var isComplex = (COMPLEX_TYPE == xtype.getTypeCategory());
             if (isComplex) {
                 var xctype = (XSComplexTypeDefinition)xtype;
                 var xbase = xctype.getBaseType();
+                xscontent = xctype.getSimpleType();                
                 if (null != xbase) {
                     var complexBase   = COMPLEX_TYPE == xbase.getTypeCategory();
                     var isProxy       = NIEM_PROXY == NamespaceKind.builtin(xbase.getNamespace());
                     var isRestriction = DERIVATION_RESTRICTION == xctype.getDerivationMethod();
                     // Sometimes this Datatype is an empty restriction of the base type
-                    // But not for a restriction of a proxy type
+                    // But not for a restriction of a proxy type (eg. niem-xs:string)
+                    // Use empty restriction of XSD type (eg. xs:string) instead
                     if (complexBase && !(isProxy && isRestriction)) {
                         var r  = new RestrictionOf();
                         var bt = getDatatype(xbase.getNamespace(), xbase.getName());
                         r.setDatatype(bt);
                         dt.setRestrictionOf(r);
-                        continue;                     
+                        continue;
                     }
                     // An extension of an XSD base type is allowed in message schemas
                     if (!complexBase && !isRestriction && W3C_XML_SCHEMA_NS_URI.equals(xbase.getNamespace())) {
                         var r  = new RestrictionOf();
                         var bt = getDatatype(xbase.getNamespace(), xbase.getName());
                         r.setDatatype(bt);
-                        dt.setRestrictionOf(r);
-                        continue;                           
+                        dt.setRestrictionOf(r);   
+                        continue;
                     }
                 }
-                xscontent = xctype.getSimpleType();
             }
             else xscontent = (XSSimpleTypeDefinition)xtype;
             
-            // Handle annotations -- documentation and code list schema appinfo
-            var an    = parseAnnotation(xscontent);
-            var docs  = getDocumentation(an);
-            for (var doc : docs) dt.setDefinition(doc);
-            handleCLSA(dt, an);
-
             switch (xscontent.getVariety()) {
                 case VARIETY_UNION:
                     dt.setUnionOf(createUnionOf(xscontent));
@@ -767,6 +767,7 @@ public class ModelFromXSD {
                     var r = createRestrictionOf(xscontent);
                     dt.setRestrictionOf(r);
                     break;
+
             }
         }
     }

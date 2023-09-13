@@ -23,14 +23,9 @@
  */
 package org.mitre.niem.xsd;
 
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
-import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
-import org.mitre.niem.cmf.Property;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * A class to generate a NIEM 6 message schema from a Model

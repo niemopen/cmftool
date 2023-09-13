@@ -24,12 +24,15 @@
 package org.mitre.niem.xsd;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mitre.niem.cmf.Model;
 
 
 /**
@@ -47,7 +50,6 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
     @ParameterizedTest
     @ValueSource(strings = { 
         "augment-0.xsd",
-        "augmentProp.xsd",
         "augmentProp.xsd",
         "cli.xsd",
         "clsa.xsd",
@@ -117,6 +119,5 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
         }
         assertEmptyLogs();
     }
-    
     
 }

@@ -3,11 +3,19 @@
   targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  version="6.0-source"
+  version="6.0"
   xml:lang="en-US">
   <xs:annotation>
     <xs:documentation>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</xs:documentation>
   </xs:annotation>
+  <xs:attributeGroup name="SimpleObjectAttributeGroup">
+    <xs:attribute ref="structures:id"/>
+    <xs:attribute ref="structures:onlyRef"/>    
+    <xs:attribute ref="structures:qname"/>
+    <xs:attribute ref="structures:ref"/>
+    <xs:attribute ref="structures:uri"/>
+    <xs:anyAttribute processContents="strict" namespace="##other"/>
+  </xs:attributeGroup>
   <xs:complexType name="AssociationType" abstract="true">
     <xs:annotation>
       <xs:documentation>A data type for a relationship between two or more objects, including any properties of that relationship.</xs:documentation>
@@ -15,11 +23,7 @@
     <xs:sequence>
       <xs:element ref="structures:AssociationAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
-    <xs:attribute ref="structures:id"/>
-    <xs:attribute ref="structures:qname"/>
-    <xs:attribute ref="structures:ref"/>
-    <xs:attribute ref="structures:uri"/>
-    <xs:anyAttribute processContents="strict"/>
+    <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
   </xs:complexType>
   <xs:complexType name="AugmentationType" abstract="true">
     <xs:annotation>
@@ -33,11 +37,7 @@
     <xs:sequence>
       <xs:element ref="structures:ObjectAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
-    <xs:attribute ref="structures:id"/>
-    <xs:attribute ref="structures:qname"/>
-    <xs:attribute ref="structures:ref"/>
-    <xs:attribute ref="structures:uri"/>
-    <xs:anyAttribute processContents="strict"/>
+    <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
   </xs:complexType>
   <xs:element name="AssociationAugmentationPoint" abstract="true">
     <xs:annotation>

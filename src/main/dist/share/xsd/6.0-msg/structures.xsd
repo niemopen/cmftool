@@ -16,6 +16,7 @@
       <xs:element ref="structures:AssociationAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute ref="structures:id"/>
+    <xs:attribute ref="structures:onlyRef"/>
     <xs:attribute ref="structures:qname"/>
     <xs:attribute ref="structures:ref"/>
     <xs:attribute ref="structures:uri"/>
@@ -33,6 +34,7 @@
       <xs:element ref="structures:ObjectAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute ref="structures:id"/>
+    <xs:attribute ref="structures:onlyRef"/>    
     <xs:attribute ref="structures:qname"/>
     <xs:attribute ref="structures:ref"/>
     <xs:attribute ref="structures:uri"/>

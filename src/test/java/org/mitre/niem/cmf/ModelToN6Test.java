@@ -49,8 +49,7 @@ public class ModelToN6Test {
     @Test
     public void testConvert() throws CMFException, FileNotFoundException, TransformerException, TransformerConfigurationException, ParserConfigurationException {
         FileInputStream cmfIS = null;
-//        var cmfFile = new File(testDirPath, "cmf5/complexContent.cmf");
-        var cmfFile = new File("tmp/n5sub.cmf");
+        var cmfFile = new File(testDirPath, "cmf5/complexContent.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {

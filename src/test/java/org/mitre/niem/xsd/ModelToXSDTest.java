@@ -48,7 +48,6 @@ import org.mitre.niem.cmf.Model;
  */
 public class ModelToXSDTest {
     
-   static String testDir = "src/test/resources/xsd5/";
    static List<LogCaptor> logs;
       
     @TempDir

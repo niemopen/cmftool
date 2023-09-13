@@ -504,13 +504,22 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("documenation")
     public void testDocumentation () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd5/complexContent.xsd" };
-        ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel(args);
+        String base = "src/test/resources/xsd5/";
+        String[] testSchemas = { 
+            "complexContent", "literal-2", "literal-3", "literal-4", "literal-5", "literal-6"
+        };
+        String[] args = new String[1];
         
-        for (var c : m.getComponentList()) {
-            if ("http://release.niem.gov/niem/niem-core/5.0/".equals(c.getNamespaceURI())) 
-                assertNotNull(c.getDefinition());        
+        //  All components in all schema documents have definitions
+        for (var ts : testSchemas) {
+            String tsf = base + ts + ".xsd";
+            args[0] = tsf;
+            ModelFromXSD mfact = new ModelFromXSD();
+            Model m = mfact.createModel(args);     
+            for (var c : m.getComponentList()) {
+                if ("http://release.niem.gov/niem/niem-core/5.0/".equals(c.getNamespaceURI())) 
+                    assertNotNull(c.getDefinition());        
+            }        
         }
     }
     
@@ -637,6 +646,9 @@ public class ModelFromXSDTest {
         
         assertEquals(2, m.getNamespaceList().size());
         assertEquals(4, m.getComponentList().size());
+        Datatype dt = m.getDatatype("nc:TextType");
+        assertNotNull(dt);
+        
         ClassType ct = m.getClassType("nc:TextType");
         assertNull(ct);  
         assertEmptyLogs();
@@ -956,9 +968,9 @@ public class ModelFromXSDTest {
     }
     
     @Test
-    public void doit () throws Exception {
-        String[] args = { "tmp/04-AugCCWithA/messageModel.xsd" };
-        ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel(args);
+    public void debugTest () throws Exception {
+        String[] args = { "tmp/NIEMTranDemo/xsd/extension/CrashDriver.xsd", "tmp/NIEMTranDemo/xsd/xml-catalog.xml" };
+        var mfact = new ModelFromXSD();
+        var m = mfact.createModel(args);
     }
 }
