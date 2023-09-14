@@ -37,6 +37,7 @@ import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import static org.mitre.niem.cmf.NamespaceKind.namespaceKind2Code;
@@ -359,6 +360,36 @@ public class ModelXMLReaderTest {
         assertTrue(p.isRelationship());
         p = m.getProperty("ira:partialIndicator");
         assertFalse(p.isRefAttribute());
+    }
+    
+    @Test
+    public void testLocalTerm () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "cmf5/localTerm.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);   
+        Namespace ns = m.getNamespaceByPrefix("nc");
+        List<LocalTerm> lsl = ns.localTermList();
+        assertEquals(3, lsl.size());
+        assertThat(lsl).extracting(LocalTerm::getTerm)
+                .containsOnly("2D", "3D", "Test");
+        assertNotNull(lsl.get(0).getLiteral());
+        assertNull(lsl.get(0).getDefinition());
+        assertNull(lsl.get(0).getSourceURIs());
+        assertEquals(0, lsl.get(0).citationList().size());
+        assertNull(lsl.get(1).getLiteral());
+        assertNotNull(lsl.get(1).getDefinition());
+        assertNull(lsl.get(1).getSourceURIs());
+        assertEquals(0, lsl.get(1).citationList().size());
+        assertNull(lsl.get(2).getLiteral());
+        assertNotNull(lsl.get(2).getDefinition());
+        assertNotNull(lsl.get(2).getSourceURIs());
+        assertEquals(2, lsl.get(2).citationList().size());        
     }
     
     @Test

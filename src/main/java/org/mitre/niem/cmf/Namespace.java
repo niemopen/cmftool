@@ -37,7 +37,8 @@ import static org.mitre.niem.cmf.NamespaceKind.namespaceCode2Kind;
 public class Namespace extends ObjectType implements Comparable<Namespace> {
     
     private Model model = null;             // Namespace objects know the Model they are part of     
-    private List<AugmentRecord> augmentList = new ArrayList<>();
+    private final List<AugmentRecord> augmentList = new ArrayList<>();
+    private final List<LocalTerm> localTermList   = new ArrayList<>();
     private String namespaceURI = null;
     private String namespacePrefix = null;
     private String definition = null;
@@ -78,6 +79,7 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public int getKind ()                     { return nsKind; }
     public boolean isExternal ()              { return nsKind == NSK_EXTERNAL; }
     public List<AugmentRecord> augmentList()  { return augmentList; }
+    public List<LocalTerm> localTermList()    { return localTermList; }
     
     public void addAugmentRecord (AugmentRecord r) {
         this.augmentList.add(r);
@@ -92,6 +94,10 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
         if (index < 0) return;
         this.augmentList.set(index, nr);
     }    
+    
+    public void addLocalTerm (LocalTerm lt) {
+        this.localTermList.add(lt);
+    }
     
     // Enforces guarantee that each namespace in a model has a unique prefix
     @Override

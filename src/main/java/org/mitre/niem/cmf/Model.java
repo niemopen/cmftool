@@ -49,7 +49,7 @@ public class Model extends ObjectType {
     
     // Info about schema documents needed when writing the model as XSD
     // Default NIEM version is 6
-    static private final SchemaDocument none            = new SchemaDocument(null,null,null,null,"6",null,"en-US");
+    static private final SchemaDocument none            = new SchemaDocument(null,null,null,null,null,null,"en-US");
     private final Map<String,SchemaDocument> schemadoc  = new HashMap<>();           // nsURI -> schema info
     
     public Map<String,SchemaDocument> schemadoc () { return schemadoc; }

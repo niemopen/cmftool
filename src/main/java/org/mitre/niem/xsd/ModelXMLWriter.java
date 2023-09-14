@@ -56,6 +56,7 @@ import static org.mitre.niem.NIEMConstants.CMF_NS_URI;
 import static org.mitre.niem.NIEMConstants.CMF_STRUCTURES_NS_URI;
 import org.mitre.niem.cmf.AugmentRecord;
 import org.mitre.niem.cmf.CodeListBinding;
+import org.mitre.niem.cmf.LocalTerm;
 import static org.mitre.niem.cmf.NamespaceKind.namespaceKind2Code;
 import org.mitre.niem.cmf.SchemaDocument;
 
@@ -214,6 +215,7 @@ public class ModelXMLWriter {
         int nsk = x.getKind();
         addSimpleChild(dom, e, "NamespaceKindCode", namespaceKind2Code(nsk));
         for (AugmentRecord z : x.augmentList()) addAugmentRec(dom, e, z);
+        for (LocalTerm z : x.localTermList()) addLocalTerm(dom, e, z);
         p.appendChild(e);
     }  
     
@@ -226,6 +228,17 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());  
         addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());     
         p.appendChild(e);        
+    }
+    
+    private void addLocalTerm (Document dom, Element p, LocalTerm x) {
+        if (null == x) return;
+        Element e = dom.createElementNS(CMF_NS_URI, "LocalTerm");
+        addSimpleChild(dom, e, "TermName", x.getTerm());
+        addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
+        addSimpleChild(dom, e, "TermLiteralText", x.getLiteral());
+        addSimpleChild(dom, e, "SourceURIList", x.getSourceURIs());
+        for (var z : x.citationList()) addSimpleChild(dom, e, "SourceCitationText", z);
+        p.appendChild(e);
     }
     
     private void addNamespaceRef (Document dom, Element p, String lname, Namespace x) {

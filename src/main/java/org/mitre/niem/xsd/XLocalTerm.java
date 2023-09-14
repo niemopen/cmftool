@@ -23,35 +23,35 @@
  */
 package org.mitre.niem.xsd;
 
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.xml.sax.Attributes;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ModelToN5XSD extends ModelToXSD {
-    
-    public ModelToN5XSD () { super(); }
-    public ModelToN5XSD (Model m) { super(m); }
-
-    @Override
-    protected String getArchitecture ()       { return "NIEM5"; }
+public class XLocalTerm extends XObjectType {
+    private LocalTerm obj = null;
     
     @Override
-    protected String getDefaultNIEMVersion()  { return "5"; }
-
+    public LocalTerm getObject () { return obj; }
+    
+    XLocalTerm (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+        super(m, p, ens, eln, a, line);
+        obj = new LocalTerm();
+        obj.setSequenceID(this.getSequenceID());       
+    }      
+    
     @Override
-    protected String getShareVersionSuffix () { return ".0"; }   
-        
-    @Override
-    protected void addSimpleTypeExtension (Document dom, Element exe) {
-        var agqn = structPrefix + ":SimpleObjectAttributeGroup";
-        var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
-        age.setAttribute("ref", agqn);
-        exe.appendChild(age);          
+    public void addAsChild (XObjectType child) {
+        child.addToLocalTerm(this);
+        super.addAsChild(child);
     }
+   
+    @Override
+    public void addToNamespace (XNamespace x) { 
+        x.getObject().addLocalTerm(this.getObject());
+    }      
 }

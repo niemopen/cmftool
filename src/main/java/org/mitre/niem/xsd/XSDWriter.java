@@ -71,7 +71,8 @@ public class XSDWriter {
                 { "xs:element", "name", "ref", "type", "minOccurs", "maxOccurs", "substitutionGroup" },
                 { "xs:import", "namespace", "schemaLocation" },
                 { "xs:complexType", "name", "type" },
-                { "xs:attribute", "name", "type" }
+                { "xs:attribute", "name", "type" },
+                { "appinfo:LocalTerm", "term" }
         };
         Scanner scn = new Scanner(ostr.toString());
         String line = scn.nextLine();
@@ -91,10 +92,6 @@ public class XSDWriter {
                 if (res.endsWith("/>")) end = "/>";
                 else end = ">";
                 res = res.substring(0, res.length() - end.length());
-//                System.out.print(String.format("indent: '%s'\n", indent));
-//                System.out.print(String.format("tag:    '%s'\n", tag));
-//                System.out.print(String.format("rest:   '%s'\n", res));
-//                System.out.print(String.format("end:    '%s'\n", end));
                 for (int i = 0; i < reorder.length; i++) {
                     if (tag.equals(reorder[i][0])) {
                         w.write(indent);
@@ -103,11 +100,12 @@ public class XSDWriter {
                         for (int j = 1; j < reorder[i].length; j++) {
                             String key = reorder[i][j];
                             if (null != tmap.get(key)) {
-                                w.write(" " + tmap.get(key));
+                                w.write(String.format(" %s=\"%s\"", key, tmap.get(key)));
                                 tmap.remove(key);
                             }
                         }
-                        for (String str : tmap.values()) w.write(" " + str);
+                        for (String key : tmap.keySet()) 
+                            w.write(String.format(" %s=\"%s\"", key, tmap.get(key)));                     
                         w.write(end);
                         line = null;
                         i = reorder.length;
@@ -120,19 +118,22 @@ public class XSDWriter {
                 if (null != line && "xs:schema".equals(tag)) {
                     w.write("<xs:schema");
                     Map<String,String>tmap = keyValMap(res);
-                    if (null != tmap.get("targetNamespace")) {
-                        w.write("\n  " + tmap.get("targetNamespace"));
+                    var tns = tmap.get("targetNamespace");
+                    if (null != tns) {
+                        w.write(String.format("\n  targetNamespace=\"%s\"", tns));
                         tmap.remove("targetNamespace");
                     }
                     var xsURI  = tmap.remove("xmlns:xs");
                     var xsiURI = tmap.remove("xmlns:xsi");
                     for (Map.Entry<String,String>me : tmap.entrySet()) {
-                        if (me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
+                        if (me.getKey().startsWith("xmlns:")) 
+                            w.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
                     }
-                    if (null != xsURI)  w.write("\n  " + xsURI);
-                    if (null != xsiURI) w.write("\n  " + xsiURI);
+                    if (null != xsURI)  w.write("\n  xmlns:xs=\"" + xsURI + "\"");
+                    if (null != xsiURI) w.write("\n  xmlns:xsi=\"" + xsiURI + "\"");
                     for (Map.Entry<String,String>me : tmap.entrySet()) {
-                        if (!me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
+                        if (!me.getKey().startsWith("xmlns:")) 
+                            w.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
                     }     
                     w.write(end);
                     line = null;
@@ -143,18 +144,14 @@ public class XSDWriter {
         }        
     }
     
-    private static final Pattern pairPat = Pattern.compile("\\s*([\\w:-]+)\\s*=\\s*(\"[^\"]*\")");
     // Breaks a string of key="value" pairs into a sorted map
+    private static Pattern attributeParse = Pattern.compile("(\\S+)\\s*=\\s*\"([^\"]*)\"");
     private static TreeMap<String,String> keyValMap (String s) {
         TreeMap<String,String> kvm = new TreeMap<>();
-        Matcher pairMatch = pairPat.matcher(s);
-        while (pairMatch.lookingAt()) {
-            String key = pairMatch.group(1);
-            String val = pairMatch.group(2);
-            int ei = pairMatch.end();
-            pairMatch.region(ei, pairMatch.regionEnd());
-            kvm.put(key, key + "=" + val);
+        Matcher m = attributeParse.matcher(s);
+        while (m.find()) {
+            kvm.put(m.group(1), m.group(2));
         }
         return kvm;
-    }    
+    }   
 }

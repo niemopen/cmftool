@@ -27,6 +27,7 @@ import static org.apache.commons.lang3.math.NumberUtils.toInt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.mitre.niem.cmf.CMFException;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.xml.sax.Attributes;
 
@@ -132,6 +133,22 @@ public class XStringObject extends XObjectType {
                 LOG.error(String.format("can't add '%s' to HasProperty", this.getComponentLname()));
                 break;
         }        
+    }
+    
+    @Override
+    public void addToLocalTerm (XLocalTerm xlt) {
+        String val = getStringVal();
+        LocalTerm lt = xlt.getObject();
+        switch (this.getComponentLname()) {
+            case "DefinitionText":      lt.setDefinition(val); break;
+            case "SourceCitationText":  lt.addCitation(val); break;
+            case "SourceURIList":       lt.setSourceURIs(val); break;
+            case "TermLiteralText":     lt.setLiteral(val); break;
+            case "TermName":            lt.setTerm(val); break;
+            default:
+                LOG.error(String.format("can't add '%s' to LocalTerm", this.getComponentLname()));
+                break;
+        }     
     }
         
     @Override

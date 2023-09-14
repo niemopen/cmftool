@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Model
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/">
+  <Namespace structures:id="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DefinitionText>appinfo test case</DefinitionText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+    <LocalTerm>
+      <TermName>2D</TermName>
+      <TermLiteralText>Two-dimensional</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>3D</TermName>
+      <DefinitionText>Three-dimensional</DefinitionText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>Test</TermName>
+      <DefinitionText>only for test purposes</DefinitionText>
+      <SourceURIList>http://example.com/1 http://example.com/2</SourceURIList>
+      <SourceCitationText>citation #1</SourceCitationText>
+      <SourceCitationText>citation #2</SourceCitationText>
+    </LocalTerm>
+  </Namespace>
+</Model>

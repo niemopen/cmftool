@@ -40,6 +40,8 @@ dependencies {
     testImplementation 'io.github.hakky54:logcaptor:2.9.0'
     testImplementation 'org.assertj:assertj-core:3.23.1'
 
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     // JCommander is for command-line interface; not needed for the library API
     api 'xerces:xercesImpl:2.12.2'
     api 'xml-apis:xml-apis:1.4.01'

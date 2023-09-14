@@ -43,6 +43,7 @@ import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
@@ -598,6 +599,30 @@ public class ModelFromXSDTest {
         assertEquals(d2, m.getDatatype("xs:token"));
         assertEmptyLogs();
     }
+    
+    @Test
+    public void testLocalTerms () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd5/localTerm.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        Namespace ns = m.getNamespaceByPrefix("nc");
+        List<LocalTerm> lsl = ns.localTermList();
+        assertEquals(3, lsl.size());
+        assertThat(lsl).extracting(LocalTerm::getTerm)
+                .containsOnly("2D", "3D", "Test");
+        assertNotNull(lsl.get(0).getLiteral());
+        assertNull(lsl.get(0).getDefinition());
+        assertNull(lsl.get(0).getSourceURIs());
+        assertEquals(0, lsl.get(0).citationList().size());
+        assertNull(lsl.get(1).getLiteral());
+        assertNotNull(lsl.get(1).getDefinition());
+        assertNull(lsl.get(1).getSourceURIs());
+        assertEquals(0, lsl.get(1).citationList().size());
+        assertNull(lsl.get(2).getLiteral());
+        assertNotNull(lsl.get(2).getDefinition());
+        assertNotNull(lsl.get(2).getSourceURIs());
+        assertEquals(2, lsl.get(2).citationList().size()); 
+    }
 
     @Test
     public void testLiteral_0 () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
@@ -966,11 +991,5 @@ public class ModelFromXSDTest {
         assertEquals(ct.hasPropertyList().get(3).getProperty(), p);
         assertEmptyLogs();
     }
-    
-    @Test
-    public void debugTest () throws Exception {
-        String[] args = { "tmp/NIEMTranDemo/xsd/extension/CrashDriver.xsd", "tmp/NIEMTranDemo/xsd/xml-catalog.xml" };
-        var mfact = new ModelFromXSD();
-        var m = mfact.createModel(args);
-    }
+
 }

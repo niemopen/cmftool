@@ -108,6 +108,7 @@ public class XObjectType {
     public void addToDatatype (XDatatype dt) { }
     public void addToFacet (XFacet f) { }
     public void addToHasProperty (XHasProperty h) { }
+    public void addToLocalTerm (XLocalTerm l) { }
     public void addToModel (XModel m) { }
     public void addToNamespace (XNamespace ns) { }
     public void addToProperty (XProperty op) { }

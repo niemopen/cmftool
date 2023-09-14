@@ -73,6 +73,7 @@ import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
@@ -334,7 +335,9 @@ public abstract class ModelToXSD {
         dom.appendChild(root);
 
         var arch      = getArchitecture();
-        nsNIEMVersion = m.niemVersion(nsuri);        
+        nsNIEMVersion = m.niemVersion(nsuri);
+        if (null == nsNIEMVersion) nsNIEMVersion = getDefaultNIEMVersion();
+
         appinfoURI    = NamespaceKind.getBuiltinNS(NIEM_APPINFO, arch, nsNIEMVersion);
         clsaURI       = NamespaceKind.getBuiltinNS(NIEM_CLSA, arch, nsNIEMVersion);
         proxyURI      = NamespaceKind.getBuiltinNS(NIEM_PROXY, arch, nsNIEMVersion);
@@ -370,12 +373,19 @@ public abstract class ModelToXSD {
             root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:"+ctprefix, ctns);
             root.setAttributeNS(ctns, ctprefix + ":" + CONFORMANCE_ATTRIBUTE_NAME, cta);
         }
-        // Add the <xs:annotation> element with namespace definition
-        Namespace ns = m.getNamespaceByURI(nsuri);
-        var ae = addDocAnnotation(dom, root, ns.getDefinition());
-        nsNSdeps.add(nsuri);       // always define prefix for target namespace
+        var  ns = m.getNamespaceByURI(nsuri);   // current namespace object
+        nsNSdeps.add(nsuri);                    // always define prefix for target namespace 
         
-        // Local term appinfo handled here, someday
+        // Create annotation element for documentation and local term appinfo
+        Element ae = null;
+        ae = addDocumentation(dom, root, ae, ns.getDefinition());
+        if (!ns.localTermList().isEmpty()) {
+            ae = addAnnotation(dom, root, ae);
+            var ai = addAppinfo(dom, ae, null);
+            for (var lt : ns.localTermList()) {
+                addLocalTerm(dom, ai, lt);
+            }
+        }
         
         // Create type definitions for ClassType objects
         // Then create typedefs for Datatype objects (when not already created)
@@ -410,6 +420,7 @@ public abstract class ModelToXSD {
                 root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:" + dnspre, dnsuri);                
             }
             if (W3C_XML_SCHEMA_NS_URI.equals(dnsuri)) continue;     // don't import XSD
+            if (appinfoURI.equals(dnsuri)) continue;                // don't import appinfo
             if (nsuri.equals(dnsuri)) continue;                     // don't import current namespace
             Path thisDoc   = Paths.get(ns2file.get(nsuri));
             Path importDoc = Paths.get(ns2file.get(dnsuri));
@@ -430,7 +441,8 @@ public abstract class ModelToXSD {
         nsPropdecls.forEach((name,element) -> {
             root.appendChild(element);
         });
-        writeDom(dom, ofw);
+        XSDWriter.writeDOM(dom, ofw);
+//        writeDom(dom, ofw);
     }
     
     // Iterate through all the ClassType objects in the model; create an
@@ -531,6 +543,7 @@ public abstract class ModelToXSD {
         var appinfoQName = appinfoPrefix + ":" + appatt;
         root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:"+appinfoPrefix, appinfoURI);
         e.setAttributeNS(appinfoURI, appinfoQName, value);
+        nsNSdeps.add(appinfoURI);
         utilityNSuri.add(appinfoURI);
     }
     
@@ -545,7 +558,7 @@ public abstract class ModelToXSD {
         Element cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
         Element exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
         cte.setAttribute("name", cname);
-        var ae = addDocAnnotation(dom, cte, ct.getDefinition());
+        var ae = addDocumentation(dom, cte, null, ct.getDefinition());
         if (ct.isAbstract())   cte.setAttribute("abstract", "true");
         if (ct.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
         if (ct.isExternal())   addAppinfoAttribute(dom, cte, "externalAdapterTypeIndicator", "true");
@@ -649,7 +662,7 @@ public abstract class ModelToXSD {
         var sce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
         var exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
         cte.setAttribute("name", cname);        
-        var ae = addDocAnnotation(dom, cte, dt.getDefinition());
+        var ae = addDocumentation(dom, cte, null, dt.getDefinition());
         if (dt.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
 
         // Restriction without facets becomes an empty xs:extension
@@ -689,11 +702,12 @@ public abstract class ModelToXSD {
         if (!nsuri.equals(dt.getNamespaceURI())) return;    // not in this namespace
         if (nsTypedefs.containsKey(cname)) return;   // already created
 
-        var ste   = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleType");
-        var ae = addDocAnnotation(dom, ste, dt.getDefinition());
+        Element ae = null;
+        var ste = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleType");       
+        ae = addDocumentation(dom, ste, ae, dt.getDefinition());
         if (null != dt.getCodeListBinding()) {
-            if (null == ae) ae = addAnnotation(dom,ste);
-            var ap = addAppinfo(dom, ae);
+            ae = addAnnotation(dom, ste, ae);
+            var ap = addAppinfo(dom, ae, null);
             var cb = addCodeListBinding(dom, ap, nsuri, dt.getCodeListBinding());
         }
         if (null != dt.getUnionOf()) addUnionElement(dom, ste, dt);
@@ -732,7 +746,7 @@ public abstract class ModelToXSD {
             String ename = "xs:" + toLowerCase(fk.charAt(0)) + fk.substring(1);
             Element fce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, ename);
             fce.setAttribute("value", f.getStringVal());
-            addDocAnnotation(dom, fce, f.getDefinition());
+            addDocumentation(dom, fce, null, f.getDefinition());
             rse.appendChild(fce);
         }
         ste.appendChild(rse);
@@ -776,7 +790,7 @@ public abstract class ModelToXSD {
         if (p.isDeprecated())    addAppinfoAttribute(dom, pe, "deprecated", "true");
         if (p.isRefAttribute())  addAppinfoAttribute(dom, pe, "referenceAttributeIndicator", "true");
         if (p.isRelationship())  addAppinfoAttribute(dom, pe, "relationshipPropertyIndicator", "true");
-        var ae = addDocAnnotation(dom, pe, p.getDefinition());
+        var ae = addDocumentation(dom, pe, null, p.getDefinition());
         if (null != pct) {
             pe.setAttribute("type", pct.getQName());
             nsNSdeps.add(pct.getNamespace().getNamespaceURI());
@@ -804,37 +818,6 @@ public abstract class ModelToXSD {
             nsNSdeps.add(subp.getNamespace().getNamespaceURI());
         }
         nsPropdecls.put(p.getName(), pe);
-    }
-    
-    // Use this to add annotation and documentation elements to a schema component.
-    // Returns the annotation element (to add appinfo, later).
-    // Returns null (and does nothing) if the documentation string is null or blank.
-    protected Element addDocAnnotation (Document dom, Element e, String s) {
-        if (null == s || s.isBlank()) return null;
-        var ae = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
-        var de = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:documentation");
-        de.setTextContent(s);
-        ae.appendChild(de);
-        e.appendChild(ae);
-        return ae;
-    }
-    
-    protected Element addAnnotation (Document dom, Element e) {
-        var ae = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
-        e.appendChild(ae);
-        return ae;
-    }
-    
-    protected Element addDocumentation (Document dom, Element e) {
-        var de = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:documentation");
-        e.appendChild(de);
-        return de;
-    }
-    
-    protected Element addAppinfo (Document dom, Element e) {
-        var ai = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:appinfo");
-        e.appendChild(ai);
-        return ai;
     }
     
     protected Element addCodeListBinding (Document dom, Element e, String nsuri, CodeListBinding clb) {
@@ -868,99 +851,6 @@ public abstract class ModelToXSD {
 //            java.util.logging.Logger.getLogger(ModelToXSD.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
-    
-    // Writes the XSD document model.  Post-processing of XSLT output to do
-    // what we wish XSLT would do, but doesn't.  You can't process arbitrary XML in
-    // this way, but we know what the XSLT output is going to be, so it works.
-    private void writeDom (Document dom, Writer w) throws TransformerConfigurationException, TransformerException, IOException {
-        Transformer tr = TransformerFactory.newInstance().newTransformer();
-        tr.setOutputProperty(OutputKeys.INDENT, "yes");
-        tr.setOutputProperty(OutputKeys.METHOD, "xml");
-        tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        StringWriter ostr = new StringWriter();
-        tr.transform(new DOMSource(dom), new StreamResult(ostr));
-        
-        // process string by lines to do what XSLT won't do :-(
-        // For <xs:schema>, namespace decls and attributes on separate indented lines.
-        // For <xs:element>, order as @ref, @minOccurs, @maxOccurs, @name, @type, @substitutionGroup, then others
-        // For <xs:import>, order as @namespace, @schemaLocation, then others
-        Pattern linePat = Pattern.compile("^(\\s*)<([^\\s>]+)(.*)");
-        String[][]reorder = {
-                { "xs:element", "name", "ref", "type", "minOccurs", "maxOccurs", "substitutionGroup" },
-                { "xs:import", "namespace", "schemaLocation" },
-                { "xs:complexType", "name", "type" },
-                { "xs:attribute", "name", "ref", "type" }
-        };
-        Scanner scn = new Scanner(ostr.toString());
-        String line = scn.nextLine();
-        w.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");    // don't want/need standalone="no"
-        while (scn.hasNextLine()) {           
-            line = scn.nextLine();
-            Matcher lineM = linePat.matcher(line);
-            if (!lineM.matches()) w.write(line);
-            else {
-                String indent = lineM.group(1);
-                String tag = lineM.group(2);
-                String res = lineM.group(3);
-                String end;
-                res = res.stripTrailing();
-                if (res.endsWith("/>")) end = "/>";
-                else end = ">";
-                res = res.substring(0, res.length() - end.length());
-                for (int i = 0; i < reorder.length; i++) {
-                    if (tag.equals(reorder[i][0])) {
-                        w.write(indent);
-                        w.write("<" + tag);
-                        Map<String,String>tmap = keyValMap(res);
-                        for (int j = 1; j < reorder[i].length; j++) {
-                            String key = reorder[i][j];
-                            if (null != tmap.get(key)) {
-                                w.write(" " + tmap.get(key));
-                                tmap.remove(key);
-                            }
-                        }
-                        for (String str : tmap.values()) w.write(" " + str);
-                        w.write(end);
-                        line = null;
-                        i = reorder.length;
-                    }
-                }
-                if (null != line && "xs:schema".equals(tag)) {
-                    w.write("<xs:schema");
-                    Map<String,String>tmap = keyValMap(res);
-                    if (null != tmap.get("targetNamespace")) {
-                        w.write("\n  " + tmap.get("targetNamespace"));
-                        tmap.remove("targetNamespace");
-                    }
-                    for (Map.Entry<String,String>me : tmap.entrySet()) {
-                        if (me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
-                    }
-                    for (Map.Entry<String,String>me : tmap.entrySet()) {
-                        if (!me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
-                    }     
-                    w.write(end);
-                    line = null;
-                }
-                if (null != line) w.write(line);
-            }
-            w.write("\n");
-        }        
-    }
-    
-    // Breaks a string of key="value" pairs into a sorted map
-    private TreeMap<String,String> keyValMap (String s) {
-        TreeMap<String,String> kvm = new TreeMap<>();
-        String[] tok = s.split("\\s+");
-        for (String tokl : tok) {
-            int ei = tokl.indexOf("=");
-            if (ei >= 0) {
-                String key = tokl.substring(0, ei);
-                kvm.put(key, tokl);
-            }
-        }
-        return kvm;
-    }
     
     // Returns a File object for the proper schema document in the "share" directory
     // for utility and XML namespaces.
@@ -1014,11 +904,65 @@ public abstract class ModelToXSD {
         return fpath;
     }
     
+    // Adds annotation element to component if needed.
+    protected Element addAnnotation (Document dom, Element component, Element ae) {
+        if (null != ae) return ae;
+        ae = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
+        component.appendChild(ae);
+        return ae;
+    }
+    
+    // Adds appinfo element to annotation if needed.
+    // Returns the appinfo element.
+    protected Element addAppinfo (Document dom, Element ae, Element ap) {
+        if (null != ap) return ap;
+        ap = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:appinfo");
+        ae.appendChild(ap);
+        return ap;
+    }
+    
+    // Adds documentation element and maybe annotation element to component if needed.
+    // Returns the annotation element.
+    // Does nothing if doc is null or blank.
+    protected Element addDocumentation (Document dom, Element component, Element ae, String doc) {
+        if (null == doc || doc.isBlank()) return ae;
+        ae = addAnnotation(dom, component, ae);
+        var de = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:documentation");
+        de.setTextContent(doc);
+        ae.appendChild(de);
+        return ae;
+    }
+    
+    // Adds an appinfo:LocalTerm element to the xs:appinfo element
+    protected void addLocalTerm (Document dom, Element ap, LocalTerm lt) {
+        if (null == lt) return;
+        var lte = dom.createElementNS(appinfoURI, appinfoPrefix + ":LocalTerm");
+        setAttribute(lte, "definition", lt.getDefinition());
+        setAttribute(lte, "literal", lt.getLiteral());
+        setAttribute(lte, "sourceURIs", lt.getSourceURIs());
+        setAttribute(lte, "term", lt.getTerm());
+        for (var cite : lt.citationList()) {
+            var ce = dom.createElementNS(appinfoURI, appinfoPrefix + ":SourceText");
+            ce.setTextContent(cite);
+            lte.appendChild(ce);
+        }
+        nsNSdeps.add(appinfoURI);
+        utilityNSuri.add(appinfoURI);        
+        ap.appendChild(lte);       
+    }
+    
+    // Convience routine for possibly null attribute values
+    protected void setAttribute(Element e, String n, String x) {
+        if (null == x) return;
+        e.setAttribute(n, x);
+    }
+    
     // Difference between subset schemas and message schemas is implemented by 
     // overriding these subroutines
     
     protected String getArchitecture ()       { return "NIEM5"; }
     protected String getShareVersionSuffix () { return ".0"; }   
+    protected String getDefaultNIEMVersion () { return "6"; }
     
     protected String getConformanceTargets (String nsuri) {
         return m.conformanceTargets(nsuri);

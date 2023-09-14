@@ -80,7 +80,9 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.CodeListBinding;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.NamespaceKind;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_APPINFO;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_CLSA;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_PROXY;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
@@ -229,11 +231,41 @@ public class ModelFromXSD {
             var nsuri = nsi.getSchemaNamespace();
             var ns    = m.getNamespaceByURI(nsuri);
             if (null == ns) continue;
+          
             var alist = parseAnnotations(nsi);
+            if (null == alist) continue;
             var docs  = getDocumentation(alist);
             for (var doc : docs) 
                 ns.setDefinition(doc);
+            
+            var sd     = sdoc.get(nsuri);
+            if (null == sd) continue;
+            var narch  = sd.niemArch();
+            var nvers  = sd.niemVersion(); 
+            var ains   = NamespaceKind.getBuiltinNS(NIEM_APPINFO, narch, nvers);
+            var aplist = getAppinfoElements(alist);
+            for (var appinfo : aplist) 
+                processSchemaAppinfo(ns, ains, appinfo);
         }        
+    }
+    
+    private void processSchemaAppinfo (Namespace ns, String appinfoURI, Element appinfo) {
+        var nl = appinfo.getElementsByTagNameNS(appinfoURI, "LocalTerm");
+        for (int i = 0; i < nl.getLength(); i++) {
+            var lte = (Element)nl.item(i);
+            var term = getAttribute(lte, "term");
+            var lit  = getAttribute(lte, "literal");
+            var doc  = getAttribute(lte, "definition");
+            var src  = getAttribute(lte, "sourceURIs");
+            var lt   = new LocalTerm(term, doc, lit, src);
+            var stnl = lte.getElementsByTagNameNS(appinfoURI, "SourceText");
+            for (int j = 0; j < stnl.getLength(); j++) {
+                var ste  = (Element)stnl.item(j);
+                var cite = ste.getTextContent();
+                lt.addCitation(cite.strip());
+            }
+            ns.addLocalTerm(lt);
+        }
     }
     
     // Now that we have unique namespace prefixes assigned, we go through all the 
@@ -1217,6 +1249,14 @@ public class ModelFromXSD {
         if (null == ns) 
             throw new CMFException(String.format("no namespace object for %s", nsuri));
         return ns.getNamespacePrefix() + ":" + lname;        
+    }
+    
+    // Returns an attribute value by name.
+    // Returns null if the element does not have the attribute.
+    private String getAttribute (Element e, String lname) {
+        var attr = e.getAttributeNode(lname);
+        if (null == attr) return null;
+        return e.getAttribute(lname);
     }
     
     // replaceSuffix("FooSimpleType", "SimpleType", "Datatype") -> "FooDatatype"
