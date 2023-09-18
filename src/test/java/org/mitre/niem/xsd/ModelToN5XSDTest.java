@@ -60,6 +60,7 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
         "deprecated.xsd",
         //            "externals.xsd",          // can't automate this one; m2x doesn't generate external documents (gml.xsd)
         "list.xsd",
+        "listSimpleType.xsd",
         "literal-0.xsd",
         "literal-1.xsd",
         "literal-2.xsd",
@@ -119,5 +120,15 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
         }
         assertEmptyLogs();
     }
+    
+//    @Test
+//    public void debugTest () throws Exception {
+//        var is = new FileInputStream("tmp/mcb.cmf");
+//        var mr = new ModelXMLReader();
+//        var m  = mr.readXML(is);
+//        var td = new File("tmp/ctmp");
+//        var mw = new ModelToN5XSD(m);
+//        mw.writeXSD(td);
+//    }
     
 }

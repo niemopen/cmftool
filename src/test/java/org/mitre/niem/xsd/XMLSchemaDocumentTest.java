@@ -33,6 +33,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeAll;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_DOMAIN;
@@ -145,6 +146,13 @@ public class XMLSchemaDocumentTest {
     }    
     
     @Test
+    public void testIsStructures () throws Exception {
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/utility/structures.xsd", "");
+        assertEquals(NSK_UTILITY, sd.schemaKind());
+        assertEmptyLogs();
+    } 
+    
+    @Test
     public void testIsUtility () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/utility/appinfo.xsd", "");
         assertEquals(NSK_UTILITY, sd.schemaKind());
@@ -163,6 +171,27 @@ public class XMLSchemaDocumentTest {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/external/xml.xsd", "");
         assertEquals(NSK_XML, sd.schemaKind());
         assertEmptyLogs();
+    }
+    
+    @Test
+    public void testLocalTerm () throws Exception {
+        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/localTerm.xsd", "");        
+        List<LocalTerm> lsl = sd.localTerms();
+        assertEquals(3, lsl.size());
+        assertThat(lsl).extracting(LocalTerm::getTerm)
+                .containsOnly("2D", "3D", "Test");
+        assertNotNull(lsl.get(0).getLiteral());
+        assertNull(lsl.get(0).getDefinition());
+        assertNull(lsl.get(0).getSourceURIs());
+        assertEquals(0, lsl.get(0).citationList().size());
+        assertNull(lsl.get(1).getLiteral());
+        assertNotNull(lsl.get(1).getDefinition());
+        assertNull(lsl.get(1).getSourceURIs());
+        assertEquals(0, lsl.get(1).citationList().size());
+        assertNull(lsl.get(2).getLiteral());
+        assertNotNull(lsl.get(2).getDefinition());
+        assertNotNull(lsl.get(2).getSourceURIs());
+        assertEquals(2, lsl.get(2).citationList().size());
     }
 
     @Test

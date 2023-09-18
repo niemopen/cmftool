@@ -29,7 +29,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import static java.lang.Character.toLowerCase;
 import java.nio.file.Path;
@@ -41,21 +40,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
@@ -194,7 +186,10 @@ public abstract class ModelToXSD {
                     break;
                 }
             }
-            if (cscflag) litTypes.add(ct);
+            if (cscflag) {
+                litTypes.add(ct);
+                LOG.debug("litType " + ct.getQName());
+            }
         }
         // Build a graph of namespaces referenced by components
         if (null != messageNSuri) refGraph = new ReferenceGraph(m.getComponentList());
@@ -205,9 +200,25 @@ public abstract class ModelToXSD {
             Datatype dt = c.asDatatype();
             if (null == dt) continue;
             if (dt.getName().endsWith("SimpleType")) needSimpleType.add(dt);
-            else if (null != dt.getUnionOf() || null != dt.getListOf()
-                    || (null != dt.getRestrictionOf() && !dt.getRestrictionOf().getFacetList().isEmpty())) {
+            else if (null != dt.getUnionOf()) {
                 needSimpleType.add(dt);
+                LOG.debug("needSimpleType " + dt.getQName());
+                for (var udt : dt.getUnionOf().getDatatypeList()) {
+                    
+                }
+            }
+            else if (null != dt.getListOf()) {
+                needSimpleType.add(dt);
+                LOG.debug("needSimpleType " + dt.getQName());
+                var ldt = dt.getListOf();
+                if (!W3C_XML_SCHEMA_NS_URI.equals(ldt.getNamespaceURI())) {
+                    needSimpleType.add(ldt);
+                    LOG.debug("needSimpleType " + ldt.getQName());                    
+                }
+            }
+            else if (null != dt.getRestrictionOf() && !dt.getRestrictionOf().getFacetList().isEmpty()) {
+                needSimpleType.add(dt);
+                LOG.debug("needSimpleType " + dt.getQName());
             }
         }
         // Collect all the NIEM versions, establish builtin namespace prefixes
@@ -575,6 +586,15 @@ public abstract class ModelToXSD {
                 lptqn = lptqn.replaceFirst("Type$", "SimpleType");
                 lptqn = lptqn.replaceFirst("Datatype$", "SimpleType");
             }
+            // Handle FooLiteral datatype that is empty restriction of XSD type
+            else if (null == lpt.getListOf() && null == lpt.getUnionOf()) {
+                var r = lpt.getRestrictionOf();
+                if (null != r && r.getFacetList().isEmpty()) {
+                    var rbt = r.getDatatype();
+                    if (W3C_XML_SCHEMA_NS_URI.equals(rbt.getNamespaceURI()))
+                        lptqn = proxifiedDatatypeQName(r.getDatatype());
+                }
+            }
             exe.setAttribute("base", lptqn);
             if (lptqn.endsWith("SimpleType")) addSimpleTypeExtension(dom, exe);
 
@@ -724,7 +744,9 @@ public abstract class ModelToXSD {
         String sep = "";
         for (Datatype udt : bdt.getUnionOf().getDatatypeList()) {
             String memberQN = maybeSimpleTypeQName(udt);
+            String udtns    = udt.getNamespaceURI();
             members.append(sep).append(memberQN);
+            nsNSdeps.add(udtns);
             sep = " ";
         }
         une.setAttribute("memberTypes", members.toString());
@@ -732,8 +754,11 @@ public abstract class ModelToXSD {
     }
     
     protected void addListElement (Document dom, Element ste, Datatype bdt) {
-        Element lse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:list");
-        lse.setAttribute("itemType", maybeSimpleTypeQName(bdt.getListOf()));
+        var lse  = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:list");
+        var idt  = bdt.getListOf();
+        var idtns = idt.getNamespaceURI();
+        nsNSdeps.add(idtns);
+        lse.setAttribute("itemType", maybeSimpleTypeQName(idt));
         ste.appendChild(lse);
     }
     

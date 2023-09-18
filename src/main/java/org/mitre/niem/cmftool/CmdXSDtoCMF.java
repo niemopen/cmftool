@@ -180,6 +180,7 @@ class CmdXSDtoCMF implements JCCommand {
         }
         // Report namespaces processed
         if (!quietFlag) {
+            for (var msg : s.xsModelMsgs()) System.out.println(msg);
             List<String> conforming = new ArrayList<>();
             List<String> external   = new ArrayList<>();
             List<String> builtins   = new ArrayList<>();

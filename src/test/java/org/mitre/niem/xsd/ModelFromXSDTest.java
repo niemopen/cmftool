@@ -814,10 +814,10 @@ public class ModelFromXSDTest {
         String[] args = { "src/test/resources/xsd5/namespace-1.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
-       
+        Namespace ns = m.getNamespaceByURI("http://release.niem.gov/niem/niem-core/5.0/");
         assertEquals(3, m.getNamespaceList().size());
         assertEquals("nc", m.getNamespaceByURI("http://example.com/Foo/1.0/").getNamespacePrefix());
-        assertEquals("bar", m.getNamespaceByURI("http://release.niem.gov/niem/niem-core/5.0/").getNamespacePrefix());
+        assertEquals("bar", m.getNamespaceByURI("http://release.niem.gov/niem/niem-core/5.0/").getNamespacePrefix());        
         assertEmptyLogs();
     }
 
@@ -992,4 +992,10 @@ public class ModelFromXSDTest {
         assertEmptyLogs();
     }
 
+//    @Test
+//    public void debugTest () throws Exception {         
+//        String[] args = { "tmp/52rel/domains/cbrn.xsd" };
+//        ModelFromXSD mfact = new ModelFromXSD();
+//        Model m = mfact.createModel(args);        
+//    }
 }

@@ -26,6 +26,7 @@ package org.mitre.niem.xsd;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.regex.Pattern;
 import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
@@ -33,6 +34,7 @@ import javax.xml.parsers.SAXParser;
 import org.apache.logging.log4j.LogManager;
 import org.javatuples.Pair;
 import static org.mitre.niem.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_APPINFO;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_CTAS;
@@ -55,6 +57,8 @@ import org.xml.sax.helpers.DefaultHandler;
  * 
  * While we're at it, we collect these other things:<ul>
  *
+ * <li> Schema-level documentation strings</li>
+ * <li> LocalTerm objects from schema-level appinfo</li>
  * <li> The target namespace attribute value</li>
  * <li> All namespace declarations encountered in the document </li>
  * <li> NIEM conformance target assertions </li>
@@ -68,9 +72,12 @@ import org.xml.sax.helpers.DefaultHandler;
 public class XMLSchemaDocument {
     static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(XMLSchemaDocument.class); 
     
+    private final Stack<String> appinfoURI = new Stack<>();
     private final List<XMLNamespaceDeclaration> nsdels = new ArrayList<>();
     private final List<String> externalImports = new ArrayList<>();
-    private final List<AppinfoAttribute> appinfo = new ArrayList<>();
+    private final List<String> docStrings = new ArrayList<>();
+    private final List<LocalTerm> localTerms = new ArrayList<>();
+    private final List<AppinfoAttribute> appinfoAtts = new ArrayList<>();
     private String targetNS = null;
     private String confTargs = null;
     private String niemArch = null;
@@ -82,7 +89,9 @@ public class XMLSchemaDocument {
     
     public List<XMLNamespaceDeclaration> namespaceDecls ()  { return nsdels; }          // all namespace declarations in document
     public List<String> externalImports ()                  { return externalImports; } // external namespaces imported in document
-    public List<AppinfoAttribute> appinfoAtts ()            { return appinfo; }         // appinfo attributes in document
+    public List<AppinfoAttribute> appinfoAtts ()            { return appinfoAtts; }     // appinfo attributes in document
+    public List<String>documentationStrings()               { return docStrings; }      // schema-level documentation strings
+    public List<LocalTerm> localTerms()                     { return localTerms; }      // LocalTerm objects from schema appinfo
     public String targetNamespace ()                        { return targetNS; }        // target namespace URI of document
     public String conformanceTargets ()                     { return confTargs; }       // value of @ct:conformanceTargets in <xs:schema>
     public String niemArch ()                               { return niemArch; }        // derived from conformance assertions or target NS
@@ -96,6 +105,7 @@ public class XMLSchemaDocument {
     
 
     public XMLSchemaDocument (String sdfuri, String sdpath) throws SAXException, ParserConfigurationException, IOException {
+        appinfoURI.push("NOTAURI");
         SAXParser saxp = ParserBootstrap.sax2Parser();
         XSDHandler h = new XSDHandler();
         saxp.parse(sdfuri, h);
@@ -108,6 +118,8 @@ public class XMLSchemaDocument {
     
     private class XSDHandler extends DefaultHandler {  
         private final XMLNamespaceScope nsm = new XMLNamespaceScope();
+        private StringBuilder chars = null;
+        private LocalTerm lterm = null;                 // LocalTerm object currently being parsed
         private Pair<String,String> ctypeEN = null;     // namespace and lname of complex type being parsed
         private Locator docloc = null;                  // for document line number in log messages
         private int depth = 0;                          // root element has depth = 0
@@ -120,11 +132,17 @@ public class XMLSchemaDocument {
         @Override
         public void startPrefixMapping (String prefix, String uri) {
             if (prefix.isEmpty()) return;
+            if (NIEM_APPINFO == NamespaceKind.builtin(uri)) appinfoURI.push(uri);
             nsm.onStartPrefixMapping(prefix, uri);
             int line = docloc.getLineNumber();
             var nsd = new XMLNamespaceDeclaration(prefix, uri, line, depth, null, NSK_UNKNOWN);  // don't know target NS or kind yet
             nsdels.add(nsd);
         }        
+        
+        @Override
+        public void endPrefixMapping(String uri) {
+            if (NIEM_APPINFO == NamespaceKind.builtin(uri)) appinfoURI.pop();            
+        }
         
         private static final Pattern xsComponentPat = Pattern.compile("(attribute)|(element)|(complexType)");
         
@@ -183,15 +201,42 @@ public class XMLSchemaDocument {
                         }   
                 }
             }
+            // Handle schema documentation strings
+            else if (2 == depth && "documentation".equals(elname)) {
+                chars = new StringBuilder();
+            }
+            // Handle appinfo:SourceText elements
+            else if ("SourceText".equals(elname) && ens.equals(appinfoURI.peek())) {
+                chars = new StringBuilder();
+            }
+            // Handle appinfo:LocalTerm elements
+            else if ("LocalTerm".equals(elname) && ens.equals(appinfoURI.peek())) {
+                lterm = new LocalTerm();
+                localTerms.add(lterm);
+                for (int i = 0; i < atts.getLength(); i++) {
+                    String aln = atts.getLocalName(i);
+                    String aval = atts.getValue(i);
+                    if (null != aval && !aval.isBlank())
+                        switch (aln) {
+                            case "definition": lterm.setDefinition(aval); break;
+                            case "literal":    lterm.setLiteral(aval); break;
+                            case "sourceURIs": lterm.setSourceURIs(aval); break;
+                            case "term":       lterm.setTerm(aval); break;
+                            default:
+                                LOG.warn(String.format("strange attribute %s in LocalTerm, %s, line %d",
+                                        aln, docloc.getSystemId(), docloc.getLineNumber()));
+                        }
+                }                
+            }
             // Remember the QName of the global complex type we are defining
             else if (1 == depth && "complexType".equals(elname)) ctypeEN = Pair.with(targetNS, atts.getValue("name"));
                 
             // Look for appinfo attributes on global definitions and declarations
             if (1 == depth && xsComponentPat.matcher(elname).lookingAt()) {   
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (NIEM_APPINFO == NamespaceKind.builtin(atts.getURI(i))) {
+                    if (atts.getURI(i).equals(appinfoURI.peek())) {
                         var een = Pair.with(targetNS, atts.getValue("name"));
-                        appinfo.add(new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), een, null));
+                        appinfoAtts.add(new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), een, null));
                     }
                 } 
             }
@@ -201,9 +246,9 @@ public class XMLSchemaDocument {
                 Pair<String, String> een = nsm.expandQName(eref);
                 if (null != ctypeEN && null != eref && null != een) {
                     for (int i = 0; i < atts.getLength(); i++) {
-                        if (NIEM_APPINFO == NamespaceKind.builtin(atts.getURI(i))) {
+                        if (atts.getURI(i).equals(appinfoURI.peek())) {
                             AppinfoAttribute a = new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), ctypeEN, een);
-                            appinfo.add(a);
+                            appinfoAtts.add(a);
                         }
                     }
                 }
@@ -216,6 +261,21 @@ public class XMLSchemaDocument {
             depth--;
             nsm.onEndElement();
             if (1 == depth && "complexType".equals(elname)) ctypeEN = null;    // finished global type defn
+            else if (2 == depth && "documentation".equals(elname)) {
+                docStrings.add(chars.toString());
+                chars = null;
+            }
+            else if (null != lterm && "SourceText".equals(elname) && ens.equals(appinfoURI.peek())) {
+                lterm.addCitation(chars.toString());
+            }
+            else if ("LocalTerm".equals(elname) && ens.equals(appinfoURI.peek())) {
+                lterm = null;
+            }
+        }
+        
+        @Override
+        public void characters (char[] ch, int start, int length) {
+            if (null != chars) chars.append(ch, start, length);
         }
         
         @Override

@@ -222,50 +222,16 @@ public class ModelFromXSD {
         }
     }
     
-    // Schema-level annotations have the namespace documentation and any 
-    // local term definitions.  (FIXME: local terms not handled yet)
+    // Schema level documentation and appinfo is parsed in the XMLSchemaDocument object
+    // Copy it into the Namespace object now.
     private void processSchemaAnnotations () {
-        var nsil = xs.getNamespaceItems();
-        for (int i = 0; i < nsil.getLength(); i++) {
-            var nsi   = (XSNamespaceItem)nsil.item(i);
-            var nsuri = nsi.getSchemaNamespace();
-            var ns    = m.getNamespaceByURI(nsuri);
-            if (null == ns) continue;
-          
-            var alist = parseAnnotations(nsi);
-            if (null == alist) continue;
-            var docs  = getDocumentation(alist);
-            for (var doc : docs) 
-                ns.setDefinition(doc);
-            
-            var sd     = sdoc.get(nsuri);
-            if (null == sd) continue;
-            var narch  = sd.niemArch();
-            var nvers  = sd.niemVersion(); 
-            var ains   = NamespaceKind.getBuiltinNS(NIEM_APPINFO, narch, nvers);
-            var aplist = getAppinfoElements(alist);
-            for (var appinfo : aplist) 
-                processSchemaAppinfo(ns, ains, appinfo);
-        }        
-    }
-    
-    private void processSchemaAppinfo (Namespace ns, String appinfoURI, Element appinfo) {
-        var nl = appinfo.getElementsByTagNameNS(appinfoURI, "LocalTerm");
-        for (int i = 0; i < nl.getLength(); i++) {
-            var lte = (Element)nl.item(i);
-            var term = getAttribute(lte, "term");
-            var lit  = getAttribute(lte, "literal");
-            var doc  = getAttribute(lte, "definition");
-            var src  = getAttribute(lte, "sourceURIs");
-            var lt   = new LocalTerm(term, doc, lit, src);
-            var stnl = lte.getElementsByTagNameNS(appinfoURI, "SourceText");
-            for (int j = 0; j < stnl.getLength(); j++) {
-                var ste  = (Element)stnl.item(j);
-                var cite = ste.getTextContent();
-                lt.addCitation(cite.strip());
+        sdoc.forEach((nsuri, sd) -> {
+            var ns = m.getNamespaceByURI(nsuri);
+            if (null != ns) {
+                if (!sd.documentationStrings().isEmpty()) ns.setDefinition(sd.documentationStrings().get(0));
+                for (var lt : sd.localTerms()) ns.addLocalTerm(lt);
             }
-            ns.addLocalTerm(lt);
-        }
+        });       
     }
     
     // Now that we have unique namespace prefixes assigned, we go through all the 
@@ -314,11 +280,18 @@ public class ModelFromXSD {
     // initialized here, and attributes distingushed from elements; the rest happens later. 
     // After this the model contains most of the property objects, but those objects 
     // are incomplete.
+    //
+    // As it turns out, a component may appear more than once in a XSNamedMap,
+    // and so the intialize routines must be ready to cope with repeats.
     private void initializeDeclarations () {
         XSNamedMap xmap = xs.getComponents(ATTRIBUTE_DECLARATION);
         for (int i = 0; i < xmap.getLength(); i++) {
-            var xobj = (XSAttributeDeclaration)xmap.item(i);
-            var p    = initializeOneDeclaration(xobj, true);
+            var xobj  = (XSAttributeDeclaration)xmap.item(i);
+            var nsuri = xobj.getNamespace();
+            var lname = xobj.getName();
+            var comp  = m.getComponent(nsuri, lname);
+            if (null != comp) continue;
+            var p = initializeOneDeclaration(xobj, true);
             if (null == p) continue;
             var an   = parseAnnotation(xobj);
             var docs = getDocumentation(an);
@@ -327,6 +300,10 @@ public class ModelFromXSD {
         xmap = xs.getComponents(ELEMENT_DECLARATION);
         for (int i = 0; i < xmap.getLength(); i++) {
             var xobj = (XSElementDeclaration)xmap.item(i);
+            var nsuri = xobj.getNamespace();
+            var lname = xobj.getName();
+            var comp  = m.getComponent(nsuri, lname);
+            if (null != comp) continue;            
             var xet  = xobj.getTypeDefinition();
             var xetu = NamespaceKind.builtin(xet.getNamespace());
             if (NIEM_STRUCTURES == xetu) {
@@ -349,8 +326,8 @@ public class ModelFromXSD {
         var lname = xobj.getName();
         int kind  = namespaceKindFromSchema(nsuri);
         if (kind > NSK_OTHERNIEM) return null;
-        var ns   = m.getNamespaceByURI(nsuri);
-        var p    = new Property(ns, lname);
+        var ns  = m.getNamespaceByURI(nsuri);
+        var p   = new Property(ns, lname);
         p.setIsAttribute(isAttribute);
         p.addToModel(m);
         propertyXSobj.put(p, xobj);
@@ -373,6 +350,8 @@ public class ModelFromXSD {
             var xbase = xtype.getBaseType();
             var nsuri = xtype.getNamespace();
             var lname = xtype.getName();
+            var comp  = m.getComponent(nsuri, lname);
+            if (null != comp) return;
             var ns    = m.getNamespaceByURI(nsuri);
             int kind  = namespaceKindFromSchema(nsuri);
             if (kind > NSK_OTHERNIEM) continue;
@@ -436,11 +415,14 @@ public class ModelFromXSD {
                 m.addNamespace(xmlns);   
                 LOG.debug("Created namespace {}", XML_NS_URI);                
             }
-            Property p = new Property(xmlns, aln);
-            p.setIsAttribute(true);
-            p.addToModel(m);
-            propertyXSobj.put(p, adecl);
-            LOG.debug("initialized property " + p.getQName());            
+            var p = m.getProperty(ans, aln);
+            if (null == p) {
+                p = new Property(xmlns, aln);
+                p.setIsAttribute(true);
+                p.addToModel(m);
+                propertyXSobj.put(p, adecl);
+                LOG.debug("initialized property " + p.getQName());         
+            }
         }
     }
     
@@ -1226,6 +1208,7 @@ public class ModelFromXSD {
         if ("anySimpleType".equals(lname)) return null;
         res = new Datatype(xsdns, lname);
         res.addToModel(m);
+        datatypeMap.put(res.getQName(), res);
         LOG.debug("created datatype " + res.getQName());
         return res;
     }

@@ -436,6 +436,7 @@ public class XMLSchema {
                 }
                 continue;
             }
+            if (sdocs.containsKey(nsuri)) continue;
             if (docl.size() < 1 && !W3C_XML_SCHEMA_NS_URI.equals(nsuri))
                 throw new XMLSchemaException(String.format("Xerces weirdness: no schema document for namespace %s", nsuri)); 
             else {
@@ -459,7 +460,6 @@ public class XMLSchema {
         for (var sd : sdocs.values()) {
             for (var extns : sd.externalImports()) {
                 LOG.debug(String.format("%s imported external by %s", extns, sd.targetNamespace()));
-                LOG.debug(String.format("sdocs.size() = %d", sdocs.size()));
                 var esd  = sdocs.get(extns);
                 int kind = NamespaceKind.kind(extns);
                 if (NSK_UNKNOWN == kind) {
