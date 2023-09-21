@@ -90,6 +90,7 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XSD;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
 import org.mitre.niem.cmf.NamespaceMap;
 import org.mitre.niem.cmf.SchemaDocument;
 import org.w3c.dom.Element;
@@ -123,6 +124,7 @@ public class ModelFromXSD {
     private Map<ClassType,XSComplexTypeDefinition> classXSobj = null;  // initialized CMF classtype paired with schema object
     private Map<String,Datatype> datatypeMap = null;                   // map QName -> initialized Datatype object
     private Set<ClassType> hasLiteralProperty = null;                  // FooType class objects requiring a FooLiteral property
+    private Set<Property> referencedProps = null;                      // some Class has this Property
     
     
     public ModelFromXSD () { }
@@ -142,12 +144,13 @@ public class ModelFromXSD {
         sdoc   = s.schemaDocuments();   // so let's get it over with here and now
         
         globalAppinfo        = new HashMap<>();
-        refAppinfo    = new HashMap<>();
+        refAppinfo           = new HashMap<>();
         propertyXSobj        = new HashMap<>();
         datatypeXSobj        = new HashMap<>();
         classXSobj           = new HashMap<>();
         datatypeMap          = new HashMap<>();
         hasLiteralProperty   = new HashSet<>();
+        referencedProps      = new HashSet<>();
          
         generateNamespaces();           // normalize namespace prefixes so we can use QNames
         processSchemaAnnotations();     // get documentation and local terms from schema annotations
@@ -157,9 +160,10 @@ public class ModelFromXSD {
         setClassInheritance();          // establish ClassType inheritance
         findClassWithLiteralProperty();
         handleSimpleTypes();
-        processProperties();            // populate all fields of property objects from schema
+//        processProperties();            // populate all fields of property objects from schema
         processClassTypes();            // populate all fields of class objects
         processDatatypes();             // populate all fields of datatype objects
+        processProperties();            // populate all fields of property objects from schema
         processAugmentations();         // add augmentation properties to augmented class objects
 
         // Add to the model a schema document record for each document in the pile
@@ -290,7 +294,7 @@ public class ModelFromXSD {
             var nsuri = xobj.getNamespace();
             var lname = xobj.getName();
             var comp  = m.getComponent(nsuri, lname);
-            if (null != comp) continue;
+            if (null != comp) continue;                 // already initialized
             var p = initializeOneDeclaration(xobj, true);
             if (null == p) continue;
             var an   = parseAnnotation(xobj);
@@ -303,11 +307,11 @@ public class ModelFromXSD {
             var nsuri = xobj.getNamespace();
             var lname = xobj.getName();
             var comp  = m.getComponent(nsuri, lname);
-            if (null != comp) continue;            
+            if (null != comp) continue;                 // already initialized            
             var xet  = xobj.getTypeDefinition();
             var xetu = NamespaceKind.builtin(xet.getNamespace());
-            if (NIEM_STRUCTURES == xetu) {
-                LOG.info(String.format("Discarding element %s:%s, because its type is from structures namespace",
+            if (NIEM_STRUCTURES == xetu && xet.getName().endsWith("AugmentationType")) {
+                LOG.info(String.format("Discarding element %s:%s; type structures:AugmentationType not allowed",
                         nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
                 continue;
             }
@@ -325,7 +329,7 @@ public class ModelFromXSD {
         var nsuri = xobj.getNamespace();
         var lname = xobj.getName();
         int kind  = namespaceKindFromSchema(nsuri);
-        if (kind > NSK_OTHERNIEM) return null;
+        if (kind > NSK_OTHERNIEM && kind != NSK_EXTERNAL) return null;
         var ns  = m.getNamespaceByURI(nsuri);
         var p   = new Property(ns, lname);
         p.setIsAttribute(isAttribute);
@@ -517,9 +521,14 @@ public class ModelFromXSD {
  
     // Now we have all of the properties from the schema, all of the classes, 
     // and all of the datatypes except XSD datatypes. Time to complete all
-    // the property objects.  Documentation has already been handled
+    // the property objects.  Documentation has already been handled.
+    // Unreferenced external properties are removed from the model here.
     private void processProperties () throws CMFException {
         for (var p : propertyXSobj.keySet()) {
+            if (NSK_EXTERNAL == p.getNamespace().getKind()) {
+                if (!referencedProps.contains(p)) m.removeComponent(p);
+                continue;
+            }
             LOG.debug("processing property " + p.getQName());
             var xobj = propertyXSobj.get(p);
             p.setIsDeprecated(getAppinfoAttribute(p.getQName(), null, "deprecated"));
@@ -534,15 +543,23 @@ public class ModelFromXSD {
             else {
                 var xedecl = (XSElementDeclaration)xobj;
                 var xetype = xedecl.getTypeDefinition();
-                var pclass = m.getClassType(xetype.getNamespace(), xetype.getName());
-                if (null == pclass) p.setDatatype(getDatatype(xetype.getNamespace(), xetype.getName()));
-                else p.setClassType(pclass);
-                var xesubg = xedecl.getSubstitutionGroupAffiliation();
-                if (null != xesubg) {
-                    p.setSubPropertyOf(m.getProperty(xesubg.getNamespace(), xesubg.getName()));
+                var xet    = xetype.getNamespace();
+                var xetb   = NamespaceKind.builtin(xet);
+                if (NIEM_STRUCTURES == xetb) {
+                    LOG.warn(String.format("Element %s:%s has type is from structures namespace (not allowed in NIEM 6)",
+                        nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
                 }
-                p.setIsAbstract(xedecl.getAbstract());
-                p.setIsReferenceable(xedecl.getNillable());
+                else {
+                    var pclass = m.getClassType(xetype.getNamespace(), xetype.getName());
+                    if (null == pclass) p.setDatatype(getDatatype(xetype.getNamespace(), xetype.getName()));
+                    else p.setClassType(pclass);
+                    var xesubg = xedecl.getSubstitutionGroupAffiliation();
+                    if (null != xesubg) {
+                        p.setSubPropertyOf(m.getProperty(xesubg.getNamespace(), xesubg.getName()));
+                    }    
+                    p.setIsAbstract(xedecl.getAbstract());
+                    p.setIsReferenceable(xedecl.getNillable());
+                }
             }
         }
     }
@@ -604,9 +621,9 @@ public class ModelFromXSD {
                         ct.setIsAugmentable(true);
                         continue;
                     }
-                    // Element declaration in external namespace will return null
                     var p = m.getProperty(xed.getNamespace(), xed.getName());
                     if (null != p) {
+                        referencedProps.add(p);
                         var hp = new HasProperty();
                         hp.setProperty(p);
                         hp.setMinOccurs(xp.getMinOccurs());

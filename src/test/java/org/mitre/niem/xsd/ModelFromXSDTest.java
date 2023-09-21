@@ -46,6 +46,7 @@ import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
 import org.mitre.niem.cmf.SchemaDocument;
@@ -552,18 +553,18 @@ public class ModelFromXSDTest {
                 .hasSize(5)
                 .extracting(Namespace::getNamespacePrefix)
                 .contains("geo", "gml", "nc", "ns", "xs"); 
+        var gmlns = m.getNamespaceByPrefix("gml");
+        var gmlpt = m.getProperty("gml:Point");
+        var geopt = m.getClassType("geo:PointType");
+        var hp = geopt.hasPropertyList().get(0);
+        assertEquals(NSK_EXTERNAL, gmlns.getKind());
+        assertTrue(gmlns.isExternal());
+        assertTrue(geopt.isExternal());
+        assertEquals(gmlpt, hp.getProperty());
+        assertNull(gmlpt.getClassType());
+        assertNull(gmlpt.getDatatype());
         
-        assertEquals(5, m.getComponentList().size());
-        Namespace n = m.getNamespaceByPrefix("ns");
-        assertNotNull(n);
-        assertFalse(n.isExternal());
-        n = m.getNamespaceByPrefix("gml");
-        assertNotNull(n);
-        assertTrue(n.isExternal());
-        ClassType ct = m.getClassType("geo:PointType");
-        assertNotNull(ct);
-        assertTrue(ct.isExternal());
-        ct = m.getClassType("ns:TrackPointType");
+        var ct = m.getClassType("ns:TrackPointType");
         assertNotNull(ct);
         assertFalse(ct.isExternal());
         assertEmptyLogs();
@@ -899,6 +900,17 @@ public class ModelFromXSDTest {
         assertEquals("MinInclusive", f.getFacetKind());
         assertEquals("0.0", f.getStringVal());        
         assertEmptyLogs();
+    }
+    
+    @Test
+    public void testStructuresType ()  throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd5/structuresType.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);     
+        
+        var p = m.getProperty("cbrn:CaseMetadata");
+        assertNull(p.getClassType());
+        assertNull(p.getDatatype());
     }
 
     @Test

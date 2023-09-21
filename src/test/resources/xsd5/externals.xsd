@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
   targetNamespace="http://example.com/external-content/"
-  xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
   xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
   xmlns:geo="http://release.niem.gov/niem/adapters/geospatial/5.0/"
   xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
@@ -9,7 +8,6 @@
   xmlns:ns="http://example.com/external-content/"
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
   version="1"
   xml:lang="en-US">

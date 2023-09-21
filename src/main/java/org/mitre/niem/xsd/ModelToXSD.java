@@ -253,7 +253,6 @@ public abstract class ModelToXSD {
         // beginning with the model namespaces.
         for (Namespace ns : m.getNamespaceList()) {
             if (W3C_XML_SCHEMA_NS_URI.equals(ns.getNamespaceURI())) continue;   // no document for xs: namespace
-            if (ns.isExternal()) continue;                              // someone else's job
             var nsuri = ns.getNamespaceURI();
             var sdoc  = m.schemadoc().get(nsuri);
             String fp = null;
@@ -276,13 +275,13 @@ public abstract class ModelToXSD {
         for (Namespace ns : m.getNamespaceList()) {
             if (W3C_XML_SCHEMA_NS_URI.equals(ns.getNamespaceURI())) continue;
             if (XML_NS_URI.equals(ns.getNamespaceURI())) continue;  // copy it later
-            if (ns.isExternal()) continue; // FIXME
             var nsuri = ns.getNamespaceURI();
             var ofp    = ns2file.get(nsuri);
             var of     = new File(ofp);
             createParentDirectories(of);
             FileWriter ofw = new FileWriter(of);
-            writeDocument(ns.getNamespaceURI(), ofw);
+            if (ns.isExternal()) writeExternalDocument(nsuri, ofw);
+            else writeDocument(nsuri, ofw);
             ofw.close();
         }
         // Next, copy the needed builtin schema documents to the destination
@@ -335,6 +334,34 @@ public abstract class ModelToXSD {
         dfr.close();
         sfr.close();
     }    
+    
+    protected void writeExternalDocument (String nsuri, Writer ofw) throws ParserConfigurationException, TransformerException, TransformerConfigurationException, IOException {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        Document dom = db.newDocument();
+        root = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:schema");
+        root.setAttribute("targetNamespace", nsuri);
+        dom.appendChild(root);  
+        
+        var ns = m.getNamespaceByURI(nsuri);
+        root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:" + ns.getNamespacePrefix(), nsuri);
+        
+        var comment = dom.createComment("This placeholder must be replaced with the actual external schema document");
+        root.appendChild(comment);
+        
+        addDocumentation(dom, root, null, ns.getDefinition());
+        
+        for (var c : m.getComponentList()) {
+            var p = c.asProperty();
+            if (null == p) continue;
+            if (ns != p.getNamespace()) continue;
+            var pe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");            
+            pe.setAttribute("name", p.getName());
+            addDocumentation(dom, pe, null, p.getDefinition());           
+            root.appendChild(pe);
+        }
+        XSDWriter.writeDOM(dom, ofw);        
+    }
     
     // Write the schema document for the specified namespace
     protected void writeDocument (String nsuri, Writer ofw) throws ParserConfigurationException, TransformerConfigurationException, TransformerException, IOException {
@@ -816,6 +843,14 @@ public abstract class ModelToXSD {
         if (p.isRefAttribute())  addAppinfoAttribute(dom, pe, "referenceAttributeIndicator", "true");
         if (p.isRelationship())  addAppinfoAttribute(dom, pe, "relationshipPropertyIndicator", "true");
         var ae = addDocumentation(dom, pe, null, p.getDefinition());
+        // Handle property from element with type from structures; blech
+        if (null == pct && null == pdt && !m.getNamespaceByURI(nsuri).isExternal()) {
+            String pdtQN = null;
+            if (p.getName().endsWith("Metadata")) pdtQN = structPrefix + ":" + "MetadataType";
+            else if (p.getName().endsWith("Association"))pdtQN = structPrefix + ":" + "AssociationType";  
+            else if (p.getName().endsWith("Object"))pdtQN = structPrefix + ":" + "ObjectType"; 
+            if (null != pdtQN) pe.setAttribute("type", pdtQN);
+        }
         if (null != pct) {
             pe.setAttribute("type", pct.getQName());
             nsNSdeps.add(pct.getNamespace().getNamespaceURI());
