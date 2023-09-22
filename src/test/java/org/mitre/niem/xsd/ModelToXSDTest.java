@@ -26,7 +26,10 @@ package org.mitre.niem.xsd;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,8 +92,8 @@ public class ModelToXSDTest {
         }
     }      
     
-    public void createCMF (String[] schemaArgs, File modelFP) throws Exception {      
-        PrintWriter modelPW = new PrintWriter(modelFP);
+    public void createCMF (String[] schemaArgs, File modelFP) throws Exception {    
+        PrintWriter modelPW = new PrintWriter(modelFP, "UTF-8");
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(schemaArgs);     
         ModelXMLWriter mw = new ModelXMLWriter();

@@ -106,7 +106,8 @@ public abstract class ModelToXSD {
     protected final Set<Datatype> needSimpleType;             // Union, list, or non-empty restriction datatypes
     
     // These change as each namespace is processed
-    protected Map<String,Element> nsPropdecls = null;         // map name -> schema declaration of attribute/element in a namespace
+    protected Map<String,Element> nsAttributeDecls = null;    // map name -> schema declaration of attribute in a namespace
+    protected Map<String,Element> nsElementDecls = null;      // map name -> schema declaration of element in a namespace
     protected Map<String,Element> nsTypedefs = null;          // map name -> schema definition of type in a namespace
     protected Set<String> nsNSdeps = null;                    // Namespace URIs of namespaces referenced in current namespace
     protected String nsNIEMVersion = null;                    // NIEM version of current document (eg. "5.0")
@@ -385,8 +386,9 @@ public abstract class ModelToXSD {
         proxyPrefix   = m.namespaceMap().getPrefix(proxyURI);
         structPrefix  = m.namespaceMap().getPrefix(structURI);
         nsNSdeps    = new HashSet<>();
-        nsPropdecls = new TreeMap<>();
-        nsTypedefs  = new TreeMap<>();
+        nsAttributeDecls = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        nsElementDecls   = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);        
+        nsTypedefs  = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         var deps    = subpropDeps.get(nsuri);
         nsNSdeps.addAll(subpropDeps.get(nsuri));
         nsNSdeps.add(structURI);
@@ -476,7 +478,10 @@ public abstract class ModelToXSD {
         nsTypedefs.forEach((name,element) -> {
             root.appendChild(element);
         });
-        nsPropdecls.forEach((name,element) -> {
+        nsAttributeDecls.forEach((name,element) -> {
+            root.appendChild(element);
+        });
+        nsElementDecls.forEach((name,element) -> {
             root.appendChild(element);
         });
         XSDWriter.writeDOM(dom, ofw);
@@ -648,6 +653,7 @@ public abstract class ModelToXSD {
             // Add element refs for element properties
             for (HasProperty hp : ct.hasPropertyList()) {
                 if (!hp.augmentingNS().isEmpty()) continue;
+                if (hp.getProperty().isAttribute()) continue;
                 if (null == sqe) sqe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");
                 addElementRef(dom, sqe, hp);
                 nsNSdeps.add(hp.getProperty().getNamespace().getNamespaceURI());
@@ -685,12 +691,13 @@ public abstract class ModelToXSD {
     protected void addElementRef (Document dom, Element sqe, HasProperty hp) {
         if (hp.getProperty().isAttribute()) return;
         var hpe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
+        hpe.setAttribute("ref", hp.getProperty().getQName());
         if (1 != hp.minOccurs()) hpe.setAttribute("minOccurs", "" + hp.minOccurs());
         if (hp.maxUnbounded())   hpe.setAttribute("maxOccurs", "unbounded");
         else if (1 != hp.maxOccurs()) hpe.setAttribute("maxOccurs", "" + hp.maxOccurs());
-        hpe.setAttribute("ref", hp.getProperty().getQName());
         if (hp.orderedProperties())
             addAppinfoAttribute(dom, hpe, "orderedPropertyIndicator", "true");
+        addDocumentation(dom, hpe, null, hp.getDefinition());
         sqe.appendChild(hpe);
     }
     
@@ -793,6 +800,7 @@ public abstract class ModelToXSD {
         RestrictionOf r = bdt.getRestrictionOf();
         Element rse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:restriction");
         rse.setAttribute("base", maybeSimpleTypeQName(r.getDatatype()));
+        Collections.sort(r.getFacetList());
         for (Facet f : r.getFacetList()) {
             String fk = f.getFacetKind();
             String ename = "xs:" + toLowerCase(fk.charAt(0)) + fk.substring(1);
@@ -862,7 +870,7 @@ public abstract class ModelToXSD {
             pdtQN = pdtQN.replaceFirst("Type$", "SimpleType");
             pdtQN = pdtQN.replaceFirst("Datatype$", "SimpleType");            
             pe.setAttribute("type", pdtQN);
-            nsNSdeps.add(pdt.getNamespace().getNamespaceURI());
+            nsNSdeps.add(pdt.getNamespace().getNamespaceURI());         
         }
         // Element declarations use proxy types instead of XSD types
         else if (!isAttribute && null != pdt) {
@@ -877,7 +885,8 @@ public abstract class ModelToXSD {
             pe.setAttribute("substitutionGroup", subpQN);
             nsNSdeps.add(subp.getNamespace().getNamespaceURI());
         }
-        nsPropdecls.put(p.getName(), pe);
+        if (isAttribute) nsAttributeDecls.put(p.getName(), pe);
+        else nsElementDecls.put(p.getName(), pe);
     }
     
     protected Element addCodeListBinding (Document dom, Element e, String nsuri, CodeListBinding clb) {

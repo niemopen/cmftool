@@ -24,10 +24,12 @@
 package org.mitre.niem.xsd;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -46,7 +48,7 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
     
     @ParameterizedTest
     @ValueSource(strings = { 
-        "augment-0.xsd",
+        "augment.xsd",
         "augmentProp.xsd",
         "cli.xsd",
         "clsa.xsd",
@@ -75,6 +77,7 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
         //            "namespace-1.xsd",        // can't automate this one; prefixes are changed in created XSD
         //            "noprefix.xsd",
         "proxy.xsd",
+        "refDocumentation.xsd",
         "relProp.xsd",
         "restriction.xsd",
         //"twoversions-0.xsd",      // can't automate this one; prefixes are changed in created XSD
@@ -127,12 +130,20 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
     
 //    @Test
 //    public void debugTest () throws Exception {
-//        var is = new FileInputStream("src/test/resources/xsd5/externals.cmf");
+//        var is = new FileInputStream("tmp/m52.cmf");
 //        var mr = new ModelXMLReader();
 //        var m  = mr.readXML(is);
-//        var td = new File("src/test/resources/xsd5/tmp");
-//        var mw = new ModelToN5XSD(m);
-//        mw.writeXSD(td);
+//        for (var ns : m.getNamespaceList()) {
+//            var header = String.format("Namespace %s: %s\n", ns.getNamespacePrefix(), ns.getNamespaceURI());
+//            for (var ar : ns.augmentList()) {
+//                var p = ar.getProperty();
+//                if (p.isAttribute()) {
+//                    System.out.print(header);
+//                    System.out.println("  " + p.getQName());
+//                    header = "";
+//                }
+//            }
+//        }
 //    }
     
 }

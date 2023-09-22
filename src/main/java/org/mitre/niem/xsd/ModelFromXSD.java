@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import static java.util.Map.entry;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.xml.parsers.ParserConfigurationException;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
@@ -44,10 +45,12 @@ import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import static org.apache.xerces.xs.XSConstants.ATTRIBUTE_DECLARATION;
-import static org.apache.xerces.xs.XSConstants.DERIVATION_EXTENSION;
 import static org.apache.xerces.xs.XSConstants.DERIVATION_RESTRICTION;
 import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
+import static org.apache.xerces.xs.XSConstants.FACET;
 import static org.apache.xerces.xs.XSConstants.MODEL_GROUP;
+import static org.apache.xerces.xs.XSConstants.MULTIVALUE_FACET;
+import static org.apache.xerces.xs.XSConstants.PARTICLE;
 import static org.apache.xerces.xs.XSConstants.TYPE_DEFINITION;
 import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSFacet;
@@ -80,9 +83,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.CodeListBinding;
-import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.NamespaceKind;
-import static org.mitre.niem.cmf.NamespaceKind.NIEM_APPINFO;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_CLSA;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_PROXY;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
@@ -297,9 +298,8 @@ public class ModelFromXSD {
             if (null != comp) continue;                 // already initialized
             var p = initializeOneDeclaration(xobj, true);
             if (null == p) continue;
-            var an   = parseAnnotation(xobj);
-            var docs = getDocumentation(an);
-            for (var doc : docs) p.setDefinition(doc);
+            var docs = getDocumentation(xobj);
+            if (!docs.isEmpty()) p.setDefinition(docs.get(0));
         }
         xmap = xs.getComponents(ELEMENT_DECLARATION);
         for (int i = 0; i < xmap.getLength(); i++) {
@@ -317,9 +317,8 @@ public class ModelFromXSD {
             }
             var p    = initializeOneDeclaration(xobj, false);
             if (null == p) continue;
-            var an   = parseAnnotation(xobj);
-            var docs = getDocumentation(an);
-            for (var doc : docs) p.setDefinition(doc);
+            var docs = getDocumentation(xobj);
+            if (!docs.isEmpty()) p.setDefinition(docs.get(0));
         }        
     }
     
@@ -580,10 +579,8 @@ public class ModelFromXSD {
             ct.setIsDeprecated(getAppinfoAttribute(ct.getQName(), null, "deprecated"));
             ct.setIsExternal(getAppinfoAttribute(ct.getQName(), null, "externalAdapterTypeIndicator"));
 
-            // Handle annotations for documentation
-            var an    = parseAnnotation(xctype);
-            var docs  = getDocumentation(an);
-            for (var doc : docs) ct.setDefinition(doc);
+            var docs = getDocumentation(xctype);
+            if (!docs.isEmpty()) ct.setDefinition(docs.get(0));
             
             // Create a FooLiteral property for FooType if needed
             if (hasLiteralProperty.contains(ct)) { 
@@ -630,6 +627,9 @@ public class ModelFromXSD {
                         if (xp.getMaxOccursUnbounded()) hp.setMaxUnbounded(true);
                         else hp.setMaxOccurs(xp.getMaxOccurs());
                         
+                        var refDocs = getDocumentation(xp);
+                        if (!refDocs.isEmpty()) hp.setDefinition(refDocs.get(0));
+                        
                         var pqn = p.getQName();                        
                         var opi = getAppinfoAttribute(ctqn, pqn, "orderedPropertyIndicator");
                         hp.setOrderedProperties("true".equals(opi));
@@ -647,6 +647,9 @@ public class ModelFromXSD {
                 hp.setMaxOccurs(1);
                 if (xatt.getRequired()) hp.setMinOccurs(1);
                 else hp.setMinOccurs(0);
+                
+                var attDocs = getDocumentation(xattdecl);
+                if (!attDocs.isEmpty()) hp.setDefinition(attDocs.get(0));
                 ct.addHasProperty(hp);
                 
                 // Handle appinfo:augmentingNamespace
@@ -749,10 +752,9 @@ public class ModelFromXSD {
            
             XSSimpleTypeDefinition xscontent = null;                    // build Datatype from this simple content
             var xtype = datatypeXSobj.get(dt);                          // complex or simple type definition for this Datatype
-            var an    = parseAnnotation(xtype);
-            var docs  = getDocumentation(an);
-            for (var doc : docs) dt.setDefinition(doc);
-            handleCLSA(dt, an); 
+            var docs  = getDocumentation(xtype);
+            if (!docs.isEmpty()) dt.setDefinition(docs.get(0));
+            handleCLSA(dt, xtype);
             
             var isComplex = (COMPLEX_TYPE == xtype.getTypeCategory());
             if (isComplex) {
@@ -805,8 +807,8 @@ public class ModelFromXSD {
     
     // Look through the children of xs:appinfo for code list schema appinfo (CLSA)
     // elements, and apply them to the Datatype object.
-    private void handleCLSA (Datatype dt, Element an) {
-        var alist = getAppinfoElements(an);
+    private void handleCLSA (Datatype dt, XSTypeDefinition xtype) {
+        var alist = getAppinfoElements(xtype);
         if (null == alist) return;
         var dtns = dt.getNamespaceURI();
         var sd   = sdoc.get(dtns);
@@ -814,7 +816,7 @@ public class ModelFromXSD {
         var nver = sd.niemVersion();
         var clsaURI = NamespaceKind.getBuiltinNS(NIEM_CLSA, arch, nver);
         for (var ae : alist) {
-            var clsaElements = an.getElementsByTagNameNS(clsaURI, "SimpleCodeListBinding");
+            var clsaElements = ae.getElementsByTagNameNS(clsaURI, "SimpleCodeListBinding");
             for (int i = 0; i < clsaElements.getLength(); i++) {
                 var clsa = (Element)clsaElements.item(i);
                 var col  = clsa.getAttribute("columnName");
@@ -850,7 +852,9 @@ public class ModelFromXSD {
     
     // Construct a RestrictionOf object from a schema simple type definition.
     private RestrictionOf createRestrictionOf (XSSimpleTypeDefinition xstype) throws CMFException {
+        var xstypeName = xstype.getName();
         var xbase = xstype.getBaseType();
+        var xbaseName = xbase.getName();
         if (null == xbase || SIMPLE_TYPE != xbase.getTypeCategory())
             throw new CMFException(
                     String.format("schema has no simple base type for restriction of %s#%s", 
@@ -867,9 +871,8 @@ public class ModelFromXSD {
             if (isXercesDefaultFacet(xbase, f.getFacetKind(), f.getLexicalFacetValue())) continue;
             var fval = f.getLexicalFacetValue();
             var fo   = new Facet();
-            var an   = parseAnnotation(f);
-            var docs = getDocumentation (an);
-            for (var doc : docs) fo.setDefinition(doc);
+            var docs = getDocumentation (f);
+            if (!docs.isEmpty()) fo.setDefinition(docs.get(0));
             fo.setFacetKind(facetKind2Code(f.getFacetKind()));
             fo.setStringVal(f.getLexicalFacetValue());         
             if (null != fo) r.addFacet(fo);
@@ -881,21 +884,23 @@ public class ModelFromXSD {
             var f     = (XSMultiValueFacet)flist.item(i);
             var fkind = FACET_PATTERN == f.getFacetKind() ? "Pattern" : "Enumeration";
             var vals  = f.getLexicalFacetValues();
-            var anns  = parseAnnotations(f);
+            var anns  = getAnnotations(f);
             for (int j = 0; j < vals.getLength(); j++) {
                 var val = vals.item(j);
-                var fo = new Facet();
                 if (isXercesDefaultFacet(xbase, f.getFacetKind(), val)) continue;
-                if (j < anns.size()) {
-                    var an = anns.get(j);
-                    var docs = getDocumentation(an);
-                    for (var doc : docs) fo.setDefinition(doc);
+                var fo = new Facet();
+                if (j < anns.size() && null != anns.get(j)) {
+                    var an   = (XSAnnotation)anns.get(j);
+                    var docs = new ArrayList<String>();
+                    getDocumentationStrings(docs, an);
+                    if (!docs.isEmpty()) fo.setDefinition(docs.get(0));
                 }
                 fo.setFacetKind(fkind);
                 fo.setStringVal(val);
                 r.addFacet(fo);
             }
         }
+        Collections.sort(r.getFacetList());
         return r;
     }
     
@@ -1290,122 +1295,79 @@ public class ModelFromXSD {
     
     // Annotations are available from the XSModel as an XML string.
     // We parse those XML strings into DOM elements to extract documentation
-    // and appinfo.  The XSModel API is funky.  You might think that XSObject
+    // and appinfo.  
+    
+    // The XSModel API is funky.  You might think that XSObject
     // would provide a list of annotations, but no.  Instead the different
-    // schema object types have their own annotation API.
-    //
-    // parseAnnotation returns null if the parsing fails, or if getAnnotation
-    // returns null.
-    private Element parseAnnotation (XSAttributeDeclaration o) {
-        return parseAnnotation(o.getAnnotation());
+    // schema object types have their own annotation API. So we roll our own
+    // annotation interface for XSObject.  Returns null for an object that 
+    // does not have annotations.
+    private XSObjectList getAnnotations (XSObject o) {
+        switch (o.getType()) {
+            case ATTRIBUTE_DECLARATION: return ((XSAttributeDeclaration)o).getAnnotations();
+            case ELEMENT_DECLARATION:   return ((XSElementDeclaration)o).getAnnotations();
+            case FACET:                 return ((XSFacet)o).getAnnotations();
+            case MULTIVALUE_FACET:      return ((XSMultiValueFacet)o).getAnnotations();
+            case PARTICLE:              return ((XSParticle)o).getAnnotations();
+            case TYPE_DEFINITION:
+                var td = (XSTypeDefinition)o;
+                if (COMPLEX_TYPE == td.getTypeCategory()) return ((XSComplexTypeDefinition)td).getAnnotations();
+                else return ((XSSimpleTypeDefinition)td).getAnnotations();
+        }
+        return null;
     }
     
-    private Element parseAnnotation (XSElementDeclaration o) {
-        return parseAnnotation(o.getAnnotation());
-    }
-    
-    private Element parseAnnotation (XSFacet o) {
-        return parseAnnotation(o.getAnnotation());
-    }
-    
-    // Type definitions can only have one annotation, but the API returns
-    // a list with one member.
-    private Element parseAnnotation (XSTypeDefinition o) {
-        XSObjectList alist;
-        if (SIMPLE_TYPE == o.getTypeCategory())
-             alist = ((XSSimpleTypeDefinition)o).getAnnotations();
-        else alist = ((XSComplexTypeDefinition)o).getAnnotations();
-        if (alist.isEmpty()) return null;
-        return parseAnnotation((XSAnnotation)alist.item(0));
-    }
-    
-    // DOM parsing happens here, turning the annotation XML string into a DOM element
-    private Element parseAnnotation (XSAnnotation an) {
-        if (null == an) return null;
-        var as = an.getAnnotationString();
-        var sr = new StringReader(as);
-        var is = new InputSource(sr);
+    // Populstes a list of the specified  XSD elements (documentation or appinfo).
+    //   annList -- empty List of Elements to populate
+    //   lname   -- local name of element to extract
+    private void parseAnnotation (List<Element> annList, XSAnnotation an, String lname) {
         try {
+            var as = an.getAnnotationString();
+            var sr = new StringReader(as);
+            var is = new InputSource(sr);
             var db  = ParserBootstrap.docBuilder();
-            var doc = db.parse(is);
-            var res = doc.getDocumentElement();
-            return res;
-        }
-        catch (Exception ex) { return null; }    // IGNORE, return null
+            var d   = db.parse(is);
+            var del = d.getElementsByTagNameNS(W3C_XML_SCHEMA_NS_URI, lname);
+            for (int i = 0; i < del.getLength(); i++) {
+                var de   = (Element)del.item(i);
+                annList.add(de);
+            }
+        } catch (Exception ex) { } // IGNORE
     }
     
-    // Returns a list of annotation elements for enumerations and patterns.
-    private List<Element> parseAnnotations (XSMultiValueFacet o) {
-        var res   = new ArrayList<Element>();
-        var alist = o.getAnnotations();
+    // Returns a list of documentation strings for this schema object
+    private List<String> getDocumentation (XSObject o) {
+        List<String> docList = new ArrayList<>();   // list of documentation strings
+        List<Element> aeList = new ArrayList<>();   // list of documentation elements
+        XSObjectList alist = getAnnotations(o);     // annotation elements from xsmodel
+        if (null == alist) return docList;
+        for (int i = 0; i < alist.getLength(); i++) {
+            var an = (XSAnnotation)alist.item(i);           // annotation element
+            getDocumentationStrings(docList, an);
+        }
+        return docList;
+    }
+    
+    // Populates a list of documentation strings from a single annotation element
+    private void getDocumentationStrings (List<String> docList, XSAnnotation an) {
+        List<Element> aeList = new ArrayList<>();   // list of documentation elements  
+        parseAnnotation(aeList, an, "documentation");
+        for (var ae : aeList) {
+            var docstr = ae.getTextContent();
+            docList.add(docstr);
+        }
+    }
+    
+    // Returns a list of appinfo elements for this schema object
+    private List<Element> getAppinfoElements (XSObject o) {
+        List<Element> apList = new ArrayList<>();
+        XSObjectList alist = getAnnotations(o);
+        if (null == alist) return apList;
         for (int i = 0; i < alist.getLength(); i++) {
             var an = (XSAnnotation)alist.item(i);
-            var ae = parseAnnotation(an);
-            if (null != ae) res.add(ae);
+            parseAnnotation(apList, an, "appinfo");
         }
-        return res;
-    }
-    
-    // Returns a list of annotations for the schema element.
-    private List<Element> parseAnnotations (XSNamespaceItem o) {
-        var res   = new ArrayList<Element>();
-        var alist = o.getAnnotations();
-        for (int i = 0; i < alist.getLength(); i++) {
-            var an = (XSAnnotation)alist.item(i);
-            var ae = parseAnnotation(an);
-            if (null != ae) res.add(ae);
-        }
-        return res;
-    }
-    
-    // Iterate through a list of annotation elements and return a list of
-    // all the appinfo elements found therein.
-    private List<Element> getAppinfoElements (List<Element> annotations) {
-        List<Element> result = null;
-        for (var ae : annotations) {
-            if (null == result) result = getAppinfoElements(ae);
-            else result.addAll(getAppinfoElements(ae));
-        }
-        if (null == result) result = new ArrayList<>();
-        return result;
-    }
-    
-    // Return a list of appinfo elements in an annotation element.
-    // Returns an empty list if annotation == null.
-    private List<Element> getAppinfoElements (Element annotation) {
-        if (null == annotation) return new ArrayList<Element>();
-        var result = new ArrayList<Element>();
-        var cl = annotation.getChildNodes();
-        for (int i = 0; i < cl.getLength(); i++) {
-            var node = cl.item(i);
-            if (ELEMENT_NODE != node.getNodeType()) continue;
-            if ("appinfo".equals(node.getLocalName()) && W3C_XML_SCHEMA_NS_URI.equals(node.getNamespaceURI())) 
-                result.add((Element)node);
-        }
-        return result;        
-    }
-    
-    // Types, elements, and attributes provide a list of annotations of size = 1.
-    private List<String> getDocumentation (List<Element> annotations) {
-        List<String> result = null;
-        for (var ae : annotations) {
-            if (null == result) result = getDocumentation(ae);
-            else result.addAll(getDocumentation(ae));
-        }
-        if (null == result) result = new ArrayList<>();
-        return result;
-    }
-    
-    private List<String> getDocumentation (Element annotation) {
-        if (null == annotation) return new ArrayList<String>();
-        var result = new ArrayList<String>();
-        var nlist = annotation.getElementsByTagNameNS(W3C_XML_SCHEMA_NS_URI, "documentation");
-        for (int i = 0; i < nlist.getLength(); i++) {
-            var de = (Element) nlist.item(i);
-            var ds = de.getTextContent();
-            result.add(ds.trim());
-        }
-        return result;
+        return apList;
     }
     
     

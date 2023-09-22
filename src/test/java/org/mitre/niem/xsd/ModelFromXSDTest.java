@@ -23,7 +23,10 @@
  */
 package org.mitre.niem.xsd;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
@@ -111,7 +114,7 @@ public class ModelFromXSDTest {
     @DisplayName("Augmentation")
     public void testAugmentation () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel("src/test/resources/xsd5/augment-0.xsd");  
+        Model m = mfact.createModel("src/test/resources/xsd5/augment.xsd");  
         
         assertThat(m.getNamespaceList())
                 .hasSize(4)
@@ -130,23 +133,19 @@ public class ModelFromXSDTest {
                 .containsExactly(m.getProperty("j:AddressCommentText"),
                         m.getProperty("j:AddressVerifiedDate"),
                         m.getProperty("j:AnotherAddress"));        
-        assertThat(m.getNamespaceByPrefix("test").augmentList())
-                .hasSize(2)
-                .extracting(AugmentRecord::getClassType)
-                .containsOnly(m.getClassType("nc:AddressType"));
         assertNotNull(m.getProperty("test:BoogalaText"));
         assertThat(m.getNamespaceByPrefix("test").augmentList())
-                .hasSize(2)
                 .extracting(AugmentRecord::getProperty)
-                .contains(m.getProperty("j:AddressCommentText"),
-                        m.getProperty("test:BoogalaText"));  
+                .containsOnly(m.getProperty("j:AddressCommentText"),
+                        m.getProperty("test:BoogalaText"),
+                        m.getProperty("test:boogalaProp"));  
         
         ClassType ct = m.getClassType("nc:AddressType");
         assertNotNull(ct);
         assertTrue(ct.isAugmentable());
         List<HasProperty> hpl = ct.hasPropertyList();
         assertNotNull(hpl);        
-        assertEquals(5, hpl.size());
+        assertEquals(6, hpl.size());
         
         HasProperty hp = hpl.get(0);
         assertEquals(hp.getProperty(), m.getProperty("nc:AddressFullText"));
@@ -573,7 +572,7 @@ public class ModelFromXSDTest {
     @Test
     @DisplayName("xml:lang")
     public void testLanguage () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        String[] args = { "src/test/resources/xsd5/augment-0.xsd" };
+        String[] args = { "src/test/resources/xsd5/augment.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
         for (var sd : m.schemadoc().values()) {
@@ -878,6 +877,17 @@ public class ModelFromXSDTest {
     }
 
     @Test
+    public void testRefDocumentation () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd5/refDocumentation.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        
+        var ct = m.getClassType("geo:PointType");
+        var hp = ct.hasPropertyList().get(0);
+        assertNotNull(hp.getDefinition());        
+    }
+    
+    @Test
     @DisplayName("Restriction")
     public void testRestriction () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         String[] args = { "src/test/resources/xsd5/restriction.xsd" };
@@ -960,12 +970,12 @@ public class ModelFromXSDTest {
         Datatype dt = m.getDatatype("nc:CStringType");
         RestrictionOf r = dt.getRestrictionOf();
         Facet f = r.getFacetList().get(0);
+        assertEquals("MaxLength", f.getFacetKind());
+        assertEquals("20", f.getStringVal());
+        f = r.getFacetList().get(1);
         assertEquals(2, r.getFacetList().size());
         assertEquals("WhiteSpace", f.getFacetKind());
         assertEquals("collapse", f.getStringVal());
-        f = r.getFacetList().get(1);
-        assertEquals("MaxLength", f.getFacetKind());
-        assertEquals("20", f.getStringVal());
 
         dt = m.getDatatype("nc:LStringType");
         r = dt.getRestrictionOf();
@@ -1003,11 +1013,20 @@ public class ModelFromXSDTest {
         assertEquals(ct.hasPropertyList().get(3).getProperty(), p);
         assertEmptyLogs();
     }
-
+//
 //    @Test
 //    public void debugTest () throws Exception {         
-//        String[] args = { "tmp/52rel/domains/cbrn.xsd" };
+//        var def = Charset.defaultCharset().displayName();
+//        String[] args = { "src/test/resources/xsd5/refDocumentation.xsd" };
 //        ModelFromXSD mfact = new ModelFromXSD();
-//        Model m = mfact.createModel(args);        
+//        Model m = mfact.createModel(args);
+//        File of = new File("tmp/rd.cmf");
+//        PrintWriter pw = new PrintWriter(of);
+//        ModelXMLWriter mw = new ModelXMLWriter();
+//        mw.writeXML(m, pw);
+//        pw.close();;
+//        int i = 1;
+//        
+//        
 //    }
 }

@@ -50,13 +50,6 @@ public class Datatype extends Component {
     public UnionOf getUnionOf()                     { return unionOf; }
     public Datatype getListOf()                     { return listOf; }
     public CodeListBinding getCodeListBinding()     { return clb; }
-    
-//    public Datatype getBaseType () {
-//        if (null != restrictionOf) return restrictionOf.getDatatype().getBaseType();
-//        else if (null != listOf)   return listOf.getBaseType();
-//        else if (null != unionOf)  return null; // FIXME
-//        else return this;
-//    }
    
     @Override
     public void addToModel (Model m) {

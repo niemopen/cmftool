@@ -15,9 +15,9 @@
   <xs:annotation>
     <xs:documentation>Justice domain.</xs:documentation>
   </xs:annotation>
-  <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="augment-2.xsd"/>
-  <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
-  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="../niem-core.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="../adapters/niem-xs.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="../utility/structures.xsd"/>
   <xs:complexType name="AddressAugmentationType">
     <xs:annotation>
       <xs:documentation>A data type for additional information about a Address.</xs:documentation>

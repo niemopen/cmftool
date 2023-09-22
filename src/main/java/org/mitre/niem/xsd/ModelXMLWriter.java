@@ -197,7 +197,8 @@ public class ModelXMLWriter {
             e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:sequenceID", x.getSequenceID());
         addComponentRef(dom, e, "Property", x.getProperty());
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());            
-        addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs()); 
+        addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());
+        addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
         if (x.orderedProperties()) addSimpleChild(dom, e, "OrderedPropertyIndicator", "true");
         x.augmentingNS().stream().sorted().forEach((ns) -> {
             addNamespaceRef(dom, e, "AugmentationNamespace", ns);

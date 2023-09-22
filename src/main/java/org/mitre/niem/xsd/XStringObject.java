@@ -123,6 +123,7 @@ public class XStringObject extends XObjectType {
     public void addToHasProperty (XHasProperty xhp) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
+        case "DefinitionText":       xhp.getObject().setDefinition(val); break;
         case "MinOccursQuantity":    xhp.getObject().setMinOccurs(toInt(val)); break;
         case "MaxOccursQuantity":    
             if ("unbounded".equals(val)) xhp.getObject().setMaxUnbounded(true);

@@ -143,7 +143,7 @@ class CmdXSDtoCMF implements JCCommand {
             }
             modelFN = obase + ".cmf";
         }
-        // Make sure output files are writable
+        // Make sure output files are writable      
         PrintWriter modelPW = null;
         try {
             modelPW = new PrintWriter(modelFN);

@@ -105,7 +105,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     // Model components are ordered by their QNames
     @Override
     public int compareTo (Component o) {
-        int rv = this.namespace.getNamespacePrefix().compareTo(o.namespace.getNamespacePrefix());
+        int rv = this.namespace.getNamespacePrefix().compareToIgnoreCase(o.namespace.getNamespacePrefix());
         if (rv != 0) return rv;
         return this.name.compareTo(o.name);
     }    

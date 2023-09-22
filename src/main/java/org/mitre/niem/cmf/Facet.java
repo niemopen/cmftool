@@ -27,7 +27,7 @@ package org.mitre.niem.cmf;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class Facet extends ObjectType {
+public class Facet extends ObjectType implements Comparable<Facet> {
     private String definition = null;
     private String facetKind = null;
     private String stringVal = null;
@@ -44,5 +44,14 @@ public class Facet extends ObjectType {
     }
     
     public Facet () { super(); }
+    
+    @Override
+    public int compareTo (Facet o) {
+        int rv = this.facetKind.compareTo(o.facetKind);
+        if (0 == rv && "Enumeration".equals(facetKind)) {
+            rv = this.stringVal.compareToIgnoreCase(o.stringVal);
+        }
+        return rv;
+    }
 
 }

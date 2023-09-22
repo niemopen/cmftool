@@ -36,20 +36,23 @@ public class HasProperty extends ObjectType {
     private int minQ = 1;
     private int maxQ = 1;
     private boolean maxUnbounded = false;
+    private String definition = null;                               // xs:documentation string    
     private boolean orderedProperties = false;
-    private final Set<Namespace> augmentingNS   = new HashSet<>();              // namespaces augmenting class with this property
+    private final Set<Namespace> augmentingNS = new HashSet<>();    // namespaces augmenting class with this property
     
     public void setProperty (Property p)            { property = p; }
     public void setMinOccurs (int m)                { minQ = m; }
     public void setMaxOccurs (int m)                { maxQ = m; }
     public void setMaxUnbounded (boolean f)         { maxUnbounded = f; }
     public void setOrderedProperties (boolean f)    { orderedProperties = f; }
+    public void setDefinition (String s)            { definition = (null == s ? null : s.strip().replaceAll("\\s+", " ")); }    
     
     public Property getProperty ()                  { return property; }
     public int minOccurs ()                         { return minQ; }
     public int maxOccurs ()                         { return maxQ; } 
     public boolean maxUnbounded ()                  { return maxUnbounded; }
     public boolean orderedProperties ()             { return orderedProperties; }
+    public String getDefinition ()                  { return definition; }
     public Set<Namespace> augmentingNS ()           { return augmentingNS; }
     
     public HasProperty () { super();  }    
