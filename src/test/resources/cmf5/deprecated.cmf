@@ -60,6 +60,7 @@
   <Datatype structures:id="nc.PercentType">
     <Name>PercentType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a ratio, proper fraction, or percentage, with 100% represented as the value 100.</DefinitionText>
     <RestrictionOf>
       <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
     </RestrictionOf>
@@ -67,6 +68,7 @@
   <Datatype structures:id="nc.SecretPercentType">
     <Name>SecretPercentType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A data type for a secret ratio, proper fraction, or percentage, with 100% represented as the value 100.</DefinitionText>
     <DeprecatedIndicator>true</DeprecatedIndicator>
     <RestrictionOf>
       <Datatype structures:ref="nc.PercentType" xsi:nil="true"/>

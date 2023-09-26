@@ -48,13 +48,7 @@ public class CMFTool {
     String xtd = "src/test/resources/xsd/";
     String dir = "tmp/02-NoAug/";
     if (0 == args.length) {
-        args = new String[]{"x2m", "-d", "-o", dir+"foo", dir+"messageModel.xsd"};
-//        args = new String[]{"x2m", "-d", "tmp/52rel/domains/biom.xsd" };
-//        args = new String[]{"x2m", "-d", xtd+"createdProp.xsd"};
-//        args = new String[]{"xval", "-d", "-s", "examples/Claim-iepd/extension/claim.xsd", "examples/Claim-iepd/xml-catalog.xml"};
-//        args = new String[]{"xval", "-d", "-o", xtd, xtd+"twoversions-0.xsd" };
-//        args = new String[]{"xcmp", xtd+"nameinfo.xsd", xtd+"out/nameinfo.xsd"};
-//        args = new String[]{"n5to6", "-d", "-o", "src/main/CMF/out", "src/main/CMF/model5.cmf"};
+        args = new String[]{"x2m", "-d", "tmp/52rel/domains/cbrn.xsd" };
     }
     
 

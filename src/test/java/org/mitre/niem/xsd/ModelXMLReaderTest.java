@@ -540,7 +540,7 @@ public class ModelXMLReaderTest {
     @Test
     public void testAugmentations () {
         FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "cmf5/augment-0.cmf");
+        File cmfFile = new File(testDirPath, "cmf5/augment.cmf");
         try {
             cmfIS = new FileInputStream(cmfFile);
         } catch (FileNotFoundException ex) {
@@ -565,9 +565,11 @@ public class ModelXMLReaderTest {
                         "nc:TextLiteral",
                         "nc:partialIndicator",
                         "test:BoogalaText",
+                        "test:boogalaProp",
                         "nc:AddressType",
                         "nc:TextType",
                         "xs:boolean",
+                        "xs:token",
                         "xs:string");       
         
         assertThat(m.getNamespaceByPrefix("j").augmentList())
@@ -581,14 +583,14 @@ public class ModelXMLReaderTest {
                 .containsOnly("j:AddressCommentText", "j:AddressVerifiedDate", "j:AnotherAddress");
         
         assertThat(m.getNamespaceByPrefix("test").augmentList())
-                .hasSize(2)
+                .hasSize(3)
                 .extracting(AugmentRecord::getClassType)
                 .containsOnly(m.getClassType("nc:AddressType"));
         
         assertThat(m.getNamespaceByPrefix("test").augmentList())
                 .extracting(AugmentRecord::getProperty)
                 .extracting(Property::getQName)
-                .containsOnly("j:AddressCommentText", "test:BoogalaText");
+                .containsOnly("j:AddressCommentText", "test:BoogalaText", "test:boogalaProp");
 
         assertThat(m.getNamespaceByPrefix("nc").augmentList())
                 .hasSize(0);
@@ -596,7 +598,7 @@ public class ModelXMLReaderTest {
         ClassType ct = m.getClassType("nc:AddressType");
         assertNotNull(ct);
         assertTrue(ct.isAugmentable());
-        assertEquals(5, ct.hasPropertyList().size());
+        assertEquals(6, ct.hasPropertyList().size());
         
         HasProperty hp = ct.hasPropertyList().get(1);
         assertEquals("j:AddressCommentText", hp.getProperty().getQName());

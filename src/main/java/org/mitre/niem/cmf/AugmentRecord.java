@@ -32,7 +32,7 @@ package org.mitre.niem.cmf;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class AugmentRecord extends ObjectType {
+public class AugmentRecord extends ObjectType implements Comparable<AugmentRecord> {
     private ClassType classType = null;         // the augmented Class
     private Property property = null;           // the agumenting Property
     private int indexInType = -1;               // index of Property in augmentation type; -1 for direct subsitution
@@ -58,4 +58,11 @@ public class AugmentRecord extends ObjectType {
     public boolean orderedProperties ()         { return orderedProperties; }
     
     public AugmentRecord () {}
+    
+    @Override
+    public int compareTo (AugmentRecord o) {
+        int rv = this.classType.compareTo(o.classType);
+        if (0 == rv) rv = this.property.compareTo(o.property);
+        return rv;
+    }
 }

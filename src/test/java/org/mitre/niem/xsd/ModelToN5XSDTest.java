@@ -59,6 +59,7 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
         "complexContent.xsd",
         //          "defaultFacets.xsd"         // won't round trip, not niem conforming
         "deprecated.xsd",
+        "doubleType.xsd",
         "externals.xsd",
         "isRefAtt.xsd",
         "list.xsd",
@@ -99,6 +100,9 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
 
         // Valid XSD?
         File newSchema = new File(tempD2, sourceXSD);
+        if (!isValidXSD(newSchema)) {
+            int i = 0;
+        }
         assertTrue(isValidXSD(newSchema));
         
         // Now create CMF from the schema in temp directory #2        
@@ -124,26 +128,11 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
             String n3 = f3.getName();
             assertEquals(n2,n3);
             assertTrue(FileUtils.contentEquals(f2, f3));
+            if (!FileUtils.contentEquals(f2, f3)) {
+                int i = 0;
+            }
         }
         assertEmptyLogs();
     }
-    
-//    @Test
-//    public void debugTest () throws Exception {
-//        var is = new FileInputStream("tmp/m52.cmf");
-//        var mr = new ModelXMLReader();
-//        var m  = mr.readXML(is);
-//        for (var ns : m.getNamespaceList()) {
-//            var header = String.format("Namespace %s: %s\n", ns.getNamespacePrefix(), ns.getNamespaceURI());
-//            for (var ar : ns.augmentList()) {
-//                var p = ar.getProperty();
-//                if (p.isAttribute()) {
-//                    System.out.print(header);
-//                    System.out.println("  " + p.getQName());
-//                    header = "";
-//                }
-//            }
-//        }
-//    }
     
 }

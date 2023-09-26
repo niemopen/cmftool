@@ -196,32 +196,35 @@ public abstract class ModelToXSD {
         if (null != messageNSuri) refGraph = new ReferenceGraph(m.getComponentList());
         
         // Collect all Datatype objects for which we must create a simpleType declaration
-        // Those are unions, or lists, or restrictions with facets
+        // Those are unions, lists,types of attributes, and FooDatatypes for FooLiteral properties
+        var nstList = new HashSet<Datatype>();
         for (Component c : m.getComponentList()) {
-            Datatype dt = c.asDatatype();
-            if (null == dt) continue;
-            if (dt.getName().endsWith("SimpleType")) needSimpleType.add(dt);
-            else if (null != dt.getUnionOf()) {
-                needSimpleType.add(dt);
-                LOG.debug("needSimpleType " + dt.getQName());
-                for (var udt : dt.getUnionOf().getDatatypeList()) {
-                    
-                }
+            var p  = c.asProperty();
+            var dt = c.asDatatype();
+            if (null != dt && null != dt.getUnionOf()) {
+                nstList.add(dt);
+                for (var udt : dt.getUnionOf().getDatatypeList()) 
+                    nstList.add(udt);
             }
-            else if (null != dt.getListOf()) {
-                needSimpleType.add(dt);
-                LOG.debug("needSimpleType " + dt.getQName());
-                var ldt = dt.getListOf();
-                if (!W3C_XML_SCHEMA_NS_URI.equals(ldt.getNamespaceURI())) {
-                    needSimpleType.add(ldt);
-                    LOG.debug("needSimpleType " + ldt.getQName());                    
-                }
+            else if (null != dt && null != dt.getListOf()) {
+                nstList.add(dt);
+                nstList.add(dt.getListOf());
             }
-            else if (null != dt.getRestrictionOf() && !dt.getRestrictionOf().getFacetList().isEmpty()) {
-                needSimpleType.add(dt);
-                LOG.debug("needSimpleType " + dt.getQName());
+            else if (null != p && p.isAttribute()) {
+                nstList.add(p.getDatatype());
+            }
+//            else if (null != p && p.getDatatype().getName().endsWith("Datatype")) {
+            else if (null != p && p.getName().endsWith("Literal")) {
+                var pdt = p.getDatatype();
+                if (pdt.getName().endsWith("Datatype")) nstList.add(p.getDatatype());
             }
         }
+        // Don't need simple type for XSD primitives
+        nstList.forEach((dt) -> {
+            if (!W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI()))
+                needSimpleType.add(dt);
+        });
+        
         // Collect all the NIEM versions, establish builtin namespace prefixes
         ArrayList<String> allVers = new ArrayList<>();
         m.schemadoc().forEach((ns,sd) -> {
@@ -704,47 +707,49 @@ public abstract class ModelToXSD {
     // Create a complex type declaration from a Datatype object (FooType)
     protected void createComplexTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
         if (null == dt) return;
-//        if (needSimpleType.contains(dt)) return;                    // create xs:simpleType instead
-        var cname = dt.getName().replaceFirst("Datatype$", "SimpleType");
-        var bname = cname.replaceFirst("SimpleType$", "Type");
-        if (nsTypedefs.containsKey(cname)) return;                  // already created
-        if (nsTypedefs.containsKey(bname)) return;                  // already have FooType complex type
-        if (!nsuri.equals(dt.getNamespaceURI())) return;            // not in this namespace
-        if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) return;        // don't create XSD builtins
+        var cname = dt.getName().replaceFirst("Datatype", "Type");
+        if (nsTypedefs.containsKey(cname)) return;                      // already created xs:ComplexType for this
+        if (!nsuri.equals(dt.getNamespaceURI())) return;                // datatype is not in this namespace
+        if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) return; // don't create XSD builtins        
         
         var cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
         var sce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
-        var exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
         cte.setAttribute("name", cname);        
         var ae = addDocumentation(dom, cte, null, dt.getDefinition());
         if (dt.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
-
-        // Restriction without facets becomes an empty xs:extension
-        // Replace XSD primitive with proxy type
-        String  btqn = null;
-        RestrictionOf r = dt.getRestrictionOf();
-        if (null != r && r.getFacetList().isEmpty()) {
-            var bdt  = r.getDatatype();
-            btqn = proxifiedDatatypeQName(bdt);
-            if (needSimpleType.contains(bdt)) {
-                btqn = btqn.replaceFirst("Type$", "SimpleType");
-                btqn = btqn.replaceFirst("Datatype$", "SimpleType");  
-            }
-        }
-        // For union, list, restriction with facets, extension base is FooSimpleType
-        else {
-            btqn = dt.getQName().replaceFirst("Type$", "SimpleType");
-            btqn = btqn.replaceFirst("Datatype$", "SimpleType");
-        }
         
-        // If extension base is a FooSimpleType, we must add SimpleObjectAttributeGroup
-        if (btqn.endsWith("SimpleType")) addSimpleTypeExtension(dom, exe);
-
-        exe.setAttribute("base", btqn);
-        sce.appendChild(exe);   // xs:simpleContent has xs:extension
+        if (null != dt.getCodeListBinding()) {
+            ae = addAnnotation(dom, cte, ae);
+            var ap = addAppinfo(dom, ae, null);
+            var cb = addCodeListBinding(dom, ap, nsuri, dt.getCodeListBinding());
+        }        
+        if (needSimpleType.contains(dt)) {
+            var stqn = dt.getQName().replaceFirst("Type", "SimpleType");
+            addEmptyExtensionElement(dom, sce, stqn);
+        }
+        else {
+            var r     = dt.getRestrictionOf();
+            var rbdt  = r.getDatatype();
+            var rbdqn = proxifiedDatatypeQName(rbdt);
+            var rfl   = r.getFacetList();
+            if (W3C_XML_SCHEMA_NS_URI.equals(rbdt.getNamespaceURI()) && rfl.isEmpty())
+                addEmptyExtensionElement(dom, sce, rbdt.getQName());
+            else
+                addRestrictionElement(dom, sce, dt, r.getDatatype(), rbdqn);
+        }
         cte.appendChild(sce);   // xs:complexType has xs:simpleContent
         nsTypedefs.put(cname, cte);
-    } 
+    }
+    
+    // Adds <xs:extension base="baseQN"> with SimpleObjectAttributeGroup
+    protected void addEmptyExtensionElement (Document dom, Element sce, String baseQN) {
+        var exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
+        var atg = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
+        atg.setAttribute("ref", structPrefix + ":SimpleObjectAttributeGroup");
+        exe.setAttribute("base", baseQN);
+        exe.appendChild(atg);
+        sce.appendChild(exe);   
+    }
     
     // Create a simple type declaration from a Datatype object
     protected void createSimpleTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
@@ -766,7 +771,10 @@ public abstract class ModelToXSD {
         }
         if (null != dt.getUnionOf()) addUnionElement(dom, ste, dt);
         else if (null != dt.getListOf()) addListElement(dom, ste, dt);
-        else if (null != dt.getRestrictionOf()) addRestrictionElement(dom, ste, dt);
+        else if (null != dt.getRestrictionOf()) {
+            var r = dt.getRestrictionOf();
+            addRestrictionElement(dom, ste, dt, r.getDatatype(), r.getDatatype().getQName());
+        }
         ste.setAttribute("name", cname);
         nsTypedefs.put(cname, ste);   
         nsNSdeps.add(dt.getNamespace().getNamespaceURI());        
@@ -796,10 +804,10 @@ public abstract class ModelToXSD {
         ste.appendChild(lse);
     }
     
-    protected void addRestrictionElement (Document dom, Element ste, Datatype bdt) {
+    protected void addRestrictionElement (Document dom, Element ste, Datatype bdt, Datatype rbdt, String rbqn) {
         RestrictionOf r = bdt.getRestrictionOf();
         Element rse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:restriction");
-        rse.setAttribute("base", maybeSimpleTypeQName(r.getDatatype()));
+        rse.setAttribute("base", rbqn);
         Collections.sort(r.getFacetList());
         for (Facet f : r.getFacetList()) {
             String fk = f.getFacetKind();
@@ -809,11 +817,13 @@ public abstract class ModelToXSD {
             addDocumentation(dom, fce, null, f.getDefinition());
             rse.appendChild(fce);
         }
+        nsNSdeps.add(rbdt.getNamespaceURI());
         ste.appendChild(rse);
     }
     
     // Returns QName for FooSimpleType if that type exists, otherwise QName for FooType
     protected String maybeSimpleTypeQName (Datatype dt) {
+        if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) return dt.getQName();
         String dtqn   = dt.getQName();
         String dtbase = dtqn.replaceFirst("Type$", "");
         String dtsqn  = dtbase + "SimpleType";

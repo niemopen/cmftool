@@ -44,15 +44,22 @@
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
     <AugmentRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
-      <Property structures:ref="test.BoogalaText" xsi:nil="true"/>
-      <AugmentationIndex>0</AugmentationIndex>
+      <Property structures:ref="j.AddressCommentText" xsi:nil="true"/>
+      <AugmentationIndex>1</AugmentationIndex>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </AugmentRecord>
     <AugmentRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
-      <Property structures:ref="j.AddressCommentText" xsi:nil="true"/>
-      <AugmentationIndex>1</AugmentationIndex>
+      <Property structures:ref="test.boogalaProp" xsi:nil="true"/>
+      <AugmentationIndex>2</AugmentationIndex>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentRecord>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <Property structures:ref="test.BoogalaText" xsi:nil="true"/>
+      <AugmentationIndex>0</AugmentationIndex>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </AugmentRecord>
@@ -88,17 +95,23 @@
     <Class structures:ref="nc.TextType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
+  <Property structures:id="nc.partialIndicator">
+    <Name>partialIndicator</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </Property>
   <Property structures:id="nc.TextLiteral">
     <Name>TextLiteral</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A literal value for a character string.</DefinitionText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </Property>
-  <Property structures:id="nc.partialIndicator">
-    <Name>partialIndicator</Name>
-    <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
-    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+  <Property structures:id="test.boogalaProp">
+    <Name>boogalaProp</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </Property>
   <Property structures:id="test.BoogalaText">
@@ -118,27 +131,33 @@
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
-    <HasProperty structures:sequenceID="2">
+    <HasProperty>
       <Property structures:ref="j.AddressCommentText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
       <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
     </HasProperty>
-    <HasProperty structures:sequenceID="3">
+    <HasProperty>
       <Property structures:ref="j.AddressVerifiedDate" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
       <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
     </HasProperty>
-    <HasProperty structures:sequenceID="4">
+    <HasProperty>
       <Property structures:ref="j.AnotherAddress" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
       <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
     </HasProperty>
-    <HasProperty structures:sequenceID="5">
+    <HasProperty>
       <Property structures:ref="test.BoogalaText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
+    </HasProperty>
+    <HasProperty>
+      <Property structures:ref="test.boogalaProp" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
@@ -157,6 +176,7 @@
       <Property structures:ref="nc.partialIndicator" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
     </HasProperty>
   </Class>
   <Datatype structures:id="xs.boolean">
@@ -167,11 +187,15 @@
     <Name>string</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
   <SchemaDocument>
     <NamespacePrefixText>niem-xs</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <DocumentFilePathText>augment-niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
@@ -180,7 +204,7 @@
     <NamespacePrefixText>j</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/domains/jxdm/7.0/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>augment-1.xsd</DocumentFilePathText>
+    <DocumentFilePathText>augment-niem/domains/jxdm.xsd</DocumentFilePathText>
     <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
@@ -189,7 +213,7 @@
     <NamespacePrefixText>test</NamespacePrefixText>
     <NamespaceURI>http://example.com/dummyAugmentation/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>augment-0.xsd</DocumentFilePathText>
+    <DocumentFilePathText>augment.xsd</DocumentFilePathText>
     <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
@@ -197,7 +221,7 @@
   <SchemaDocument>
     <NamespacePrefixText>structures</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
-    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <DocumentFilePathText>augment-niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>5.0</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
@@ -206,7 +230,7 @@
     <NamespacePrefixText>nc</NamespacePrefixText>
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>augment-2.xsd</DocumentFilePathText>
+    <DocumentFilePathText>augment-niem/niem-core.xsd</DocumentFilePathText>
     <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>

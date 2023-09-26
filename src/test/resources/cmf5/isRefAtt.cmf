@@ -15,12 +15,6 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="ira.TextLiteral">
-    <Name>TextLiteral</Name>
-    <Namespace structures:ref="ira" xsi:nil="true"/>
-    <DefinitionText>A literal value for a character string.</DefinitionText>
-    <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </Property>
   <Property structures:id="ira.categoryRef">
     <Name>categoryRef</Name>
     <Namespace structures:ref="ira" xsi:nil="true"/>
@@ -33,6 +27,12 @@
     <Namespace structures:ref="ira" xsi:nil="true"/>
     <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
+  </Property>
+  <Property structures:id="ira.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="ira" xsi:nil="true"/>
+    <DefinitionText>A literal value for a character string.</DefinitionText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </Property>
   <Class structures:id="ira.TextType">
     <Name>TextType</Name>
@@ -50,12 +50,12 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
   </Class>
-  <Datatype structures:id="xs.IDREFS">
-    <Name>IDREFS</Name>
-    <Namespace structures:ref="xs" xsi:nil="true"/>
-  </Datatype>
   <Datatype structures:id="xs.boolean">
     <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.IDREFS">
+    <Name>IDREFS</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
   <Datatype structures:id="xs.string">

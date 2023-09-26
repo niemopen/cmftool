@@ -31,7 +31,7 @@ import java.util.List;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class LocalTerm extends ObjectType {
+public class LocalTerm extends ObjectType implements Comparable<LocalTerm> {
     private String term = null;                                     // local term token
     private String definition = null;                               // definition text
     private String literal = null;                                  // literal expansion of term
@@ -58,5 +58,10 @@ public class LocalTerm extends ObjectType {
         definition = d;
         literal = l;
         sourceURIs = s;
+    }
+    
+    @Override
+    public int compareTo (LocalTerm o) {
+        return this.term.compareToIgnoreCase(o.term);
     }
 }

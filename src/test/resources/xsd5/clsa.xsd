@@ -11,7 +11,6 @@
   ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
   version="1"
   xml:lang="en-US">
-  <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="niem/niem-core.xsd"/>
   <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
   <xs:simpleType name="CountryAlpha2CodeSimpleType">
     <xs:annotation>
@@ -79,14 +78,4 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:element name="CountryAlpha2Code" type="genc:CountryAlpha2CodeType" substitutionGroup="nc:CountryRepresentation" nillable="true">
-    <xs:annotation>
-      <xs:documentation>A country, territory, dependency, or other such geopolitical subdivision of a location.</xs:documentation>
-    </xs:annotation>
-  </xs:element>
-  <xs:element name="CountryAlpha3Code" type="genc:CountryAlpha3CodeType" substitutionGroup="nc:CountryRepresentation" nillable="true">
-    <xs:annotation>
-      <xs:documentation>A country, territory, dependency, or other such geopolitical subdivision of a location.</xs:documentation>
-    </xs:annotation>
-  </xs:element>
 </xs:schema>

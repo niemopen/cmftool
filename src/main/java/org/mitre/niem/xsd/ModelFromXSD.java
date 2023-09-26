@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import static java.util.Map.entry;
 import java.util.Set;
-import java.util.logging.Level;
 import javax.xml.parsers.ParserConfigurationException;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
@@ -44,6 +43,7 @@ import org.apache.xerces.xs.XSAnnotation;
 import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
+import static org.apache.xerces.xs.XSComplexTypeDefinition.CONTENTTYPE_SIMPLE;
 import static org.apache.xerces.xs.XSConstants.ATTRIBUTE_DECLARATION;
 import static org.apache.xerces.xs.XSConstants.DERIVATION_RESTRICTION;
 import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
@@ -58,7 +58,6 @@ import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSModelGroup;
 import org.apache.xerces.xs.XSMultiValueFacet;
 import org.apache.xerces.xs.XSNamedMap;
-import org.apache.xerces.xs.XSNamespaceItem;
 import org.apache.xerces.xs.XSObject;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSParticle;
@@ -95,7 +94,6 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
 import org.mitre.niem.cmf.NamespaceMap;
 import org.mitre.niem.cmf.SchemaDocument;
 import org.w3c.dom.Element;
-import static org.w3c.dom.Node.ELEMENT_NODE;
 
 
 /**
@@ -161,7 +159,6 @@ public class ModelFromXSD {
         setClassInheritance();          // establish ClassType inheritance
         findClassWithLiteralProperty();
         handleSimpleTypes();
-//        processProperties();            // populate all fields of property objects from schema
         processClassTypes();            // populate all fields of class objects
         processDatatypes();             // populate all fields of datatype objects
         processProperties();            // populate all fields of property objects from schema
@@ -286,28 +283,33 @@ public class ModelFromXSD {
     // After this the model contains most of the property objects, but those objects 
     // are incomplete.
     //
-    // As it turns out, a component may appear more than once in a XSNamedMap,
-    // and so the intialize routines must be ready to cope with repeats.
+    // Sometimes iterating through the XSNamedMap hits the same component more
+    // than once. This happens when we create the entire NIEM model by
+    // supplying domains/*.xsd and codes/*.xsd to XMLSchema.initialSchemaDocs
     private void initializeDeclarations () {
+        HashSet<String>seen = new HashSet<>();
         XSNamedMap xmap = xs.getComponents(ATTRIBUTE_DECLARATION);
         for (int i = 0; i < xmap.getLength(); i++) {
             var xobj  = (XSAttributeDeclaration)xmap.item(i);
             var nsuri = xobj.getNamespace();
             var lname = xobj.getName();
-            var comp  = m.getComponent(nsuri, lname);
-            if (null != comp) continue;                 // already initialized
+            var clkN  = String.format("{%s}%s", nsuri, lname);
+            if (seen.contains(clkN)) continue;      // weird repeats in XSNamedMap
+            seen.add(clkN);
             var p = initializeOneDeclaration(xobj, true);
             if (null == p) continue;
             var docs = getDocumentation(xobj);
             if (!docs.isEmpty()) p.setDefinition(docs.get(0));
         }
+        seen = new HashSet<>();
         xmap = xs.getComponents(ELEMENT_DECLARATION);
         for (int i = 0; i < xmap.getLength(); i++) {
             var xobj = (XSElementDeclaration)xmap.item(i);
             var nsuri = xobj.getNamespace();
             var lname = xobj.getName();
-            var comp  = m.getComponent(nsuri, lname);
-            if (null != comp) continue;                 // already initialized            
+            var clkN  = String.format("{%s}%s", nsuri, lname);
+            if (seen.contains(clkN)) continue;      // weird repeats in XSNamedMap
+            seen.add(clkN);           
             var xet  = xobj.getTypeDefinition();
             var xetu = NamespaceKind.builtin(xet.getNamespace());
             if (NIEM_STRUCTURES == xetu && xet.getName().endsWith("AugmentationType")) {
@@ -346,15 +348,21 @@ public class ModelFromXSD {
     // handle FooSimpleType declarations.  We don't create datatype objects for 
     // proxy types at all.  We don't create datatype objects for types in the XSD 
     // namespace until we see we need them.
+    //
+    // Sometimes iterating through the XSNamedMap hits the same component more
+    // than once. This happens when we create the entire NIEM model by
+    // supplying domains/*.xsd and codes/*.xsd to XMLSchema.initialSchemaDocs
     private void initializeDefinitions () throws CMFException {
+        HashSet<String>seen = new HashSet<>();
         XSNamedMap xmap = xs.getComponents(TYPE_DEFINITION);
         for (int i = 0; i < xmap.getLength(); i++) {
             var xtype = (XSTypeDefinition)xmap.item(i);
             var xbase = xtype.getBaseType();
             var nsuri = xtype.getNamespace();
             var lname = xtype.getName();
-            var comp  = m.getComponent(nsuri, lname);
-            if (null != comp) return;
+            var clkN  = String.format("{%s}%s", nsuri, lname);
+            if (seen.contains(clkN)) continue;      // weird repeats in XSNamedMap
+            seen.add(clkN);
             var ns    = m.getNamespaceByURI(nsuri);
             int kind  = namespaceKindFromSchema(nsuri);
             if (kind > NSK_OTHERNIEM) continue;
@@ -369,7 +377,7 @@ public class ModelFromXSD {
             else {
                 // Complex type can be a class or a datatype object.
                 // Simple content without model attributes is a Datatype object
-                boolean hasAttributes = false;
+                boolean hasModelAttributes = false;
                 var qname  = ns.getNamespacePrefix() + ":" + lname;
                 var xctype = (XSComplexTypeDefinition)xtype;
                 var atts   = xctype.getAttributeUses();
@@ -378,19 +386,19 @@ public class ModelFromXSD {
                     var adecl = au.getAttrDeclaration();
                     var ans   = adecl.getNamespace();
                     if (NIEM_STRUCTURES != NamespaceKind.builtin(ans)) {    // attributes in structures NS don't count
-                        hasAttributes = true;                               // found a semantic attribute; we're done
+                        hasModelAttributes = true;                          // found a model attribute; we're done
                         break;
                     }
                 }
-                boolean isSimple = (null != xctype.getSimpleType());
-                if (isSimple && !hasAttributes) {   // it's a Datatype
+                boolean isSimple = CONTENTTYPE_SIMPLE == xctype.getContentType();
+                if (isSimple && !hasModelAttributes) {   // it's a Datatype
                     var dt   = new Datatype(ns, lname);               
                     datatypeXSobj.put(dt, xtype);
                     datatypeMap.put(dt.getQName(), dt);
-                    LOG.debug("initialized datatype " + dt.getQName()); 
+                    LOG.debug("initialized datatype " + dt.getQName());                  
                 }
-                // Complex content is a ClassType object
-                // Simple content with model attributes or metadata anywhere in derivation is a ClassType object
+                // Complex, mixed, empty content is a ClassType object
+                // Simple content with model attributes anywhere in derivation is a ClassType object
                 else {
                     initializeXMLattributes(xctype);
                     var ct   = new ClassType(ns, lname);                    
@@ -457,45 +465,59 @@ public class ModelFromXSD {
         }
     }
 
-    // There are no Datatype objects named "FooSimpleType" in CMF.
-    // If there is a ClassType object named "FooType", then the Datatype is named "FooDatatype".
-    // If no such ClassType object, then the Datatype is named "FooType.
+    // There are no Datatype objects named "FooSimpleType" in CMF.  Three cases:
+    // 1. There is no FooType in the schema.
+    // 2. There is a FooType with simple content and model attributes.
+    // 3. Everything else (FooType CSC with no model attributes).
+    // For case #1, rename FooSimpleType to FooType.
+    // For case #2, rename FooSimpleType to FooDatatype.
+    // For case #3, replace the content of FooType with content of FooSimpleType,
+    // and remove FooSimpleType.
+    // Simple types for lists, unions, attributes are a concern for ModelToXSD,
+    // not here.
     private void handleSimpleTypes () throws CMFException {
         Map<Datatype,Datatype> replacements = new HashMap<>();      
         for (var sdt : datatypeXSobj.keySet()) {
             var xtype  = datatypeXSobj.get(sdt);
+            if (SIMPLE_TYPE != xtype.getTypeCategory()) continue;   // dt is not from xs:simpleType declaration
+            
             var sdtqn  = sdt.getQName();                            // "x:FooSimpleType"
             var baseqn = sdtqn.replaceFirst("SimpleType$", "Type"); // "x:FooType"
             var ddtqn  = baseqn.replaceFirst("Type$", "Datatype");  // "x:FooDatatype"
             var ct     = m.getClassType(baseqn);                    // ClassObject named x:FooType, if any
             var dt     = datatypeMap.get(baseqn);                   // Datatype object named x:FooType, if any
-            if (SIMPLE_TYPE != xtype.getTypeCategory()) continue;   // dt is not from xs:simpleType declaration
-            
+
             // We are either going to rename Datatype sdt, or replace the content
             // of Datatype dt with the content of sdt.
             boolean replace  = false;
             String rename    = null;
             
-            // If there is no x:FooType object, then rename the Datatype from 
+            // Case #1: the schema defines x:FooSimpleType but not x:FooType, and there is no
+            // schema for a x:FooType class or datatype object.  So we rename the Datatype from 
             // "x:FooSimpleType" to "x:FooType"
             if (null == ct && null == dt) {
                 rename = baseqn;               
             }
-            // If there is a x:FooType class object, then it has a x:FooSimpleType literal.
-            // Rename the datatype object from "x:FooSimpleType" to "x:FooDatatype"
+            // Case #2: there is a x:FooType class object, and so it has a 
+            // x:FooSimpleType literal.  Rename the datatype object from 
+            // x:FooSimpleType to "x:FooDatatype"; it will be the datatype of the literal property.
             else if (null != ct) {
                 rename = ddtqn;
             }
+            // Case #3: the schema defined both x:FooSimpleType and x:FooType, and so
+            // x:FooType has simple content and no model attributes.  
+            // Rename datatype for x:FooSimpleType to x:FooType.
             else {
-                var dtxtype = datatypeXSobj.get(dt);        // xs:complexType for x:FooType
-                var dtxbase = dtxtype.getBaseType();        // schema extension base
-                var dtxbqn  = getQN(dtxbase);               // QName of extension base
-                if (dtxbqn.equals(sdtqn)) {                 // if equal, dt is an empty extension of sdt
-                    replace = true;                         // so replace dt with sdt
-                }
-                else {                                      // not equal
-                    rename = ddtqn;                         // rename x:FooSimpleType to x:FooDatatype
-                }
+                replace = true;
+//                var dtxtype = datatypeXSobj.get(dt);        // xs:complexType for x:FooType
+//                var dtxbase = dtxtype.getBaseType();        // schema extension base
+//                var dtxbqn  = getQN(dtxbase);               // QName of extension base
+//                if (dtxbqn.equals(sdtqn)) {                 // if equal, dt is an empty extension of sdt
+//                    replace = true;                         // so replace dt with sdt
+//                }
+//                else {                                      // not equal
+//                    rename = baseqn;                         // rename x:FooSimpleType to x:FooType
+//                }
             }
             if (replace) {
                 replacements.put(dt, sdt);          
@@ -652,13 +674,13 @@ public class ModelFromXSD {
                 if (!attDocs.isEmpty()) hp.setDefinition(attDocs.get(0));
                 ct.addHasProperty(hp);
                 
-                // Handle appinfo:augmentingNamespace
-                var augNSuri = getAppinfoAttribute(ct.getQName(), p.getQName(), "augmentingNamespace");
-                if (!augNSuri.isEmpty()) {
-                    var augNS = m.getNamespaceByURI(augNSuri);
-                    hp.augmentingNS().add(augNS);
-                    addAugmentRecord(augNS, ct, hp, -1);                   
-                }
+                // Handle appinfo:augmentingNamespace FIXME
+//                var augNSuri = getAppinfoAttribute(ct.getQName(), p.getQName(), "augmentingNamespace");
+//                if (!augNSuri.isEmpty()) {
+//                    var augNS = m.getNamespaceByURI(augNSuri);
+//                    hp.augmentingNS().add(augNS);
+//                    addAugmentRecord(augNS, ct, hp, -1);                   
+//                }
             }            
         }
     }    
@@ -745,62 +767,63 @@ public class ModelFromXSD {
     // type with simple content and no attributes.
     private void processDatatypes () throws CMFException {
         for (var dt : datatypeXSobj.keySet()) {
+            LOG.debug("processing datatype " + dt.getQName());
             dt.setIsDeprecated(getAppinfoAttribute(dt.getQName(), null, "deprecated"));
             m.addComponent(dt);
             if (xsdns == dt.getNamespace()) continue;               // nothing more to do for XSD types
-            LOG.debug("processing datatype " + dt.getQName());
-           
-            XSSimpleTypeDefinition xscontent = null;                    // build Datatype from this simple content
-            var xtype = datatypeXSobj.get(dt);                          // complex or simple type definition for this Datatype
+
+            var xtype = datatypeXSobj.get(dt);                      // complex or simple type definition for this Datatype
             var docs  = getDocumentation(xtype);
             if (!docs.isEmpty()) dt.setDefinition(docs.get(0));
             handleCLSA(dt, xtype);
+            var typeNS = xtype.getNamespace();
+            var typeLN = xtype.getName();
             
-            var isComplex = (COMPLEX_TYPE == xtype.getTypeCategory());
-            if (isComplex) {
-                var xctype = (XSComplexTypeDefinition)xtype;
-                var xbase = xctype.getBaseType();
-                xscontent = xctype.getSimpleType();                
-                if (null != xbase) {
-                    var complexBase   = COMPLEX_TYPE == xbase.getTypeCategory();
-                    var isProxy       = NIEM_PROXY == NamespaceKind.builtin(xbase.getNamespace());
-                    var isRestriction = DERIVATION_RESTRICTION == xctype.getDerivationMethod();
-                    // Sometimes this Datatype is an empty restriction of the base type
-                    // But not for a restriction of a proxy type (eg. niem-xs:string)
-                    // Use empty restriction of XSD type (eg. xs:string) instead
-                    if (complexBase && !(isProxy && isRestriction)) {
-                        var r  = new RestrictionOf();
-                        var bt = getDatatype(xbase.getNamespace(), xbase.getName());
-                        r.setDatatype(bt);
+            // Create union, list, or restriction for a simple type
+            if (SIMPLE_TYPE == xtype.getTypeCategory()) {
+                var xstype = (XSSimpleTypeDefinition)xtype;
+                switch (xstype.getVariety()) {
+                    case VARIETY_UNION:
+                        dt.setUnionOf(createUnionOf(xstype));
+                        break;
+                    case VARIETY_LIST:
+                        var xitem = xstype.getItemType();
+                        var listdt = getDatatype(xitem.getNamespace(), xitem.getName());
+                        dt.setListOf(listdt);
+                        break;
+                    default:
+                        var xbase = xstype.getBaseType();
+                        var r = createRestrictionOf(xbase, xstype);
                         dt.setRestrictionOf(r);
-                        continue;
-                    }
-                    // An extension of an XSD base type is allowed in message schemas
-                    if (!complexBase && !isRestriction && W3C_XML_SCHEMA_NS_URI.equals(xbase.getNamespace())) {
-                        var r  = new RestrictionOf();
-                        var bt = getDatatype(xbase.getNamespace(), xbase.getName());
-                        r.setDatatype(bt);
-                        dt.setRestrictionOf(r);   
-                        continue;
-                    }
+                        break;                
                 }
+                continue;
             }
-            else xscontent = (XSSimpleTypeDefinition)xtype;
-            
-            switch (xscontent.getVariety()) {
-                case VARIETY_UNION:
-                    dt.setUnionOf(createUnionOf(xscontent));
-                    break;
-                case VARIETY_LIST:
-                    var xitem = xscontent.getItemType();
-                    var listdt = getDatatype(xitem.getNamespace(), xitem.getName());
-                    dt.setListOf(listdt);
-                    break;
-                default:
-                    var r = createRestrictionOf(xscontent);
-                    dt.setRestrictionOf(r);
-                    break;
+            // Handle a complex type -- it will have simple content and no model attributes.
+            // It can't be a union or list -- that would be a simple type.
+            // Usually we create a datatype that is a restriction of the base type.
+            // If the base type is a proxy, create a restriction of the XSD type instead.
+            var xctype  = (XSComplexTypeDefinition)xtype;
+            var xbaseST = xctype.getSimpleType();
+            var xbase   = xctype.getBaseType();
 
+            var baseNSuri = xbase.getNamespace();
+            var baseLN    = xbase.getName();
+            var baseDT    = getDatatype(baseNSuri, baseLN);
+            var isComplexBase = COMPLEX_TYPE == xbase.getTypeCategory();
+            var isProxyBase   = NIEM_PROXY == NamespaceKind.kind(baseNSuri);
+            var isRestriction = DERIVATION_RESTRICTION == xctype.getDerivationMethod();
+            
+            // Handle a restriction with facets
+            if (null != xbaseST) {
+                var r = createRestrictionOf(xbase, xbaseST);
+                dt.setRestrictionOf(r);
+            }
+            else {
+                var r = new RestrictionOf();
+                r.setDatatype(baseDT);
+                dt.setRestrictionOf(r);
+                LOG.debug(String.format("%s is a restriction of %s", dt.getQName(), baseDT.getQName()));
             }
         }
     }
@@ -902,6 +925,51 @@ public class ModelFromXSD {
         }
         Collections.sort(r.getFacetList());
         return r;
+    }
+    
+    private RestrictionOf createRestrictionOf (XSTypeDefinition xbase, XSSimpleTypeDefinition xstype) throws CMFException {
+        var bt = getDatatype(xbase.getNamespace(), xbase.getName());
+        if (null == bt) return null;
+        
+        RestrictionOf r = new RestrictionOf();
+        r.setDatatype(bt);
+        XSObjectList flist = xstype.getFacets();
+        for (int i = 0; i < flist.getLength(); i++) {
+            var f    = (XSFacet)flist.item(i);
+            if (isXercesDefaultFacet(xbase, f.getFacetKind(), f.getLexicalFacetValue())) continue;
+            var fval = f.getLexicalFacetValue();
+            var fo   = new Facet();
+            var docs = getDocumentation (f);
+            if (!docs.isEmpty()) fo.setDefinition(docs.get(0));
+            fo.setFacetKind(facetKind2Code(f.getFacetKind()));
+            fo.setStringVal(f.getLexicalFacetValue());         
+            if (null != fo) r.addFacet(fo);
+        }
+        // Pattern and Extension facets are different.  We get parallel lists, one of
+        // facet values, the other of facet annotations.
+        flist = xstype.getMultiValueFacets();
+        for (int i = 0; i < flist.getLength(); i++) {
+            var f     = (XSMultiValueFacet)flist.item(i);
+            var fkind = FACET_PATTERN == f.getFacetKind() ? "Pattern" : "Enumeration";
+            var vals  = f.getLexicalFacetValues();
+            var anns  = getAnnotations(f);
+            for (int j = 0; j < vals.getLength(); j++) {
+                var val = vals.item(j);
+                if (isXercesDefaultFacet(xbase, f.getFacetKind(), val)) continue;
+                var fo = new Facet();
+                if (j < anns.size() && null != anns.get(j)) {
+                    var an   = (XSAnnotation)anns.get(j);
+                    var docs = new ArrayList<String>();
+                    getDocumentationStrings(docs, an);
+                    if (!docs.isEmpty()) fo.setDefinition(docs.get(0));
+                }
+                fo.setFacetKind(fkind);
+                fo.setStringVal(val);
+                r.addFacet(fo);
+            }
+        }
+        Collections.sort(r.getFacetList());
+        return r;        
     }
     
     // Convert Xerces facet kind value to CMF facet kind code.
@@ -1074,6 +1142,8 @@ public class ModelFromXSD {
                 var frec = new DefFacet(fkind, fval);
                 flst.add(frec);
             }
+            xercesFacet.put("anyType", new ArrayList<>());
+            xercesFacet.put("anySimpleType", new ArrayList<>());
         }
         var btname = bt.getName();
         while (!xercesFacet.containsKey(btname)) {
@@ -1178,6 +1248,10 @@ public class ModelFromXSD {
     // Property hp.getProperty() is a useful augmentation for Class ct,
     // according to the owner of Namespace augn.
     private void addAugmentRecord (Namespace augn, ClassType ct, HasProperty hp, int index) {
+        for (var ar : augn.augmentList()) {
+            if (ar.getClassType() != ct) continue;
+            if (ar.getProperty() == hp.getProperty()) return;
+        }
         var ar = new AugmentRecord();
         ar.setClassType(ct);
         ar.setProperty(hp.getProperty());

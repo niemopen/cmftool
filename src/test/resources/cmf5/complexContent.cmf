@@ -14,6 +14,13 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
+  <Property structures:id="nc.partialIndicator">
+    <Name>partialIndicator</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </Property>
   <Property structures:id="nc.PersonGivenName">
     <Name>PersonGivenName</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
@@ -27,26 +34,6 @@
     <DefinitionText>A middle name of a person.</DefinitionText>
     <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="nc.PersonSurName">
-    <Name>PersonSurName</Name>
-    <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A last name or family name of a person.</DefinitionText>
-    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="nc.TextLiteral">
-    <Name>TextLiteral</Name>
-    <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A literal value for a character string.</DefinitionText>
-    <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </Property>
-  <Property structures:id="nc.partialIndicator">
-    <Name>partialIndicator</Name>
-    <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
-    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
-    <AttributeIndicator>true</AttributeIndicator>
   </Property>
   <Property structures:id="nc.personNameCommentText">
     <Name>personNameCommentText</Name>
@@ -62,6 +49,19 @@
     <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </Property>
+  <Property structures:id="nc.PersonSurName">
+    <Name>PersonSurName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A last name or family name of a person.</DefinitionText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Property structures:id="nc.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A literal value for a character string.</DefinitionText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </Property>
   <Class structures:id="nc.PersonNameTextType">
     <Name>PersonNameTextType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
@@ -71,6 +71,7 @@
       <Property structures:ref="nc.personNameInitialIndicator" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DefinitionText>True if value represents the first letter or initials of a persons name; false otherwise.</DefinitionText>
     </HasProperty>
   </Class>
   <Class structures:id="nc.PersonNameType">
@@ -96,6 +97,7 @@
       <Property structures:ref="nc.personNameCommentText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DefinitionText>A comment about a kind of name for a person.</DefinitionText>
     </HasProperty>
   </Class>
   <Class structures:id="nc.ProperNameTextType">
@@ -117,6 +119,7 @@
       <Property structures:ref="nc.partialIndicator" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
     </HasProperty>
   </Class>
   <Datatype structures:id="xs.boolean">

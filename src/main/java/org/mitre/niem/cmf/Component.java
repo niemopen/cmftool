@@ -107,7 +107,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public int compareTo (Component o) {
         int rv = this.namespace.getNamespacePrefix().compareToIgnoreCase(o.namespace.getNamespacePrefix());
         if (rv != 0) return rv;
-        return this.name.compareTo(o.name);
+        return this.name.compareToIgnoreCase(o.name);
     }    
     
     public static String genURI (String nsuri, String lname) {

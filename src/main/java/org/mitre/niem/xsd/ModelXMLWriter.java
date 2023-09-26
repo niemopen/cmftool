@@ -35,6 +35,7 @@ import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.Model;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.Scanner;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
 import javax.xml.parsers.DocumentBuilder;
@@ -215,6 +216,8 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
         int nsk = x.getKind();
         addSimpleChild(dom, e, "NamespaceKindCode", namespaceKind2Code(nsk));
+        Collections.sort(x.augmentList());
+        Collections.sort(x.localTermList());
         for (AugmentRecord z : x.augmentList()) addAugmentRec(dom, e, z);
         for (LocalTerm z : x.localTermList()) addLocalTerm(dom, e, z);
         p.appendChild(e);

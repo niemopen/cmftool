@@ -26,6 +26,7 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -297,6 +298,7 @@ public class ModelFromXSDTest {
         String[] args = { "src/test/resources/xsd5/codelistNoSType.xsd" };
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(args);
+        var dt = m.getDatatype("cmf:NamespaceKindCodeType");
         var xstoken  = m.getDatatype("xs:token");
         var restrict = m.getDatatype("cmf:NamespaceKindCodeType").getRestrictionOf();
         assertThat(restrict.getDatatype()).isEqualTo(xstoken);
@@ -522,6 +524,18 @@ public class ModelFromXSDTest {
                     assertNotNull(c.getDefinition());        
             }        
         }
+    }
+    
+    @Test
+    @DisplayName("Complex content")
+    public void testDoubleType () throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        String[] args = { "src/test/resources/xsd5/doubleType.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
+        var dt = m.getDatatype("cbrn:DoubleType");
+        var r  = dt.getRestrictionOf();
+        var rb = r.getDatatype();
+        assertEquals("xs:double", rb.getQName());
     }
     
     @Test
@@ -1013,20 +1027,18 @@ public class ModelFromXSDTest {
         assertEquals(ct.hasPropertyList().get(3).getProperty(), p);
         assertEmptyLogs();
     }
-//
-//    @Test
-//    public void debugTest () throws Exception {         
-//        var def = Charset.defaultCharset().displayName();
-//        String[] args = { "src/test/resources/xsd5/refDocumentation.xsd" };
-//        ModelFromXSD mfact = new ModelFromXSD();
-//        Model m = mfact.createModel(args);
-//        File of = new File("tmp/rd.cmf");
-//        PrintWriter pw = new PrintWriter(of);
-//        ModelXMLWriter mw = new ModelXMLWriter();
-//        mw.writeXML(m, pw);
-//        pw.close();;
-//        int i = 1;
+
+    @Test
+    public void debugTest () throws Exception {         
+        var def = Charset.defaultCharset().displayName();
+        String[] args = { "tmp/debug.xsd" };
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel(args);
 //        
-//        
-//    }
+//        var sw = new StringWriter();
+//        var pw = new PrintWriter(sw);
+//        var mw = new ModelXMLWriter();
+//        mw.writeXML(m, pw);         
+//        int i = 0;
+    }
 }

@@ -14,6 +14,126 @@
     <NamespacePrefixText>nc</NamespacePrefixText>
     <DefinitionText>NIEM Core.</DefinitionText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
+    <LocalTerm>
+      <TermName>2D</TermName>
+      <TermLiteralText>Two-dimensional</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>3D</TermName>
+      <TermLiteralText>Three-dimensional</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>Alpha2</TermName>
+      <DefinitionText>Two-letter</DefinitionText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>Alpha3</TermName>
+      <DefinitionText>Three-letter</DefinitionText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>CMV</TermName>
+      <TermLiteralText>Commercial Motor Vehicle</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>DEA</TermName>
+      <TermLiteralText>Drug Enforcement Administration</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>ESN</TermName>
+      <TermLiteralText>electronic serial number</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>FATCA</TermName>
+      <TermLiteralText>Foreign Account Tax Compliance Act</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>FIPS</TermName>
+      <TermLiteralText>Federal Information Processing Standards</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>GENC</TermName>
+      <TermLiteralText>Geopolitical Entities, Names, and Codes</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>GSM</TermName>
+      <TermLiteralText>Global System for Mobile communication</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>IMEI</TermName>
+      <TermLiteralText>International Mobile Equipment Identity</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>IPv4</TermName>
+      <TermLiteralText>Internet Protocol version 4</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>IPv6</TermName>
+      <TermLiteralText>Internet Protocol version 6</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>ISO</TermName>
+      <TermLiteralText>International Organization for Standardization</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>ISO3166</TermName>
+      <DefinitionText>ISO 3166 is a standard published by the International Organization for Standardization (ISO) that defines codes for the names of countries, dependent territories, special areas of geographical interest, and their principal subdivisions (e.g., provinces or states). The official name of the standard is Codes for the representation of names of countries and their subdivisions.</DefinitionText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>ISSN</TermName>
+      <TermLiteralText>International Standard Serial Number</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>MAC</TermName>
+      <TermLiteralText>media access control address</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>MIME</TermName>
+      <TermLiteralText>Multipurpose Internet Mail Extensions</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>MSRP</TermName>
+      <TermLiteralText>Manufacturer's suggested retail price</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>NANP</TermName>
+      <TermLiteralText>North American Numbering Plan</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>Postdirectional</TermName>
+      <DefinitionText>A word following a street name that indicates the directional taken by the thoroughfare from an arbitrary starting point or line, or the sector where it is located.</DefinitionText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>Predirectional</TermName>
+      <DefinitionText>A word preceding a street name that indicates the directional taken by the thoroughfare from an arbitrary starting point or line, or the sector where it is located.</DefinitionText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>RFID</TermName>
+      <TermLiteralText>Radio-frequency identification</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>RH</TermName>
+      <DefinitionText>Rhesus (Rh) factor is an inherited protein found on the surface of red blood cells.</DefinitionText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>SSN</TermName>
+      <TermLiteralText>Social Security Number</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>TCP</TermName>
+      <TermLiteralText>Transmission Control Protocol</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>UMTS</TermName>
+      <TermLiteralText>Universal Mobile Telecommunications Service</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>UTC</TermName>
+      <TermLiteralText>Coordinated Universal Time</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>UTM</TermName>
+      <TermLiteralText>Universal Transverse Mercator</TermLiteralText>
+    </LocalTerm>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
@@ -55,6 +175,13 @@
     <DefinitionText>A data concept for a representation of a date.</DefinitionText>
     <AbstractIndicator>true</AbstractIndicator>
   </Property>
+  <Property structures:id="nc.partialIndicator">
+    <Name>partialIndicator</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </Property>
   <Property structures:id="nc.PersonBirthDate">
     <Name>PersonBirthDate</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
@@ -81,13 +208,6 @@
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A literal value for a character string.</DefinitionText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </Property>
-  <Property structures:id="nc.partialIndicator">
-    <Name>partialIndicator</Name>
-    <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
-    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
-    <AttributeIndicator>true</AttributeIndicator>
   </Property>
   <Property structures:id="nc.truncationIndicator">
     <Name>truncationIndicator</Name>
@@ -156,11 +276,13 @@
       <Property structures:ref="nc.partialIndicator" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DefinitionText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DefinitionText>
     </HasProperty>
     <HasProperty>
       <Property structures:ref="nc.truncationIndicator" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DefinitionText>True if the length of a string is greater than the length of the field within which the string was stored in the exporting system; false otherwise.</DefinitionText>
     </HasProperty>
   </Class>
   <Datatype structures:id="genc.CountryAlpha2CodeType">
