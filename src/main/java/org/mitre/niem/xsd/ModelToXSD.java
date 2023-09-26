@@ -26,9 +26,11 @@ package org.mitre.niem.xsd;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Writer;
 import static java.lang.Character.toLowerCase;
 import java.nio.file.Path;
@@ -51,7 +53,7 @@ import javax.xml.transform.TransformerException;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
-import static org.apache.commons.io.FileUtils.copyFile;
+import static org.apache.commons.io.FileUtils.copyInputStreamToFile;
 import static org.apache.commons.io.FileUtils.createParentDirectories;
 import org.apache.commons.io.FilenameUtils;
 import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
@@ -292,10 +294,10 @@ public abstract class ModelToXSD {
         for (String uri : utilityNSuri) {
             var ofp = ns2file.get(uri);
             var df  = new File(ofp);
-            var sf = getShareSchemaFile(uri);
+            var is = getBuiltinSchemaStream(uri);
             createParentDirectories(df);
-            if (NIEM_PROXY == NamespaceKind.builtin(uri)) writeProxyDocument(uri, sf, df);
-            else copyFile(sf, df);
+            if (NIEM_PROXY == NamespaceKind.builtin(uri)) writeProxyDocument(uri, is, df);
+            else copyInputStreamToFile(is, df);
         }
         // Write the XML Catalog file if one is desired
         if (null != catPath) {
@@ -310,7 +312,7 @@ public abstract class ModelToXSD {
     // we do for the other builtins.  There's only one import element, and we know
     // what it looks like, so we just hack it.
     protected static final Pattern importPat = Pattern.compile("<xs:import\\s");
-    protected void writeProxyDocument (String proxyURI, File sf, File df) throws IOException {
+    protected void writeProxyDocument (String proxyURI, InputStream is, File df) throws IOException {
         var arch      = getArchitecture();
         var nver      = NamespaceKind.version(proxyURI);
         var structURI = NamespaceKind.getBuiltinNS(NIEM_STRUCTURES, arch, nver);
@@ -323,11 +325,11 @@ public abstract class ModelToXSD {
         else relP = dp.getParent().relativize(structP);
         structSL = separatorsToUnix(relP.toString());
         
-        var dfr       = new FileWriter(df);
-        var sfr       = new FileReader(sf);
-        var sfbr      = new BufferedReader(sfr);
+        var dfr = new FileWriter(df);
+        var ir  = new InputStreamReader(is);
+        var ibr = new BufferedReader(ir);
         String line;
-        while (null != (line = sfbr.readLine())) {
+        while (null != (line = ibr.readLine())) {
             var match = importPat.matcher(line);
             if (match.find()) {
                 dfr.write(String.format("  <xs:import namespace=\"%s\" schemaLocation=\"%s\"/>\n",
@@ -336,7 +338,7 @@ public abstract class ModelToXSD {
             else dfr.write(line+"\n");
         }
         dfr.close();
-        sfr.close();
+        ibr.close();
     }    
     
     protected void writeExternalDocument (String nsuri, Writer ofw) throws ParserConfigurationException, TransformerException, TransformerConfigurationException, IOException {
@@ -931,25 +933,37 @@ public abstract class ModelToXSD {
 //        }
 //    }
     
-    // Returns a File object for the proper schema document in the "share" directory
-    // for utility and XML namespaces.
-    protected File getShareSchemaFile (String nsuri) {
-        // Path to share directory is different when running from IDE
+    // Returns a File object for the proper schema document for builtin and XML namespaces.
+    // Look in the JAR first, then in the "share" directory (FIXME)
+    protected InputStream getBuiltinSchemaStream (String nsuri) {
+        String bfn;
+        if (XML_NS_URI.equals(nsuri)) bfn = new String("xml.xsd");      
+        else {
+            var vsuf = getShareVersionSuffix();
+            var vers = NamespaceKind.version(nsuri) + vsuf;
+            int util = NamespaceKind.builtin(nsuri);
+            var bfp  = NamespaceKind.defaultBuiltinPath(util);  // eg. "utility/structures.xsd"        
+            var bf   = new File(bfp);
+            bfn  = bf.getName();                            // eg. "structures.xsd"
+            bfn = FilenameUtils.concat(vers, bfn);          // eg. "6.0-src/structures.xsd"  
+        }
+        // Running from IDE?  Open stream 
         var sdirfn = ModelToXSD.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (sdirfn.endsWith(".jar")) sdirfn = FilenameUtils.concat(sdirfn, "../../share/xsd");
-        else sdirfn = FilenameUtils.concat(sdirfn, "../../../../src/main/dist/share/xsd");
-        var sdir = new File(sdirfn);
-        
-        if (XML_NS_URI.equals(nsuri)) return new File(sdir, "xml.xsd");
-        
-        var vsuf = getShareVersionSuffix();
-        var vers = NamespaceKind.version(nsuri) + vsuf;
-        int util = NamespaceKind.builtin(nsuri);
-        var bfp  = NamespaceKind.defaultBuiltinPath(util);  // eg. "utility/structures.xsd"
-        var bf   = new File(bfp);
-        var bfn  = bf.getName();                            // eg. "structures.xsd"
-        bfn = FilenameUtils.concat(vers, bfn);              // eg. "6.0-src/structures.xsd"
-        return new File(sdir, bfn);
+        if (!sdirfn.endsWith(".jar")) {
+            sdirfn = FilenameUtils.concat(sdirfn, "../../../../src/main/resources/xsd");
+            var sf = new File(sdirfn, bfn);
+            InputStream is;
+            try {
+                is = new FileInputStream(sf);
+            } catch (FileNotFoundException ex) {
+                LOG.error(String.format("could not open %s: %s", sf.toString(), ex.getMessage()));
+                is = InputStream.nullInputStream();
+            }
+            return is;
+        }
+        // Running from JAR? Get resource
+        var is = ModelToXSD.class.getResourceAsStream("/xsd/" + bfn);
+        return is;
     }
     
     // Generate a file path for thie namespace schema document
