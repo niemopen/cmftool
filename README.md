@@ -10,6 +10,13 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 0.7-alpha.4 (26 September)
+
+* Many many bugs fixed
+* Entire NIEM 5 model converts to CMF and back to XSD
+* The usual builtin schema documents now obtained from the JAR file
+* NIEM 6 XSD generation still doesn't work
+
 ## What's new in version 0.7-alpha.3 (9 August)
 
 * New features in CMF to XSD commands
