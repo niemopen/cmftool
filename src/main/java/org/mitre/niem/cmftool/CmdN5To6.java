@@ -26,11 +26,14 @@ package org.mitre.niem.cmftool;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -119,18 +122,33 @@ public class CmdN5To6 implements JCCommand {
                 cob.usage();
                 System.exit(1);
             }
-        }          
-        // Make sure output file is writable
-        PrintWriter ow = new PrintWriter(System.out);
-        if (!"".equals(objFile)) {
-            try {
-                File of = new File(objFile);
-                ow = new PrintWriter(of);
-            } catch (FileNotFoundException ex) {
-                System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
+        }
+        // There must be some arguments left
+        if (na.length() < 1) {
+            cob.usage();
+            System.exit(1);            
+        }
+        // The output file must not be one of the input file arguments
+        for (int i = 0; i < mainArgs.size(); i++) {
+            if (mainArgs.get(i).equals(objFile)) {
+                System.err.println("Output file would overwrite input file " + objFile);
                 System.exit(1);
             }
         }
+        // Make sure output model file is writable      
+        BufferedWriter ow = null;        
+        try {
+            var of  = new File(objFile);
+            var ofs = new FileOutputStream(of);
+            var osw = new OutputStreamWriter(ofs, "UTF-8");
+            ow = new BufferedWriter(osw);
+        } catch (UnsupportedEncodingException ex) { 
+            System.err.println(String.format("Can't write UTF-8 to output", ex.getMessage()));
+            System.exit(1);            
+        } catch (FileNotFoundException ex) {
+            System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
+            System.exit(1);            
+        }     
         // Make sure the Xerces parser can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
@@ -193,7 +211,7 @@ public class CmdN5To6 implements JCCommand {
         try {            
             mw.writeXML(m, ow);
             ow.close();
-        } catch (TransformerException ex) {
+        } catch (TransformerException | IOException ex) {
             System.err.println(String.format("Output error: %s", ex.getMessage()));
             System.exit(1);
         } catch (ParserConfigurationException ex) {

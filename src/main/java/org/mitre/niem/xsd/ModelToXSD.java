@@ -939,8 +939,7 @@ public abstract class ModelToXSD {
         String bfn;
         if (XML_NS_URI.equals(nsuri)) bfn = new String("xml.xsd");      
         else {
-            var vsuf = getShareVersionSuffix();
-            var vers = NamespaceKind.version(nsuri) + vsuf;
+            var vers = NamespaceKind.version(nsuri) + ".0";
             int util = NamespaceKind.builtin(nsuri);
             var bfp  = NamespaceKind.defaultBuiltinPath(util);  // eg. "utility/structures.xsd"        
             var bf   = new File(bfp);
@@ -1054,7 +1053,6 @@ public abstract class ModelToXSD {
     // overriding these subroutines
     
     protected String getArchitecture ()       { return "NIEM5"; }
-    protected String getShareVersionSuffix () { return ".0"; }   
     protected String getDefaultNIEMVersion () { return "6"; }
     
     protected String getConformanceTargets (String nsuri) {

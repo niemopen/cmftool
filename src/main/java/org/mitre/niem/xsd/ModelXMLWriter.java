@@ -23,6 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
+import java.io.IOException;
 import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ClassType;
@@ -33,8 +34,8 @@ import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.UnionOf;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.Model;
-import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Collections;
 import java.util.Scanner;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
@@ -70,7 +71,7 @@ public class ModelXMLWriter {
     
     static final Logger LOG = LogManager.getLogger(ModelXMLWriter.class);    
     
-    public void writeXML (Model m, PrintWriter ow) throws TransformerConfigurationException, TransformerException, ParserConfigurationException {
+    public void writeXML (Model m, Writer ow) throws TransformerConfigurationException, TransformerException, ParserConfigurationException, IOException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document dom = db.newDocument();
@@ -91,12 +92,12 @@ public class ModelXMLWriter {
             String line = scn.nextLine();
             if (line.startsWith("<Model ")) {
                 String[] tok = line.split("\\s+");
-                ow.print("<Model\n");
+                ow.write("<Model\n");
                 for (int i = 1; i < tok.length; i++) {
-                    ow.print("  " + tok[i] + "\n");
+                    ow.write("  " + tok[i] + "\n");
                 }
             }
-            else ow.print(line + "\n");
+            else ow.write(line + "\n");
         }
     }
     

@@ -39,10 +39,7 @@ public class ModelToMsgXSD extends ModelToXSD {
     public ModelToMsgXSD (Model m) { super(m); }
 
     @Override
-    protected String getArchitecture ()       { return "NIEM6"; }
-
-    @Override
-    protected String getShareVersionSuffix () { return ".0-msg"; }   
+    protected String getArchitecture ()       { return "NIEM6"; }   
     
     @Override
     protected String getConformanceTargets (String nsuri) {

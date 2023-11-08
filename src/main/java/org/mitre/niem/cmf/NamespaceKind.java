@@ -52,7 +52,7 @@ import org.javatuples.Triplet;
  * - conformance target assertion gives you External (must parse schema document)
  * - appinfo:externalImportIndicator gives you External (must parse whole pile)
  * 
- * Builtin: appinfo, cli, clsa, ct, xs-proxy, structures
+ * Builtin: appinfo, cli, clsa, ct, niem-xs, structures
  * Determined by namespace URI
  * Note that while CLI is a builtin, it has kind == OtherNIEM
  *
@@ -147,7 +147,7 @@ public class NamespaceKind {
         "cli",        NIEM_CLI,
         "clsa",       NIEM_CLSA,
         "ct",         NIEM_CTAS,
-        "xs-proxy",   NIEM_PROXY,
+        "niem-xs",    NIEM_PROXY,
         "structures", NIEM_STRUCTURES,
         "xml",        NIEM_XML,
         "notbuiltin", NIEM_NOTBUILTIN
@@ -157,7 +157,7 @@ public class NamespaceKind {
         "cli",          // NIEM_CLI,
         "clsa",         // NIEM_CLSA,
         "ct",           // NIEM_CTAS,
-        "xs-proxy",     // NIEM_PROXY,
+        "niem-xs",      // NIEM_PROXY,
         "structures",   // NIEM_STRUCTURES,
         "xml",          // NIEM_XML,
         "notbuiltin",   // NIEM_NOTBUILTIN 
@@ -187,25 +187,25 @@ public class NamespaceKind {
       "NIEM6", "UTILITY",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
       "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
       "NIEM6", "UTILITY",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
-      "NIEM6", "UTILITY",   "xs-proxy",   "6", "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
+      "NIEM6", "UTILITY",   "niem-xs" ,   "6", "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
       "NIEM6", "UTILITY",   "structures", "6", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
       
       "NIEM5", "UTILITY",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
       "NIEM5", "UTILITY",   "clsa",       "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
-      "NIEM5", "UTILITY",   "xs-proxy",   "5", "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
+      "NIEM5", "UTILITY",   "niem-xs",    "5", "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
       "NIEM5", "UTILITY",   "structures", "5", "http://release.niem.gov/niem/structures/5.0/",
 
       "NIEM5", "UTILITY",   "appinfo",    "4", "http://release.niem.gov/niem/appinfo/4.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
       "NIEM5", "UTILITY",   "clsa",       "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
-      "NIEM5", "UTILITY",   "xs-proxy",   "4", "http://release.niem.gov/niem/proxy/xsd/4.0/",
+      "NIEM5", "UTILITY",   "niem-xs" ,   "4", "http://release.niem.gov/niem/proxy/xsd/4.0/",
       "NIEM5", "UTILITY",   "structures", "4", "http://release.niem.gov/niem/structures/4.0/",    
       
       "NIEM5", "UTILITY",   "appinfo",    "3", "http://release.niem.gov/niem/appinfo/3.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-instance/",
       "NIEM5", "UTILITY",   "clsa",       "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-schema-appinfo/",
-      "NIEM5", "UTILITY",   "xs-proxy",   "3", "http://release.niem.gov/niem/proxy/xsd/3.0/",
+      "NIEM5", "UTILITY",   "niem-xs",    "3", "http://release.niem.gov/niem/proxy/xsd/3.0/",
       "NIEM5", "UTILITY",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/",            
       
       // These must come at the end of the list
@@ -226,7 +226,7 @@ public class NamespaceKind {
 
     // Patterns for recognizing architecture from conformance target assertions
     private final static String[] arches = {
-        "NIEM6", "https://docs.oasis-open.org/niemopen/ns/specification/naming-and-design-rules(?=/)",
+        "NIEM6", "https://docs.oasis-open.org/niemopen/ns/specification/XNDR(?=/)",
         "NIEM5", "http://reference.niem.gov/niem/specification/naming-and-design-rules(?=/)"
     };
     

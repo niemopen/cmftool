@@ -39,10 +39,7 @@ public class ModelToSrcXSD extends ModelToXSD {
 
     @Override
     protected String getArchitecture ()       { return "NIEM6"; }
-    
-    @Override
-    protected String getShareVersionSuffix () { return ".0-src"; }   
-    
+       
     @Override
     protected void addSimpleTypeExtension (Document dom, Element exe) {
         var agqn = structPrefix + ":SimpleObjectAttributeGroup";

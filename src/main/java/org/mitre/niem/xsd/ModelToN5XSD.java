@@ -43,9 +43,6 @@ public class ModelToN5XSD extends ModelToXSD {
     
     @Override
     protected String getDefaultNIEMVersion()  { return "5"; }
-
-    @Override
-    protected String getShareVersionSuffix () { return ".0"; }   
         
     @Override
     protected void addSimpleTypeExtension (Document dom, Element exe) {

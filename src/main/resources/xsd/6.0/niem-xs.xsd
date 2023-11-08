@@ -1,28 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
-  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/"
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+  version="psd01"
+  xml:lang="en-US"
+  xsi:schemaLocation="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/ ../utility/appinfo.xsd https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/ ../utility/conformanceTargets.xsd"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument"
   xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
-  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/"
-  xmlns:xs-proxy="https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/naming-and-design-rules/3.0/#ReferenceSchemaDocument"
-  version="6.0-source"
-  xml:lang="en-US">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <xs:annotation>
     <xs:documentation>Proxy types that carry dictionary metadata and have XML data type simple contents.</xs:documentation>
     <xs:appinfo>
-      <appinfo:LocalTerm definition="An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive." term="maxInclusive"/>
+      <appinfo:LocalTerm term="maxInclusive" definition="An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive."/>
     </xs:appinfo>
   </xs:annotation>
-  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="structures.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="../utility/structures.xsd"/>
   <xs:complexType name="anyURI">
     <xs:annotation>
       <xs:documentation>A data type for a Uniform Resource Identifier Reference (URI).  A value can be absolute or relative, and may have an optional fragment identifier (i.e., it may be a URI Reference).</xs:documentation>
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:anyURI">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -32,7 +34,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:base64Binary">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -42,7 +44,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:boolean">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -52,7 +54,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:byte">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -62,7 +64,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:date">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -72,7 +74,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:dateTime">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -82,7 +84,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:decimal">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -92,7 +94,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:double">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -102,7 +104,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:duration">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -112,7 +114,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:float">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -122,7 +124,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:gDay">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -132,7 +134,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:gMonth">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -142,7 +144,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:gMonthDay">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -152,7 +154,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:gYear">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -162,7 +164,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:gYearMonth">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -172,7 +174,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:hexBinary">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -182,7 +184,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:int">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -192,7 +194,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:integer">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -202,7 +204,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:language">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -212,7 +214,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:long">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -222,7 +224,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:negativeInteger">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -232,7 +234,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:nonNegativeInteger">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -242,7 +244,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:nonPositiveInteger">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -252,7 +254,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:normalizedString">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -262,7 +264,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:positiveInteger">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -272,7 +274,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:short">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -282,7 +284,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:string">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -292,7 +294,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:time">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -302,7 +304,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:token">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -312,7 +314,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:unsignedByte">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -322,7 +324,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:unsignedInt">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -332,7 +334,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:unsignedLong">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -342,7 +344,7 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:unsignedShort">
-        <xs:anyAttribute processContents="strict"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
