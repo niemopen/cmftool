@@ -24,6 +24,7 @@
 package org.mitre.niem.xsd;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -61,7 +62,6 @@ public class XMLCatalogCreator {
     }
     
     public void writeCatalog (File cf) throws IOException, ParserConfigurationException, TransformerConfigurationException, TransformerException {
-        var cfw = new FileWriter(cf);
         var cfp = cf.toPath();
         if (null != cfp.getParent()) cfp = cfp.getParent();
         
@@ -75,30 +75,17 @@ public class XMLCatalogCreator {
             var sfn = nsmap.get(nsuri);             // name of schema document
             var sff = new File(sfn);
             var sfp = sff.toPath();
-            var relp = cfp.relativize(sfp);
+            var relp = cfp.relativize(sfp);         // path relative to catalog's directory
             var uris = relp.toString();
+            uris = uris.replace('\\', '/');
             
             var entry = dom.createElementNS(XML_CATALOG_NS_URI, "uri");
             entry.setAttribute("name", nsuri);
             entry.setAttribute("uri", uris);
             root.appendChild(entry);
         }
-        var ostr = new StringWriter();
-        var tr   = TransformerFactory.newInstance().newTransformer();
-        tr.setOutputProperty(OutputKeys.INDENT, "yes");
-        tr.setOutputProperty(OutputKeys.METHOD, "xml");
-        tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        tr.transform(new DOMSource(dom), new StreamResult(ostr));
-        
-        var scn  = new Scanner(ostr.toString());
-        var line = scn.nextLine();
-        cfw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");  // standalone="no" is ugly
-        while (scn.hasNextLine()) {
-            line = scn.nextLine();
-            cfw.write(line);
-            cfw.write("\n");
-        }
-        cfw.close();
+        var ofs = new FileOutputStream(cf);
+        var xw = new XMLWriter(dom, ofs);
+        xw.writeXML();;
     }
 }

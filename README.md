@@ -10,6 +10,13 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 0.7-alpha.5 (14 November)
+
+* NIEM 6 XSD generation uses builtin schema documents from NIEM 6 PSD01
+* Entire NIEM 6 PSD 01 model converts to CMF and back to XSD
+* Handle several annoying differences between Windows and Linux JRE 
+* Many other bugs fixed
+
 ## What's new in version 0.7-alpha.4 (26 September)
 
 * Many many bugs fixed
@@ -45,7 +52,7 @@ General questions about OASIS Open Projects may be directed to OASIS staff at [p
 ## What's working now
 
 - NIEM XML schema pile to Common Model Format
-- Common Model Format to NIEM XML schema pile (no catalog file yet)
+- Common Model Format to NIEM XML schema pile
 - NIEM 5.2 niem-core model converts from XSD to CMF and back to XSD with no significant change
   (except LocalTerm appinfo is not handled yet)
 - Entire NIEM 5.2 model converts from XSD to CMF, and vice versa.  (Haven't looked for significant changes yet.)
@@ -53,18 +60,17 @@ General questions about OASIS Open Projects may be directed to OASIS staff at [p
 ## Quick start
 
 After a build, the directory "build/install/cmftool" contains a working installation.
-Put "build/install/cmftool/bin" in your PATH and cmftool will run from 
-the command line.
+Put "build/install/cmftool/bin" in your PATH and cmftool will run from the command line.
 
 The release ZIP file has all the scripts, resources, and libraries, without the source code.  You could use that instead.
 
-Run "cmftool x2m Foo.xsd > Foo.cmf" to generate CMF model from XSD.
-Run "cmftool m2x -o /tmp/xsd Foo.cmf" to generate XSD from CMF.
+Run "cmftool x2m foo.xsd" to generate CMF model (foo.cmf) from XSD.
+Run "cmftool m2xsrc -o tmp foo.cmf" to generate XSD from CMF.
 Run "cmftool help" for a list of commands.
 
 ## Examples
 
-There is an "examples" directory, with... examples.
+There is an "examples" directory, with... examples.  But they are still NIEM 5 based.
 
 ## Testing
 
@@ -72,7 +78,7 @@ The directory "src/test/resources" contains resources for the JUnit tests.
 
 ## Building
 
-This project was built with NetBeans 17.0, Gradle 8.0.2, and Oracle JDK 17.0.7
+This project was built with NetBeans 10.0, Gradle 8.3, and Oracle JDK 17.0.9
 Try "gradle installDist" 
 
 ## Other assets

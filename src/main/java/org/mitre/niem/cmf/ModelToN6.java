@@ -58,14 +58,13 @@ public class ModelToN6 {
       "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
       "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
       "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/",
-      "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
+      "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
       "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",      
     };
     
     private static final String OASIS_PREFIX   = "https://docs.oasis-open.org/niemopen/ns/";
-    private static final Pattern N5SPEC_PAT    = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/specification/");
-    private static final Pattern N5MODEL_PAT   = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/");
-    private static final Pattern N5VERSION_PAT = Pattern.compile("/5\\.0/");
+    private static final Pattern NIEMGOV_PAT   = Pattern.compile("http://((reference)|(release)|(publication))\\.niem\\.gov/niem/(?<spec>specification/)?");
+    private static final Pattern VERSION_PAT   = Pattern.compile("/\\d+\\.0/");
     
     public ModelToN6 () { 
         for (int i = 0; i < utilpdat.length; i++) 
@@ -82,33 +81,7 @@ public class ModelToN6 {
         nslist.addAll(m.getNamespaceList());
         for (var ns : nslist) {
             String ouri = ns.getNamespaceURI();
-            String nuri = null;
-            for (int i = 0; i < utilpdat.length; i++) {
-                var match = utilpat.get(i).matcher(ouri);
-                if (match.matches()) {
-                    nuri = utilrep[i];
-                    break;
-                }
-            }
-            // No match with utility NS URI, try NIEM specification
-            if (null == nuri) {
-                Matcher match = N5SPEC_PAT.matcher(ouri);
-                if (match.lookingAt()) {
-                    nuri = match.replaceFirst(OASIS_PREFIX+"specification/");
-                    match = N5VERSION_PAT.matcher(nuri);
-                    if (match.find()) nuri = match.replaceFirst("/6.0/");
-                }                
-            }
-            // Finally, try NIEM model
-            if (null == nuri) {
-                Matcher match = N5MODEL_PAT.matcher(ouri);
-                if (match.lookingAt()) {
-                    nuri = match.replaceFirst(OASIS_PREFIX+"model/");
-                    match = N5VERSION_PAT.matcher(nuri);
-                    if (match.find()) nuri = match.replaceFirst("/6.0/");
-                }                
-            }
-            // Make the change, if any
+            String nuri = changeURI(ouri);
             if (null != nuri) {
                 try {
                     ns.setNamespaceURI(nuri);
@@ -117,45 +90,70 @@ public class ModelToN6 {
                     LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
                             ouri, nuri, ex.getMessage()));
                 }
-                LOG.debug(String.format("%-40s -> %s\n", ouri, nuri));
+                newURI.put(ouri, nuri);
+                LOG.debug(String.format("NS %-40.40s -> %s\n", ouri, nuri));
             }
         }
         // Fix the SchemaDocument objects
         var sdocs = new ArrayList<SchemaDocument>();
         sdocs.addAll(m.schemadoc().values());
         for (var sd : sdocs) {
-            var olduri = sd.targetNS();
-            var nsuri  = newURI.get(olduri);
+            var ouri = sd.targetNS();
+            var nuri = newURI.get(ouri);
             
             // Some SchemaDocument objects don't have corresponding Namespace objects
             // Fix them here
-            if (null == nsuri) {
+            if (null == nuri) {
                 var builtin = NamespaceKind.builtin(sd.targetNS());
                 if (builtin < NIEM_NOTBUILTIN) 
-                nsuri = NamespaceKind.getBuiltinNS(builtin, "NIEM6", "6");
-                LOG.debug(String.format("%-40s -> %s\n", olduri, nsuri));                
+                nuri = NamespaceKind.getBuiltinNS(builtin, "NIEM6", "6");
+            
             }
-            sd.setTargetNS(nsuri);
+            sd.setTargetNS(nuri);
             sd.setNIEMversion("6");
-            m.schemadoc().remove(olduri);
-            m.schemadoc().put(nsuri, sd);
+            m.schemadoc().remove(ouri);
+            m.schemadoc().put(nuri, sd);
+            LOG.debug(String.format("SD %-40.40s -> %s\n", ouri, nuri));     
             
             // Change the conformance targets to NIEM 6
-            var nct = new StringBuilder();
+            var ncts = new StringBuilder();
             var cts = sd.confTargets();
             if (null == cts) continue;
             var ctl = cts.split("\\s+");
             var sep = "";
             for (int i = 0; i < ctl.length; i++) {
                 var ct = ctl[i];
-                var match = N5MODEL_PAT.matcher(ct);
-                if (match.lookingAt()) ct = match.replaceFirst(OASIS_PREFIX);
-                match = N5VERSION_PAT.matcher(ct);
+                var nct = changeURI(ct);
+                nct = nct.replaceFirst("/naming-and-design-rules/", "/XNDR/");
+                var match = VERSION_PAT.matcher(ct);
                 if (match.find()) ct = match.replaceFirst("/6.0/");
-                nct.append(sep).append(ct);
+                ncts.append(sep);
+                ncts.append(nct);
                 sep = " ";
             }
-            sd.setConfTargets(nct.toString());
+            sd.setConfTargets(ncts.toString());
         }
+    }
+    
+    private String changeURI(String ouri) {
+        
+        // Convert a builtin namespace URI
+        for (int i = 0; i < utilpdat.length; i++) {
+            var match = utilpat.get(i).matcher(ouri);
+            if (match.matches()) return utilrep[i];
+        }
+        // Convert niem.gov to OASIS
+        Matcher match = NIEMGOV_PAT.matcher(ouri);
+        if (match.lookingAt()) {
+            String nuri;
+            if (null == match.group("spec")) nuri = match.replaceFirst(OASIS_PREFIX+"model/");
+            else nuri = match.replaceFirst(OASIS_PREFIX+"specification/");
+            match = VERSION_PAT.matcher(nuri);
+            if (match.find()) {
+                nuri = match.replaceFirst("/6.0/");
+            }
+            return nuri;
+        }
+        return null;
     }
 }

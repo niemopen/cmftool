@@ -29,8 +29,9 @@ import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -108,11 +109,10 @@ public class CmdXSDcanonicalize implements JCCommand {
             }
         }       
         // Make sure output file is writable
-        PrintWriter ow = new PrintWriter(System.out);
+        OutputStream ow = System.out;
         if (!"".equals(objFile)) {
             try {
-                File of = new File(objFile);
-                ow = new PrintWriter(of);
+                ow = new FileOutputStream(objFile);
             } catch (FileNotFoundException ex) {
                 System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
                 System.exit(1);
@@ -145,7 +145,12 @@ public class CmdXSDcanonicalize implements JCCommand {
             System.exit(1);
             Logger.getLogger(CmdXSDcanonicalize.class.getName()).log(Level.SEVERE, null, ex);
         }
-        ow.close();
+        try {
+            ow.close();
+        } catch (IOException ex) {
+            System.err.println("Error closing output file: " + ex.getMessage());
+            System.exit(1);
+        }
         System.exit(0);
     }    
 }

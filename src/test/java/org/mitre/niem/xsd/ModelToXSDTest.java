@@ -93,12 +93,12 @@ public class ModelToXSDTest {
     }      
     
     public void createCMF (String[] schemaArgs, File modelFP) throws Exception {    
-        PrintWriter modelPW = new PrintWriter(modelFP, "UTF-8");
+        FileOutputStream os = new FileOutputStream(modelFP);
         ModelFromXSD mfact = new ModelFromXSD();
         Model m = mfact.createModel(schemaArgs);     
         ModelXMLWriter mw = new ModelXMLWriter();
-        mw.writeXML(m, modelPW); 
-        modelPW.close();   
+        mw.writeXML(m, os); 
+        os.close();   
     }
     
     public void createXSD (File modelFP, File outDir) throws Exception {

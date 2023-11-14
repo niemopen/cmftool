@@ -32,9 +32,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.mitre.niem.cmf.Model;
@@ -110,26 +113,16 @@ class CmdCMFtoCMF implements JCCommand {
                 System.exit(1);
             }
         }       
-        // Set up UTF-8 output writer
         // Make sure output file is writable
-        BufferedWriter ow = null;        
-        try {
-            if ("".equals(objFile)) {
-                ow = new BufferedWriter(new OutputStreamWriter(System.out, "UTF-8"));
-            }
-            else {
-                var of  = new File(objFile);
-                var ofs = new FileOutputStream(of);
-                var osw = new OutputStreamWriter(ofs, "UTF-8");
-                ow = new BufferedWriter(osw);
-            }
-        } catch (UnsupportedEncodingException ex) { 
-            System.err.println(String.format("Can't write UTF-8 to output", ex.getMessage()));
-            System.exit(1);            
+        OutputStream os = null;  
+        if ("".equals(objFile)) os = System.out;
+        else try {
+            os = new FileOutputStream(objFile);
         } catch (FileNotFoundException ex) {
             System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
-            System.exit(1);            
-        } 
+            System.exit(1);    
+        }
+
         // Make sure the Xerces parser can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
@@ -165,8 +158,8 @@ class CmdCMFtoCMF implements JCCommand {
         // Write the NIEM model instance to the output stream
         ModelXMLWriter mw = new ModelXMLWriter();
         try {            
-            mw.writeXML(m, ow);
-            ow.close();
+            mw.writeXML(m, os);
+            os.close();
         } catch (TransformerException | IOException ex) {
             System.err.println(String.format("Output error: %s", ex.getMessage()));
             System.exit(1);

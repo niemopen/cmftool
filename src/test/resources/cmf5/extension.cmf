@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<Model
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/"
   xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Namespace structures:id="nc">
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixText>nc</NamespacePrefixText>
@@ -14,18 +14,6 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="nc.PersonGivenName">
-    <Name>PersonGivenName</Name>
-    <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A first name of a person.</DefinitionText>
-    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="nc.TextLiteral">
-    <Name>TextLiteral</Name>
-    <Namespace structures:ref="nc" xsi:nil="true"/>
-    <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </Property>
   <Property structures:id="nc.partialIndicator">
     <Name>partialIndicator</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
@@ -33,12 +21,24 @@
     <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </Property>
+  <Property structures:id="nc.PersonGivenName">
+    <Name>PersonGivenName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DefinitionText>A first name of a person.</DefinitionText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
   <Property structures:id="nc.personNameInitialIndicator">
     <Name>personNameInitialIndicator</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>True if value represents the first letter or initials of a persons name; false otherwise.</DefinitionText>
     <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
+  </Property>
+  <Property structures:id="nc.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </Property>
   <Class structures:id="nc.PersonNameTextType">
     <Name>PersonNameTextType</Name>

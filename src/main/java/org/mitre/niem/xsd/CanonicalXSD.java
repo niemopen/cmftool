@@ -25,7 +25,7 @@ package org.mitre.niem.xsd;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -50,7 +50,7 @@ import org.xml.sax.SAXException;
  */
 public class CanonicalXSD {
 
-    public static void canonicalize(InputStream is, Writer w) throws ParserConfigurationException, SAXException, IOException, TransformerConfigurationException, TransformerException {
+    public static void canonicalize(InputStream is, OutputStream os) throws ParserConfigurationException, SAXException, IOException, TransformerConfigurationException, TransformerException {
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setValidating(false);
@@ -122,7 +122,8 @@ public class CanonicalXSD {
         for (Element e : definitions) oroot.appendChild(e);
         for (Element e : declarations) oroot.appendChild(e);
 
-        XSDWriter.writeDOM(odom, w);
+        var xsdw = new XSDWriter(odom, os);
+        xsdw.writeXML();
     }
 
 }

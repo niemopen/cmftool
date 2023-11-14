@@ -29,13 +29,19 @@ package org.mitre.niem.cmf;
  * AugmentationType, we could just use ClassType for this, but they aren't so we
  * can't. 
  * 
+ * An index of -1 for an element indicates a non-augmentation element substituted
+ * for an augmentation point.
+ * 
+ * An index of -1 for an attribute indicates an attribute augmentation, not part
+ * of an augmentation type.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class AugmentRecord extends ObjectType implements Comparable<AugmentRecord> {
     private ClassType classType = null;         // the augmented Class
     private Property property = null;           // the agumenting Property
-    private int indexInType = -1;               // index of Property in augmentation type; -1 for direct subsitution
+    private int indexInType = -1;               // index of Property in augmentation type, or -1 if no such type
     private int minQ = 0;
     private int maxQ = 0;
     private boolean maxUnbounded = false;
@@ -62,7 +68,8 @@ public class AugmentRecord extends ObjectType implements Comparable<AugmentRecor
     @Override
     public int compareTo (AugmentRecord o) {
         int rv = this.classType.compareTo(o.classType);
-        if (0 == rv) rv = this.property.compareTo(o.property);
+//        if (0 == rv) rv = this.indexInType - o.indexInType;
+        if (0 == rv) rv = this.property.getQName().compareTo(o.property.getQName());
         return rv;
     }
 }

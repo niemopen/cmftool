@@ -160,6 +160,7 @@ public class ModelFromXSD {
         findClassWithLiteralProperty();
         handleSimpleTypes();
         processClassTypes();            // populate all fields of class objects
+    debugDoit();
         processDatatypes();             // populate all fields of datatype objects
         processProperties();            // populate all fields of property objects from schema
         processAugmentations();         // add augmentation properties to augmented class objects
@@ -591,6 +592,8 @@ public class ModelFromXSD {
     private void processClassTypes () throws CMFException {
         for (var ct : classXSobj.keySet()) {
             LOG.debug("processing class " + ct.getQName());
+            if ("nc:PersonNameType".equals(ct.getQName()))
+                debugDoit();
             var ctqn    = ct.getQName();
             var ctns    = ct.getNamespace();                // class namespace object
             var ctnsuri = ctns.getNamespaceURI();           // class namespace URI
@@ -681,7 +684,8 @@ public class ModelFromXSD {
 //                    hp.augmentingNS().add(augNS);
 //                    addAugmentRecord(augNS, ct, hp, -1);                   
 //                }
-            }            
+            }      
+            if ("nc:PersonNameType".equals(ct.getQName())) debugDoit();
         }
     }    
 
@@ -1193,6 +1197,7 @@ public class ModelFromXSD {
             }
             // Otherwise add augmentation property p to the augmented type
             else {
+                LOG.debug("Augmenting {} with augmentation property {}", augmented.getQName(), p.getQName());
                 HasProperty ahp = new HasProperty();
                 ahp.setProperty(p);
                 ahp.setMinOccurs(0);
@@ -1241,6 +1246,8 @@ public class ModelFromXSD {
             if (ahp.maxUnbounded()) augHP.setMaxUnbounded(true);
             else if (!augHP.maxUnbounded()) augHP.setMaxOccurs(max(augHP.maxOccurs(), ahp.maxOccurs()));
         }
+        LOG.debug("Class {} hasPropertyList:", aug.getQName());
+        for (var xhp : aug.hasPropertyList()) LOG.debug("  " + xhp.getProperty().getQName());
         augHP.augmentingNS().add(ans);
     }
     
@@ -1260,7 +1267,8 @@ public class ModelFromXSD {
         ar.setMaxOccurs(hp.maxOccurs());
         ar.setMaxUnbounded(hp.maxUnbounded());
         augn.addAugmentRecord(ar);
-        LOG.debug(String.format("namespace %s augments %s with %s", augn.getNamespacePrefix(), ct.getQName(), hp.getProperty().getQName()));
+        LOG.debug(String.format("namespace %s augments %s with %s (index %d)", 
+                augn.getNamespacePrefix(), ct.getQName(), hp.getProperty().getQName(), index));
     }
  
     // Retrieve appinfo attribute value for a global component or element reference.
@@ -1444,7 +1452,14 @@ public class ModelFromXSD {
         return apList;
     }
     
-    
+    private void debugDoit () {
+        var ct = m.getClassType("nc:PersonNameType");
+        if (null == ct) LOG.debug("debugDoit nc:PersonNameType not defined");
+        else {
+            LOG.debug("debugDoit nc:PersonNameType properties");
+            for (var hp : ct.hasPropertyList()) LOG.debug("  {}", hp.getProperty().getQName());
+        }
+    }
 //    // debug tool
 //    private String elementToString (Element e) {  
 //        String result = "";

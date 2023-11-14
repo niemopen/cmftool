@@ -26,13 +26,9 @@ package org.mitre.niem.cmftool;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -148,15 +144,9 @@ class CmdXSDtoCMF implements JCCommand {
             modelFN = obase + ".cmf";
         }
         // Make sure output model file is writable      
-        BufferedWriter ow = null;        
+        FileOutputStream os = null;        
         try {
-            var of  = new File(modelFN);
-            var ofs = new FileOutputStream(of);
-            var osw = new OutputStreamWriter(ofs, "UTF-8");
-            ow = new BufferedWriter(osw);
-        } catch (UnsupportedEncodingException ex) { 
-            System.err.println(String.format("Can't write UTF-8 to output", ex.getMessage()));
-            System.exit(1);            
+            os = new FileOutputStream(modelFN);        
         } catch (FileNotFoundException ex) {
             System.err.println(String.format("Can't write to output file %s: %s", modelFN, ex.getMessage()));
             System.exit(1);            
@@ -236,8 +226,8 @@ class CmdXSDtoCMF implements JCCommand {
         // Write the NIEM model instance to the output stream
         ModelXMLWriter mw = new ModelXMLWriter();
         try {            
-            mw.writeXML(m, ow); 
-            ow.close();
+            mw.writeXML(m, os); 
+            os.close();
         } catch (TransformerException | IOException ex) {
             System.err.println(String.format("Output error: %s", ex.getMessage()));
             System.exit(1);

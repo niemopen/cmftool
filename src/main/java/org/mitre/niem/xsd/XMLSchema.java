@@ -26,13 +26,18 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.xml.XMLConstants;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.namespace.QName;
@@ -83,6 +88,7 @@ import org.xml.sax.SAXException;
  */
 public class XMLSchema {
     static final Logger LOG = LogManager.getLogger(XMLSchema.class);
+    private Object URIDecoder;
     
     /**
      * Returns the list of catalog file paths found in the constructor's arguments
@@ -414,7 +420,10 @@ public class XMLSchema {
         for (int i = 0; i < nslist.getLength(); i++) {
             XSNamespaceItem xnsi = nslist.item(i);
             StringList docl = xnsi.getDocumentLocations();
-            for (int j = 0; j < docl.size(); j++) alldocs.add(docl.item(j));
+            for (int j = 0; j < docl.size(); j++) {
+                String furi = xercesLocationURI(docl.item(j));
+                alldocs.add(furi);
+            }
         }
         // Now we know all the schema documents in the pile.  Add all the catalog
         // documents and find the greatest common prefix
@@ -422,6 +431,7 @@ public class XMLSchema {
         pileRoot = getCommonPrefix(alldocs.toArray(new String[0]));
         int prlen = pileRoot.lastIndexOf("/");
         if (prlen >= 0) pileRoot = pileRoot.substring(0, prlen + 1);
+        LOG.debug("pileRoot: " + pileRoot);
         
         // Iterate over XSNamespaceItems to process schema documents 
         // One entry for each namespace URI that was a @targetNamespace in any document
@@ -442,9 +452,9 @@ public class XMLSchema {
             else {
                 if (docl.size() > 1) LOG.warn("Multiple documents listed for namespace {} in XSModel?", nsuri);
                 for (int j = 0; j < docl.getLength(); j++) {
-                    String sdfuri = docl.item(j);
+                    String sdfuri = xercesLocationURI(docl.item(j));
                     String sdpath = sdfuri.substring(prlen+1);
-                    LOG.debug("Processing file {} for namespace {}", sdfuri, nsuri);
+                    LOG.debug("Processing {} for namespace {}", sdfuri, nsuri);
                     var sd = new XMLSchemaDocument(sdfuri, sdpath);
                     var targetNS = sd.targetNamespace();
                     if (null != targetNS && !nsuri.equals(targetNS))
@@ -468,6 +478,19 @@ public class XMLSchema {
                 }
             }
         }
+    }
+    
+    // Xerces reports schema document location as file URIs that sometimes
+    // include percent-encoded backslash characters as separators.  Who knew?
+    private String xercesLocationURI (String locuri) {
+        var furi = locuri;
+        try {
+            furi = URLDecoder.decode(locuri, "UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            LOG.error("Can't decode UTF-8: " + ex.getMessage());
+        }
+        furi = furi.replace('\\', '/');
+        return furi;
     }
     
     public class XMLSchemaException extends Exception {

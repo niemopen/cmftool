@@ -26,21 +26,15 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import javax.xml.parsers.ParserConfigurationException;
+import java.io.FileOutputStream;
 import javax.xml.transform.TransformerException;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import static org.mitre.niem.xsd.FileCompare.compareIgnoringTrailingWhitespace;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -98,12 +92,12 @@ public class ModelXMLWriterTest {
         ModelXMLReader mr = new ModelXMLReader();
         Model m = mr.readXML(cmfIS);
         assertNotNull(m);
-        PrintWriter outPW = null;
+        FileOutputStream os = null;
         ModelXMLWriter mw = new ModelXMLWriter();
         try {
-            outPW = new PrintWriter(outF);
-            mw.writeXML(m, outPW);
-            outPW.close();
+            os = new FileOutputStream(outF);
+            mw.writeXML(m, os);
+            os.close();
             String result = compareIgnoringTrailingWhitespace(inF, outF);
             assertNull(result);
         } catch (Exception ex) {

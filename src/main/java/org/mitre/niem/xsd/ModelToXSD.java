@@ -27,11 +27,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Writer;
+import java.io.OutputStream;
 import static java.lang.Character.toLowerCase;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -285,10 +286,10 @@ public abstract class ModelToXSD {
             var ofp    = ns2file.get(nsuri);
             var of     = new File(ofp);
             createParentDirectories(of);
-            FileWriter ofw = new FileWriter(of);
-            if (ns.isExternal()) writeExternalDocument(nsuri, ofw);
-            else writeDocument(nsuri, ofw);
-            ofw.close();
+            var os = new FileOutputStream(of);
+            if (ns.isExternal()) writeExternalDocument(nsuri, os);
+            else writeDocument(nsuri, os);
+            os.close();
         }
         // Next, copy the needed builtin schema documents to the destination
         for (String uri : utilityNSuri) {
@@ -341,7 +342,7 @@ public abstract class ModelToXSD {
         ibr.close();
     }    
     
-    protected void writeExternalDocument (String nsuri, Writer ofw) throws ParserConfigurationException, TransformerException, TransformerConfigurationException, IOException {
+    protected void writeExternalDocument (String nsuri, OutputStream os) throws ParserConfigurationException, TransformerException, TransformerConfigurationException, IOException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document dom = db.newDocument();
@@ -351,9 +352,16 @@ public abstract class ModelToXSD {
         
         var ns = m.getNamespaceByURI(nsuri);
         root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:" + ns.getNamespacePrefix(), nsuri);
-        
-        var comment = dom.createComment("This placeholder must be replaced with the actual external schema document");
-        root.appendChild(comment);
+
+        // Add namespace version number and language attribute, if specified
+        String lang = m.schemaLanguage(nsuri);
+        String nsv  = getSchemaVersion(nsuri);
+        if (null != lang && !lang.isBlank()) root.setAttributeNS(XML_NS_URI, "lang", lang);
+        if (null != nsv && !nsv.isBlank())   root.setAttribute("version", nsv);        
+
+        root.appendChild(dom.createComment(" * "));        
+        root.appendChild(dom.createComment(" * This placeholder must be replaced with the actual external schema document"));
+        root.appendChild(dom.createComment(" * "));   
         
         addDocumentation(dom, root, null, ns.getDefinition());
         
@@ -366,11 +374,13 @@ public abstract class ModelToXSD {
             addDocumentation(dom, pe, null, p.getDefinition());           
             root.appendChild(pe);
         }
-        XSDWriter.writeDOM(dom, ofw);        
+        var xsdw = new XSDWriter(dom, os);
+        xsdw.writeXML();
+     
     }
     
     // Write the schema document for the specified namespace
-    protected void writeDocument (String nsuri, Writer ofw) throws ParserConfigurationException, TransformerConfigurationException, TransformerException, IOException {
+    protected void writeDocument (String nsuri, OutputStream os) throws ParserConfigurationException, TransformerConfigurationException, TransformerException, IOException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document dom = db.newDocument();
@@ -489,8 +499,8 @@ public abstract class ModelToXSD {
         nsElementDecls.forEach((name,element) -> {
             root.appendChild(element);
         });
-        XSDWriter.writeDOM(dom, ofw);
-//        writeDom(dom, ofw);
+        var xsdw = new XSDWriter(dom, os);
+        xsdw.writeXML();;
     }
     
     // Iterate through all the ClassType objects in the model; create an
@@ -645,12 +655,7 @@ public abstract class ModelToXSD {
             Element sqe = null;
             var cce     = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
             var basect  = ct.getExtensionOfClass();
-            if (null == basect) {
-                if (cname.endsWith("AssociationType"))        exe.setAttribute("base", structPrefix + ":AssociationType");
-                else if (cname.endsWith("MetadataType"))      exe.setAttribute("base", structPrefix + ":MetadataType");
-                else if (!cname.endsWith("AugmentationType")) exe.setAttribute("base", structPrefix + ":ObjectType");
-                else exe.setAttribute("base", structPrefix + ":AugmentationType");
-            } 
+            if (null == basect) exe.setAttribute("base", structuresBaseType(cname));
             else {
                 exe.setAttribute("base", basect.getQName());
                 nsNSdeps.add(basect.getNamespace().getNamespaceURI());
@@ -675,22 +680,39 @@ public abstract class ModelToXSD {
             var ate = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
             ate.setAttribute("ref", p.getQName());
             if (0 != hp.minOccurs()) ate.setAttribute("use", "required");
+            
+            // Only add augmenting attributes that are not part of an augmentation type
+            // Attributes in an augmentation type have an index >= 0
             if (!hp.augmentingNS().isEmpty()) {
                 var ulist = new StringBuilder();
                 var sep = "";
                 for (var ns : hp.augmentingNS()) {
-                    ulist.append(sep);
-                    ulist.append(ns.getNamespaceURI());
-                    sep = " ";                            
+                    var ar = ns.findAugmentRecord(ct, p);
+                    if (null != ar && ar.indexInType() < 0) {
+                        ulist.append(sep);
+                        ulist.append(ns.getNamespaceURI());
+                        sep = " ";         
+                    }
                 }
-                addAppinfoAttribute(dom, ate, "augmentingNamespace", ulist.toString());
+                if (!ulist.isEmpty()) {
+                    addAppinfoAttribute(dom, ate, "augmentingNamespace", ulist.toString());
+                    exe.appendChild(ate);
+                    nsNSdeps.add(p.getNamespace().getNamespaceURI());            
+                }
             }
-            exe.appendChild(ate);
-            nsNSdeps.add(p.getNamespace().getNamespaceURI());
+            else {
+                exe.appendChild(ate);
+                nsNSdeps.add(p.getNamespace().getNamespaceURI());
+            }
         }
     }
     
-    protected void addSimpleTypeExtension (Document dom, Element exe) { }
+    protected void addSimpleTypeExtension (Document dom, Element exe) { 
+        var agqn = structPrefix + ":SimpleObjectAttributeGroup";
+        var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
+        age.setAttribute("ref", agqn);
+        exe.appendChild(age);   
+    }
     
     // Create <xs:element ref="foo">, append it to some <xs:sequence>
     protected void addElementRef (Document dom, Element sqe, HasProperty hp) {
@@ -864,11 +886,8 @@ public abstract class ModelToXSD {
         if (p.isRelationship())  addAppinfoAttribute(dom, pe, "relationshipPropertyIndicator", "true");
         var ae = addDocumentation(dom, pe, null, p.getDefinition());
         // Handle property from element with type from structures; blech
-        if (null == pct && null == pdt && !m.getNamespaceByURI(nsuri).isExternal()) {
-            String pdtQN = null;
-            if (p.getName().endsWith("Metadata")) pdtQN = structPrefix + ":" + "MetadataType";
-            else if (p.getName().endsWith("Association"))pdtQN = structPrefix + ":" + "AssociationType";  
-            else if (p.getName().endsWith("Object"))pdtQN = structPrefix + ":" + "ObjectType"; 
+        if (null == pct && null == pdt && !p.isAbstract() && !m.getNamespaceByURI(nsuri).isExternal()) {
+            String pdtQN = structuresBaseType(p.getName());
             if (null != pdtQN) pe.setAttribute("type", pdtQN);
         }
         if (null != pct) {
@@ -941,10 +960,9 @@ public abstract class ModelToXSD {
         else {
             var vers = NamespaceKind.version(nsuri) + ".0";
             int util = NamespaceKind.builtin(nsuri);
-            var bfp  = NamespaceKind.defaultBuiltinPath(util);  // eg. "utility/structures.xsd"        
-            var bf   = new File(bfp);
-            bfn  = bf.getName();                            // eg. "structures.xsd"
-            bfn = FilenameUtils.concat(vers, bfn);          // eg. "6.0-src/structures.xsd"  
+            var bfp  = NamespaceKind.defaultBuiltinPath(util);  // eg. "utility/structures.xsd"
+            bfn = FilenameUtils.getName(bfp);       // eg. "structures.xsd"
+            bfn = vers + "/" + bfn;                 // eg. "6.0/structures.xsd"     
         }
         // Running from IDE?  Open stream 
         var sdirfn = ModelToXSD.class.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -962,6 +980,7 @@ public abstract class ModelToXSD {
         }
         // Running from JAR? Get resource
         var is = ModelToXSD.class.getResourceAsStream("/xsd/" + bfn);
+        if (null == is) LOG.error(String.format("can't open resource /xsd/%s", bfn));
         return is;
     }
     
@@ -1061,5 +1080,13 @@ public abstract class ModelToXSD {
     
     protected String getSchemaVersion (String nsuri) {
         return m.schemaVersion(nsuri);
+    }
+    
+    protected String structuresBaseType (String compName) {
+        var bt = structPrefix + ":";
+        if (compName.endsWith("Association") || compName.endsWith("AssociationType")) bt = bt + "AssociationType";
+        else if (compName.endsWith("Augmentation") || compName.endsWith("AugmentationType")) bt = bt + "AugmentationType";        
+        else if (compName.endsWith("Adapter") || compName.endsWith("AdapterType")) bt = bt + "AdapterType";         else bt = bt + "ObjectType";
+        return bt;
     }
 }

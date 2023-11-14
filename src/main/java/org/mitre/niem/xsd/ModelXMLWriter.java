@@ -24,6 +24,7 @@
 package org.mitre.niem.xsd;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ClassType;
@@ -34,21 +35,13 @@ import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.UnionOf;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.Model;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Collections;
-import java.util.Scanner;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,34 +64,14 @@ public class ModelXMLWriter {
     
     static final Logger LOG = LogManager.getLogger(ModelXMLWriter.class);    
     
-    public void writeXML (Model m, Writer ow) throws TransformerConfigurationException, TransformerException, ParserConfigurationException, IOException {
+    public void writeXML (Model m, OutputStream os) throws TransformerConfigurationException, TransformerException, ParserConfigurationException, IOException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document dom = db.newDocument();
         Element root = genModel(dom, m);
         dom.appendChild(root);
-
-        Transformer tr = TransformerFactory.newInstance().newTransformer();
-        tr.setOutputProperty(OutputKeys.INDENT, "yes");
-        tr.setOutputProperty(OutputKeys.METHOD, "xml");
-        tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-
-        // send DOM to string, then format the namespace decls
-        StringWriter ostr = new StringWriter();
-        tr.transform(new DOMSource(dom), new StreamResult(ostr));
-        Scanner scn = new Scanner(ostr.toString());
-        while (scn.hasNextLine()) {
-            String line = scn.nextLine();
-            if (line.startsWith("<Model ")) {
-                String[] tok = line.split("\\s+");
-                ow.write("<Model\n");
-                for (int i = 1; i < tok.length; i++) {
-                    ow.write("  " + tok[i] + "\n");
-                }
-            }
-            else ow.write(line + "\n");
-        }
+        XMLWriter xw = new XMLWriter(dom, os);
+        xw.writeXML();
     }
     
     private Element genModel (Document dom, Model m) {

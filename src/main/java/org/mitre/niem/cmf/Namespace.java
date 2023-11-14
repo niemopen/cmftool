@@ -89,6 +89,13 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
         this.augmentList.remove(r);
     }
     
+    public AugmentRecord findAugmentRecord (ClassType ct, Property p) {
+        for (var ar : augmentList)
+            if (ar.getClassType() == ct && ar.getProperty() == p)
+                return ar;
+        return null;
+    }
+    
     public void replaceAugmentRecord (AugmentRecord or, AugmentRecord nr) {
         int index = this.augmentList.indexOf(or);
         if (index < 0) return;

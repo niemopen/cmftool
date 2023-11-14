@@ -187,7 +187,7 @@ public class NamespaceKind {
       "NIEM6", "UTILITY",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
       "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
       "NIEM6", "UTILITY",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
-      "NIEM6", "UTILITY",   "niem-xs" ,   "6", "https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/",
+      "NIEM6", "UTILITY",   "niem-xs" ,   "6", "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
       "NIEM6", "UTILITY",   "structures", "6", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
       
       "NIEM5", "UTILITY",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   

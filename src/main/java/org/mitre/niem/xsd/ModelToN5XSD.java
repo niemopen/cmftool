@@ -23,10 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.mitre.niem.cmf.Model;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  *
@@ -43,12 +40,14 @@ public class ModelToN5XSD extends ModelToXSD {
     
     @Override
     protected String getDefaultNIEMVersion()  { return "5"; }
-        
+
     @Override
-    protected void addSimpleTypeExtension (Document dom, Element exe) {
-        var agqn = structPrefix + ":SimpleObjectAttributeGroup";
-        var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
-        age.setAttribute("ref", agqn);
-        exe.appendChild(age);          
-    }
+    protected String structuresBaseType (String compName) {
+        var bt = structPrefix + ":";
+        if (compName.endsWith("Association") || compName.endsWith("AssociationType")) bt = bt + "AssociationType";
+        else if (compName.endsWith("Augmentation") || compName.endsWith("AugmentationType")) bt = bt + "AugmentationType";        
+        else if (compName.endsWith("Metadata") || compName.endsWith("MetadataType")) bt = bt + "MetadataType";
+        else bt = bt + "ObjectType";
+        return bt;
+    }    
 }

@@ -147,7 +147,7 @@ public class NamespaceKindTest {
         assertEquals("NIEM6", NamespaceKind.architecture("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/"));   
         assertEquals("NIEM6", NamespaceKind.architecture("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/")); 
         assertEquals("NIEM6", NamespaceKind.architecture("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"));
-        assertEquals("NIEM6", NamespaceKind.architecture("https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/"));
+        assertEquals("NIEM6", NamespaceKind.architecture("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
         assertEquals("NIEM6", NamespaceKind.architecture("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"));   
         
         assertEquals(NIEM_NOTBUILTIN, NamespaceKind.builtin("http://example.com/foo"));
@@ -161,7 +161,7 @@ public class NamespaceKindTest {
         assertEquals(NIEM_CLI, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/"));   
         assertEquals(NIEM_CLSA, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/"));    
         assertEquals(NIEM_CTAS, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"));
-        assertEquals(NIEM_PROXY, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/"));
+        assertEquals(NIEM_PROXY, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
         assertEquals(NIEM_STRUCTURES, NamespaceKind.builtin("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/")); 
         assertEquals(NIEM_XML, NamespaceKind.builtin(XML_NS_URI));
         
@@ -177,7 +177,7 @@ public class NamespaceKindTest {
         assertEquals(NSK_OTHERNIEM, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/"));   
         assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/"));    
         assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"));
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/"));
+        assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
         assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/")); 
         
         assertEquals("", NamespaceKind.version("http://example.com/foo"));
@@ -193,7 +193,7 @@ public class NamespaceKindTest {
         assertEquals("6", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/"));   
         assertEquals("6", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/"));    
         assertEquals("", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"));
-        assertEquals("6", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/model/proxy/niem-xs/6.0/"));
+        assertEquals("6", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
         assertEquals("6", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"));
         
         NamespaceKind.set("http://example.com/foo", "NIEM6", NSK_EXTENSION, NIEM_NOTBUILTIN, "4");

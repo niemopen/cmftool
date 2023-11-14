@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<Model
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/"
   xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Namespace structures:id="j">
     <NamespaceURI>http://release.niem.gov/niem/domains/jxdm/7.0/</NamespaceURI>
     <NamespacePrefixText>j</NamespacePrefixText>
@@ -51,16 +51,16 @@
     </AugmentRecord>
     <AugmentRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
-      <Property structures:ref="test.boogalaProp" xsi:nil="true"/>
-      <AugmentationIndex>2</AugmentationIndex>
-      <MinOccursQuantity>0</MinOccursQuantity>
+      <Property structures:ref="test.BoogalaText" xsi:nil="true"/>
+      <AugmentationIndex>0</AugmentationIndex>
+      <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </AugmentRecord>
     <AugmentRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
-      <Property structures:ref="test.BoogalaText" xsi:nil="true"/>
-      <AugmentationIndex>0</AugmentationIndex>
-      <MinOccursQuantity>1</MinOccursQuantity>
+      <Property structures:ref="test.boogalaProp" xsi:nil="true"/>
+      <AugmentationIndex>2</AugmentationIndex>
+      <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </AugmentRecord>
   </Namespace>

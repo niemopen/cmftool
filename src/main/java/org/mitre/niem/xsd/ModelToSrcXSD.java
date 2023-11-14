@@ -39,13 +39,5 @@ public class ModelToSrcXSD extends ModelToXSD {
 
     @Override
     protected String getArchitecture ()       { return "NIEM6"; }
-       
-    @Override
-    protected void addSimpleTypeExtension (Document dom, Element exe) {
-        var agqn = structPrefix + ":SimpleObjectAttributeGroup";
-        var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:anyAttribute");
-        age.setAttribute("processContents", "lax");
-        exe.appendChild(age);          
-    }
     
 }

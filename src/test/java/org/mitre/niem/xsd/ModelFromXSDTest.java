@@ -1028,17 +1028,17 @@ public class ModelFromXSDTest {
         assertEmptyLogs();
     }
 
-    @Test
-    public void debugTest () throws Exception {         
-        var def = Charset.defaultCharset().displayName();
-        String[] args = { "tmp/debug.xsd" };
-        ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel(args);
+//    @Test
+//    public void debugTest () throws Exception {         
+//        var def = Charset.defaultCharset().displayName();
+//        String[] args = { "tmp/debug.xsd" };
+//        ModelFromXSD mfact = new ModelFromXSD();
+//        Model m = mfact.createModel(args);
 //        
 //        var sw = new StringWriter();
 //        var pw = new PrintWriter(sw);
 //        var mw = new ModelXMLWriter();
 //        mw.writeXML(m, pw);         
 //        int i = 0;
-    }
+//    }
 }
