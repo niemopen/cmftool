@@ -28,7 +28,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
-import static org.mitre.niem.NIEMConstants.CMF_NS_URI;
 import static org.mitre.niem.NIEMConstants.OWL_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDFS_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDF_NS_URI;

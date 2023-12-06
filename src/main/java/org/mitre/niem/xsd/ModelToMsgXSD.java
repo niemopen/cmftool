@@ -62,6 +62,9 @@ public class ModelToMsgXSD extends ModelToXSD {
         return "message"+rv;
     }    
     
+    @Override
+    protected String getShareSuffix () { return "-msg"; }
+    
     // Don't convert "xs:foo" to "xs-proxy:foo" in message schema documents
     @Override
     protected String proxifiedDatatypeQName (Datatype dt) {

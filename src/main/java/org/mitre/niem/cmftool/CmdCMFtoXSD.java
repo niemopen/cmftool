@@ -109,9 +109,9 @@ class CmdCMFtoXSD implements JCCommand {
         // Make sure the command is valid
         String cmdName = cob.getProgramName();
         switch (cmdName) {
-            case "m2xn5":           // model to N5 schema
-            case "m2xsrc":          // model to N6 source schema (ref or ext)
-            case "m2xmsg": break;   // model to N6 message schema
+            case "m2x5":           // model to N5 schema
+            case "m2xs":          // model to N6 source schema (ref or ext)
+            case "m2xm": break;   // model to N6 message schema
             default:
                 System.err.println("unknown command: cmftool " + cmdName);
                 System.exit(1);
@@ -201,9 +201,9 @@ class CmdCMFtoXSD implements JCCommand {
         // Write the proper kind of NIEM model XSD to the output stream
         ModelToXSD mw = null;
         switch (cmdName) {
-            case "m2xn5"  -> mw = new ModelToN5XSD(m);
-            case "m2xsrc" -> mw = new ModelToSrcXSD(m);
-            case "m2xmsg" -> mw = new ModelToMsgXSD(m);
+            case "m2x5" -> mw = new ModelToN5XSD(m);
+            case "m2xs" -> mw = new ModelToSrcXSD(m);
+            case "m2xm" -> mw = new ModelToMsgXSD(m);
             default -> {
                 System.err.println("unknown command: cmftool " + cmdName);
                 System.exit(1);

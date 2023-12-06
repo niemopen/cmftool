@@ -25,26 +25,13 @@ package org.mitre.niem.xsd;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Map;
-import java.util.Scanner;
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
-import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import static org.mitre.niem.NIEMConstants.XML_CATALOG_NS_URI;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * A class to create an OASIS XML Catalog file from a mapping of namespace URIs

@@ -23,10 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.mitre.niem.cmf.Model;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  *
@@ -38,6 +35,8 @@ public class ModelToSrcXSD extends ModelToXSD {
     public ModelToSrcXSD (Model m) { super(m); }
 
     @Override
-    protected String getArchitecture ()       { return "NIEM6"; }
+    protected String getArchitecture ()     { return "NIEM6"; }
     
+    @Override
+    protected String getShareSuffix ()      { return "-src"; }    
 }

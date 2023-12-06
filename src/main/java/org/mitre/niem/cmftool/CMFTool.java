@@ -68,17 +68,17 @@ public class CMFTool {
         var xsdCmpCmd      = new CmdXSDcmp(jc);
         var xsValCmd       = new CmdXSDvalidate(jc);
         var helpCmd        = new CommandHelp(jc);    
-        jc.addCommand("m2m", cmfToCmfCmd);
-        jc.addCommand("m2o", cmfToOwlCmd);
-        jc.addCommand("m2xsrc", cmfToSrcXsdCmd);
-        jc.addCommand("m2xmsg", cmfToMsgXsdCmd);
-        jc.addCommand("m2xn5", cmfToN5XsdCmd);
-        jc.addCommand("n5to6", n5To6Cmd);
-        jc.addCommand("x2m", xsdToCmfCmd);  
+        jc.addCommand("m2m",    cmfToCmfCmd);
+        jc.addCommand("m2o",    cmfToOwlCmd);
+        jc.addCommand("m2xs",   cmfToSrcXsdCmd);
+        jc.addCommand("m2xm",   cmfToMsgXsdCmd);
+        jc.addCommand("m2x5",   cmfToN5XsdCmd);
+        jc.addCommand("n5to6",  n5To6Cmd);
+        jc.addCommand("x2m",    xsdToCmfCmd);  
         jc.addCommand("xcanon", xsdCanon);
-        jc.addCommand("xcmp", xsdCmpCmd);
-        jc.addCommand("xval", xsValCmd);
-        jc.addCommand("help", helpCmd);
+        jc.addCommand("xcmp",   xsdCmpCmd);
+        jc.addCommand("xval",   xsValCmd);
+        jc.addCommand("help",   helpCmd);
         
         if (args.length < 1) {
             System.out.println("Version: " + CMFTool.class.getPackage().getImplementationVersion());

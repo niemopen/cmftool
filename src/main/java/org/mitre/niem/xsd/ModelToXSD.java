@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import static java.lang.Character.isUpperCase;
 import static java.lang.Character.toLowerCase;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -85,6 +86,7 @@ import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTBUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_BUILTIN_COUNT;
 import org.mitre.niem.cmf.ReferenceGraph;
+import static org.mitre.utility.IndefiniteArticle.articalize;
 
 
 /**
@@ -253,7 +255,7 @@ public abstract class ModelToXSD {
         // Generate augmentation points for all augmentable ClassTypes in the model.
         generateAugmentationPoints();
         
-        // Make sure we have a new file with a unique name for all the schema documents
+        // Make sure we have a new file with a unique name for all the schema documents.
         // Schema document file paths can be suggested in the Model, otherwise default
         // paths will be created.  All this hinting and defaulting is not guaranteed 
         // to produce a unique file path for each namespace, so we ensure that here,
@@ -296,9 +298,11 @@ public abstract class ModelToXSD {
             var ofp = ns2file.get(uri);
             var df  = new File(ofp);
             var is = getBuiltinSchemaStream(uri);
-            createParentDirectories(df);
-            if (NIEM_PROXY == NamespaceKind.builtin(uri)) writeProxyDocument(uri, is, df);
-            else copyInputStreamToFile(is, df);
+            if (null != is) {
+                createParentDirectories(df);
+                if (NIEM_PROXY == NamespaceKind.builtin(uri)) writeProxyDocument(uri, is, df);
+                else copyInputStreamToFile(is, df);
+            }
         }
         // Write the XML Catalog file if one is desired
         if (null != catPath) {
@@ -570,8 +574,9 @@ public abstract class ModelToXSD {
             if (indx >= arlist.size()) continue;
             
             // Otherwise create augmentation type for remaining properties
+            String typePhrase = typeNameToPhrase(targCTName);
             ClassType augCT = new ClassType(ns, augTpName);
-            augCT.setDefinition("A data type for additional information about a " + targName + ".");
+            augCT.setDefinition("A data type for additional information about " + typePhrase + ".");
             while (indx < arlist.size()) {
                 var ar = arlist.get(indx++);
                 var hp = new HasProperty();
@@ -586,7 +591,7 @@ public abstract class ModelToXSD {
           
             // Create an augmentation element
             var augP = new Property(ns, augElName);
-            augP.setDefinition("Additional information about a " + targName + ".");
+            augP.setDefinition("Additional information about " + typePhrase + ".");
             augP.setClassType(augCT);
             augP.setSubPropertyOf(augPoint);
             m.addComponent(augP);
@@ -958,11 +963,12 @@ public abstract class ModelToXSD {
         String bfn;
         if (XML_NS_URI.equals(nsuri)) bfn = new String("xml.xsd");      
         else {
-            var vers = NamespaceKind.version(nsuri) + ".0";
+            var vsuf = getShareSuffix();
+            var vers = NamespaceKind.version(nsuri) + ".0" + vsuf;
             int util = NamespaceKind.builtin(nsuri);
             var bfp  = NamespaceKind.defaultBuiltinPath(util);  // eg. "utility/structures.xsd"
             bfn = FilenameUtils.getName(bfp);       // eg. "structures.xsd"
-            bfn = vers + "/" + bfn;                 // eg. "6.0/structures.xsd"     
+            bfn = vers + "/" + bfn;                 // eg. "5.0/structures.xsd"     
         }
         // Running from IDE?  Open stream 
         var sdirfn = ModelToXSD.class.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -1011,7 +1017,7 @@ public abstract class ModelToXSD {
         var fpath = fp.getPath();
         nsfiles.add(munged);
         ns2file.put(nsuri, fpath);
-        LOG.debug(String.format("%s -> %s", nsuri, fpath));
+        LOG.debug(String.format("genSchemaFile %s -> %s", nsuri, fpath));
         return fpath;
     }
     
@@ -1068,10 +1074,29 @@ public abstract class ModelToXSD {
         e.setAttribute(n, x);
     }
     
+    // Convert a camel-case type name to a noun phrase
+    // "TelephoneNumberType" -> "a telephone number"
+    protected String typeNameToPhrase (String typeName) {
+        var sep  = "";
+        var buf  = new StringBuilder();
+        var name = typeName.replaceFirst("Type$", "");          // FooType -> Foo
+        for (int i = 0; i < name.length(); i++) {
+            var ch = name.charAt(i);
+            if (isUpperCase(ch)) {
+                buf.append(sep);
+                sep = " ";
+            }
+            buf.append(toLowerCase(ch));            
+        }
+        var res = buf.toString();
+        res = articalize(res);
+        return res;
+    }
+    
     // Difference between subset schemas and message schemas is implemented by 
     // overriding these subroutines
     
-    protected String getArchitecture ()       { return "NIEM5"; }
+    protected String getArchitecture ()       { return "NIEM6"; }
     protected String getDefaultNIEMVersion () { return "6"; }
     
     protected String getConformanceTargets (String nsuri) {
@@ -1082,11 +1107,14 @@ public abstract class ModelToXSD {
         return m.schemaVersion(nsuri);
     }
     
+    protected String getShareSuffix () { return ""; }
+    
     protected String structuresBaseType (String compName) {
         var bt = structPrefix + ":";
         if (compName.endsWith("Association") || compName.endsWith("AssociationType")) bt = bt + "AssociationType";
         else if (compName.endsWith("Augmentation") || compName.endsWith("AugmentationType")) bt = bt + "AugmentationType";        
-        else if (compName.endsWith("Adapter") || compName.endsWith("AdapterType")) bt = bt + "AdapterType";         else bt = bt + "ObjectType";
+        else if (compName.endsWith("Adapter") || compName.endsWith("AdapterType")) bt = bt + "AdapterType";         
+        else bt = bt + "ObjectType";
         return bt;
     }
 }
