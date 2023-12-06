@@ -56,7 +56,9 @@ import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
 import org.mitre.niem.xsd.XMLSchema;
 import org.mitre.niem.xsd.XMLSchemaDocument;
 import org.xml.sax.SAXException;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_UTILITY;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
+import static org.mitre.niem.cmf.NamespaceKind.archFromCTA;
+import static org.mitre.niem.cmf.NamespaceKind.versionFromCTA;
 
 /**
  *
@@ -180,7 +182,11 @@ class CmdXSDtoCMF implements JCCommand {
         }
         // Report namespaces processed
         if (!quietFlag) {
-            for (var msg : s.xsModelMsgs()) System.out.println(msg);
+            if (!s.xsModelMsgs().isEmpty()) {
+                System.out.println("Schema assembly messages:");
+                for (var msg : s.xsModelMsgs()) System.out.println("  " + msg);                
+            }
+            List<String> model      = new ArrayList<>();
             List<String> conforming = new ArrayList<>();
             List<String> external   = new ArrayList<>();
             List<String> builtins   = new ArrayList<>();
@@ -191,9 +197,9 @@ class CmdXSDtoCMF implements JCCommand {
                     case NSK_DOMAIN:
                     case NSK_CORE:
                     case NSK_OTHERNIEM:
-                        conforming.add(nsuri);
+                        model.add(nsuri);
                         break;
-                    case NSK_UTILITY:
+                    case NSK_BUILTIN:
                     case NSK_XML:
                     case NSK_XSD:
                         builtins.add(nsuri);
@@ -202,10 +208,40 @@ class CmdXSDtoCMF implements JCCommand {
                     case NSK_UNKNOWN:  unknown.add(nsuri); break; 
                 }
             });
+            var hdr = "Namespaces with problems:\n";
+            for (var ns : model) {
+                var sd   = sdoc.get(ns);
+                var arch = sd.niemArch();
+                if (arch.isBlank()) {
+                    System.out.print(String.format("%s  %s [unknown NIEM architecture]\n", hdr, ns));
+                    hdr = "";
+                    continue;
+                }
+                var mflg = false;
+                var cts  = sd.conformanceTargets();
+                if (null != cts) {
+                    var ctl = cts.split("\\s+");
+                    for (int i = 0; !mflg && i < ctl.length; i++) {
+                        var ct = ctl[i];
+                        if (arch.equals(archFromCTA(ct))) {
+                            conforming.add(ns);
+                            mflg = true;
+                        }
+                    }
+                }
+                if (!mflg) {
+                    System.out.print(String.format("%s  %s [no valid conformance assertion]\n", hdr, ns));
+                    hdr = "";
+                }
+            }
             if (!conforming.isEmpty()) {
                 Collections.sort(conforming);
                 System.out.println("Conforming namespaces:");
-                conforming.forEach((ns) -> { System.out.println("  " + ns);});
+                for (var ns : conforming) {
+                    var sd  = sdoc.get(ns);
+                    var ver = sd.niemVersion();
+                    System.out.println(String.format("  %s [NIEM version='%s']", ns, ver));
+                }
             }
             if (!external.isEmpty()) {
                 Collections.sort(external);

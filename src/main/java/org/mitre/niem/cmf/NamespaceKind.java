@@ -82,7 +82,7 @@ public class NamespaceKind {
     public final static int NSK_DOMAIN     = 1;     // domain schema
     public final static int NSK_CORE       = 2;     // niem core schema
     public final static int NSK_OTHERNIEM  = 3;     // code-lists-instance, or namespace URI starts with a model prefix 
-    public final static int NSK_UTILITY    = 4;     // appinfo, code-lists-schema-attributes, conformance, proxy, structures
+    public final static int NSK_BUILTIN    = 4;     // appinfo, code-lists-schema-attributes, conformance, proxy, structures
     public final static int NSK_XSD        = 5;     // namespace for XSD datatypes
     public final static int NSK_XML        = 6;     // namespace for xml: attributes
     public final static int NSK_EXTERNAL   = 7;     // imported with appinfo:externalImportIndicator
@@ -95,7 +95,7 @@ public class NamespaceKind {
             "DOMAIN",    NSK_DOMAIN,
             "CORE",      NSK_CORE,
             "OTHERNIEM", NSK_OTHERNIEM,
-            "UTILITY",   NSK_UTILITY,
+            "BUILTIN",   NSK_BUILTIN,
             "XSD",       NSK_XSD,
             "XML",       NSK_XML,
             "EXTERNAL",  NSK_EXTERNAL,
@@ -107,7 +107,7 @@ public class NamespaceKind {
             "DOMAIN",       // NSK_DOMAIN
             "CORE",         // NSK_CORE
             "OTHERNIEM",    // NSK_OTHERNIEM
-            "UTILITY",      // NSK_UTILITY
+            "BUILTIN",      // NSK_BUILTIN
             "XSD",          // NSK_XSD
             "XML",          // NSK_XML
             "EXTERNAL",     // NSK_EXTERNAL
@@ -119,7 +119,7 @@ public class NamespaceKind {
             true,           // NSK_DOMAIN
             true,           // NSK_CORE
             true,           // NSK_OTHERNIEM
-            false,          // NSK_UTILITY
+            false,          // NSK_BUILTIN
             true,           // NSK_XSD
             true,           // NSK_XML
             true,           // NSK_EXTERNAL
@@ -184,44 +184,44 @@ public class NamespaceKind {
     private final static String[] builtinTab = { 
     // arch    kind         builtin      vers  uri
     // ----    ----         -------      ----  ---
-      "NIEM6", "UTILITY",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
+      "NIEM6", "BUILTIN",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
       "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
-      "NIEM6", "UTILITY",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
-      "NIEM6", "UTILITY",   "niem-xs" ,   "6", "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
-      "NIEM6", "UTILITY",   "structures", "6", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
+      "NIEM6", "BUILTIN",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
+      "NIEM6", "BUILTIN",   "niem-xs" ,   "6", "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
+      "NIEM6", "BUILTIN",   "structures", "6", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
       
-      "NIEM5", "UTILITY",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   
+      "NIEM5", "BUILTIN",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
-      "NIEM5", "UTILITY",   "clsa",       "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
-      "NIEM5", "UTILITY",   "niem-xs",    "5", "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
-      "NIEM5", "UTILITY",   "structures", "5", "http://release.niem.gov/niem/structures/5.0/",
+      "NIEM5", "BUILTIN",   "clsa",       "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
+      "NIEM5", "BUILTIN",   "niem-xs",    "5", "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
+      "NIEM5", "BUILTIN",   "structures", "5", "http://release.niem.gov/niem/structures/5.0/",
 
-      "NIEM5", "UTILITY",   "appinfo",    "4", "http://release.niem.gov/niem/appinfo/4.0/",   
+      "NIEM5", "BUILTIN",   "appinfo",    "4", "http://release.niem.gov/niem/appinfo/4.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
-      "NIEM5", "UTILITY",   "clsa",       "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
-      "NIEM5", "UTILITY",   "niem-xs" ,   "4", "http://release.niem.gov/niem/proxy/xsd/4.0/",
-      "NIEM5", "UTILITY",   "structures", "4", "http://release.niem.gov/niem/structures/4.0/",    
+      "NIEM5", "BUILTIN",   "clsa",       "4", "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
+      "NIEM5", "BUILTIN",   "niem-xs" ,   "4", "http://release.niem.gov/niem/proxy/xsd/4.0/",
+      "NIEM5", "BUILTIN",   "structures", "4", "http://release.niem.gov/niem/structures/4.0/",    
       
-      "NIEM5", "UTILITY",   "appinfo",    "3", "http://release.niem.gov/niem/appinfo/3.0/",   
+      "NIEM5", "BUILTIN",   "appinfo",    "3", "http://release.niem.gov/niem/appinfo/3.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-instance/",
-      "NIEM5", "UTILITY",   "clsa",       "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-schema-appinfo/",
-      "NIEM5", "UTILITY",   "niem-xs",    "3", "http://release.niem.gov/niem/proxy/xsd/3.0/",
-      "NIEM5", "UTILITY",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/",            
+      "NIEM5", "BUILTIN",   "clsa",       "3", "http://reference.niem.gov/niem/specification/code-lists/3.0/code-lists-schema-appinfo/",
+      "NIEM5", "BUILTIN",   "niem-xs",    "3", "http://release.niem.gov/niem/proxy/xsd/3.0/",
+      "NIEM5", "BUILTIN",   "structures", "3", "http://release.niem.gov/niem/structures/3.0/",            
       
       // These must come at the end of the list
-      "NIEM6", "UTILITY",   "ct",         "",  "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/",
-      "NIEM5", "UTILITY",   "ct",         "",  "http://release.niem.gov/niem/conformanceTargets/3.0/",
+      "NIEM6", "BUILTIN",   "ct",         "",  "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/",
+      "NIEM5", "BUILTIN",   "ct",         "",  "http://release.niem.gov/niem/conformanceTargets/3.0/",
     };
     
     // Patterns for recognizing NIEM model namespaces
     private final static String[] nspats = {
-      "NIEM6", "DOMAIN",     "https://docs\\.oasis-open\\.org/niemopen/ns/model/domains/.*/[\\d]+([\\d.]+)/",
-      "NIEM6", "CORE",       "https://docs\\.oasis-open\\.org/niemopen/ns/model/niem-core/[\\d]+([\\d.]+)/",
-      "NIEM6", "OTHERNIEM",  "https://docs\\.oasis-open\\.org/niemopen/ns/model/.*/[\\d]+([\\d.]+)/",
+      "NIEM6", "DOMAIN",     "https://docs\\.oasis-open\\.org/niemopen/ns/model/domains/.*/(?<vers>[\\d]+)([\\d.]+)/",
+      "NIEM6", "CORE",       "https://docs\\.oasis-open\\.org/niemopen/ns/model/niem-core/(?<vers>[\\d]+)([\\d.]+)/",
+      "NIEM6", "OTHERNIEM",  "https://docs\\.oasis-open\\.org/niemopen/ns/model/.*/(?<vers>[\\d]+)([\\d.]+)/",
 
-      "NIEM5", "DOMAIN",     "http://((publication)|(release))\\.niem\\.gov/niem/domains/.*/[\\d]+([\\d.]+)/#?",
-      "NIEM5", "CORE",       "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/[\\d]+([\\d.]+)/#?",
-      "NIEM5", "OTHERNIEM",  "http://((publication)|(release))\\.niem\\.gov/niem/.*/[\\d]+([\\d.]+)/#?",
+      "NIEM5", "DOMAIN",     "http://((publication)|(release))\\.niem\\.gov/niem/domains/.*/(?<vers>[\\d]+)([\\d.]+)/#?",
+      "NIEM5", "CORE",       "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/(?<vers>[\\d]+)([\\d.]+)/#?",
+      "NIEM5", "OTHERNIEM",  "http://((publication)|(release))\\.niem\\.gov/niem/.*/(?<vers>[\\d]+)([\\d.]+)/#?",
     };
 
     // Patterns for recognizing architecture from conformance target assertions
@@ -262,7 +262,7 @@ public class NamespaceKind {
                 uripat.add(rec);
             }
             catch(Exception ex) {
-                LOG.error(String.format("invalid regex '%s'", nspats[i+2]));
+                LOG.error(String.format("NamespaceKind.reset(): invalid regex '%s'", nspats[i+2]));
             }
         }
         archpat = new ArrayList<>();
@@ -274,7 +274,7 @@ public class NamespaceKind {
                 archpat.add(rec);
             }
             catch(Exception ex) {
-                LOG.error(String.format("invalid regex '%s'", nspats[i+2]));
+                LOG.error(String.format("NamespaceKind.reset(): invalid regex '%s'", nspats[i+2]));
             }            
         }
     }
@@ -347,7 +347,8 @@ public class NamespaceKind {
         uridat.put(nsuri, nrec);
     }
     
-    // Determine architecture from conformance target assertions
+    // Determine architecture from conformance target assertions.
+    // Returns empty string if CTA doesn't match any architecture.
     public static String archFromCTA (String cta) {
         for (var arec : archpat) {
             var arch = arec.getValue0();
@@ -355,7 +356,6 @@ public class NamespaceKind {
             Matcher m = apat.matcher(cta);
             if (m.lookingAt()) return arch;
         }
-        LOG.error(String.format("can't determine architecture from CTA '%s'", cta));
         return "";
     }
     

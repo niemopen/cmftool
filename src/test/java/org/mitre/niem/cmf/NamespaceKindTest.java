@@ -39,7 +39,7 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_DOMAIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTENSION;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_UTILITY;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XSD;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTBUILTIN;
@@ -103,12 +103,12 @@ public class NamespaceKindTest {
         assertEquals(NSK_DOMAIN, NamespaceKind.kind("http://release.niem.gov/niem/domains/humanServices/5.2/"));
         assertEquals(NSK_OTHERNIEM, NamespaceKind.kind("http://release.niem.gov/niem/auxiliary/cui/5.1/"));
         assertEquals(NSK_OTHERNIEM, NamespaceKind.kind("http://release.niem.gov/niem/codes/genc/5.0/"));         
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("http://release.niem.gov/niem/appinfo/5.0/"));   
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("http://release.niem.gov/niem/appinfo/5.0/"));   
         assertEquals(NSK_OTHERNIEM, NamespaceKind.kind("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/"));   
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/"));    
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("http://release.niem.gov/niem/conformanceTargets/3.0/"));
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("http://release.niem.gov/niem/structures/5.0/")); 
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/"));    
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("http://release.niem.gov/niem/conformanceTargets/3.0/"));
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("http://release.niem.gov/niem/structures/5.0/")); 
         
         assertEquals("", NamespaceKind.version("http://example.com/foo"));
         assertEquals("", NamespaceKind.version("http://example.com/foo/5.0/"));
@@ -173,12 +173,12 @@ public class NamespaceKindTest {
         assertEquals(NSK_DOMAIN, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/domains/humanServices/6.0/"));
         assertEquals(NSK_OTHERNIEM, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/cui/5.1/"));
         assertEquals(NSK_OTHERNIEM, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/codes/genc/6.0/"));         
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"));   
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"));   
         assertEquals(NSK_OTHERNIEM, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/"));   
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/"));    
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"));
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
-        assertEquals(NSK_UTILITY, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/")); 
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/"));    
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"));
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
+        assertEquals(NSK_BUILTIN, NamespaceKind.kind("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/")); 
         
         assertEquals("", NamespaceKind.version("http://example.com/foo"));
         assertEquals("", NamespaceKind.version("http://example.com/foo/6.0/"));
@@ -186,7 +186,7 @@ public class NamespaceKindTest {
         assertEquals("", NamespaceKind.version(W3C_XML_SCHEMA_NS_URI));
         assertEquals("", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"));
         assertEquals("", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/model/domains/humanServices/6.0/"));
-        assertEquals("", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/model/cui/5.1/"));
+        assertEquals("", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/model/cui/6.0/"));
         assertEquals("", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/model/codes/genc/6.0/"));        
         assertEquals("", NamespaceKind.version("http://release.niem.gov/niem/codes/genc/6.0/"));   
         assertEquals("6", NamespaceKind.version("https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"));   

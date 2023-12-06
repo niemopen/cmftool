@@ -39,7 +39,7 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_DOMAIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTENSION;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_UTILITY;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
 
 
@@ -148,14 +148,14 @@ public class XMLSchemaDocumentTest {
     @Test
     public void testIsStructures () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/utility/structures.xsd", "");
-        assertEquals(NSK_UTILITY, sd.schemaKind());
+        assertEquals(NSK_BUILTIN, sd.schemaKind());
         assertEmptyLogs();
     } 
     
     @Test
     public void testIsUtility () throws Exception {
         XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/utility/appinfo.xsd", "");
-        assertEquals(NSK_UTILITY, sd.schemaKind());
+        assertEquals(NSK_BUILTIN, sd.schemaKind());
         assertEmptyLogs();
     }    
     
