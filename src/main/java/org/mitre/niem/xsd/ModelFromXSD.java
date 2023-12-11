@@ -160,10 +160,10 @@ public class ModelFromXSD {
         findClassWithLiteralProperty();
         handleSimpleTypes();
         processClassTypes();            // populate all fields of class objects
-    debugDoit();
         processDatatypes();             // populate all fields of datatype objects
         processProperties();            // populate all fields of property objects from schema
-        processAugmentations();         // add augmentation properties to augmented class objects
+        processElementAugmentations();  // add augmentation elements to augmented class objects
+        processAttributeAugmentations();// add augmentation attributes to augmented class objects
 
         // Add to the model a schema document record for each document in the pile
         sdoc.forEach((nsuri, sd) -> {
@@ -239,14 +239,14 @@ public class ModelFromXSD {
     
     // Now that we have unique namespace prefixes assigned, we go through all the 
     // appinfo attribute records in all the schema documents and index them by global
-    // compnent QName (and sometimes then element reference QName).  Sure would be
+    // component QName (and sometimes then element reference QName).  Sure would be
     // nice if appinfo attributes were available through XSModel, but they aren't.
     private void processAppinfoAttributes () {
         sdoc.forEach((ns,sd) -> {
             for (var arec : sd.appinfoAtts()) {
-                String cns = arec.componentEQN().getValue0();
-                String cln = arec.componentEQN().getValue1();
-                String cqn = m.getNamespaceByURI(cns).getNamespacePrefix() + ":" + cln;
+                String cnsuri = arec.componentEQN().getValue0();
+                String cln    = arec.componentEQN().getValue1();
+                String cqn    = m.getNamespaceByURI(cnsuri).getNamespacePrefix() + ":" + cln;
                 
                 // Component appinfo; add arec to appinfo list for this component
                 if (null == arec.elementEQN()) {
@@ -259,20 +259,26 @@ public class ModelFromXSD {
                 }
                 // Element or attribute reference appinfo; add arec to list for this component and element ref
                 else {
-                    String ens = arec.elementEQN().getValue0();
-                    String eln = arec.elementEQN().getValue1();
-                    String eqn = m.getNamespaceByURI(ens).getNamespacePrefix() + ":" + eln;
-                    var eqnmap = refAppinfo.get(cqn);
-                    if (null == eqnmap) {
-                        eqnmap = new HashMap<>();
-                        refAppinfo.put(cqn, eqnmap);
+                    var ensuri = arec.elementEQN().getValue0();
+                    var eln    = arec.elementEQN().getValue1();
+                    var ens    = m.getNamespaceByURI(ensuri);
+                    if (null == ens) {
+                        LOG.warn(String.format("no NIEM namespace for appinfo namespace=\"%s\"", ensuri));
                     }
-                    var arlist = eqnmap.get(eqn);
-                    if (null == arlist) {
-                        arlist = new ArrayList<>();
-                        eqnmap.put(eqn, arlist);
+                    else {
+                        String eqn = ens.getNamespacePrefix() + ":" + eln;
+                        var eqnmap = refAppinfo.get(cqn);
+                        if (null == eqnmap) {
+                            eqnmap = new HashMap<>();
+                            refAppinfo.put(cqn, eqnmap);
+                        }
+                        var arlist = eqnmap.get(eqn);
+                        if (null == arlist) {
+                            arlist = new ArrayList<>();
+                            eqnmap.put(eqn, arlist);
+                        }
+                        arlist.add(arec);
                     }
-                    arlist.add(arec);
                 }
             }
         });
@@ -592,8 +598,6 @@ public class ModelFromXSD {
     private void processClassTypes () throws CMFException {
         for (var ct : classXSobj.keySet()) {
             LOG.debug("processing class " + ct.getQName());
-            if ("nc:PersonNameType".equals(ct.getQName()))
-                debugDoit();
             var ctqn    = ct.getQName();
             var ctns    = ct.getNamespace();                // class namespace object
             var ctnsuri = ctns.getNamespaceURI();           // class namespace URI
@@ -685,7 +689,6 @@ public class ModelFromXSD {
 //                    addAugmentRecord(augNS, ct, hp, -1);                   
 //                }
             }      
-            if ("nc:PersonNameType".equals(ct.getQName())) debugDoit();
         }
     }    
 
@@ -1164,7 +1167,7 @@ public class ModelFromXSD {
     // Special handling for element augmentations.  Augmentation types do not 
     // appear in the model.  Instead, their properties are added to the property 
     // list of the augmented type.
-    private void processAugmentations () {
+    private void processElementAugmentations () {
         // Find all elements substitutable for an augmentation point
         for (Component c : m.getComponentList()) {
             Property p = c.asProperty();
@@ -1217,6 +1220,38 @@ public class ModelFromXSD {
                     || lname.endsWith("Augmentation")) delComps.add(c);
         }
         for (Component c : delComps) { m.removeComponent(c); }
+    }
+    
+    // Special handing for attribute augmentations. These are marked in XSD
+    // by appinfo:augmentingNamespace.
+    private void processAttributeAugmentations () {
+        for (var cqn : refAppinfo.keySet()) {
+            var ct      = m.getClassType(cqn);
+            var propMap = refAppinfo.get(cqn);
+            for (var prop : propMap.keySet()) {
+                var hp    = ct.getHasProperty(prop);
+                var alist = propMap.get(prop);
+                if (null == hp) continue;
+                for (var arec : alist) {
+                    if ("augmentingNamespace".equals(arec.attLname())) {
+                        var ansLstr = arec.attValue().trim();
+                        if (ansLstr.isBlank()) continue;
+                        var ansList = ansLstr.split("\\s+");
+                        for (int i = 0; i < ansList.length; i++) {
+                            var ansuri = ansList[i];
+                            var ans = m.getNamespaceByURI(ansuri);
+                            if (null == ans) {
+                                LOG.warn(String.format("augmenting namespace %s is not NIEM-conforming in schema", ansuri));
+                                continue;
+                            }
+                            LOG.debug("{} augments {} with attribute {}", ansuri, cqn, prop);
+                            hp.augmentingNS().add(ans);
+                            addAugmentRecord(ans, ct, hp, -1);
+                        }            
+                    }
+                }
+            }
+        }
     }
     
     // Adds augmentation property to the augmented class
@@ -1451,15 +1486,7 @@ public class ModelFromXSD {
         }
         return apList;
     }
-    
-    private void debugDoit () {
-        var ct = m.getClassType("nc:PersonNameType");
-        if (null == ct) LOG.debug("debugDoit nc:PersonNameType not defined");
-        else {
-            LOG.debug("debugDoit nc:PersonNameType properties");
-            for (var hp : ct.hasPropertyList()) LOG.debug("  {}", hp.getProperty().getQName());
-        }
-    }
+
 //    // debug tool
 //    private String elementToString (Element e) {  
 //        String result = "";

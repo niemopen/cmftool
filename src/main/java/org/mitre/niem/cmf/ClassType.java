@@ -56,6 +56,13 @@ public class ClassType extends Component {
     public ClassType getExtensionOfClass ()       { return extensionOfClass; }
             
     public List<HasProperty> hasPropertyList ()   { return hasPropertyList; }
+    
+    public HasProperty getHasProperty (String qname) {
+        for (var hp : hasPropertyList) {
+            if (qname.equals(hp.getProperty().getQName())) return hp;
+        }
+        return null;
+    }
 
     public void addHasProperty (HasProperty c) {
         this.hasPropertyList.add(c);

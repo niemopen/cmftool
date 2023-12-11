@@ -48,7 +48,7 @@ public class CMFTool {
     String xtd = "src/test/resources/xsd/";
     String dir = "tmp/02-NoAug/";
     if (0 == args.length) {
-        args = new String[]{"x2m", "-o", "tmp/aug/x.cmf", "tmp/aug/niem-core.xsd", "tmp/aug/domains/justice.xsd" };
+        args = new String[]{"x2m", "-o", "tmp/aug/x.cmf", "tmp/aug/messageModel.xsd", "tmp/aug/niem-core.xsd" };
     }
     
 

@@ -23,11 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
@@ -109,6 +105,19 @@ public class ModelFromXSDTest {
                 .extracting(Namespace::getNamespacePrefix)
                 .contains("geo", "gml", "nc", "ns", "xs");    
         assertEmptyLogs();
+    }
+    
+    @Test
+    public void testAttAugmentation () throws Exception {
+        ModelFromXSD mfact = new ModelFromXSD();
+        Model m = mfact.createModel("src/test/resources/xsd6/attAug.xsd");  
+        var myNS = m.getNamespaceByPrefix("my");
+        var ncNS = m.getNamespaceByPrefix("nc");
+        var edCT = m.getClassType("nc:EducationType");
+        var hp   = edCT.getHasProperty("my:privacyText");
+        assertNotNull(hp);
+        assertThat(hp.augmentingNS())
+                .containsExactly(myNS);
     }
     
     @Test
