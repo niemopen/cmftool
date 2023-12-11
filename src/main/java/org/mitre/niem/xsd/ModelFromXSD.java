@@ -472,13 +472,15 @@ public class ModelFromXSD {
         }
     }
 
-    // There are no Datatype objects named "FooSimpleType" in CMF.  Three cases:
-    // 1. There is no FooType in the schema.
-    // 2. There is a FooType with simple content and model attributes.
-    // 3. Everything else (FooType CSC with no model attributes).
-    // For case #1, rename FooSimpleType to FooType.
-    // For case #2, rename FooSimpleType to FooDatatype.
-    // For case #3, replace the content of FooType with content of FooSimpleType,
+    // There are no Datatype objects named "FooSimpleType" in CMF.  Four cases:
+    // 1. This is a simple type named "FooType" from a message schema.
+    // 2. There is no FooType in the schema.
+    // 3. There is a FooType with simple content and model attributes.
+    // 4. Everything else (FooType CSC with no model attributes).
+    // For case #1, process the simpleType object as a Datatype.
+    // For case #2, rename FooSimpleType to FooType.
+    // For case #3, rename FooSimpleType to FooDatatype.
+    // For case #4, replace the content of FooType with content of FooSimpleType,
     // and remove FooSimpleType.
     // Simple types for lists, unions, attributes are a concern for ModelToXSD,
     // not here.
@@ -499,32 +501,28 @@ public class ModelFromXSD {
             boolean replace  = false;
             String rename    = null;
             
-            // Case #1: the schema defines x:FooSimpleType but not x:FooType, and there is no
+            // Case #1: This is a simple type declaration in a message schema document
+            // Don't change the type name.
+            if (!sdtqn.endsWith("SimpleType")) {
+                rename = sdtqn;     // keep as FooType (no change)
+            }
+            // Case #2: the schema defines x:FooSimpleType but not x:FooType, and there is no
             // schema for a x:FooType class or datatype object.  So we rename the Datatype from 
             // "x:FooSimpleType" to "x:FooType"
-            if (null == ct && null == dt) {
+            else if (null == ct && null == dt) {
                 rename = baseqn;               
             }
-            // Case #2: there is a x:FooType class object, and so it has a 
+            // Case #3: there is a x:FooType class object, and so it has a 
             // x:FooSimpleType literal.  Rename the datatype object from 
             // x:FooSimpleType to "x:FooDatatype"; it will be the datatype of the literal property.
             else if (null != ct) {
                 rename = ddtqn;
             }
-            // Case #3: the schema defined both x:FooSimpleType and x:FooType, and so
+            // Case #4: the schema defined both x:FooSimpleType and x:FooType, and so
             // x:FooType has simple content and no model attributes.  
             // Rename datatype for x:FooSimpleType to x:FooType.
             else {
                 replace = true;
-//                var dtxtype = datatypeXSobj.get(dt);        // xs:complexType for x:FooType
-//                var dtxbase = dtxtype.getBaseType();        // schema extension base
-//                var dtxbqn  = getQN(dtxbase);               // QName of extension base
-//                if (dtxbqn.equals(sdtqn)) {                 // if equal, dt is an empty extension of sdt
-//                    replace = true;                         // so replace dt with sdt
-//                }
-//                else {                                      // not equal
-//                    rename = baseqn;                         // rename x:FooSimpleType to x:FooType
-//                }
             }
             if (replace) {
                 replacements.put(dt, sdt);          

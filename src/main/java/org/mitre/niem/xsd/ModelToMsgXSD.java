@@ -23,9 +23,11 @@
  */
 package org.mitre.niem.xsd;
 
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
+import org.w3c.dom.Document;
 
 /**
  * A class to generate a NIEM 6 message schema from a Model
@@ -37,6 +39,39 @@ public class ModelToMsgXSD extends ModelToXSD {
     
     public ModelToMsgXSD () { super(); }
     public ModelToMsgXSD (Model m) { super(m); }
+    
+    // For a message schema, we create a simple type declaration from a Datatype object (FooType)
+    @Override
+    protected void createTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
+        if (null == dt) return;
+        var cname = dt.getName().replaceFirst("Datatype$", "Type");     // FooDatatype -> FooType
+        if (nsTypedefs.containsKey(cname)) return;                      // already created xs:ComplexType for this
+        if (!nsuri.equals(dt.getNamespaceURI())) return;                // datatype is not in this namespace
+        if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) return; // don't create XSD builtins        
+        
+        var cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleType");
+        cte.setAttribute("name", cname);        
+        var ae = addDocumentation(dom, cte, null, dt.getDefinition());
+        if (dt.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
+        
+        if (null != dt.getCodeListBinding()) {
+            ae = addAnnotation(dom, cte, ae);
+            var ap = addAppinfo(dom, ae, null);
+            var cb = addCodeListBinding(dom, ap, nsuri, dt.getCodeListBinding());
+        }        
+        if (needSimpleType.contains(dt)) {
+            var stqn = dt.getQName().replaceFirst("Type$", "SimpleType");
+            addEmptyExtensionElement(dom, cte, stqn);
+        }
+        else {
+            var r     = dt.getRestrictionOf();
+            var rbdt  = r.getDatatype();
+            var rbdqn = proxifiedDatatypeQName(rbdt);
+            var rfl   = r.getFacetList();
+            addRestrictionElement(dom, cte, dt, r.getDatatype(), rbdqn);
+        }
+        nsTypedefs.put(cname, cte);
+    }    
 
     @Override
     protected String getArchitecture ()       { return "NIEM6"; }   

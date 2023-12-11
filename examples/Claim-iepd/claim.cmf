@@ -1,186 +1,186 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<Model
-  xmlns:cmf="http://reference.niem.gov/specification/cmf/0.5/"
-  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns="http://reference.niem.gov/specification/cmf/0.5/">
-  <Namespace structures:uri="claim">
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="claim">
     <NamespaceURI>http://example.org/claim/1/</NamespaceURI>
-    <NamespacePrefixName>claim</NamespacePrefixName>
+    <NamespacePrefixText>claim</NamespacePrefixText>
     <DefinitionText>A data model for an insurance claim.</DefinitionText>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
   </Namespace>
-  <Namespace structures:uri="iso_4217">
-    <NamespaceURI>http://release.niem.gov/niem/codes/iso_4217/5.0/</NamespaceURI>
-    <NamespacePrefixName>iso_4217</NamespacePrefixName>
+  <Namespace structures:id="iso_4217">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/codes/iso_4217/6.0/</NamespaceURI>
+    <NamespacePrefixText>iso_4217</NamespacePrefixText>
     <DefinitionText>ISO 4217 - Codes for the representation of currencies and funds</DefinitionText>
     <NamespaceKindCode>OTHERNIEM</NamespaceKindCode>
   </Namespace>
-  <Namespace structures:uri="nc">
-    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
-    <NamespacePrefixName>nc</NamespacePrefixName>
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
     <DefinitionText>NIEM Core.</DefinitionText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
   </Namespace>
-  <Namespace structures:uri="xs">
+  <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
-    <NamespacePrefixName>xs</NamespacePrefixName>
+    <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:uri="claim:Claim">
+  <Property structures:id="claim.Claim">
     <Name>Claim</Name>
-    <Namespace structures:uri="claim" xsi:nil="true"/>
+    <Namespace structures:ref="claim" xsi:nil="true"/>
     <DefinitionText>An insurance claim resulting from an auto crash.</DefinitionText>
-    <Class structures:uri="claim:ClaimType" xsi:nil="true"/>
+    <Class structures:ref="claim.ClaimType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Property structures:uri="claim:DamagedVehicle">
+  <Property structures:id="claim.DamagedVehicle">
     <Name>DamagedVehicle</Name>
-    <Namespace structures:uri="claim" xsi:nil="true"/>
+    <Namespace structures:ref="claim" xsi:nil="true"/>
     <DefinitionText>A vehicle that has sustained damage.</DefinitionText>
-    <Class structures:uri="nc:VehicleType" xsi:nil="true"/>
+    <Class structures:ref="nc.VehicleType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Property structures:uri="claim:VehicleDamageAmount">
+  <Property structures:id="claim.VehicleDamageAmount">
     <Name>VehicleDamageAmount</Name>
-    <Namespace structures:uri="claim" xsi:nil="true"/>
+    <Namespace structures:ref="claim" xsi:nil="true"/>
     <DefinitionText>An amount of money evaluating the cost of repair of damage to a vehicle.</DefinitionText>
-    <Class structures:uri="nc:AmountType" xsi:nil="true"/>
+    <Class structures:ref="nc.AmountType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Property structures:uri="iso_4217:CurrencyCode">
+  <Property structures:id="iso_4217.CurrencyCode">
     <Name>CurrencyCode</Name>
-    <Namespace structures:uri="iso_4217" xsi:nil="true"/>
+    <Namespace structures:ref="iso_4217" xsi:nil="true"/>
     <DefinitionText>A unit of money or exchange.</DefinitionText>
-    <SubPropertyOf structures:uri="nc:CurrencyAbstract" xsi:nil="true"/>
-    <Datatype structures:uri="iso_4217:CurrencyCodeType" xsi:nil="true"/>
+    <SubPropertyOf structures:ref="nc.CurrencyAbstract" xsi:nil="true"/>
+    <Datatype structures:ref="iso_4217.CurrencyCodeType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Property structures:uri="nc:Amount">
+  <Property structures:id="nc.Amount">
     <Name>Amount</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>An amount of money.</DefinitionText>
-    <Datatype structures:uri="xs:decimal" xsi:nil="true"/>
+    <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Property structures:uri="nc:CurrencyAbstract">
+  <Property structures:id="nc.CurrencyAbstract">
     <Name>CurrencyAbstract</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data concept for a unit of money or exchange.</DefinitionText>
     <AbstractIndicator>true</AbstractIndicator>
   </Property>
-  <Property structures:uri="nc:IdentificationID">
+  <Property structures:id="nc.IdentificationID">
     <Name>IdentificationID</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>An identifier.</DefinitionText>
-    <Datatype structures:uri="xs:string" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Property structures:uri="nc:ItemValue">
+  <Property structures:id="nc.ItemValue">
     <Name>ItemValue</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>An evaluation of the monetary worth of an item.</DefinitionText>
-    <Class structures:uri="nc:ItemValueType" xsi:nil="true"/>
+    <Class structures:ref="nc.ItemValueType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Property structures:uri="nc:ItemValueAmount">
+  <Property structures:id="nc.ItemValueAmount">
     <Name>ItemValueAmount</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A monetary value of an item.</DefinitionText>
-    <Class structures:uri="nc:AmountType" xsi:nil="true"/>
+    <Class structures:ref="nc.AmountType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Property structures:uri="nc:VehicleIdentification">
+  <Property structures:id="nc.VehicleIdentification">
     <Name>VehicleIdentification</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A unique identification for a specific vehicle.</DefinitionText>
-    <Class structures:uri="nc:IdentificationType" xsi:nil="true"/>
+    <Class structures:ref="nc.IdentificationType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
   </Property>
-  <Class structures:uri="claim:ClaimType">
+  <Class structures:id="claim.ClaimType">
     <Name>ClaimType</Name>
-    <Namespace structures:uri="claim" xsi:nil="true"/>
+    <Namespace structures:ref="claim" xsi:nil="true"/>
     <DefinitionText>A data type for an insurance claim.</DefinitionText>
     <AugmentableIndicator>true</AugmentableIndicator>
-    <HasProperty structures:sequenceID="1">
-      <Property structures:uri="claim:DamagedVehicle" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:ref="claim.DamagedVehicle" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
-    <HasProperty structures:sequenceID="2">
-      <Property structures:uri="claim:VehicleDamageAmount" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:ref="claim.VehicleDamageAmount" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
   </Class>
-  <Class structures:uri="nc:AmountType">
+  <Class structures:id="nc.AmountType">
     <Name>AmountType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for an amount of money.</DefinitionText>
-    <HasProperty structures:sequenceID="1">
-      <Property structures:uri="nc:Amount" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:ref="nc.Amount" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
-    <HasProperty structures:sequenceID="2">
-      <Property structures:uri="nc:CurrencyAbstract" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:ref="nc.CurrencyAbstract" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
   </Class>
-  <Class structures:uri="nc:ConveyanceType">
+  <Class structures:id="nc.ConveyanceType">
     <Name>ConveyanceType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for a means of transport from place to place.</DefinitionText>
-    <ExtensionOfClass structures:uri="nc:ItemType" xsi:nil="true"/>
+    <ExtensionOfClass structures:ref="nc.ItemType" xsi:nil="true"/>
   </Class>
-  <Class structures:uri="nc:IdentificationType">
+  <Class structures:id="nc.IdentificationType">
     <Name>IdentificationType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for a representation of an identity.</DefinitionText>
-    <HasProperty structures:sequenceID="1">
-      <Property structures:uri="nc:IdentificationID" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:ref="nc.IdentificationID" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
   </Class>
-  <Class structures:uri="nc:ItemType">
+  <Class structures:id="nc.ItemType">
     <Name>ItemType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for an article or thing.</DefinitionText>
-    <HasProperty structures:sequenceID="1">
-      <Property structures:uri="nc:ItemValue" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:ref="nc.ItemValue" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
   </Class>
-  <Class structures:uri="nc:ItemValueType">
+  <Class structures:id="nc.ItemValueType">
     <Name>ItemValueType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for an evaluation of the monetary worth of an item.</DefinitionText>
-    <HasProperty structures:sequenceID="1">
-      <Property structures:uri="nc:ItemValueAmount" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:ref="nc.ItemValueAmount" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
   </Class>
-  <Class structures:uri="nc:VehicleType">
+  <Class structures:id="nc.VehicleType">
     <Name>VehicleType</Name>
-    <Namespace structures:uri="nc" xsi:nil="true"/>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
     <DefinitionText>A data type for a conveyance designed to carry an operator, passengers and/or cargo, over land.</DefinitionText>
-    <ExtensionOfClass structures:uri="nc:ConveyanceType" xsi:nil="true"/>
-    <HasProperty structures:sequenceID="1">
-      <Property structures:uri="nc:VehicleIdentification" xsi:nil="true"/>
+    <ExtensionOfClass structures:ref="nc.ConveyanceType" xsi:nil="true"/>
+    <HasProperty>
+      <Property structures:ref="nc.VehicleIdentification" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
   </Class>
-  <Datatype structures:uri="iso_4217:CurrencyCodeType">
+  <Datatype structures:id="iso_4217.CurrencyCodeType">
     <Name>CurrencyCodeType</Name>
-    <Namespace structures:uri="iso_4217" xsi:nil="true"/>
+    <Namespace structures:ref="iso_4217" xsi:nil="true"/>
     <DefinitionText>A data type for a currency that qualifies a monetary amount.</DefinitionText>
     <RestrictionOf>
-      <Datatype structures:uri="xs:token" xsi:nil="true"/>
+      <Datatype structures:ref="xs.token" xsi:nil="true"/>
       <Enumeration>
         <StringValue>AED</StringValue>
         <DefinitionText>UAE Dirham</DefinitionText>
@@ -899,50 +899,50 @@
       </Enumeration>
     </RestrictionOf>
   </Datatype>
-  <Datatype structures:uri="xs:decimal">
+  <Datatype structures:id="xs.decimal">
     <Name>decimal</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
-  <Datatype structures:uri="xs:string">
+  <Datatype structures:id="xs.string">
     <Name>string</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
-  <Datatype structures:uri="xs:token">
+  <Datatype structures:id="xs.token">
     <Name>token</Name>
-    <Namespace structures:uri="xs" xsi:nil="true"/>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
   <SchemaDocument>
-    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
-    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <DocumentFilePathText>utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>ps01.1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
-    <NamespaceURI>http://release.niem.gov/niem/codes/iso_4217/5.0/</NamespaceURI>
-    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>niem/codes/iso_4217.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-  </SchemaDocument>
-  <SchemaDocument>
+    <NamespacePrefixText>claim</NamespacePrefixText>
     <NamespaceURI>http://example.org/claim/1/</NamespaceURI>
-    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>extension/claim.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>claim.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>message1</SchemaVersionText>
   </SchemaDocument>
   <SchemaDocument>
-    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
-    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
-    <SchemaVersionText>5.0</SchemaVersionText>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem-core.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>message1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
   <SchemaDocument>
-    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
-    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>niem/niem-core.xsd</DocumentFilePathText>
-    <NIEMVersionText>5.0</NIEMVersionText>
+    <NamespacePrefixText>iso_4217</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/codes/iso_4217/6.0/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>codes/iso_4217.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </SchemaDocument>
 </Model>

@@ -1,7 +1,7 @@
 <claim:Claim
   xmlns:claim="http://example.org/claim/1/"
-  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
-  xmlns:iso_4217="http://release.niem.gov/niem/codes/iso_4217/5.0/">
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:iso_4217="https://docs.oasis-open.org/niemopen/ns/model/codes/iso_4217/6.0/">
   <claim:DamagedVehicle>
     <nc:ItemValue>
       <nc:ItemValueAmount>

@@ -450,7 +450,7 @@ public abstract class ModelToXSD {
         // Then create typedefs for Datatype objects (when not already created)
         // Remember external namespaces when encountered
         for (Component c : m.getComponentList()) createComplexTypeFromClass(dom, nsuri, c.asClassType());
-        for (Component c : m.getComponentList()) createComplexTypeFromDatatype(dom, nsuri, c.asDatatype());
+        for (Component c : m.getComponentList()) createTypeFromDatatype(dom, nsuri, c.asDatatype());
         for (Datatype dt : needSimpleType)       createSimpleTypeFromDatatype(dom, nsuri, dt);
         
         // Create elements and attributes for Property objects
@@ -734,9 +734,9 @@ public abstract class ModelToXSD {
     }
     
     // Create a complex type declaration from a Datatype object (FooType)
-    protected void createComplexTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
+    protected void createTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
         if (null == dt) return;
-        var cname = dt.getName().replaceFirst("Datatype", "Type");
+        var cname = dt.getName().replaceFirst("Datatype$", "Type");     // FooDatatype -> FooType
         if (nsTypedefs.containsKey(cname)) return;                      // already created xs:ComplexType for this
         if (!nsuri.equals(dt.getNamespaceURI())) return;                // datatype is not in this namespace
         if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) return; // don't create XSD builtins        
@@ -753,7 +753,7 @@ public abstract class ModelToXSD {
             var cb = addCodeListBinding(dom, ap, nsuri, dt.getCodeListBinding());
         }        
         if (needSimpleType.contains(dt)) {
-            var stqn = dt.getQName().replaceFirst("Type", "SimpleType");
+            var stqn = dt.getQName().replaceFirst("Type$", "SimpleType");
             addEmptyExtensionElement(dom, sce, stqn);
         }
         else {
