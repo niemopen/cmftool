@@ -1,21 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+     NIEM Model Version 6.0
+     Project Specification 01
+     04 December 2023
+     Copyright (c) OASIS Open 2023. All Rights Reserved.
+     Source: https://docs.oasis-open.org/niemopen/niem-model/v6.0/ps01/xsd/
+     Latest stage of narrative specification: https://docs.oasis-open.org/niemopen/niem-model/v6.0/niem-model-v6.0.html
+     NIEMOpen IPR Statement: https://github.com/niemopen/oasis-open-project/blob/main/IPR-STATEMENT.md
+-->
+
 <xs:schema
   targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  version="psd01-msg"
+  version="ps01.1"
   xml:lang="en-US">
 
   <xs:annotation>
     <xs:documentation>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</xs:documentation>
   </xs:annotation>
-  
-  <xs:attributeGroup name="SimpleObjectAttributeGroup"/>
 
-  <xs:attributeGroup name="ReferenceAttributeGroup">
-    <xs:attribute ref="structures:id" />
-    <xs:attribute ref="structures:ref" />
-    <xs:attribute ref="structures:uri" />
+  <xs:attributeGroup name="SimpleObjectAttributeGroup">
   </xs:attributeGroup>
 
   <xs:complexType name="AdapterType" abstract="true">
@@ -25,6 +30,7 @@
     <xs:sequence>
       <xs:element ref="structures:ObjectAugmentationPoint" minOccurs="0" maxOccurs="unbounded" />
     </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
     <xs:attribute ref="structures:id" />
     <xs:attribute ref="structures:ref" />
     <xs:attribute ref="structures:uri" />
@@ -37,6 +43,7 @@
     <xs:sequence>
       <xs:element ref="structures:AssociationAugmentationPoint" minOccurs="0" maxOccurs="unbounded" />
     </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
     <xs:attribute ref="structures:id" />
     <xs:attribute ref="structures:ref" />
     <xs:attribute ref="structures:uri" />
@@ -55,9 +62,11 @@
     <xs:sequence>
       <xs:element ref="structures:ObjectAugmentationPoint" minOccurs="0" maxOccurs="unbounded" />
     </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
     <xs:attribute ref="structures:id" />
     <xs:attribute ref="structures:ref" />
     <xs:attribute ref="structures:uri" />
+    <xs:anyAttribute processContents="strict" namespace="##other" />
   </xs:complexType>
 
   <xs:element name="AssociationAugmentationPoint" abstract="true">

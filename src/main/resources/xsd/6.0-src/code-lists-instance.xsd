@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+     NIEM Model Version 6.0
+     Project Specification 01
+     04 December 2023
+     Copyright (c) OASIS Open 2023. All Rights Reserved.
+     Source: https://docs.oasis-open.org/niemopen/niem-model/v6.0/ps01/xsd/
+     Latest stage of narrative specification: https://docs.oasis-open.org/niemopen/niem-model/v6.0/niem-model-v6.0.html
+     NIEMOpen IPR Statement: https://github.com/niemopen/oasis-open-project/blob/main/IPR-STATEMENT.md
+-->
+
 <xs:schema
   targetNamespace="https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/"
-  version="psd01"
+  version="ps01"
   xml:lang="en-US"
   ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument"
   xmlns:cli="https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/"
