@@ -91,6 +91,7 @@ public class ModelToMsgXSD extends ModelToXSD {
         var kind = ns.getKind();
         var rv   = m.schemaVersion(nsuri);
         if (kind > NSK_CORE) return rv;
+        if (null == rv) return "message";
         if (rv.startsWith("source")) rv = rv.substring(6);
         else if (rv.startsWith("subset"))rv = rv.substring(6);
         else if (rv.startsWith("message")) rv = rv.substring(7);

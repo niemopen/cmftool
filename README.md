@@ -10,6 +10,12 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 0.7-alpha.6 (12 December)
+
+* CMF to message schema is working
+* Most of the augmentation examples are working (but not augmentations on every object)
+* Built-in schema documents are from the PS01 release
+
 ## What's new in version 0.7-alpha.5 (14 November)
 
 * NIEM 6 XSD generation uses builtin schema documents from NIEM 6 PSD01

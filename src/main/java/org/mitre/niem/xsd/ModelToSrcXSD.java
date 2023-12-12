@@ -24,6 +24,7 @@
 package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Model;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 
 /**
  *
@@ -33,7 +34,26 @@ import org.mitre.niem.cmf.Model;
 public class ModelToSrcXSD extends ModelToXSD {
     public ModelToSrcXSD () { super(); }
     public ModelToSrcXSD (Model m) { super(m); }
+    
+    
+    @Override
+    protected String getConformanceTargets (String nsuri) {
+        var rv = m.conformanceTargets(nsuri);
+        rv = rv.replaceAll("MessageSchemaDocument", "SubsetSchemaDocument");           
+        return rv;
+    }  
 
+    @Override
+    protected String getSchemaVersion (String nsuri) {
+        var ns = m.getNamespaceByURI(nsuri);
+        var kind = ns.getKind();
+        var rv   = m.schemaVersion(nsuri);
+        if (kind > NSK_CORE) return rv;
+        if (null == rv) return "source";
+        if (rv.startsWith("message")) rv = "source" + rv.substring(7);
+        return rv;
+    } 
+    
     @Override
     protected String getArchitecture ()     { return "NIEM6"; }
     
