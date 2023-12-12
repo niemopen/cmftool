@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE catalog PUBLIC "-//OASIS//DTD XML Catalogs V1.1//EN" "http://www.oasis-open.org/committees/entity/release/1.1/catalog.dtd">
-<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
-  <uri name="http://example.com/CrashDriver/1.1/" uri="extension/CrashDriver.xsd"/>
-  <uri name="http://example.com/PrivacyMetadata/2.0/" uri="extension/PrivacyMetadata.xsd"/>
-  <nextCatalog catalog="niem/xml-catalog.xml"/>
-</catalog>
