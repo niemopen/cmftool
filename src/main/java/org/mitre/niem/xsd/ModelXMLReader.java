@@ -258,7 +258,7 @@ public class ModelXMLReader {
                 case "CodeListConstrainingIndicator":
                 case "CodeListURI":
                 case "ConformanceTargetURIList":
-                case "DefinitionText":   
+                case "DocumentationText":   
                 case "DeprecatedIndicator":
                 case "DocumentFilePathText":
                 case "ExternalAdapterTypeIndicator":

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+  version="1"
+  xml:lang="en-US"
+  xsi:schemaLocation="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/ utility/appinfo.xsd https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/ utility/conformanceTargets.xsd">
+  <xs:annotation>
+    <xs:documentation>NIEM Core subset for externals.</xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="../niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="../niem/utility/structures.xsd"/>
+  <xs:import namespace="http://www.w3.org/XML/1998/namespace"/>
+  <xs:element name="LocationGeospatialCoordinateAbstract" abstract="true">
+    <xs:annotation>
+      <xs:documentation>A data concept for a geospatial location.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+</xs:schema>

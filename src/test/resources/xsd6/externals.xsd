@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/external-content/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:geo="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-gml/6.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+  xmlns:ns="http://example.com/external-content/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>Test schema for external content with adapter.</xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-gml/6.0/" schemaLocation="externals-niem/niem-gml.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/" schemaLocation="externals-niem/niem-core.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:complexType name="TrackPointType">
+    <xs:annotation>
+      <xs:documentation>A data type for a track point.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="structures:ObjectType">
+        <xs:sequence>
+          <xs:element ref="geo:LocationGeospatialPointAdapter"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="TrackPoint" type="ns:TrackPointType"/>
+</xs:schema>

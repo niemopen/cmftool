@@ -48,8 +48,7 @@ public class CMFTool {
     String xtd = "src/test/resources/xsd/";
     String dir = "tmp/02-NoAug/";
     if (0 == args.length) {
-        args = new String[]{"x2m", "-o", "tmp/claim/t.cmf", "tmp/claim/xsd/claim.xsd/", "tmp/claim/xsd/niem-core.xsd",
-            "tmp/claim/xsd/codes/iso_4217.xsd"};
+        args = new String[]{"x2m", "src/test/resources/xsd/clsa.xsd"};
 
 //        args = new String[]{"m2xm", "-o", "examples/Claim-iepd/tmp", "examples/Claim-iepd/claim.cmf"};
 //        args = new String[]{"x2m", "-o", "tmp/aug/x.cmf", "tmp/aug/messageModel.xsd", "tmp/aug/niem-core.xsd" };

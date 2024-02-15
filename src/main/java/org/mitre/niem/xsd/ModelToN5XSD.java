@@ -26,6 +26,8 @@ package org.mitre.niem.xsd;
 import org.mitre.niem.cmf.Model;
 
 /**
+ * Generates a NIEM 5 schema document pile from a CMF model
+ * that is based on NIEM 3, 4, or 5.0 namespaces.
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>

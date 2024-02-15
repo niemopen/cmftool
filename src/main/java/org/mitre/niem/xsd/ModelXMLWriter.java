@@ -161,7 +161,7 @@ public class ModelXMLWriter {
                 addSimpleChild(dom, e, "WhiteSpaceValueCode", x.getStringVal()); 
                 break;
         }
-        addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
+        addSimpleChild(dom, e, "DocumentationText", x.getDefinition());
         p.appendChild(e);
     }
         
@@ -173,7 +173,7 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "Property", x.getProperty());
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());            
         addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());
-        addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
+        addSimpleChild(dom, e, "DocumentationText", x.getDefinition());
         if (x.orderedProperties()) addSimpleChild(dom, e, "OrderedPropertyIndicator", "true");
         x.augmentingNS().stream().sorted().forEach((ns) -> {
             addNamespaceRef(dom, e, "AugmentationNamespace", ns);
@@ -187,7 +187,7 @@ public class ModelXMLWriter {
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", x.getNamespacePrefix());
         addSimpleChild(dom, e, "NamespaceURI", x.getNamespaceURI());
         addSimpleChild(dom, e, "NamespacePrefixText", x.getNamespacePrefix());
-        addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
+        addSimpleChild(dom, e, "DocumentationText", x.getDocumentation());
         int nsk = x.getKind();
         addSimpleChild(dom, e, "NamespaceKindCode", namespaceKind2Code(nsk));
         Collections.sort(x.augmentList());
@@ -212,7 +212,7 @@ public class ModelXMLWriter {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "LocalTerm");
         addSimpleChild(dom, e, "TermName", x.getTerm());
-        addSimpleChild(dom, e, "DefinitionText", x.getDefinition());
+        addSimpleChild(dom, e, "DocumentationText", x.getDefinition());
         addSimpleChild(dom, e, "TermLiteralText", x.getLiteral());
         addSimpleChild(dom, e, "SourceURIList", x.getSourceURIs());
         for (var z : x.citationList()) addSimpleChild(dom, e, "SourceCitationText", z);
@@ -271,7 +271,7 @@ public class ModelXMLWriter {
         if (null == x) return;
         addSimpleChild(dom, p, "Name", x.getName());
         addNamespaceRef(dom, p, "Namespace", x.getNamespace());
-        addSimpleChild(dom, p, "DefinitionText", x.getDefinition());
+        addSimpleChild(dom, p, "DocumentationText", x.getDocumentation());
         if (x.isAbstract())   addSimpleChild(dom, p, "AbstractIndicator", "true");
         if (x.isDeprecated()) addSimpleChild(dom, p, "DeprecatedIndicator", "true");
     }

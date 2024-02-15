@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/codes/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:ns="http://example.com/codes/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+  elementFormDefault="qualified">
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:simpleType name="UnionSimpleType">
+    <xs:union memberTypes="xs:decimal xs:float"/>
+  </xs:simpleType>
+  <xs:complexType name="UnionType">
+    <xs:simpleContent>
+      <xs:extension base="ns:UnionSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:element name="Numbers" type="ns:UnionType"/>
+</xs:schema>

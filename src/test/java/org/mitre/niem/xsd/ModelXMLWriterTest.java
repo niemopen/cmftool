@@ -82,7 +82,7 @@ public class ModelXMLWriterTest {
     })
     public void testWriteXML (String cmfFN) throws TransformerException {
         FileInputStream cmfIS = null;
-        File cmfDir = new File(testDirPath, "cmf5");
+        File cmfDir = new File(testDirPath, "cmf");
         File inF = new File(cmfDir, cmfFN);
         try {
             cmfIS = new FileInputStream(inF);

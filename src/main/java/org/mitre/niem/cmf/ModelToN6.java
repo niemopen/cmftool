@@ -57,7 +57,7 @@ public class ModelToN6 {
       "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
       "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
       "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
-      "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/3.0/",
+      "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/",
       "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
       "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",      
     };

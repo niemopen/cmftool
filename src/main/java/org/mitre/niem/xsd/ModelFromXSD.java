@@ -231,7 +231,7 @@ public class ModelFromXSD {
         sdoc.forEach((nsuri, sd) -> {
             var ns = m.getNamespaceByURI(nsuri);
             if (null != ns) {
-                if (!sd.documentationStrings().isEmpty()) ns.setDefinition(sd.documentationStrings().get(0));
+                if (!sd.documentationStrings().isEmpty()) ns.setDocumentation(sd.documentationStrings().get(0));
                 for (var lt : sd.localTerms()) ns.addLocalTerm(lt);
             }
         });       
@@ -306,7 +306,7 @@ public class ModelFromXSD {
             var p = initializeOneDeclaration(xobj, true);
             if (null == p) continue;
             var docs = getDocumentation(xobj);
-            if (!docs.isEmpty()) p.setDefinition(docs.get(0));
+            if (!docs.isEmpty()) p.setDocumentation(docs.get(0));
         }
         seen = new HashSet<>();
         xmap = xs.getComponents(ELEMENT_DECLARATION);
@@ -327,7 +327,7 @@ public class ModelFromXSD {
             var p    = initializeOneDeclaration(xobj, false);
             if (null == p) continue;
             var docs = getDocumentation(xobj);
-            if (!docs.isEmpty()) p.setDefinition(docs.get(0));
+            if (!docs.isEmpty()) p.setDocumentation(docs.get(0));
         }        
     }
     
@@ -604,10 +604,11 @@ public class ModelFromXSD {
             var xsbase  = xctype.getSimpleType();           // base type XSSimpleTypeDefinition (possibly null)
             ct.setIsAbstract(xctype.getAbstract());
             ct.setIsDeprecated(getAppinfoAttribute(ct.getQName(), null, "deprecated"));
-            ct.setIsExternal(getAppinfoAttribute(ct.getQName(), null, "externalAdapterTypeIndicator"));
+            ct.setIsExternal("true".equals(getAppinfoAttribute(ct.getQName(), null, "externalAdapterTypeIndicator"))
+                                || ct.getName().endsWith("AdapterType"));
 
             var docs = getDocumentation(xctype);
-            if (!docs.isEmpty()) ct.setDefinition(docs.get(0));
+            if (!docs.isEmpty()) ct.setDocumentation(docs.get(0));
             
             // Create a FooLiteral property for FooType if needed
             if (hasLiteralProperty.contains(ct)) { 
@@ -620,10 +621,10 @@ public class ModelFromXSD {
                     npln = npbase + "Literal" + String.format("%02d", mungct++);
                 }
                 var np   = new Property(ctns, npln);
-                var doc  = ct.getDefinition();
+                var doc  = ct.getDocumentation();
                 if (null != doc) {
                     var ndoc = doc.replaceFirst("A data type", "A literal value");
-                    np.setDefinition(ndoc);
+                    np.setDocumentation(ndoc);
                 }
                 np.setDatatype(basedt);
                 np.addToModel(m);
@@ -779,7 +780,7 @@ public class ModelFromXSD {
 
             var xtype = datatypeXSobj.get(dt);                      // complex or simple type definition for this Datatype
             var docs  = getDocumentation(xtype);
-            if (!docs.isEmpty()) dt.setDefinition(docs.get(0));
+            if (!docs.isEmpty()) dt.setDocumentation(docs.get(0));
             handleCLSA(dt, xtype);
             var typeNS = xtype.getNamespace();
             var typeLN = xtype.getName();

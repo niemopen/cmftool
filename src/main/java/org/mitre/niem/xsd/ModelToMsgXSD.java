@@ -51,7 +51,7 @@ public class ModelToMsgXSD extends ModelToXSD {
         
         var cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleType");
         cte.setAttribute("name", cname);        
-        var ae = addDocumentation(dom, cte, null, dt.getDefinition());
+        var ae = addDocumentation(dom, cte, null, dt.getDocumentation());
         if (dt.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
         
         if (null != dt.getCodeListBinding()) {

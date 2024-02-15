@@ -41,7 +41,7 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     private final List<LocalTerm> localTermList   = new ArrayList<>();
     private String namespaceURI = null;
     private String namespacePrefix = null;
-    private String definition = null;
+    private String documentation = null;
     private int nsKind = NSK_UNKNOWN;
     
     public Namespace () { super(); }
@@ -68,14 +68,14 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     }
     
     void setModel (Model m)                   { model = m; }
-    public void setDefinition (String s)      { definition = s; }
+    public void setDocumentation (String s)   { documentation = s.strip().replaceAll("\\s+", " "); }
     public void setKind (int k)               { nsKind = k; }
     public void setKind (String c)            { nsKind = namespaceCode2Kind(c); }
 
     public Model getModel ()                  { return model; }
     public String getNamespaceURI ()          { return namespaceURI; }
     public String getNamespacePrefix ()       { return namespacePrefix; }
-    public String getDefinition ()            { return definition; }
+    public String getDocumentation ()            { return documentation; }
     public int getKind ()                     { return nsKind; }
     public boolean isExternal ()              { return nsKind == NSK_EXTERNAL; }
     public List<AugmentRecord> augmentList()  { return augmentList; }

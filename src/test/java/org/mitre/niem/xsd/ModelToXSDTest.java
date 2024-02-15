@@ -25,12 +25,8 @@ package org.mitre.niem.xsd;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -40,12 +36,15 @@ import org.apache.commons.io.FileUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
 import org.mitre.niem.cmf.Model;
 
 /**
- *
+ * Common routines for model to schema pile tests.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -83,6 +82,53 @@ public class ModelToXSDTest {
         for (var log : logs) log.close();
     }
     
+    public void testRT(String testDir, String sourceXSD) throws Exception {
+    
+        // Create CMF from input schema, weite to temp directory #1
+        String[] schemaArgs = { testDir + sourceXSD };
+        File modelFP = new File(tempD1, "model.cmf");
+        createCMF(schemaArgs, modelFP);
+        
+        // Create schema from that CMF, write to temp directory #2
+        createXSD(modelFP, tempD2);
+
+        // Valid XSD?
+        File newSchema = new File(tempD2, sourceXSD);
+        if (!isValidXSD(newSchema)) {
+            int i = 0;
+        }
+        assertTrue(isValidXSD(newSchema));
+        
+        // Now create CMF from the schema in temp directory #2        
+        File newModelFP = new File(tempD1, "newModel.cmf");
+        createCMF(schemaArgs, newModelFP);
+        
+        // First and second model files should be the same
+        assertTrue(FileUtils.contentEquals(modelFP, newModelFP));
+
+        // Now create second schema from new CMF & CMF in temp directory #3
+        createXSD(newModelFP, tempD3);
+        
+        // Second and third temp directory should have same content
+        List<File> sfl2 = FileUtils.listFiles(tempD2, null, true).stream().sorted().collect(Collectors.toList());
+        List<File> sfl3 = FileUtils.listFiles(tempD3, null, true).stream().sorted().collect(Collectors.toList());
+        int i2 = 0;
+        int i3 = 0;
+        assertEquals(sfl2.size(), sfl3.size());
+        while (i2 < sfl2.size() && i3 < sfl3.size()) {
+            File f2 = sfl2.get(i2++);
+            File f3 = sfl3.get(i3++);
+            String n2 = f2.getName();
+            String n3 = f3.getName();
+            assertEquals(n2,n3);
+            assertTrue(FileUtils.contentEquals(f2, f3));
+            if (!FileUtils.contentEquals(f2, f3)) {
+                int i = 0;
+            }
+        }
+        assertEmptyLogs();
+    }    
+    
     public void assertEmptyLogs () {
         for (var log : logs) {
             var errors = log.getErrorLogs();
@@ -101,13 +147,7 @@ public class ModelToXSDTest {
         os.close();   
     }
     
-    public void createXSD (File modelFP, File outDir) throws Exception {
-        FileInputStream mis = new FileInputStream(modelFP);
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(mis);
-        ModelToXSD mw = new ModelToN5XSD(m);
-        mw.writeXSD(outDir);
-    }    
+    public void createXSD (File modelFP, File outDir) throws Exception { }    
     
     public boolean isValidXSD (File sdoc) throws Exception {
         String[] args = { sdoc.toString() };

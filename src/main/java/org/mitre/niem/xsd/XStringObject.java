@@ -69,7 +69,7 @@ public class XStringObject extends XObjectType {
         switch (this.getComponentLname()) {
         case "AbstractIndicator":            xc.getObject().setIsAbstract(val); break;
         case "AugmentableIndicator":         xc.getObject().setIsAugmentable(val); break;
-        case "DefinitionText":               xc.getObject().setDefinition(val); break;
+        case "DocumentationText":            xc.getObject().setDocumentation(val); break;
         case "DeprecatedIndicator":          xc.getObject().setIsDeprecated(val); break;
         case "ExternalAdapterTypeIndicator": xc.getObject().setIsExternal(val); break;      
         case "Name":                         xc.getObject().setName(val); break;
@@ -95,7 +95,7 @@ public class XStringObject extends XObjectType {
     public void addToDatatype(XDatatype xdt) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DefinitionText":      xdt.getObject().setDefinition(val); break;
+        case "DocumentationText":   xdt.getObject().setDocumentation(val); break;
         case "DeprecatedIndicator": xdt.getObject().setIsDeprecated(val); break;        
         case "Name":                xdt.getObject().setName(val); break;
         default:
@@ -108,7 +108,7 @@ public class XStringObject extends XObjectType {
     public void addToFacet(XFacet xf) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DefinitionText":      xf.getObject().setDefinition(val); break;
+        case "DocumentationText":  xf.getObject().setDefinition(val); break;
         case "NonNegativeValue":
         case "PositiveValue":
         case "StringValue":
@@ -123,7 +123,7 @@ public class XStringObject extends XObjectType {
     public void addToHasProperty (XHasProperty xhp) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DefinitionText":       xhp.getObject().setDefinition(val); break;
+        case "DocumentationText":    xhp.getObject().setDefinition(val); break;
         case "MinOccursQuantity":    xhp.getObject().setMinOccurs(toInt(val)); break;
         case "MaxOccursQuantity":    
             if ("unbounded".equals(val)) xhp.getObject().setMaxUnbounded(true);
@@ -141,7 +141,7 @@ public class XStringObject extends XObjectType {
         String val = getStringVal();
         LocalTerm lt = xlt.getObject();
         switch (this.getComponentLname()) {
-            case "DefinitionText":      lt.setDefinition(val); break;
+            case "DocumentationText":   lt.setDefinition(val); break;
             case "SourceCitationText":  lt.addCitation(val); break;
             case "SourceURIList":       lt.setSourceURIs(val); break;
             case "TermLiteralText":     lt.setLiteral(val); break;
@@ -156,7 +156,7 @@ public class XStringObject extends XObjectType {
     public void addToNamespace(XNamespace xns) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DefinitionText":      xns.getObject().setDefinition(val) ; break;
+        case "DocumentationText":   xns.getObject().setDocumentation(val) ; break;
         case "NamespaceKindCode":   xns.getObject().setKind(val); break;
         case "NamespaceURI":        try { xns.getObject().setNamespaceURI(val); }    catch (CMFException ex) { } break;
         case "NamespacePrefixText": try { xns.getObject().setNamespacePrefix(val); } catch (CMFException ex) { } break;
@@ -171,7 +171,7 @@ public class XStringObject extends XObjectType {
         switch (this.getComponentLname()) {
         case "AbstractIndicator":             xop.getObject().setIsAbstract(val); break;
         case "AttributeIndicator":            xop.getObject().setIsAttribute(val); break;
-        case "DefinitionText":                xop.getObject().setDefinition(val); break;
+        case "DocumentationText":             xop.getObject().setDocumentation(val); break;
         case "DeprecatedIndicator":           xop.getObject().setIsDeprecated(val); break;  
         case "RefAttributeIndicator":         xop.getObject().setIsRefAttribute(val); break;
         case "ReferenceableIndicator":        xop.getObject().setIsReferenceable(val); break;

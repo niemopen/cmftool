@@ -10,6 +10,13 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 1.0-alpha.1
+
+* Fixed many URIs in source, resource, test files
+* DefinitionText changed to DocumentationText in CMF 1.0  
+* Recognize adapter representation term in addition to appinfo:externalAdapterTypeIndicator
+* Many changes to the JUnit tests.
+
 ## What's new in version 0.7-alpha.6 (12 December)
 
 * CMF to message schema is working

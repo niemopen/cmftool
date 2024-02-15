@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <Datatype structures:id="nc.TokenListType">
+    <Name>TokenListType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a white space-delimited list of tokens.</DocumentationText>
+    <ListOf structures:ref="xs.token" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>list.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+</Model>

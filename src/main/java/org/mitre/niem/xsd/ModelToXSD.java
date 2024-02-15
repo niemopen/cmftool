@@ -90,7 +90,7 @@ import static org.mitre.utility.IndefiniteArticle.articalize;
 
 
 /**
- * A class for writing a Model as a NIEM XML schema pile.
+ * An abstract class for writing a Model as a NIEM XML schema pile.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -367,7 +367,7 @@ public abstract class ModelToXSD {
         root.appendChild(dom.createComment(" * This placeholder must be replaced with the actual external schema document"));
         root.appendChild(dom.createComment(" * "));   
         
-        addDocumentation(dom, root, null, ns.getDefinition());
+        addDocumentation(dom, root, null, ns.getDocumentation());
         
         for (var c : m.getComponentList()) {
             var p = c.asProperty();
@@ -375,7 +375,7 @@ public abstract class ModelToXSD {
             if (ns != p.getNamespace()) continue;
             var pe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");            
             pe.setAttribute("name", p.getName());
-            addDocumentation(dom, pe, null, p.getDefinition());           
+            addDocumentation(dom, pe, null, p.getDocumentation());           
             root.appendChild(pe);
         }
         var xsdw = new XSDWriter(dom, os);
@@ -437,7 +437,7 @@ public abstract class ModelToXSD {
         
         // Create annotation element for documentation and local term appinfo
         Element ae = null;
-        ae = addDocumentation(dom, root, ae, ns.getDefinition());
+        ae = addDocumentation(dom, root, ae, ns.getDocumentation());
         if (!ns.localTermList().isEmpty()) {
             ae = addAnnotation(dom, root, ae);
             var ai = addAppinfo(dom, ae, null);
@@ -520,7 +520,7 @@ public abstract class ModelToXSD {
             var targName   = targCTName.substring(0, targCTName.length()-4);        // FooType -> Foo
             var augPtName  = targName + "AugmentationPoint";                        // FooType -> FooAugmentationPoint
             var augPoint = new Property(targCTns, augPtName);
-            augPoint.setDefinition("An augmentation point for " + targCTName + ".");
+            augPoint.setDocumentation("An augmentation point for " + targCTName + ".");
             augPoint.setIsAbstract(true);
             m.addComponent(augPoint);
             var hp = new HasProperty();
@@ -576,7 +576,7 @@ public abstract class ModelToXSD {
             // Otherwise create augmentation type for remaining properties
             String typePhrase = typeNameToPhrase(targCTName);
             ClassType augCT = new ClassType(ns, augTpName);
-            augCT.setDefinition("A data type for additional information about " + typePhrase + ".");
+            augCT.setDocumentation("A data type for additional information about " + typePhrase + ".");
             while (indx < arlist.size()) {
                 var ar = arlist.get(indx++);
                 var hp = new HasProperty();
@@ -591,7 +591,7 @@ public abstract class ModelToXSD {
           
             // Create an augmentation element
             var augP = new Property(ns, augElName);
-            augP.setDefinition("Additional information about " + typePhrase + ".");
+            augP.setDocumentation("Additional information about " + typePhrase + ".");
             augP.setClassType(augCT);
             augP.setSubPropertyOf(augPoint);
             m.addComponent(augP);
@@ -621,7 +621,7 @@ public abstract class ModelToXSD {
         Element cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
         Element exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
         cte.setAttribute("name", cname);
-        var ae = addDocumentation(dom, cte, null, ct.getDefinition());
+        var ae = addDocumentation(dom, cte, null, ct.getDocumentation());
         if (ct.isAbstract())   cte.setAttribute("abstract", "true");
         if (ct.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
         if (ct.isExternal())   addAppinfoAttribute(dom, cte, "externalAdapterTypeIndicator", "true");
@@ -744,7 +744,7 @@ public abstract class ModelToXSD {
         var cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
         var sce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
         cte.setAttribute("name", cname);        
-        var ae = addDocumentation(dom, cte, null, dt.getDefinition());
+        var ae = addDocumentation(dom, cte, null, dt.getDocumentation());
         if (dt.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
         
         if (null != dt.getCodeListBinding()) {
@@ -792,7 +792,7 @@ public abstract class ModelToXSD {
 
         Element ae = null;
         var ste = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleType");       
-        ae = addDocumentation(dom, ste, ae, dt.getDefinition());
+        ae = addDocumentation(dom, ste, ae, dt.getDocumentation());
         if (null != dt.getCodeListBinding()) {
             ae = addAnnotation(dom, ste, ae);
             var ap = addAppinfo(dom, ae, null);
@@ -889,7 +889,7 @@ public abstract class ModelToXSD {
         if (p.isDeprecated())    addAppinfoAttribute(dom, pe, "deprecated", "true");
         if (p.isRefAttribute())  addAppinfoAttribute(dom, pe, "referenceAttributeIndicator", "true");
         if (p.isRelationship())  addAppinfoAttribute(dom, pe, "relationshipPropertyIndicator", "true");
-        var ae = addDocumentation(dom, pe, null, p.getDefinition());
+        var ae = addDocumentation(dom, pe, null, p.getDocumentation());
         // Handle property from element with type from structures; blech
         if (null == pct && null == pdt && !p.isAbstract() && !m.getNamespaceByURI(nsuri).isExternal()) {
             String pdtQN = structuresBaseType(p.getName());

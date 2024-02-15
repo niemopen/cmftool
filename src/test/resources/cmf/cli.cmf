@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="cli">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/</NamespaceURI>
+    <NamespacePrefixText>cli</NamespacePrefixText>
+    <DocumentationText>Definitions for the use of the NIEM Code Lists Specification, version 5.0, in XML message instances.</DocumentationText>
+    <NamespaceKindCode>OTHERNIEM</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <Property structures:id="cli.codeListColumnName">
+    <Name>codeListColumnName</Name>
+    <Namespace structures:ref="cli" xsi:nil="true"/>
+    <DocumentationText>A local name for a code list column within a code list.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </Property>
+  <Property structures:id="cli.codeListConstrainingIndicator">
+    <Name>codeListConstrainingIndicator</Name>
+    <Namespace structures:ref="cli" xsi:nil="true"/>
+    <DocumentationText>True if a code list binding constrains the validity of a code list value; false otherwise.</DocumentationText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </Property>
+  <Property structures:id="cli.codeListURI">
+    <Name>codeListURI</Name>
+    <Namespace structures:ref="cli" xsi:nil="true"/>
+    <DocumentationText>A universal identifier for a code list.</DocumentationText>
+    <Datatype structures:ref="xs.anyURI" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </Property>
+  <Property structures:id="nc.CodeLiteral">
+    <Name>CodeLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A literal value for a code with codes sourced from an external code list.</DocumentationText>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </Property>
+  <Class structures:id="nc.CodeType">
+    <Name>CodeType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a code with codes sourced from an external code list.</DocumentationText>
+    <HasProperty>
+      <Property structures:ref="nc.CodeLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <Property structures:ref="cli.codeListColumnName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DocumentationText>A local name for a code list column within a code list.</DocumentationText>
+    </HasProperty>
+    <HasProperty>
+      <Property structures:ref="cli.codeListConstrainingIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DocumentationText>True if a code list binding constrains the validity of a code list value; false otherwise.</DocumentationText>
+    </HasProperty>
+    <HasProperty>
+      <Property structures:ref="cli.codeListURI" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DocumentationText>A universal identifier for a code list.</DocumentationText>
+    </HasProperty>
+  </Class>
+  <Datatype structures:id="xs.anyURI">
+    <Name>anyURI</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <SchemaDocument>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>cli.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>cli</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/utility/code-lists-instance.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+</Model>

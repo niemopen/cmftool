@@ -119,8 +119,8 @@ public class ModelToOWL {
             else {
                 ow.print("\n    a " + propKind);
             }
-            if (null != p.getDefinition()) {
-                ow.print(" ;\n    rdfs:comment \"" + p.getDefinition() + "\"");               
+            if (null != p.getDocumentation()) {
+                ow.print(" ;\n    rdfs:comment \"" + p.getDocumentation() + "\"");               
             }
             ow.println(" .");
         }
@@ -136,8 +136,8 @@ public class ModelToOWL {
             if (null != ct.getExtensionOfClass()) {
                 ow.print(" ;\n    rdfs:subClassOf " + ct.getExtensionOfClass().getQName());
             }
-            if (null != ct.getDefinition()) {
-                ow.print(" ;\n    rdfs:comment \"" + ct.getDefinition() + "\"");               
+            if (null != ct.getDocumentation()) {
+                ow.print(" ;\n    rdfs:comment \"" + ct.getDocumentation() + "\"");               
             }
             for (HasProperty hp : ct.hasPropertyList()) {
                 if (0 < hp.minOccurs()) {
@@ -184,7 +184,7 @@ public class ModelToOWL {
         ow.print("\n");
         ow.print(dt.getQName());
         ow.print("\n    a rdfs:Datatype");
-        if (null != dt.getDefinition()) ow.print(" ;\n    rdfs:comment \"" + dt.getDefinition() + "\"");
+        if (null != dt.getDocumentation()) ow.print(" ;\n    rdfs:comment \"" + dt.getDocumentation() + "\"");
         if (null != bdt) {
             ow.print(" ;\n    owl:equivalentClass ");
             if (fl.isEmpty()) ow.print(componentQName(bdt));

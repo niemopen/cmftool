@@ -38,7 +38,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     protected short type;                   // component type (ClassType, Property, etc.)
     private String name = null;             // local name
     private Namespace namespace = null;     // namespace object
-    private String definition = null;       // xs:documentation string
+    private String documentation = null;       // xs:documentation string
     private boolean isAbstract = false;
     private boolean isDeprecated = false;
     
@@ -64,7 +64,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     }
     
     void setModel (Model m)                 { model = m; }    
-    public void setDefinition (String s)    { definition = (null == s ? null : s.strip().replaceAll("\\s+", " ")); }
+    public void setDocumentation (String s) { documentation = (null == s ? null : s.strip().replaceAll("\\s+", " ")); }
     public void setIsAbstract(boolean f)    { isAbstract = f; }
     public void setIsDeprecated(boolean f)  { isDeprecated = f; }
     public void setIsAbstract (String s)    { isAbstract = "true".equals(s); }
@@ -75,7 +75,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public String getName ()                { return name; }
     public Namespace getNamespace ()        { return namespace; }
     public String getNamespaceURI ()        { return namespace.getNamespaceURI(); }
-    public String getDefinition ()          { return definition; }
+    public String getDocumentation ()       { return documentation; }
     public boolean isAbstract ()            { return isAbstract; }
     public boolean isDeprecated ()          { return isDeprecated; }    
     

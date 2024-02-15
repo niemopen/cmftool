@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xs-proxy="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>Datatype property</xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:complexType name="PersonNameTextType">
+    <xs:annotation>
+      <xs:documentation>A data type for a name by which a person is known, referred, or addressed.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="nc:ProperNameTextType"/>      
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="ProperNameTextType">
+    <xs:annotation>
+      <xs:documentation>A data type for a word or phrase by which a person or thing is known, referred, or addressed.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="nc:TextType"/>
+    </xs:simpleContent>
+  </xs:complexType><xs:complexType name="TextType">
+    <xs:annotation>
+      <xs:documentation>A data type for a character string.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs-proxy:string"/>
+    </xs:simpleContent>
+  </xs:complexType>
+</xs:schema>

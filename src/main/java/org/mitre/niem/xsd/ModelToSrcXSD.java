@@ -28,6 +28,10 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 
 /**
  *
+ * Generates a NIEM 6 schema document pile from a CMF model.
+ * Works for most models based on NIEM 3, 4, and 5 namespaces.
+ * Won't work for those models with metadata or adapters.  FIXME??
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */

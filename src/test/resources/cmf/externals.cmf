@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="geo">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-gml/6.0/</NamespaceURI>
+    <NamespacePrefixText>geo</NamespacePrefixText>
+    <DocumentationText>NIEM adapter types for geospatial components from GML 3.2.1, a subset of which is included with this release as an external standard. The Geography Markup Language (GML) is defined by the Open Geospatial Consortium (OGC).</DocumentationText>
+    <NamespaceKindCode>OTHERNIEM</NamespaceKindCode>
+    <LocalTerm>
+      <TermName>GML</TermName>
+      <TermLiteralText>Geography Markup Language</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>Multi</TermName>
+      <DocumentationText>one or more</DocumentationText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>OGC</TermName>
+      <TermLiteralText>Open Geospatial Consortium</TermLiteralText>
+    </LocalTerm>
+  </Namespace>
+  <Namespace structures:id="gml">
+    <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
+    <NamespacePrefixText>gml</NamespacePrefixText>
+    <DocumentationText>GML Subset schema for gml:AngleType,gml:Curve,gml:Envelope,gml:AbstractFeature,gml:AbstractGeometricPrimitiveType,gml:AbstractGeoemetry,gml:LengthType,gml:LineString,gml:MultiCurve,gml:MultiGeometry,gml:MultiPoint,gml:MultiSurface,gml:Point,gml:Polygon,gml:Surface, written by gmlSubset.xslt.</DocumentationText>
+    <NamespaceKindCode>EXTERNAL</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DocumentationText>NIEM Core subset for externals.</DocumentationText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="ns">
+    <NamespaceURI>http://example.com/external-content/</NamespaceURI>
+    <NamespacePrefixText>ns</NamespacePrefixText>
+    <DocumentationText>Test schema for external content with adapter.</DocumentationText>
+    <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <Property structures:id="geo.LocationGeospatialPointAdapter">
+    <Name>LocationGeospatialPointAdapter</Name>
+    <Namespace structures:ref="geo" xsi:nil="true"/>
+    <DocumentationText>A 2D or 3D geometric point. A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DocumentationText>
+    <SubPropertyOf structures:ref="nc.LocationGeospatialCoordinateAbstract" xsi:nil="true"/>
+    <Class structures:ref="geo.PointAdapterType" xsi:nil="true"/>
+    <ReferenceableIndicator>true</ReferenceableIndicator>
+  </Property>
+  <Property structures:id="gml.Point">
+    <Name>Point</Name>
+    <Namespace structures:ref="gml" xsi:nil="true"/>
+    <DocumentationText>A Point is defined by a single coordinate tuple. The direct position of a point is specified by the pos element which is of type DirectPositionType.</DocumentationText>
+  </Property>
+  <Property structures:id="nc.LocationGeospatialCoordinateAbstract">
+    <Name>LocationGeospatialCoordinateAbstract</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data concept for a geospatial location.</DocumentationText>
+    <AbstractIndicator>true</AbstractIndicator>
+  </Property>
+  <Property structures:id="ns.TrackPoint">
+    <Name>TrackPoint</Name>
+    <Namespace structures:ref="ns" xsi:nil="true"/>
+    <Class structures:ref="ns.TrackPointType" xsi:nil="true"/>
+  </Property>
+  <Class structures:id="geo.PointAdapterType">
+    <Name>PointAdapterType</Name>
+    <Namespace structures:ref="geo" xsi:nil="true"/>
+    <DocumentationText>A data type for a 2D or 3D geometric point. A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DocumentationText>
+    <ExternalAdapterTypeIndicator>true</ExternalAdapterTypeIndicator>
+    <HasProperty>
+      <Property structures:ref="gml.Point" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DocumentationText>A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DocumentationText>
+    </HasProperty>
+  </Class>
+  <Class structures:id="ns.TrackPointType">
+    <Name>TrackPointType</Name>
+    <Namespace structures:ref="ns" xsi:nil="true"/>
+    <DocumentationText>A data type for a track point.</DocumentationText>
+    <HasProperty>
+      <Property structures:ref="geo.LocationGeospatialPointAdapter" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+  </Class>
+  <SchemaDocument>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>geo</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-gml/6.0/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals-niem/niem-gml.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals-niem/niem-core.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>ns</NamespacePrefixText>
+    <NamespaceURI>http://example.com/external-content/</NamespaceURI>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>gml</NamespacePrefixText>
+    <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
+    <DocumentFilePathText>externals-niem/gml.xsd</DocumentFilePathText>
+    <NIEMVersionText/>
+    <SchemaVersionText>3.2.1 2010-01-28</SchemaVersionText>
+  </SchemaDocument>
+  <SchemaDocument>
+    <NamespacePrefixText>xlink</NamespacePrefixText>
+    <NamespaceURI>http://www.w3.org/1999/xlink</NamespaceURI>
+    <DocumentFilePathText>externals-niem/xlinks.xsd</DocumentFilePathText>
+    <NIEMVersionText/>
+    <SchemaVersionText>2.0</SchemaVersionText>
+  </SchemaDocument>
+</Model>

@@ -185,8 +185,8 @@ public class NamespaceKind {
     // arch    kind         builtin      vers  uri
     // ----    ----         -------      ----  ---
       "NIEM6", "BUILTIN",   "appinfo",    "6", "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
-      "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-instance/",
-      "NIEM6", "BUILTIN",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/code-lists-schema-appinfo/",
+      "NIEM6", "OTHERNIEM", "cli",        "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/",
+      "NIEM6", "BUILTIN",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/appinfo/",
       "NIEM6", "BUILTIN",   "niem-xs" ,   "6", "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
       "NIEM6", "BUILTIN",   "structures", "6", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
       

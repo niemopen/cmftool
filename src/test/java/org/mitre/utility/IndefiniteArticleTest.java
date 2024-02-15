@@ -50,6 +50,7 @@ public class IndefiniteArticleTest {
         assertEquals("a", aOrAn("horoscope"));
         assertEquals("a", aOrAn("NASA employee"));
         assertEquals("an", aOrAn("NGA employee"));
+        assertEquals("an", aOrAn("RDF triple"));
         assertEquals("a", aOrAn("unanimous vote"));
         assertEquals("an", aOrAn("unanticipated outcome"));
         assertEquals("a", aOrAn("used car"));
