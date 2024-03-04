@@ -92,7 +92,6 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XSD;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
 import org.mitre.niem.cmf.NamespaceMap;
-import org.mitre.niem.cmf.SchemaDocument;
 import org.w3c.dom.Element;
 
 
@@ -164,19 +163,6 @@ public class ModelFromXSD {
         processProperties();            // populate all fields of property objects from schema
         processElementAugmentations();  // add augmentation elements to augmented class objects
         processAttributeAugmentations();// add augmentation attributes to augmented class objects
-
-        // Add to the model a schema document record for each document in the pile
-        sdoc.forEach((nsuri, sd) -> {
-            SchemaDocument cmfsd = new SchemaDocument();
-            cmfsd.setTargetPrefix(nsmap.getPrefix(nsuri));
-            cmfsd.setTargetNS(nsuri);
-            cmfsd.setConfTargets(sd.conformanceTargets());
-            cmfsd.setFilePath(sd.filepath());
-            cmfsd.setNIEMversion(sd.niemVersion());
-            cmfsd.setSchemaVersion(sd.schemaVersion());
-            cmfsd.setLanguage(sd.language());
-            m.addSchemaDoc(nsuri, cmfsd);
-        });
         return m;
     }
     
@@ -197,7 +183,7 @@ public class ModelFromXSD {
         Collections.sort(allnsd);
         for (var nsd : allnsd) nsmap.assignPrefix(nsd.decPrefix(), nsd.decURI());
         
-        // Add namespace objects for NIEM, external, and XSD namespaces found in schema pile
+        // Add namespace objects for the namespaces found in schema pile
         // The XML namespace we initialize later, and only if someone uses it
         // NIEM XSD doesn't require a namespace prefix, but CMF does, so make one if necessary.
         sdoc.forEach((nsuri, sd) -> {
@@ -207,10 +193,15 @@ public class ModelFromXSD {
                 nsmap.assignPrefix(prefix, nsuri);
             }
             int kind = sd.schemaKind();
-            if (NSK_XML != kind && NamespaceKind.isKindInCMF(kind)) {
+            if (NSK_XML != kind) {
                 Namespace n = new Namespace(prefix, nsuri);
                 n.setKind(kind);
                 try { m.addNamespace(n); } catch (CMFException ex) { } // CAN'T HAPPEN
+                n.setConfTargets(sd.conformanceTargets());
+                n.setFilePath(sd.filepath());
+                n.setNIEMversion(sd.niemVersion());
+                n.setSchemaVersion(sd.schemaVersion());
+                n.setLanguage(sd.language());
                 LOG.debug("Created namespace {}", nsuri);
             }
         });        
@@ -318,7 +309,7 @@ public class ModelFromXSD {
             if (seen.contains(clkN)) continue;      // weird repeats in XSNamedMap
             seen.add(clkN);           
             var xet  = xobj.getTypeDefinition();
-            var xetu = NamespaceKind.builtin(xet.getNamespace());
+            var xetu = NamespaceKind.uriBuiltinNum(xet.getNamespace());
             if (NIEM_STRUCTURES == xetu && xet.getName().endsWith("AugmentationType")) {
                 LOG.info(String.format("Discarding element %s:%s; type structures:AugmentationType not allowed",
                         nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
@@ -392,7 +383,7 @@ public class ModelFromXSD {
                     var au    = (XSAttributeUse)atts.item(j);
                     var adecl = au.getAttrDeclaration();
                     var ans   = adecl.getNamespace();
-                    if (NIEM_STRUCTURES != NamespaceKind.builtin(ans)) {    // attributes in structures NS don't count
+                    if (NIEM_STRUCTURES != NamespaceKind.uriBuiltinNum(ans)) {    // attributes in structures NS don't count
                         hasModelAttributes = true;                          // found a model attribute; we're done
                         break;
                     }
@@ -570,7 +561,7 @@ public class ModelFromXSD {
                 var xedecl = (XSElementDeclaration)xobj;
                 var xetype = xedecl.getTypeDefinition();
                 var xet    = xetype.getNamespace();
-                var xetb   = NamespaceKind.builtin(xet);
+                var xetb   = NamespaceKind.uriBuiltinNum(xet);
                 if (NIEM_STRUCTURES == xetb) {
                     LOG.warn(String.format("Element %s:%s has type is from structures namespace (not allowed in NIEM 6)",
                         nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
@@ -702,7 +693,7 @@ public class ModelFromXSD {
             XSAttributeUse au = (XSAttributeUse)atl.item(i);
             XSAttributeDeclaration a = au.getAttrDeclaration();
             // Don't add attributes from the structures namespace
-            if (NIEM_STRUCTURES != NamespaceKind.builtin(a.getNamespace())) 
+            if (NIEM_STRUCTURES != NamespaceKind.uriBuiltinNum(a.getNamespace())) 
                 aset.add(au);
         }
         // Now remove attribute uses in the base types
@@ -817,7 +808,7 @@ public class ModelFromXSD {
             var baseLN    = xbase.getName();
             var baseDT    = getDatatype(baseNSuri, baseLN);
             var isComplexBase = COMPLEX_TYPE == xbase.getTypeCategory();
-            var isProxyBase   = NIEM_PROXY == NamespaceKind.kind(baseNSuri);
+            var isProxyBase   = NIEM_PROXY == NamespaceKind.uri2Kind(baseNSuri);
             var isRestriction = DERIVATION_RESTRICTION == xctype.getDerivationMethod();
             
             // Handle a restriction with facets
@@ -1336,7 +1327,7 @@ public class ModelFromXSD {
     // If you ask for any type in the XML namespace, you get xs:string.  
     // If you ask for xs:anyType or xs:anySimpleType, you get null.
     private Datatype getDatatype (String nsuri, String lname) throws CMFException {
-        if (NIEM_PROXY == NamespaceKind.builtin(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
+        if (NIEM_PROXY == NamespaceKind.uriBuiltinNum(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
         var dtqn = getQN(nsuri, lname);
         var res  = datatypeMap.get(dtqn);
         if (null != res)                   return res;
@@ -1365,7 +1356,7 @@ public class ModelFromXSD {
     }
     
     private String getQN (String nsuri, String lname) throws CMFException {
-        if (NIEM_PROXY == NamespaceKind.builtin(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
+        if (NIEM_PROXY == NamespaceKind.uriBuiltinNum(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
         var ns = m.getNamespaceByURI(nsuri);
         if (null == ns) 
             throw new CMFException(String.format("no namespace object for %s", nsuri));

@@ -137,7 +137,7 @@ public class XMLSchemaTest {
     @DisplayName("not a schema or catalog")
     public void testGS04 () throws XMLSchema.XMLSchemaException, IOException {    
         var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga("/cmf5/codeType.cmf"));
+           var s = new XMLSchema(ga("/cmf/codeType.cmf"));
         });
         assertThat(thrown.getMessage()).contains("not a schema document or XML catalog"); 
     }

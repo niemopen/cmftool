@@ -8,6 +8,11 @@
     <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixText>nc</NamespacePrefixText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>codeType.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
@@ -49,30 +54,4 @@
     <Name>token</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
-  <SchemaDocument>
-    <NamespacePrefixText>niem-xs</NamespacePrefixText>
-    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
-    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
-    <NIEMVersionText>5</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>structures</NamespacePrefixText>
-    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
-    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>5</NIEMVersionText>
-    <SchemaVersionText>5.0</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>nc</NamespacePrefixText>
-    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
-    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>codeType.xsd</DocumentFilePathText>
-    <NIEMVersionText>5</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
 </Model>

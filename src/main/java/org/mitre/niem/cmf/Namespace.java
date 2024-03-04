@@ -43,6 +43,12 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     private String namespacePrefix = null;
     private String documentation = null;
     private int nsKind = NSK_UNKNOWN;
+    private String confTargs = null;
+    private String filepath = null;
+    private String niemVersion = null;
+    private String schemaVersion = null;
+    private String language = null;
+    private String importDoc = null;
     
     public Namespace () { super(); }
      
@@ -71,13 +77,24 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public void setDocumentation (String s)   { documentation = s.strip().replaceAll("\\s+", " "); }
     public void setKind (int k)               { nsKind = k; }
     public void setKind (String c)            { nsKind = namespaceCode2Kind(c); }
-
+    public void setConfTargets (String s)     { confTargs = s; }
+    public void setFilePath (String s)        { filepath = s; }
+    public void setNIEMversion (String s)     { niemVersion = s; }
+    public void setSchemaVersion (String s)   { schemaVersion = s; }
+    public void setLanguage (String s)        { language = s; }
+    
     public Model getModel ()                  { return model; }
     public String getNamespaceURI ()          { return namespaceURI; }
     public String getNamespacePrefix ()       { return namespacePrefix; }
-    public String getDocumentation ()            { return documentation; }
+    public String getDocumentation ()         { return documentation; }
     public int getKind ()                     { return nsKind; }
     public boolean isExternal ()              { return nsKind == NSK_EXTERNAL; }
+    public String getConfTargets ()           { return confTargs; }
+    public String getFilePath ()              { return filepath; }
+    public String getNiemVersion ()           { return niemVersion; }
+    public String getSchemaVersion ()         { return schemaVersion; }
+    public String getLanguage ()              { return language; }
+    public String getImportDoc ()             { return importDoc; }
     public List<AugmentRecord> augmentList()  { return augmentList; }
     public List<LocalTerm> localTermList()    { return localTermList; }
     

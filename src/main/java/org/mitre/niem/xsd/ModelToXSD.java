@@ -232,11 +232,11 @@ public abstract class ModelToXSD {
         
         // Collect all the NIEM versions, establish builtin namespace prefixes
         ArrayList<String> allVers = new ArrayList<>();
-        m.schemadoc().forEach((ns,sd) -> {
-            String nvers = sd.niemVersion();
+        m.getNamespaceList().forEach((ns) -> {
+            String nvers = ns.getNiemVersion();
             if (null != nvers && !nvers.isBlank() && !allVers.contains(nvers)) allVers.add(nvers);
         });
-        if (allVers.isEmpty()) allVers.add("5");
+        if (allVers.isEmpty()) allVers.add(getDefaultNIEMVersion());
         Collections.sort(allVers);
         Collections.reverse(allVers);   // highest versions first
         var arch = getArchitecture();
@@ -246,8 +246,8 @@ public abstract class ModelToXSD {
                 String nsuri   = NamespaceKind.getBuiltinNS(uk, arch, nv);
                 String uprefix;
                 if (null == nsuri) continue;
-                var sdoc = m.schemadoc().get(nsuri);
-                if (null != sdoc) uprefix = sdoc.targetPrefix();        // try prefix from schema document
+                var ns = m.getNamespaceByURI(nsuri);
+                if (null != ns) uprefix = ns.getNamespaceURI();         // try prefix from schema document
                 else uprefix = NamespaceKind.namespaceUtil2Builtin(uk); // use default prefix for this utility         
                 m.namespaceMap().assignPrefix(uprefix, nsuri);            
             }
@@ -256,17 +256,15 @@ public abstract class ModelToXSD {
         generateAugmentationPoints();
         
         // Make sure we have a new file with a unique name for all the schema documents.
-        // Schema document file paths can be suggested in the Model, otherwise default
+        // Schema document file paths can be suggested in the Namespace object, otherwise default
         // paths will be created.  All this hinting and defaulting is not guaranteed 
         // to produce a unique file path for each namespace, so we ensure that here,
         // beginning with the model namespaces.
         for (Namespace ns : m.getNamespaceList()) {
             if (W3C_XML_SCHEMA_NS_URI.equals(ns.getNamespaceURI())) continue;   // no document for xs: namespace
             var nsuri = ns.getNamespaceURI();
-            var sdoc  = m.schemadoc().get(nsuri);
-            String fp = null;
-            if (null != sdoc) fp = sdoc.filePath();                     // use hint from Model
-            var absfp = genSchemaFile(nsuri, od, fp);
+            String fp = ns.getFilePath();
+            var absfp = genSchemaFilePath(nsuri, fp, od);
         }
         // Now generate new unique file names for the utility schema documents.
         if (null != m.getNamespaceByURI(XML_NS_URI)) utilityNSuri.add(XML_NS_URI);
@@ -275,9 +273,9 @@ public abstract class ModelToXSD {
                 if (NIEM_CLI == util) continue;
                 var nsuri = NamespaceKind.getBuiltinNS(util, arch, vers);
                 if (null == nsuri) continue;
-                var sdoc = m.schemadoc().get(nsuri);
-                if (null != sdoc) genSchemaFile(nsuri, od, sdoc.filePath());
-                else genSchemaFile(nsuri, od, null);
+                var ns = m.getNamespaceByURI(nsuri);
+                if (null != ns) genSchemaFilePath(nsuri, ns.getFilePath(), od);
+                else genSchemaFilePath(nsuri, null, od);
             }
         }
         // Now write the schema document for each namespace
@@ -300,7 +298,7 @@ public abstract class ModelToXSD {
             var is = getBuiltinSchemaStream(uri);
             if (null != is) {
                 createParentDirectories(df);
-                if (NIEM_PROXY == NamespaceKind.builtin(uri)) writeProxyDocument(uri, is, df);
+                if (NIEM_PROXY == NamespaceKind.uriBuiltinNum(uri)) writeProxyDocument(uri, is, df);
                 else copyInputStreamToFile(is, df);
             }
         }
@@ -319,7 +317,7 @@ public abstract class ModelToXSD {
     protected static final Pattern importPat = Pattern.compile("<xs:import\\s");
     protected void writeProxyDocument (String proxyURI, InputStream is, File df) throws IOException {
         var arch      = getArchitecture();
-        var nver      = NamespaceKind.version(proxyURI);
+        var nver      = NamespaceKind.uri2Version(proxyURI);
         var structURI = NamespaceKind.getBuiltinNS(NIEM_STRUCTURES, arch, nver);
         var structFN  = ns2file.get(structURI);
         var structP   = Paths.get(structFN);       
@@ -358,8 +356,8 @@ public abstract class ModelToXSD {
         root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:" + ns.getNamespacePrefix(), nsuri);
 
         // Add namespace version number and language attribute, if specified
-        String lang = m.schemaLanguage(nsuri);
-        String nsv  = getSchemaVersion(nsuri);
+        String lang = ns.getLanguage();
+        String nsv  = ns.getSchemaVersion();
         if (null != lang && !lang.isBlank()) root.setAttributeNS(XML_NS_URI, "lang", lang);
         if (null != nsv && !nsv.isBlank())   root.setAttribute("version", nsv);        
 
@@ -391,9 +389,10 @@ public abstract class ModelToXSD {
         root = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:schema");
         root.setAttribute("targetNamespace", nsuri);
         dom.appendChild(root);
-
+        
+        var  ns       = m.getNamespaceByURI(nsuri);   // current namespace object
         var arch      = getArchitecture();
-        nsNIEMVersion = m.niemVersion(nsuri);
+        nsNIEMVersion = ns.getNiemVersion();
         if (null == nsNIEMVersion) nsNIEMVersion = getDefaultNIEMVersion();
 
         appinfoURI    = NamespaceKind.getBuiltinNS(NIEM_APPINFO, arch, nsNIEMVersion);
@@ -418,21 +417,21 @@ public abstract class ModelToXSD {
         generateAugmentationComponents(nsuri);
         
         // Add namespace version number and language attribute, if specified
-        String lang = m.schemaLanguage(nsuri);
-        String nsv  = getSchemaVersion(nsuri);
+        String lang = ns.getLanguage();
+        String nsv  = ns.getSchemaVersion();
         if (null != lang && !lang.isBlank()) root.setAttributeNS(XML_NS_URI, "lang", lang);
         if (null != nsv && !nsv.isBlank())   root.setAttribute("version", nsv);
         
         // Add conformance target assertions, if any
-        String cta = getConformanceTargets(nsuri);
-        if (null != cta) {
+        String cta = fixConformanceTargets(m.getNamespaceByURI(nsuri).getConfTargets());
+        if (null != cta && !cta.isBlank()) {
             String ctns = NamespaceKind.getBuiltinNS(NIEM_CTAS, arch, nsNIEMVersion);
             String ctprefix;
             ctprefix = m.namespaceMap().getPrefix(ctns);
             root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:"+ctprefix, ctns);
             root.setAttributeNS(ctns, ctprefix + ":" + CONFORMANCE_ATTRIBUTE_NAME, cta);
         }
-        var  ns = m.getNamespaceByURI(nsuri);   // current namespace object
+
         nsNSdeps.add(nsuri);                    // always define prefix for target namespace 
         
         // Create annotation element for documentation and local term appinfo
@@ -963,12 +962,12 @@ public abstract class ModelToXSD {
         String bfn;
         if (XML_NS_URI.equals(nsuri)) bfn = new String("xml.xsd");      
         else {
-            var vsuf = getShareSuffix();
-            var vers = NamespaceKind.version(nsuri) + ".0" + vsuf;
-            int util = NamespaceKind.builtin(nsuri);
-            var bfp  = NamespaceKind.defaultBuiltinPath(util);  // eg. "utility/structures.xsd"
-            bfn = FilenameUtils.getName(bfp);       // eg. "structures.xsd"
-            bfn = vers + "/" + bfn;                 // eg. "5.0/structures.xsd"     
+            var vsuf = getShareSuffix();                                // "", "-src", "-msg"
+            var vers = NamespaceKind.uri2Version(nsuri) + ".0" + vsuf;  // eg. "6.0-arc"
+            int util = NamespaceKind.uriBuiltinNum(nsuri);              // eg. NIEM_PROXY
+            var bfp  = NamespaceKind.defaultBuiltinPath(util);          // eg. "utility/structures.xsd"
+            bfn = FilenameUtils.getName(bfp);                           // eg. "structures.xsd"
+            bfn = vers + "/" + bfn;                                     // eg. "6.0-src/structures.xsd"     
         }
         // Running from IDE?  Open stream 
         var sdirfn = ModelToXSD.class.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -995,10 +994,10 @@ public abstract class ModelToXSD {
     // Mung the file path as needed to make path unique and not existing
     // Return the path to the created file (including outputDir)
     private static Pattern nsnamePat = Pattern.compile("/(\\w+)/\\d(\\.\\d+)*(/#)?$");
-    private String genSchemaFile (String nsuri, File outputDir, String hint) throws IOException {
+    private String genSchemaFilePath (String nsuri, String hint, File outputDir) throws IOException {
         if (ns2file.containsKey(nsuri)) return ns2file.get(nsuri);
         if (null == hint) {
-            int util = NamespaceKind.builtin(nsuri);
+            int util = NamespaceKind.uriBuiltinNum(nsuri);
             if (util < NIEM_NOTBUILTIN) hint = NamespaceKind.defaultBuiltinPath(util);
             else {
                 var m = nsnamePat.matcher(nsuri);
@@ -1099,12 +1098,12 @@ public abstract class ModelToXSD {
     protected String getArchitecture ()       { return "NIEM6"; }
     protected String getDefaultNIEMVersion () { return "6"; }
     
-    protected String getConformanceTargets (String nsuri) {
-        return m.conformanceTargets(nsuri);
+    protected String fixConformanceTargets (String nsuri) {
+        return m.getNamespaceByURI(nsuri).getConfTargets();
     }
     
-    protected String getSchemaVersion (String nsuri) {
-        return m.schemaVersion(nsuri);
+    protected String fixSchemaVersion (String nsuri) {
+        return m.getNamespaceByURI(nsuri).getSchemaVersion();
     }
     
     protected String getShareSuffix () { return ""; }

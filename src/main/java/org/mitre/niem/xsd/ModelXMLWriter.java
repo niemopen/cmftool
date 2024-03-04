@@ -53,7 +53,6 @@ import org.mitre.niem.cmf.AugmentRecord;
 import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.LocalTerm;
 import static org.mitre.niem.cmf.NamespaceKind.namespaceKind2Code;
-import org.mitre.niem.cmf.SchemaDocument;
 
 /**
  *
@@ -83,22 +82,8 @@ public class ModelXMLWriter {
         for (Component c : m.getComponentList()) { addProperty(dom, e, c.asProperty()); }
         for (Component c : m.getComponentList()) { addClassType(dom, e, c.asClassType()); }
         for (Component c : m.getComponentList()) { addDatatype(dom, e, c.asDatatype()); }
-        m.schemadoc().forEach((nsuri, sd) ->     { addSchemaDocument(dom, e, nsuri, sd); });
 
         return e;
-    }
-    
-    public void addSchemaDocument (Document dom, Element p, String nsuri, SchemaDocument x) {
-        if (null == x) return;
-        Element e = dom.createElementNS(CMF_NS_URI, "SchemaDocument");
-        addSimpleChild(dom, e, "NamespacePrefixText", x.targetPrefix());
-        addSimpleChild(dom, e, "NamespaceURI", nsuri);
-        addSimpleChild(dom, e, "ConformanceTargetURIList", x.confTargets());
-        addSimpleChild(dom, e, "DocumentFilePathText", x.filePath());
-        addSimpleChild(dom, e, "NIEMVersionText", x.niemVersion());
-        addSimpleChild(dom, e, "SchemaVersionText", x.schemaVersion());
-        addSimpleChild(dom, e, "SchemaLanguageName", x.language());
-        p.appendChild(e);
     }
  
     private void addClassType (Document dom, Element p, ClassType x) {
@@ -190,6 +175,11 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "DocumentationText", x.getDocumentation());
         int nsk = x.getKind();
         addSimpleChild(dom, e, "NamespaceKindCode", namespaceKind2Code(nsk));
+        addSimpleChild(dom, e, "ConformanceTargetURIList", x.getConfTargets());
+        addSimpleChild(dom, e, "DocumentFilePathText", x.getFilePath());
+        addSimpleChild(dom, e, "NIEMVersionText", x.getNiemVersion());
+        addSimpleChild(dom, e, "SchemaVersionText", x.getSchemaVersion());
+        addSimpleChild(dom, e, "SchemaLanguageName", x.getLanguage());
         Collections.sort(x.augmentList());
         Collections.sort(x.localTermList());
         for (AugmentRecord z : x.augmentList()) addAugmentRec(dom, e, z);

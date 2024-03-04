@@ -468,7 +468,7 @@ public class XMLSchema {
             for (var extns : sd.externalImports()) {
                 LOG.debug(String.format("%s imported external by %s", extns, sd.targetNamespace()));
                 var esd  = sdocs.get(extns);
-                int kind = NamespaceKind.kind(extns);
+                int kind = NamespaceKind.uri2Kind(extns);
                 if (NSK_UNKNOWN == kind) {
                     esd.setSchemaKind(NSK_EXTERNAL);
                     NamespaceKind.setKind(extns, kind);

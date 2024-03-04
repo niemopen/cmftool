@@ -53,7 +53,7 @@ public class XObjectType {
         componentLname = eln;
         lineNumber = line;
         for (int i = 0; i < a.getLength(); i++) {
-            if (NIEM_STRUCTURES == NamespaceKind.builtin(a.getURI(i))) {
+            if (NIEM_STRUCTURES == NamespaceKind.uriBuiltinNum(a.getURI(i))) {
                 if (null != a.getLocalName(i)) {
                     switch (a.getLocalName(i)) {
                         case "id":         id = a.getValue(i); break;
@@ -113,6 +113,5 @@ public class XObjectType {
     public void addToNamespace (XNamespace ns) { }
     public void addToProperty (XProperty op) { }
     public void addToRestrictionOf (XRestrictionOf r) { }
-    public void addToSchemaDocument (XSchemaDocument s) { }
     public void addToUnionOf (XUnionOf u) { }    
 }

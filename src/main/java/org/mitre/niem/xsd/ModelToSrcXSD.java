@@ -23,8 +23,11 @@
  */
 package org.mitre.niem.xsd;
 
+import static org.mitre.niem.NIEMConstants.DEFAULT_NIEM_VERSION;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 
 /**
  *
@@ -39,21 +42,38 @@ public class ModelToSrcXSD extends ModelToXSD {
     public ModelToSrcXSD () { super(); }
     public ModelToSrcXSD (Model m) { super(m); }
     
-    
+    // Convert NIEM v3-5 ctargs to NIEM 6.
+    // Convert NIEM 6 message schema to subset schema ctarg.
     @Override
-    protected String getConformanceTargets (String nsuri) {
-        var rv = m.conformanceTargets(nsuri);
-        rv = rv.replaceAll("MessageSchemaDocument", "SubsetSchemaDocument");           
-        return rv;
+    protected String fixConformanceTargets (String ctaStr) {
+        if (null == ctaStr) return null;
+        if (ctaStr.isBlank()) return "";
+        var ctab = new StringBuilder();
+        var ctas = ctaStr.split("\\s+");
+        var n5pf = NamespaceKind.getCTPrefix("NIEM5");
+        var n6pf = NamespaceKind.getCTPrefix("NIEM6");
+        var sep  = "";
+        for (String cta : ctas) {
+            if (cta.startsWith(n5pf)) {
+                var targ = NamespaceKind.targetFromCTA(cta);
+                cta = n6pf + DEFAULT_NIEM_VERSION + "/" + targ;
+            }
+            cta = cta.replace("MessageSchemaDocument", "SubsetSchemaDocument");
+            ctab.append(sep).append(cta);
+            sep = " ";
+        }
+        ctaStr = ctab.toString();               
+        return ctaStr;
     }  
 
+    // 
     @Override
-    protected String getSchemaVersion (String nsuri) {
+    protected String fixSchemaVersion (String nsuri) {
         var ns = m.getNamespaceByURI(nsuri);
         var kind = ns.getKind();
-        var rv   = m.schemaVersion(nsuri);
-        if (kind > NSK_CORE) return rv;
-        if (null == rv) return "source";
+        var rv   = ns.getSchemaVersion();
+        if (kind > NSK_OTHERNIEM) return rv;// not a model schema, leave @version alone 
+        if (null == rv) return "source";    // "source" is the default @version
         if (rv.startsWith("message")) rv = "source" + rv.substring(7);
         return rv;
     } 

@@ -156,10 +156,16 @@ public class XStringObject extends XObjectType {
     public void addToNamespace(XNamespace xns) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DocumentationText":   xns.getObject().setDocumentation(val) ; break;
-        case "NamespaceKindCode":   xns.getObject().setKind(val); break;
-        case "NamespaceURI":        try { xns.getObject().setNamespaceURI(val); }    catch (CMFException ex) { } break;
+        case "ConformanceTargetURIList": xns.getObject().setConfTargets(val); break;
+        case "DocumentFilePathText":     xns.getObject().setFilePath(val); break;
+        case "DocumentationText":        xns.getObject().setDocumentation(val) ; break;
+        case "NamespaceKindCode":        xns.getObject().setKind(val); break;
         case "NamespacePrefixText": try { xns.getObject().setNamespacePrefix(val); } catch (CMFException ex) { } break;
+        case "NamespaceURI":        try { xns.getObject().setNamespaceURI(val); }    catch (CMFException ex) { } break;
+        case "NIEMVersionText":          xns.getObject().setNIEMversion(val); break;
+        case "SchemaLanguageName":       xns.getObject().setLanguage(val); break;
+        case "SchemaVersionText":        xns.getObject().setSchemaVersion(val); break;            
+
         default:
                 LOG.error(String.format("can't add '%s' to Namespace", this.getComponentLname()));
                 break;
@@ -179,23 +185,6 @@ public class XStringObject extends XObjectType {
         case "Name":                          xop.getObject().setName(val); break;
         default:
                 LOG.error(String.format("can't add '%s' to Property", this.getComponentLname()));
-                break;
-        }
-    }
-    
-    @Override
-    public void addToSchemaDocument (XSchemaDocument xsd) {
-        String val = getStringVal();
-        switch (this.getComponentLname()) {
-            case "ConformanceTargetURIList": xsd.getObject().setConfTargets(val); break;
-            case "DocumentFilePathText":     xsd.getObject().setFilePath(val); break;
-            case "NamespacePrefixText":      xsd.getObject().setTargetPrefix(val); break;
-            case "NamespaceURI":             xsd.getObject().setTargetNS(val); break;
-            case "NIEMVersionText":          xsd.getObject().setNIEMversion(val); break;
-            case "SchemaLanguageName":       xsd.getObject().setLanguage(val); break;
-            case "SchemaVersionText":        xsd.getObject().setSchemaVersion(val); break;
-            default:
-                LOG.error(String.format("can't add '%s' to SchemaDocument", this.getComponentLname()));
                 break;
         }
     }

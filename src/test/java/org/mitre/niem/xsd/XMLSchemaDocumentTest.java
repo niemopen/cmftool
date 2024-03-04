@@ -118,7 +118,7 @@ public class XMLSchemaDocumentTest {
         
         assertEquals("http://release.niem.gov/niem/niem-core/5.0/", targetNS);
         assertEquals("http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument", sd.conformanceTargets());
-        assertEquals("5", sd.niemVersion());
+        assertEquals("5.0", sd.niemVersion());
         assertEquals("99", sd.schemaVersion());
         assertEquals(2, sd.schemaKind());
         assertEmptyLogs();

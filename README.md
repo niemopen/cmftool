@@ -12,6 +12,8 @@ General questions about OASIS Open Projects may be directed to OASIS staff at [p
 
 ## What's new in version 1.0-alpha.1
 
+* Create NIEM 6 source and message document piles from NIEM 5 model
+* Every schema document gets a Namespace object; SchemaDocument removed
 * Fixed many URIs in source, resource, test files
 * DefinitionText changed to DocumentationText in CMF 1.0  
 * Recognize adapter representation term in addition to appinfo:externalAdapterTypeIndicator

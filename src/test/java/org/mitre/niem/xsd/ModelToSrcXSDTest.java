@@ -25,9 +25,12 @@ package org.mitre.niem.xsd;
 
 import java.io.File;
 import java.io.FileInputStream;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.NamespaceKind;
 
 /**
  *
@@ -85,6 +88,34 @@ public class ModelToSrcXSDTest extends ModelToXSDTest {
     })
     public void testRoundTrip(String sourceXSD) throws Exception {
         testRT(testDir, sourceXSD);
+    }
+    
+    @Test
+    public void testFixConformanceTargets () {
+        NamespaceKind.reset();
+        var mw   = new ModelToSrcXSD(null);
+        var ctas = "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument";
+        var rv   = mw.fixConformanceTargets(ctas);
+        assertEquals(rv, "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument");
+        
+        ctas = "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument";
+        rv   = mw.fixConformanceTargets(ctas);
+        assertEquals(rv, "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument");
+        
+        ctas = "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument";
+        rv   = mw.fixConformanceTargets(ctas);
+        assertEquals(rv, "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument");
+        
+        ctas = "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument " +
+               "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument " +
+               "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument";
+        rv   = mw.fixConformanceTargets(ctas);
+        var rvs = rv.split("\\s+");
+        assertEquals(rvs[0], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument");
+        assertEquals(rvs[1], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument");
+        assertEquals(rvs[2], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument");
+
+        int i = 0;
     }
         
     @Override

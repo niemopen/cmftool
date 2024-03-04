@@ -9,6 +9,11 @@
     <NamespacePrefixText>geo</NamespacePrefixText>
     <DocumentationText>NIEM adapter types for geospatial components from GML 3.2.1, a subset of which is included with this release as an external standard. The Geography Markup Language (GML) is defined by the Open Geospatial Consortium (OGC).</DocumentationText>
     <NamespaceKindCode>OTHERNIEM</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals-niem/niem-gml.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
     <LocalTerm>
       <TermName>GML</TermName>
       <TermLiteralText>Geography Markup Language</TermLiteralText>
@@ -27,18 +32,65 @@
     <NamespacePrefixText>gml</NamespacePrefixText>
     <DocumentationText>GML Subset schema for gml:AngleType,gml:Curve,gml:Envelope,gml:AbstractFeature,gml:AbstractGeometricPrimitiveType,gml:AbstractGeoemetry,gml:LengthType,gml:LineString,gml:MultiCurve,gml:MultiGeometry,gml:MultiPoint,gml:MultiSurface,gml:Point,gml:Polygon,gml:Surface, written by gmlSubset.xslt.</DocumentationText>
     <NamespaceKindCode>EXTERNAL</NamespaceKindCode>
+    <DocumentFilePathText>externals-niem/gml.xsd</DocumentFilePathText>
+    <NIEMVersionText/>
+    <SchemaVersionText>3.2.1 2010-01-28</SchemaVersionText>
   </Namespace>
   <Namespace structures:id="nc">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
     <NamespacePrefixText>nc</NamespacePrefixText>
     <DocumentationText>NIEM Core subset for externals.</DocumentationText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals-niem/niem-core.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="niem-xs">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <LocalTerm>
+      <TermName>maxInclusive</TermName>
+      <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
+    </LocalTerm>
   </Namespace>
   <Namespace structures:id="ns">
     <NamespaceURI>http://example.com/external-content/</NamespaceURI>
     <NamespacePrefixText>ns</NamespacePrefixText>
     <DocumentationText>Test schema for external content with adapter.</DocumentationText>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>externals.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="structures">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="xlink">
+    <NamespaceURI>http://www.w3.org/1999/xlink</NamespaceURI>
+    <NamespacePrefixText>xlink</NamespacePrefixText>
+    <DocumentationText>GML 3.0 candidate xlinks schema. Copyright (c) 2001 OGC, All Rights Reserved.</DocumentationText>
+    <NamespaceKindCode>UNKNOWN</NamespaceKindCode>
+    <DocumentFilePathText>externals-niem/xlinks.xsd</DocumentFilePathText>
+    <NIEMVersionText/>
+    <SchemaVersionText>2.0</SchemaVersionText>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
@@ -91,62 +143,4 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
   </Class>
-  <SchemaDocument>
-    <NamespacePrefixText>niem-xs</NamespacePrefixText>
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>geo</NamespacePrefixText>
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-gml/6.0/</NamespaceURI>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>externals-niem/niem-gml.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>structures</NamespacePrefixText>
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
-    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>nc</NamespacePrefixText>
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>externals-niem/niem-core.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>ns</NamespacePrefixText>
-    <NamespaceURI>http://example.com/external-content/</NamespaceURI>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>externals.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>gml</NamespacePrefixText>
-    <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
-    <DocumentFilePathText>externals-niem/gml.xsd</DocumentFilePathText>
-    <NIEMVersionText/>
-    <SchemaVersionText>3.2.1 2010-01-28</SchemaVersionText>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>xlink</NamespacePrefixText>
-    <NamespaceURI>http://www.w3.org/1999/xlink</NamespaceURI>
-    <DocumentFilePathText>externals-niem/xlinks.xsd</DocumentFilePathText>
-    <NIEMVersionText/>
-    <SchemaVersionText>2.0</SchemaVersionText>
-  </SchemaDocument>
 </Model>

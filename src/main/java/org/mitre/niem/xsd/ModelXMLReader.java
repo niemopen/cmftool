@@ -231,7 +231,6 @@ public class ModelXMLReader {
                 case "Namespace":             o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
                 case "Property":              o = new XProperty(m, p, ens, eln, atts, lineNum); break;
                 case "RestrictionOf":         o = new XRestrictionOf(m, p, ens, eln, atts, lineNum); break;
-                case "SchemaDocument":        o = new XSchemaDocument(m, p, ens, eln, atts, lineNum); break;
                 case "SubPropertyOf":         o = new XProperty(m, p, ens, eln, atts, lineNum); break;
                 case "UnionOf":               o = new XUnionOf(m, p, ens, eln, atts, lineNum); break;
 

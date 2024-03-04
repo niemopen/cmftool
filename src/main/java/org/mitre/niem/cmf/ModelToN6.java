@@ -72,67 +72,67 @@ public class ModelToN6 {
     }
     
     public void convert (Model m) throws CMFException {
-        
-        // Change namespace URI in model namespace objects
-        // Iterate over copied list of namespace objects 
-        // Remember URI changes, fix SchemaDocument objeccts later
-        Map<String,String> newURI = new HashMap<>();
-        List<Namespace> nslist    = new ArrayList<>();
-        nslist.addAll(m.getNamespaceList());
-        for (var ns : nslist) {
-            String ouri = ns.getNamespaceURI();
-            String nuri = changeURI(ouri);
-            if (null != nuri) {
-                try {
-                    ns.setNamespaceURI(nuri);
-                    newURI.put(ouri, nuri);                
-                } catch (CMFException ex) {
-                    LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
-                            ouri, nuri, ex.getMessage()));
-                }
-                newURI.put(ouri, nuri);
-                LOG.debug(String.format("NS %-40.40s -> %s\n", ouri, nuri));
-            }
-        }
-        // Fix the SchemaDocument objects
-        var sdocs = new ArrayList<SchemaDocument>();
-        sdocs.addAll(m.schemadoc().values());
-        for (var sd : sdocs) {
-            var ouri = sd.targetNS();
-            var nuri = newURI.get(ouri);
-            
-            // Some SchemaDocument objects don't have corresponding Namespace objects
-            // Fix them here
-            if (null == nuri) {
-                var builtin = NamespaceKind.builtin(sd.targetNS());
-                if (builtin < NIEM_NOTBUILTIN) 
-                nuri = NamespaceKind.getBuiltinNS(builtin, "NIEM6", "6");
-            
-            }
-            sd.setTargetNS(nuri);
-            sd.setNIEMversion("6");
-            m.schemadoc().remove(ouri);
-            m.schemadoc().put(nuri, sd);
-            LOG.debug(String.format("SD %-40.40s -> %s\n", ouri, nuri));     
-            
-            // Change the conformance targets to NIEM 6
-            var ncts = new StringBuilder();
-            var cts = sd.confTargets();
-            if (null == cts) continue;
-            var ctl = cts.split("\\s+");
-            var sep = "";
-            for (int i = 0; i < ctl.length; i++) {
-                var ct = ctl[i];
-                var nct = changeURI(ct);
-                nct = nct.replaceFirst("/naming-and-design-rules/", "/XNDR/");
-                var match = VERSION_PAT.matcher(ct);
-                if (match.find()) ct = match.replaceFirst("/6.0/");
-                ncts.append(sep);
-                ncts.append(nct);
-                sep = " ";
-            }
-            sd.setConfTargets(ncts.toString());
-        }
+//        
+//        // Change namespace URI in model namespace objects
+//        // Iterate over copied list of namespace objects 
+//        // Remember URI changes, fix SchemaDocument objeccts later
+//        Map<String,String> newURI = new HashMap<>();
+//        List<Namespace> nslist    = new ArrayList<>();
+//        nslist.addAll(m.getNamespaceList());
+//        for (var ns : nslist) {
+//            String ouri = ns.getNamespaceURI();
+//            String nuri = changeURI(ouri);
+//            if (null != nuri) {
+//                try {
+//                    ns.setNamespaceURI(nuri);
+//                    newURI.put(ouri, nuri);                
+//                } catch (CMFException ex) {
+//                    LOG.error(String.format("Could not replace namespace URI %s with %s: %s",
+//                            ouri, nuri, ex.getMessage()));
+//                }
+//                newURI.put(ouri, nuri);
+//                LOG.debug(String.format("NS %-40.40s -> %s\n", ouri, nuri));
+//            }
+//        }
+//        // Fix the SchemaDocument objects
+//        var sdocs = new ArrayList<SchemaDocument>();
+//        sdocs.addAll(m.schemadoc().values());
+//        for (var sd : sdocs) {
+//            var ouri = sd.targetNS();
+//            var nuri = newURI.get(ouri);
+//            
+//            // Some SchemaDocument objects don't have corresponding Namespace objects
+//            // Fix them here
+//            if (null == nuri) {
+//                var builtin = NamespaceKind.builtin(sd.targetNS());
+//                if (builtin < NIEM_NOTBUILTIN) 
+//                nuri = NamespaceKind.getBuiltinNS(builtin, "NIEM6", "6");
+//            
+//            }
+//            sd.setTargetNS(nuri);
+//            sd.setNIEMversion("6");
+//            m.schemadoc().remove(ouri);
+//            m.schemadoc().put(nuri, sd);
+//            LOG.debug(String.format("SD %-40.40s -> %s\n", ouri, nuri));     
+//            
+//            // Change the conformance targets to NIEM 6
+//            var ncts = new StringBuilder();
+//            var cts = sd.confTargets();
+//            if (null == cts) continue;
+//            var ctl = cts.split("\\s+");
+//            var sep = "";
+//            for (int i = 0; i < ctl.length; i++) {
+//                var ct = ctl[i];
+//                var nct = changeURI(ct);
+//                nct = nct.replaceFirst("/naming-and-design-rules/", "/XNDR/");
+//                var match = VERSION_PAT.matcher(ct);
+//                if (match.find()) ct = match.replaceFirst("/6.0/");
+//                ncts.append(sep);
+//                ncts.append(nct);
+//                sep = " ";
+//            }
+//            sd.setConfTargets(ncts.toString());
+//        }
     }
     
     private String changeURI(String ouri) {

@@ -40,6 +40,8 @@ import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import static org.mitre.niem.cmf.NamespaceKind.namespaceKind2Code;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
@@ -80,41 +82,41 @@ public class ModelXMLReaderTest {
         assertFalse(p.isAttribute());
     }
     
-    @Test
-    public void testSchemaDocument () {
-        FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "codetype.cmf");
-        try {
-            cmfIS = new FileInputStream(cmfFile);
-        } catch (FileNotFoundException ex) {
-            fail("Where is my input file?");
-        }
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(cmfIS);
-        assertNotNull(m);
-        assertEquals(0, mr.getMessages().size());  
- 
-        var sd = m.schemadoc().get("http://release.niem.gov/niem/proxy/niem-xs/5.0/");
-        assertNotNull(sd);
-        assertEquals("http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument", sd.confTargets());
-        assertEquals("niem/adapters/niem-xs.xsd", sd.filePath());
-        assertEquals("5", sd.niemVersion());
-        assertEquals("1", sd.schemaVersion());
-    
-        sd = m.schemadoc().get("http://release.niem.gov/niem/structures/5.0/");
-        assertNotNull(sd);
-        assertEquals(null, sd.confTargets());
-        assertEquals("niem/utility/structures.xsd", sd.filePath());
-        assertEquals("5", sd.niemVersion());
-        assertEquals("5.0", sd.schemaVersion());
-       
-        sd = m.schemadoc().get("http://release.niem.gov/niem/niem-core/5.0/");
-        assertNotNull(sd);
-        assertEquals("http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument", sd.confTargets());
-        assertEquals("codeType.xsd", sd.filePath());
-        assertEquals("5", sd.niemVersion());
-        assertEquals("1", sd.schemaVersion());  
-    }
+//    @Test
+//    public void testSchemaDocument () {
+//        FileInputStream cmfIS = null;
+//        File cmfFile = new File(testDirPath, "codetype.cmf");
+//        try {
+//            cmfIS = new FileInputStream(cmfFile);
+//        } catch (FileNotFoundException ex) {
+//            fail("Where is my input file?");
+//        }
+//        ModelXMLReader mr = new ModelXMLReader();
+//        Model m = mr.readXML(cmfIS);
+//        assertNotNull(m);
+//        assertEquals(0, mr.getMessages().size());  
+// 
+//        var sd = m.schemadoc().get("http://release.niem.gov/niem/proxy/niem-xs/5.0/");
+//        assertNotNull(sd);
+//        assertEquals("http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument", sd.confTargets());
+//        assertEquals("niem/adapters/niem-xs.xsd", sd.filePath());
+//        assertEquals("5", sd.niemVersion());
+//        assertEquals("1", sd.schemaVersion());
+//    
+//        sd = m.schemadoc().get("http://release.niem.gov/niem/structures/5.0/");
+//        assertNotNull(sd);
+//        assertEquals(null, sd.confTargets());
+//        assertEquals("niem/utility/structures.xsd", sd.filePath());
+//        assertEquals("5", sd.niemVersion());
+//        assertEquals("5.0", sd.schemaVersion());
+//       
+//        sd = m.schemadoc().get("http://release.niem.gov/niem/niem-core/5.0/");
+//        assertNotNull(sd);
+//        assertEquals("http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument", sd.confTargets());
+//        assertEquals("codeType.xsd", sd.filePath());
+//        assertEquals("5", sd.niemVersion());
+//        assertEquals("1", sd.schemaVersion());  
+//    }
     
     @Test
     public void testExtensionOf () {
@@ -130,7 +132,7 @@ public class ModelXMLReaderTest {
         assertNotNull(m);
         assertEquals(0, mr.getMessages().size());
         
-        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(4, m.getNamespaceList().size());
         assertNotNull(m.getNamespaceByPrefix("nc"));
         assertNotNull(m.getNamespaceByPrefix("xs"));
         
@@ -400,8 +402,9 @@ public class ModelXMLReaderTest {
         assertNotNull(m);
         assertEquals(0, mr.getMessages().size());
         
-        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(3, m.getNamespaceList().size());
         assertNotNull(m.getNamespaceByPrefix("nc"));
+        assertNotNull(m.getNamespaceByPrefix("structures"));
         assertNotNull(m.getNamespaceByPrefix("xs"));
         
         assertEquals(2, m.getComponentList().size());
@@ -427,11 +430,10 @@ public class ModelXMLReaderTest {
         assertNotNull(m);
         assertEquals(0, mr.getMessages().size());
         
-        assertEquals(7, m.schemadoc().size());   
-        for (var sd : m.schemadoc().values()) {
-            if ("http://www.opengis.net/gml/3.2".equals(sd.targetNS())) assertNull(sd.language());
-            else if ("http://www.w3.org/1999/xlink".equals(sd.targetNS())) assertNull(sd.language());
-            else assertEquals("en-US", sd.language());
+        assertEquals(8, m.getNamespaceList().size());   
+        for (var ns : m.getNamespaceList()) {
+            if (ns.getKind() > NSK_BUILTIN) assertNull(ns.getLanguage());
+            else assertEquals("en-US", ns.getLanguage());
         }
     }
 
@@ -448,7 +450,7 @@ public class ModelXMLReaderTest {
         Model m = mr.readXML(cmfIS);
         assertNotNull(m);
         assertEquals(0, mr.getMessages().size());
-        assertEquals(2, m.getNamespaceList().size());  
+        assertEquals(4, m.getNamespaceList().size());  
         assertNull(m.getNamespaceByURI("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
         assertEquals(5, m.getComponentList().size());
         assertNotNull(m.getDatatype("xs:decimal"));
@@ -469,7 +471,7 @@ public class ModelXMLReaderTest {
         assertNotNull(m);
         assertEquals(0, mr.getMessages().size());
         
-        assertEquals(2, m.getNamespaceList().size());
+        assertEquals(3, m.getNamespaceList().size());
         assertNotNull(m.getNamespaceByPrefix("ns"));
         assertNotNull(m.getNamespaceByPrefix("xs"));
         
@@ -500,7 +502,7 @@ public class ModelXMLReaderTest {
         assertNotNull(m);
         assertEquals(0, mr.getMessages().size());
         
-        assertEquals(5, m.getNamespaceList().size());
+        assertEquals(8, m.getNamespaceList().size());
         assertNotNull(m.getNamespaceByPrefix("geo"));
         assertNotNull(m.getNamespaceByPrefix("gml"));
         assertNotNull(m.getNamespaceByPrefix("nc"));
@@ -548,7 +550,7 @@ public class ModelXMLReaderTest {
         var nsl = m.getNamespaceList();
         assertThat(m.getNamespaceList())
                 .extracting(Namespace::getNamespacePrefix)
-                .containsOnly("nc", "test", "j", "xs");
+                .containsOnly("nc", "structures", "niem-xs", "test", "j", "xs");
         
         assertThat(m.getComponentList())
                 .extracting(Component::getQName)

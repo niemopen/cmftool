@@ -37,7 +37,7 @@ import org.mitre.niem.xsd.ModelXMLReader;
  */
 public class ReferenceGraphTest {
     
-   static String testDir = "src/test/resources/cmf6/";
+   static String testDir = "src/test/resources/cmf/";
    
     public ReferenceGraphTest() {
     }
@@ -49,7 +49,7 @@ public class ReferenceGraphTest {
         Model m = mr.readXML(mis);
         var my = m.getNamespaceByURI("http://example.com/N6AugEx/1.0/");
         var nc = m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/");
-        var j  = m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/domains/jxdm/8.2/");
+        var j  = m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/");
         assertNotNull(my);
         assertNotNull(nc);
         assertNotNull(j);

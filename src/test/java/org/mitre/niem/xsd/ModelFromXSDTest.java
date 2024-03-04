@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2022 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
-import org.mitre.niem.cmf.SchemaDocument;
 import org.mitre.niem.cmf.UnionOf;
 import org.xml.sax.SAXException;
 
@@ -81,7 +81,7 @@ public class ModelFromXSDTest {
     public void clearLogs() {
         for (var log : logs) {
             log.clearLogs();
-        };
+        }
     }
 
     @AfterAll
@@ -113,9 +113,10 @@ public class ModelFromXSDTest {
 
             List<Namespace> nslist = m.getNamespaceList();
             assertThat(nslist)
-                    .hasSize(5)
+                    .hasSize(8)
                     .extracting(Namespace::getNamespacePrefix)
-                    .contains("geo", "gml", "nc", "ns", "xs");
+                    .contains("geo", "gml", "nc", "niem-xs", 
+                              "ns", "structures", "xlink", "xs");
             assertEmptyLogs();
         }
     }
@@ -153,9 +154,9 @@ public class ModelFromXSDTest {
             Model m = mfact.createModel(sch);
 
             assertThat(m.getNamespaceList())
-                    .hasSize(4)
+                    .hasSize(6)
                     .extracting(Namespace::getNamespacePrefix)
-                    .contains("j", "nc", "test", "xs");
+                    .contains("j", "nc", "niem-xs", "structures", "test", "xs");
             assertEquals("Augmentation test schema", m.getNamespaceByPrefix("test").getDocumentation());
             assertThat(m.getNamespaceByPrefix("nc").augmentList()).hasSize(0);
             assertThat(m.getNamespaceByPrefix("xs").augmentList()).hasSize(0);
@@ -318,7 +319,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(3, m.getNamespaceList().size());
             assertEquals(4, m.getComponentList().size());
             Datatype dt = m.getDatatype("nc:EmploymentPositionBasisCodeType");
             assertNotNull(dt);
@@ -384,7 +385,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(3, m.getNamespaceList().size());
             assertEquals(7, m.getComponentList().size());
             Datatype dt = m.getDatatype("nc:EmploymentPositionBasisCodeDatatype");
             assertNotNull(dt);
@@ -448,7 +449,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(3, m.getNamespaceList().size());
             assertEquals(4, m.getComponentList().size());
             Datatype u = m.getDatatype("test:ColorCodeType");
             Datatype c = m.getDatatype("test:CoolColorCodeType");
@@ -475,7 +476,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertEquals(13, m.getComponentList().size());
             ClassType ct = m.getClassType("nc:PersonNameType");
             assertNotNull(ct);
@@ -520,7 +521,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(3, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertThat(m.getComponentList())
                     .hasSize(9)
                     .extracting(Component::getQName)
@@ -572,7 +573,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertEquals(10, m.getComponentList().size());
             Property p = m.getProperty("nc:ConfidencePercent");
             assertNotNull(p);
@@ -659,7 +660,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertEquals(13, m.getComponentList().size());
             ClassType persNT = m.getClassType("nc:PersonNameTextType");
             ClassType propNT = m.getClassType("nc:ProperNameTextType");
@@ -683,9 +684,9 @@ public class ModelFromXSDTest {
             Model m = mfact.createModel(sch);
 
             assertThat(m.getNamespaceList())
-                    .hasSize(5)
+                    .hasSize(8)
                     .extracting(Namespace::getNamespacePrefix)
-                    .contains("geo", "gml", "nc", "ns", "xs");
+                    .contains("geo", "gml", "nc", "niem-xs", "ns", "structures", "xlink", "xs");
             ClassType geopt = null;
             var gmlns = m.getNamespaceByPrefix("gml");
             var gmlpt = m.getProperty("gml:Point");
@@ -717,8 +718,9 @@ public class ModelFromXSDTest {
             }
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
-            for (var sd : m.schemadoc().values()) {
-                assertEquals("en-US", sd.language());
+            for (var ns : m.getNamespaceList()) {
+                if (ns.getKind() < NSK_OTHERNIEM)
+                    assertEquals("en-US", ns.getLanguage());
             }
             assertEmptyLogs();
         }
@@ -736,7 +738,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(3, m.getNamespaceList().size());
             assertEquals(2, m.getComponentList().size());
             Datatype dt = m.getDatatype("nc:TokenListType");
             assertNotNull(dt);
@@ -790,7 +792,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertEquals(2, m.getComponentList().size());
             Datatype dt = m.getDatatype("nc:TextType");
             assertNotNull(dt);
@@ -810,7 +812,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertEquals(5, m.getComponentList().size());
             ClassType ct = m.getClassType("nc:TextType");
             assertNotNull(ct);
@@ -841,7 +843,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertEquals(4, m.getComponentList().size());
             Datatype dt = m.getDatatype("nc:TextType");
             assertNotNull(dt);
@@ -863,7 +865,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertEquals(8, m.getComponentList().size());
             ClassType ct1 = m.getClassType("nc:TextType");
             assertNotNull(ct1);
@@ -910,7 +912,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertEquals(7, m.getComponentList().size());
             Datatype dt1 = m.getDatatype("nc:TextType");
             assertNotNull(dt1);
@@ -941,7 +943,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(3, m.getNamespaceList().size());
             assertEquals(2, m.getComponentList().size());
             Datatype dt1 = m.getDatatype("nc:AngularMinuteType");
             assertNotNull(dt1);
@@ -966,7 +968,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(3, m.getNamespaceList().size());
             assertEquals(8, m.getComponentList().size());
             ClassType ct = m.getClassType("nc:AngularMinuteType");
             Datatype dt = m.getDatatype("nc:AngularMinuteDatatype");
@@ -994,7 +996,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(3, m.getNamespaceList().size());
             assertEquals(8, m.getComponentList().size());
             ClassType ct = m.getClassType("nc:AttributedAngularMinuteType");
             Datatype dt = m.getDatatype("nc:AngularMinuteType");
@@ -1024,13 +1026,13 @@ public class ModelFromXSDTest {
             Model m = mfact.createModel(sch);
             if (tdir.endsWith("6")) {
                 Namespace ns = m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/");
-                assertEquals(3, m.getNamespaceList().size());
+                assertEquals(5, m.getNamespaceList().size());
                 assertEquals("nc", m.getNamespaceByURI("http://example.com/Foo/1.0/").getNamespacePrefix());
                 assertEquals("bar", m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/").getNamespacePrefix());
             }
             else {
                 Namespace ns = m.getNamespaceByURI("http://release.niem.gov/niem/niem-core/5.0/");
-                assertEquals(3, m.getNamespaceList().size());
+                assertEquals(5, m.getNamespaceList().size());
                 assertEquals("nc", m.getNamespaceByURI("http://example.com/Foo/1.0/").getNamespacePrefix());
                 assertEquals("bar", m.getNamespaceByURI("http://release.niem.gov/niem/niem-core/5.0/").getNamespacePrefix());                
             }
@@ -1050,7 +1052,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(3, m.getNamespaceList().size());
+            assertEquals(5, m.getNamespaceList().size());
             assertEquals("nc", m.getNamespaceByURI("http://example.com/Foo/1.0/").getNamespacePrefix());
             if (tdir.endsWith("6")) {
                 assertEquals("nc_6", m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/").getNamespacePrefix());
@@ -1096,7 +1098,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(4, m.getNamespaceList().size());
             assertEquals(5, m.getComponentList().size());
             Datatype dt = m.getDatatype("nc:PercentType");
             assertNotNull(dt);
@@ -1145,7 +1147,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(3, m.getNamespaceList().size());
             assertEquals(2, m.getComponentList().size());
             assertNull(m.getDatatype("nc:AngularMinuteSimpleType"));
             Datatype dt = m.getDatatype("nc:AngularMinuteType");
@@ -1214,7 +1216,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(2, m.getNamespaceList().size());
+            assertEquals(3, m.getNamespaceList().size());
             assertEquals(4, m.getComponentList().size());
             Datatype dt = m.getDatatype("ns:UnionType");
             assertNotNull(dt);
@@ -1284,7 +1286,7 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals(3, m.getNamespaceList().size());
+            assertEquals(5, m.getNamespaceList().size());
             assertEquals(7, m.getComponentList().size());
             Namespace xml = m.getNamespaceByPrefix("xml");
             assertNotNull(xml);

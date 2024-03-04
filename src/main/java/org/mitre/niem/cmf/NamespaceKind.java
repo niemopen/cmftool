@@ -33,7 +33,6 @@ import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 /**
@@ -162,20 +161,8 @@ public class NamespaceKind {
         "xml",          // NIEM_XML,
         "notbuiltin",   // NIEM_NOTBUILTIN 
     };
-    // Default schema document filenames are properly not part of CMF, but it's
-    // way too much trouble to put them anywhere else.
-    private final static String[] defBuiltinPath = {
-        "utility/appinfo.xsd",                      //NIEM_APPINFO,
-        "utility/code-lists-instance.xsd",          // NIEM_CLI,
-        "utility/code-lists-schema-appinfo.xsd",    // NIEM_CLSA,
-        "utility/conformanceTargets.xsd",           // NIEM_CTAS,
-        "adapters/niem-xs.xsd",                     // NIEM_PROXY,
-        "utility/structures.xsd",                   // NIEM_STRUCTURES,
-        "external/xml.xsd",                         // NIEM_XML,
-        "notbuiltin",                               // NIEM_NOTBUILTIN     
-    };
 
-    // Definitions for all the builtin namespaces in all known versions
+    // Definitions for recognizing all the builtin namespaces in all known versions
     // arch: how to generate XSD from CMF, different for NIEM 2, 3-5, 6, and NCDF
     // kind: of namespace
     // builtin: which builtin?
@@ -189,7 +176,7 @@ public class NamespaceKind {
       "NIEM6", "BUILTIN",   "clsa",       "6", "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/appinfo/",
       "NIEM6", "BUILTIN",   "niem-xs" ,   "6", "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
       "NIEM6", "BUILTIN",   "structures", "6", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
-      
+
       "NIEM5", "BUILTIN",   "appinfo",    "5", "http://release.niem.gov/niem/appinfo/5.0/",   
       "NIEM5", "OTHERNIEM", "cli",        "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
       "NIEM5", "BUILTIN",   "clsa",       "5", "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
@@ -223,16 +210,17 @@ public class NamespaceKind {
       "NIEM5", "CORE",       "http://((publication)|(release))\\.niem\\.gov/niem/niem-core/(?<vers>[\\d]+)([\\d.]+)/#?",
       "NIEM5", "OTHERNIEM",  "http://((publication)|(release))\\.niem\\.gov/niem/.*/(?<vers>[\\d]+)([\\d.]+)/#?",
     };
-
-    // Patterns for recognizing architecture from conformance target assertions
-    private final static String[] arches = {
-        "NIEM6", "https://docs.oasis-open.org/niemopen/ns/specification/XNDR(?=/)",
-        "NIEM5", "http://reference.niem.gov/niem/specification/naming-and-design-rules(?=/)"
-    };
+    
+    // Conformance target prefix, by architecture
+    private static final Map<String,String> archCTPrefix = Map.of(
+        "NIEM6", "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/",
+        "NIEM5", "http://reference.niem.gov/niem/specification/naming-and-design-rules/"    
+    );
+    public static String getCTPrefix (String arch) { return archCTPrefix.get(arch); }
     
     // Compiled regexs for recognizing namespace URIs and architecture
     private static List<Triplet<String,Integer,Pattern>> uripat = null;     // built from nspats
-    private static List<Pair<String,Pattern>> archpat = null;               // built from arches
+    private static HashMap<String,Pattern> archpat = null;                  // built from archCTPrefix
 
     // Map NSURI -> its architecture, ns kind, utility kind (if any) and NIEM version (if known)
     // May be updated during schema parsing as CTAs and external namespaces are recognized
@@ -265,17 +253,11 @@ public class NamespaceKind {
                 LOG.error(String.format("NamespaceKind.reset(): invalid regex '%s'", nspats[i+2]));
             }
         }
-        archpat = new ArrayList<>();
-        for (int i = 0; i < arches.length; i += 2) {
-            try {
-                var arch = arches[i];
-                var apat = Pattern.compile(arches[i+1]);
-                var rec  = new Pair<String,Pattern>(arch, apat);
-                archpat.add(rec);
-            }
-            catch(Exception ex) {
-                LOG.error(String.format("NamespaceKind.reset(): invalid regex '%s'", nspats[i+2]));
-            }            
+        archpat = new HashMap<>();
+        for (var arch : archCTPrefix.keySet()) {
+            var str = archCTPrefix.get(arch);
+            var pat = Pattern.compile(str);
+            archpat.put(arch, pat);
         }
     }
     
@@ -302,36 +284,31 @@ public class NamespaceKind {
     }
     
     // Returns "" if NIEM architecture is unknown; never returns null
-    public static String architecture (String nsuri) {
+    public static String uri2Architecture (String nsuri) {
         var rec = lookup(nsuri);
         return rec.arch();
     }
     
-    public static int kind (String nsuri) {
+    public static int uri2Kind (String nsuri) {
         var rec = lookup(nsuri);
         return rec.kind();
     }
     
-    public static int builtin (String nsuri) {
+    public static int uriBuiltinNum (String nsuri) {
         var rec = lookup(nsuri);
         return rec.builtin();
     }
     
     // Returns "" if NIEM version is unknown; never returns null
-    public static String version (String nsuri) {
+    public static String uri2Version (String nsuri) {
         var rec = lookup(nsuri);
         return rec.version();
     }
-
-    public static void set (String nsuri, String arch, int kind, int builtin, String version) {
-        if (null == arch) arch = "";
-        if (null == version) version = "";
-        var rec = lookup(nsuri);
-        if (rec.arch.equals(arch) && rec.kind == kind && rec.builtin == builtin && rec.version.equals(version)) return;
-        var nrec = new NSuridat(arch, kind, builtin, version);
-        uridat.put(nsuri, nrec);
-    }
     
+    // Sometimes you can't tell what kind of namespace you have until you parse
+    // the schema document.  Can't recognize EXTENSION namespaces without 
+    // the conformance target assertion.  Can't recognize EXTERNAL namespaces
+    // until you have seen all the xs:import elements.
     public static void setKind (String nsuri, int kind) {
         var rec = lookup(nsuri);
         if (rec.kind == kind) return;
@@ -339,21 +316,12 @@ public class NamespaceKind {
         uridat.put(nsuri, nrec);
     }
     
-    public static void setArchitecture (String nsuri, String arch) {
-        if (null == arch) arch = "";
-        var rec = lookup(nsuri);
-        if (rec.arch.equals(arch)) return;
-        var nrec = new NSuridat(arch, rec.kind, rec.builtin, rec.version);
-        uridat.put(nsuri, nrec);
-    }
-    
     // Determine architecture from conformance target assertions.
     // Returns empty string if CTA doesn't match any architecture.
     public static String archFromCTA (String cta) {
-        for (var arec : archpat) {
-            var arch = arec.getValue0();
-            var apat = arec.getValue1();
-            Matcher m = apat.matcher(cta);
+        for (var arch : archpat.keySet()) {
+            var apat = archpat.get(arch);
+            var m = apat.matcher(cta);
             if (m.lookingAt()) return arch;
         }
         return "";
@@ -361,10 +329,10 @@ public class NamespaceKind {
     
     // Determine NIEM version from conformance target assertions
     // Returns "" if version is unknown; never returns null
-    private static final Pattern versPat = Pattern.compile("/(\\d)(\\.\\d+)?/");
+    private static final Pattern versPat = Pattern.compile("((\\d)(\\.\\d+)?)/");
     public static String versionFromCTA (String cta) {
-        for (var arec : archpat) {
-            var apat = arec.getValue1();
+        for (var arch : archpat.keySet()) {
+            var apat = archpat.get(arch);
             Matcher m = apat.matcher(cta);
             if (m.lookingAt()) {
                 String rest = cta.substring(m.end());
@@ -373,6 +341,25 @@ public class NamespaceKind {
             }
         }
         return "";        
+    }
+    
+    // Return the target from a conformance target assertion
+    // Returns "" instead of null.
+    public static String targetFromCTA (String cta) {
+        for (var arch : archpat.keySet()) {
+            var apat = archpat.get(arch);
+            var m    = apat.matcher(cta);
+            if (m.lookingAt()) {
+                var rest = cta.substring(m.end());
+                var vm   = versPat.matcher(rest);
+                if (vm.find()) {
+                    var targ = rest.substring(vm.end());
+                    return targ;
+                }
+                return "";
+            }
+        }
+        return "";
     }
    
     public static int namespaceCode2Kind (String code) {
@@ -418,16 +405,35 @@ public class NamespaceKind {
     public static String getBuiltinNS(int util, String arch, String version) {
         if (NIEM_XML == util) return XML_NS_URI;
         String ustr = namespaceUtil2Builtin(util);
+        String uri = null;
+        
+        // Return first match on arch, util, and version.
+        // Remember first match of arch and util only.
         for (int i = 0; i < builtinTab.length; i += BUILTIN_TAB_WIDTH) {
-            if (builtinTab[i + 0].equals(arch) 
-                    && builtinTab[i + 2].equals(ustr) 
-                    && (builtinTab[i + 3].equals(version) || builtinTab[i + 3].isBlank()))
-                return builtinTab[i + 4];
-          }
-        LOG.error(String.format("could not find URI for '%s' version '%s'", ustr, version));
-        return null;
+            if (builtinTab[i + 0].equals(arch) && builtinTab[i + 2].equals(ustr)) {
+                if (null == uri) uri = builtinTab[i + 4];
+                if (builtinTab[i + 3].equals(version) || builtinTab[i + 3].isBlank())
+                    return builtinTab[i + 4];
+            }
+        }
+        if (null == uri) LOG.error(String.format("could not find URI for %s '%s' version '%s'", arch, ustr));
+        return uri;
     }
     
+    // Default schema document file paths are properly not part of CMF, but it's
+    // way too much trouble to put them anywhere else. 
+    private final static String[] defBuiltinPath = {
+        "utility/appinfo.xsd",                      // NIEM_APPINFO,
+        "utility/code-lists-instance.xsd",          // NIEM_CLI,
+        "utility/code-lists-schema-appinfo.xsd",    // NIEM_CLSA,
+        "utility/conformanceTargets.xsd",           // NIEM_CTAS,
+        "adapters/niem-xs.xsd",                     // NIEM_PROXY,
+        "utility/structures.xsd",                   // NIEM_STRUCTURES,
+        "external/xml.xsd",                         // NIEM_XML,
+        "notbuiltin",                               // NIEM_NOTBUILTIN     
+    };
+    // Returns the default path from the schema pile root to the builtin schema 
+    // document.
     public static String defaultBuiltinPath (int util) {
         if (util < 0 || util > NSK_NUMKINDS) {
             LOG.error(String.format("invalid namespace kind '%d'", util));

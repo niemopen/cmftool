@@ -46,21 +46,7 @@ import static org.mitre.niem.cmf.Component.C_OBJECTPROPERTY;
  */
 public class Model extends ObjectType {
     static final Logger LOG = LogManager.getLogger(Model.class);
-    
-    // Info about schema documents needed when writing the model as XSD
-    // Default NIEM version is 6
-    static private final SchemaDocument none            = new SchemaDocument(null,null,null,null,null,null,"en-US");
-    private final Map<String,SchemaDocument> schemadoc  = new HashMap<>();           // nsURI -> schema info
-    
-    public Map<String,SchemaDocument> schemadoc () { return schemadoc; }
-    public void addSchemaDoc(String nsuri, SchemaDocument doc) {
-        schemadoc.put(nsuri, doc);
-    }
-    public String conformanceTargets (String ns)    { return schemadoc.getOrDefault(ns,none).confTargets(); }
-    public String niemVersion (String ns)           { return schemadoc.getOrDefault(ns,none).niemVersion(); }
-    public String schemaLanguage (String ns)        { return schemadoc.getOrDefault(ns,none).language(); }
-    public String schemaVersion (String ns)         { return schemadoc.getOrDefault(ns,none).schemaVersion(); }
-    
+   
     // Map of namespace prefix and URI.  Includes mappings for built-in namespaces 
     // that are not part of the model (but still need to be unique).  Code for
     // processing XML schema piles is allowed to use this.

@@ -132,7 +132,7 @@ public class XMLSchemaDocument {
         @Override
         public void startPrefixMapping (String prefix, String uri) {
             if (prefix.isEmpty()) return;
-            if (NIEM_APPINFO == NamespaceKind.builtin(uri)) appinfoURI.push(uri);
+            if (NIEM_APPINFO == NamespaceKind.uriBuiltinNum(uri)) appinfoURI.push(uri);
             nsm.onStartPrefixMapping(prefix, uri);
             int line = docloc.getLineNumber();
             var nsd = new XMLNamespaceDeclaration(prefix, uri, line, depth, null, NSK_UNKNOWN);  // don't know target NS or kind yet
@@ -141,7 +141,7 @@ public class XMLSchemaDocument {
         
         @Override
         public void endPrefixMapping(String uri) {
-            if (NIEM_APPINFO == NamespaceKind.builtin(uri)) appinfoURI.pop();            
+            if (NIEM_APPINFO == NamespaceKind.uriBuiltinNum(uri)) appinfoURI.pop();            
         }
         
         private static final Pattern xsComponentPat = Pattern.compile("(attribute)|(element)|(complexType)");
@@ -161,14 +161,14 @@ public class XMLSchemaDocument {
                 language = atts.getValue(XML_NS_URI, "lang");
                 
                 // Get schema kind and niem version (maybe)
-                kind        = NamespaceKind.kind(targetNS);
-                niemArch    = NamespaceKind.architecture(targetNS);
-                niemVersion = NamespaceKind.version(targetNS);
+                kind        = NamespaceKind.uri2Kind(targetNS);
+                niemArch    = NamespaceKind.uri2Architecture(targetNS);
+                niemVersion = NamespaceKind.uri2Version(targetNS);
 
                 // Get conformance target assertion
                 for (int i = 0; i < atts.getLength(); i++) {
                     var auri = atts.getURI(i);
-                    int util = NamespaceKind.builtin(auri);
+                    int util = NamespaceKind.uriBuiltinNum(auri);
                     if (NIEM_CTAS == util) {
                         if (CONFORMANCE_ATTRIBUTE_NAME.equals(atts.getLocalName(i))) {                        
                             confTargs = atts.getValue(i);
@@ -194,7 +194,7 @@ public class XMLSchemaDocument {
             else if ("import".equals(elname)) {
                 String importNS = atts.getValue("namespace");
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (NIEM_APPINFO == NamespaceKind.builtin(atts.getURI(i)))
+                    if (NIEM_APPINFO == NamespaceKind.uriBuiltinNum(atts.getURI(i)))
                         if ("externalImportIndicator".equals(atts.getLocalName(i))) {
                             if ("true".equals(atts.getValue(i))) externalImports.add(importNS);
                             break;

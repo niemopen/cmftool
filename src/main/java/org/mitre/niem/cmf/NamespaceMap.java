@@ -100,7 +100,7 @@ public class NamespaceMap {
         // If the URI has a known version, or seems to end in a version number, 
         // try eg. "nc_4" for version 4.0
         else {
-            String vstr = NamespaceKind.version(nsuri);
+            String vstr = NamespaceKind.uri2Version(nsuri);
             if (!vstr.isEmpty()) mungP = mungBase + "_" + vstr;
             else {
                 Matcher vm = versPat.matcher(nsuri);
