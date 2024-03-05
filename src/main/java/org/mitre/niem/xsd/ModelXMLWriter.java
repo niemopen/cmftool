@@ -153,8 +153,6 @@ public class ModelXMLWriter {
     private void addHasProperty (Document dom, Element p, HasProperty x) {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "HasProperty");    
-        if (null != x.getSequenceID()) 
-            e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:sequenceID", x.getSequenceID());
         addComponentRef(dom, e, "Property", x.getProperty());
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());            
         addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());

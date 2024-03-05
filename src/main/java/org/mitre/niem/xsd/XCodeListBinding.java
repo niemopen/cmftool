@@ -40,8 +40,7 @@ public class XCodeListBinding extends XObjectType {
     
     XCodeListBinding (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new CodeListBinding();
-        obj.setSequenceID(this.getSequenceID());       
+        obj = new CodeListBinding();    
     }      
     
     @Override

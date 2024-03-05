@@ -40,8 +40,7 @@ public class XHasProperty extends XObjectType {
     
     XHasProperty (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new HasProperty();
-        obj.setSequenceID(this.getSequenceID());       
+        obj = new HasProperty();  
     }      
     
     @Override

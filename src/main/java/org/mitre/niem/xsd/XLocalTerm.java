@@ -40,8 +40,7 @@ public class XLocalTerm extends XObjectType {
     
     XLocalTerm (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new LocalTerm();
-        obj.setSequenceID(this.getSequenceID());       
+        obj = new LocalTerm();      
     }      
     
     @Override
