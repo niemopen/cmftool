@@ -152,8 +152,12 @@ public class ModelXMLWriter {
         
     private void addHasProperty (Document dom, Element p, HasProperty x) {
         if (null == x) return;
-        Element e = dom.createElementNS(CMF_NS_URI, "HasProperty");    
-        addComponentRef(dom, e, "Property", x.getProperty());
+        var e  = dom.createElementNS(CMF_NS_URI, "HasProperty");  
+        var pr = x.getProperty();
+        
+        if (null == pr.getClassType()) addComponentRef(dom, e, "DataProperty", pr);
+        else addComponentRef(dom, e, "ObjectProperty", pr);
+        
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());            
         addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());
         addSimpleChild(dom, e, "DocumentationText", x.getDefinition());
@@ -189,7 +193,11 @@ public class ModelXMLWriter {
         if (null == x) return;
         Element e = dom.createElementNS(CMF_NS_URI, "AugmentRecord");
         addComponentRef(dom, e, "Class", x.getClassType());
-        addComponentRef(dom, e, "Property", x.getProperty());
+        
+        var pr = x.getProperty();
+        if (null == pr.getClassType()) addComponentRef(dom, e, "DataProperty", pr);
+        else addComponentRef(dom, e, "ObjectProperty", pr);
+        
         addSimpleChild(dom, e, "AugmentationIndex", ""+x.indexInType());
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());  
         addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());     
@@ -216,17 +224,25 @@ public class ModelXMLWriter {
     }
     
     private void addProperty (Document dom, Element p, Property x) {
+        Element e = null;
         if (null == x) return;
-        Element e = dom.createElementNS(CMF_NS_URI, "Property");
+        if (null == x.getClassType()) e = dom.createElementNS(CMF_NS_URI, "DataProperty");
+        else e = dom.createElementNS(CMF_NS_URI, "ObjectProperty");
+        
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
         addComponentChildren(dom, e, x);
         addComponentRef(dom, e, "SubPropertyOf", x.getSubPropertyOf());
-        addComponentRef(dom, e, "Class", x.getClassType());
-        addComponentRef(dom, e, "Datatype", x.getDatatype());
-        if (x.isAttribute())     addSimpleChild(dom, e, "AttributeIndicator", "true");
-        if (x.isRefAttribute())  addSimpleChild(dom, e, "RefAttributeIndicator", "true");
-        if (x.isReferenceable()) addSimpleChild(dom, e, "ReferenceableIndicator", "true");
-        if (x.isRelationship())  addSimpleChild(dom, e, "RelationshipPropertyIndicator", "true");
+        if (x.isRelationship())  addSimpleChild(dom, e, "RelationshipPropertyIndicator", "true"); 
+        
+        if (null == x.getClassType()) {
+            addComponentRef(dom, e, "Datatype", x.getDatatype());            
+            if (x.isAttribute())     addSimpleChild(dom, e, "AttributeIndicator", "true");
+            if (x.isRefAttribute())  addSimpleChild(dom, e, "RefAttributeIndicator", "true");
+        }
+        else {
+            addComponentRef(dom, e, "Class", x.getClassType());
+            if (x.isReferenceable()) addSimpleChild(dom, e, "ReferenceableIndicator", "true");
+        }
         p.appendChild(e);
     }
           

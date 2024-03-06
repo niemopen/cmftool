@@ -27,11 +27,11 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="ns.Numbers">
+  <DataProperty structures:id="ns.Numbers">
     <Name>Numbers</Name>
     <Namespace structures:ref="ns" xsi:nil="true"/>
     <Datatype structures:ref="ns.UnionType" xsi:nil="true"/>
-  </Property>
+  </DataProperty>
   <Datatype structures:id="ns.UnionType">
     <Name>UnionType</Name>
     <Namespace structures:ref="ns" xsi:nil="true"/>

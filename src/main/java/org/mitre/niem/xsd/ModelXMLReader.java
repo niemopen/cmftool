@@ -222,6 +222,7 @@ public class ModelXMLReader {
                 case "AugmentRecord":         o = new XAugmentRecord(m, p, ens, eln, atts, lineNum); break;
                 case "Class":                 o = new XClassType(m, p, ens, eln, atts, lineNum); break;
                 case "CodeListBinding":       o = new XCodeListBinding(m, p, ens, eln, atts, lineNum); break;
+                case "DataProperty":          o = new XProperty(m, p, ens, eln, atts, lineNum); break;
                 case "Datatype":              o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "ExtensionOfClass":      o = new XClassType(m, p, ens, eln, atts, lineNum); break;
                 case "HasProperty":           o = new XHasProperty(m, p, ens, eln, atts, lineNum); break;
@@ -229,7 +230,7 @@ public class ModelXMLReader {
                 case "ListOf":                o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "Model":                 o = new XModel(m, p, ens, eln, atts, lineNum); break;
                 case "Namespace":             o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
-                case "Property":              o = new XProperty(m, p, ens, eln, atts, lineNum); break;
+                case "ObjectProperty":        o = new XProperty(m, p, ens, eln, atts, lineNum); break;
                 case "RestrictionOf":         o = new XRestrictionOf(m, p, ens, eln, atts, lineNum); break;
                 case "SubPropertyOf":         o = new XProperty(m, p, ens, eln, atts, lineNum); break;
                 case "UnionOf":               o = new XUnionOf(m, p, ens, eln, atts, lineNum); break;

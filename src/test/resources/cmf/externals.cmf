@@ -97,37 +97,37 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="geo.LocationGeospatialPointAdapter">
+  <ObjectProperty structures:id="geo.LocationGeospatialPointAdapter">
     <Name>LocationGeospatialPointAdapter</Name>
     <Namespace structures:ref="geo" xsi:nil="true"/>
     <DocumentationText>A 2D or 3D geometric point. A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DocumentationText>
     <SubPropertyOf structures:ref="nc.LocationGeospatialCoordinateAbstract" xsi:nil="true"/>
     <Class structures:ref="geo.PointAdapterType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="gml.Point">
+  </ObjectProperty>
+  <DataProperty structures:id="gml.Point">
     <Name>Point</Name>
     <Namespace structures:ref="gml" xsi:nil="true"/>
     <DocumentationText>A Point is defined by a single coordinate tuple. The direct position of a point is specified by the pos element which is of type DirectPositionType.</DocumentationText>
-  </Property>
-  <Property structures:id="nc.LocationGeospatialCoordinateAbstract">
+  </DataProperty>
+  <DataProperty structures:id="nc.LocationGeospatialCoordinateAbstract">
     <Name>LocationGeospatialCoordinateAbstract</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data concept for a geospatial location.</DocumentationText>
     <AbstractIndicator>true</AbstractIndicator>
-  </Property>
-  <Property structures:id="ns.TrackPoint">
+  </DataProperty>
+  <ObjectProperty structures:id="ns.TrackPoint">
     <Name>TrackPoint</Name>
     <Namespace structures:ref="ns" xsi:nil="true"/>
     <Class structures:ref="ns.TrackPointType" xsi:nil="true"/>
-  </Property>
+  </ObjectProperty>
   <Class structures:id="geo.PointAdapterType">
     <Name>PointAdapterType</Name>
     <Namespace structures:ref="geo" xsi:nil="true"/>
     <DocumentationText>A data type for a 2D or 3D geometric point. A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DocumentationText>
     <ExternalAdapterTypeIndicator>true</ExternalAdapterTypeIndicator>
     <HasProperty>
-      <Property structures:ref="gml.Point" xsi:nil="true"/>
+      <DataProperty structures:ref="gml.Point" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DocumentationText>
@@ -138,7 +138,7 @@
     <Namespace structures:ref="ns" xsi:nil="true"/>
     <DocumentationText>A data type for a track point.</DocumentationText>
     <HasProperty>
-      <Property structures:ref="geo.LocationGeospatialPointAdapter" xsi:nil="true"/>
+      <ObjectProperty structures:ref="geo.LocationGeospatialPointAdapter" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>

@@ -44,18 +44,17 @@
       <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
     </LocalTerm>
   </Namespace>
-  <Property structures:id="nc.ConfidencePercent">
+  <DataProperty structures:id="nc.ConfidencePercent">
     <Name>ConfidencePercent</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A value that indicates belief that content is accurate or trustworthy.</DocumentationText>
     <Datatype structures:ref="nc.PercentType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="nc.SomeText">
+  </DataProperty>
+  <DataProperty structures:id="nc.SomeText">
     <Name>SomeText</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </Property>
+  </DataProperty>
   <Datatype structures:id="nc.PercentType">
     <Name>PercentType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>

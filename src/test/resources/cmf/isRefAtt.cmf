@@ -45,37 +45,37 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="ira.categoryRef">
+  <DataProperty structures:id="ira.categoryRef">
     <Name>categoryRef</Name>
     <Namespace structures:ref="ira" xsi:nil="true"/>
     <Datatype structures:ref="xs.IDREFS" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
     <RefAttributeIndicator>true</RefAttributeIndicator>
-  </Property>
-  <Property structures:id="ira.partialIndicator">
+  </DataProperty>
+  <DataProperty structures:id="ira.partialIndicator">
     <Name>partialIndicator</Name>
     <Namespace structures:ref="ira" xsi:nil="true"/>
     <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
-  </Property>
-  <Property structures:id="ira.TextLiteral">
+  </DataProperty>
+  <DataProperty structures:id="ira.TextLiteral">
     <Name>TextLiteral</Name>
     <Namespace structures:ref="ira" xsi:nil="true"/>
     <DocumentationText>A literal value for a character string.</DocumentationText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </Property>
+  </DataProperty>
   <Class structures:id="ira.TextType">
     <Name>TextType</Name>
     <Namespace structures:ref="ira" xsi:nil="true"/>
     <DocumentationText>A data type for a character string.</DocumentationText>
     <DeprecatedIndicator>true</DeprecatedIndicator>
     <HasProperty>
-      <Property structures:ref="ira.TextLiteral" xsi:nil="true"/>
+      <DataProperty structures:ref="ira.TextLiteral" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
     <HasProperty>
-      <Property structures:ref="ira.categoryRef" xsi:nil="true"/>
+      <DataProperty structures:ref="ira.categoryRef" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>

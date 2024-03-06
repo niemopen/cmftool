@@ -14,13 +14,12 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="nc.toleranceNumeric">
+  <DataProperty structures:id="nc.toleranceNumeric">
     <Name>toleranceNumeric</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>An allowable range for error on a point estimate.</DocumentationText>
     <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
+  </DataProperty>
   <Datatype structures:id="nc.NumericType">
     <Name>NumericType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>

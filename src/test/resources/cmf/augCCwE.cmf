@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Model 
-  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/"
-  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/0.8/"
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Namespace structures:id="j">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/</NamespaceURI>
     <NamespacePrefixText>j</NamespacePrefixText>
-    <DefinitionText>Justice</DefinitionText>
+    <DocumentationText>Justice</DocumentationText>
     <NamespaceKindCode>DOMAIN</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>domains/justice.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>message-1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
     <AugmentRecord>
       <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-      <Property structures:ref="j.EducationTotalYearsText" xsi:nil="true"/>
+      <DataProperty structures:ref="j.EducationTotalYearsText" xsi:nil="true"/>
       <AugmentationIndex>0</AugmentationIndex>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
@@ -21,70 +26,85 @@
     <NamespaceURI>http://example.com/N6AugEx/1.0/</NamespaceURI>
     <NamespacePrefixText>my</NamespacePrefixText>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>messageModel.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>message-1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </Namespace>
   <Namespace structures:id="nc">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
     <NamespacePrefixText>nc</NamespacePrefixText>
-    <DefinitionText>NIEM Core.</DefinitionText>
+    <DocumentationText>NIEM Core.</DocumentationText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem-core.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>message-1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="structures">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <NamespaceKindCode>UNKNOWN</NamespaceKindCode>
+    <DocumentFilePathText>utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01-msg</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="j.EducationTotalYearsText">
+  <DataProperty structures:id="j.EducationTotalYearsText">
     <Name>EducationTotalYearsText</Name>
     <Namespace structures:ref="j" xsi:nil="true"/>
-    <DefinitionText>A total number of years a person has been involved in attaining their education.</DefinitionText>
+    <DocumentationText>A total number of years a person has been involved in attaining their education.</DocumentationText>
     <Datatype structures:ref="nc.TextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="my.Message">
+  </DataProperty>
+  <ObjectProperty structures:id="my.Message">
     <Name>Message</Name>
     <Namespace structures:ref="my" xsi:nil="true"/>
     <Class structures:ref="my.MessageType" xsi:nil="true"/>
-  </Property>
-  <Property structures:id="nc.Date">
+  </ObjectProperty>
+  <DataProperty structures:id="nc.Date">
     <Name>Date</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A full date.</DefinitionText>
+    <DocumentationText>A full date.</DocumentationText>
     <SubPropertyOf structures:ref="nc.DateRepresentation" xsi:nil="true"/>
     <Datatype structures:ref="xs.date" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="nc.DateRepresentation">
+  </DataProperty>
+  <DataProperty structures:id="nc.DateRepresentation">
     <Name>DateRepresentation</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A data concept for a representation of a date.</DefinitionText>
+    <DocumentationText>A data concept for a representation of a date.</DocumentationText>
     <AbstractIndicator>true</AbstractIndicator>
-  </Property>
-  <Property structures:id="nc.EducationDescriptionText">
+  </DataProperty>
+  <DataProperty structures:id="nc.EducationDescriptionText">
     <Name>EducationDescriptionText</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A description of a person's educational background.</DefinitionText>
+    <DocumentationText>A description of a person's educational background.</DocumentationText>
     <Datatype structures:ref="nc.TextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="nc.EducationInProgressIndicator">
+  </DataProperty>
+  <DataProperty structures:id="nc.EducationInProgressIndicator">
     <Name>EducationInProgressIndicator</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>True if a person's formal education is still in progress; false otherwise.</DefinitionText>
+    <DocumentationText>True if a person's formal education is still in progress; false otherwise.</DocumentationText>
     <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="nc.PersonEducation">
+  </DataProperty>
+  <ObjectProperty structures:id="nc.PersonEducation">
     <Name>PersonEducation</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A person's educational background.</DefinitionText>
+    <DocumentationText>A person's educational background.</DocumentationText>
     <Class structures:ref="nc.EducationType" xsi:nil="true"/>
     <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
+  </ObjectProperty>
   <Class structures:id="my.MessageType">
     <Name>MessageType</Name>
     <Namespace structures:ref="my" xsi:nil="true"/>
     <HasProperty>
-      <Property structures:ref="nc.PersonEducation" xsi:nil="true"/>
+      <ObjectProperty structures:ref="nc.PersonEducation" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
@@ -92,20 +112,20 @@
   <Class structures:id="nc.EducationType">
     <Name>EducationType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A data type for a person's educational background.</DefinitionText>
+    <DocumentationText>A data type for a person's educational background.</DocumentationText>
     <AugmentableIndicator>true</AugmentableIndicator>
     <HasProperty>
-      <Property structures:ref="nc.EducationDescriptionText" xsi:nil="true"/>
+      <DataProperty structures:ref="nc.EducationDescriptionText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
     <HasProperty>
-      <Property structures:ref="nc.EducationInProgressIndicator" xsi:nil="true"/>
+      <DataProperty structures:ref="nc.EducationInProgressIndicator" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
     <HasProperty>
-      <Property structures:ref="j.EducationTotalYearsText" xsi:nil="true"/>
+      <DataProperty structures:ref="j.EducationTotalYearsText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
       <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
@@ -114,10 +134,10 @@
   <Class structures:id="nc.PersonType">
     <Name>PersonType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DefinitionText>A data type for a human being.</DefinitionText>
+    <DocumentationText>A data type for a human being.</DocumentationText>
     <AugmentableIndicator>true</AugmentableIndicator>
     <HasProperty>
-      <Property structures:ref="nc.PersonEducation" xsi:nil="true"/>
+      <ObjectProperty structures:ref="nc.PersonEducation" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
@@ -141,39 +161,4 @@
     <Name>string</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
-  <SchemaDocument>
-    <NamespacePrefixText>my</NamespacePrefixText>
-    <NamespaceURI>http://example.com/N6AugEx/1.0/</NamespaceURI>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>messageModel.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>message-1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>structures</NamespacePrefixText>
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
-    <DocumentFilePathText>utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01-msg</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>nc</NamespacePrefixText>
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>niem-core.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>message-1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
-  <SchemaDocument>
-    <NamespacePrefixText>j</NamespacePrefixText>
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/</NamespaceURI>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>domains/justice.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>message-1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
-  </SchemaDocument>
 </Model>

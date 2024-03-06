@@ -19,20 +19,19 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="nc.EmploymentPositionBasisAbstract">
+  <DataProperty structures:id="nc.EmploymentPositionBasisAbstract">
     <Name>EmploymentPositionBasisAbstract</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data concept for a nature or duration of the position, such as permanent, non-permanent, or contractor.</DocumentationText>
     <AbstractIndicator>true</AbstractIndicator>
-  </Property>
-  <Property structures:id="nc.EmploymentPositionBasisCode">
+  </DataProperty>
+  <DataProperty structures:id="nc.EmploymentPositionBasisCode">
     <Name>EmploymentPositionBasisCode</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A nature or duration of the position, such as permanent, non-permanent, or contractor.</DocumentationText>
     <SubPropertyOf structures:ref="nc.EmploymentPositionBasisAbstract" xsi:nil="true"/>
     <Datatype structures:ref="nc.EmploymentPositionBasisCodeType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
+  </DataProperty>
   <Datatype structures:id="nc.EmploymentPositionBasisCodeType">
     <Name>EmploymentPositionBasisCodeType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>

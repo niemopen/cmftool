@@ -45,44 +45,43 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Property structures:id="nc.ConfidencePercent">
+  <DataProperty structures:id="nc.ConfidencePercent">
     <Name>ConfidencePercent</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A value that indicates belief that content is accurate or trustworthy.</DocumentationText>
     <Datatype structures:ref="nc.PercentType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
-  </Property>
-  <Property structures:id="nc.DepAtt">
+  </DataProperty>
+  <DataProperty structures:id="nc.DepAtt">
     <Name>DepAtt</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DeprecatedIndicator>true</DeprecatedIndicator>
     <Datatype structures:ref="xs.token" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
-  </Property>
-  <Property structures:id="nc.SecretPercent">
+  </DataProperty>
+  <DataProperty structures:id="nc.SecretPercent">
     <Name>SecretPercent</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DeprecatedIndicator>true</DeprecatedIndicator>
     <Datatype structures:ref="nc.SecretPercentType" xsi:nil="true"/>
-  </Property>
-  <Property structures:id="nc.TextLiteral">
+  </DataProperty>
+  <DataProperty structures:id="nc.TextLiteral">
     <Name>TextLiteral</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A literal value for a character string.</DocumentationText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </Property>
+  </DataProperty>
   <Class structures:id="nc.TextType">
     <Name>TextType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for a character string.</DocumentationText>
     <DeprecatedIndicator>true</DeprecatedIndicator>
     <HasProperty>
-      <Property structures:ref="nc.TextLiteral" xsi:nil="true"/>
+      <DataProperty structures:ref="nc.TextLiteral" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
     <HasProperty>
-      <Property structures:ref="nc.DepAtt" xsi:nil="true"/>
+      <DataProperty structures:ref="nc.DepAtt" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
