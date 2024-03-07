@@ -597,6 +597,9 @@ public class ModelFromXSD {
             ct.setIsDeprecated(getAppinfoAttribute(ct.getQName(), null, "deprecated"));
             ct.setIsExternal("true".equals(getAppinfoAttribute(ct.getQName(), null, "externalAdapterTypeIndicator"))
                                 || ct.getName().endsWith("AdapterType"));
+            
+            var rcode = getAppinfoAttribute(ct.getQName(), null, "referenceCode");
+            if (!rcode.isBlank()) ct.setReferenceCode(rcode);
 
             var docs = getDocumentation(xctype);
             if (!docs.isEmpty()) ct.setDocumentation(docs.get(0));
@@ -1296,12 +1299,12 @@ public class ModelFromXSD {
                 augn.getNamespacePrefix(), ct.getQName(), hp.getProperty().getQName(), index));
     }
  
-    // Retrieve appinfo attribute value for a global component or element reference.
+    // Retrieve appinfo attribute value for a global component or an element reference.
     // Returns an empty string for appinfo that doesn't exist; never returns null.
     // For <xs:complexType name="ThingType" appinfo:deprecated="true">, do 
-    //     getAppinfo("nc:ThingType", null, "deprecated")
+    //     getAppinfoAttribute("nc:ThingType", null, "deprecated")
     // For <xs:element ref="nc:Thing" appinfo:orderedPropertyIndicator="true", do
-    //     getAppinfo("nc:ThingType", "nc:Prop", "orderedPropertyIndicator")
+    //     getAppinfoAttribute("nc:ThingType", "nc:Prop", "orderedPropertyIndicator")
     private String getAppinfoAttribute (String compQN, String erefQN, String alname) {
         if (null == erefQN) {
             var arlist = globalAppinfo.get(compQN);

@@ -114,7 +114,7 @@
     <Namespace structures:ref="j" xsi:nil="true"/>
     <DocumentationText>A comment about an address.</DocumentationText>
     <Class structures:ref="nc.TextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
+    <ReferenceCode>ANY</ReferenceCode>
   </ObjectProperty>
   <DataProperty structures:id="j.AddressVerifiedDate">
     <Name>AddressVerifiedDate</Name>
@@ -132,7 +132,7 @@
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A complete address.</DocumentationText>
     <Class structures:ref="nc.TextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
+    <ReferenceCode>ANY</ReferenceCode>
   </ObjectProperty>
   <DataProperty structures:id="nc.partialIndicator">
     <Name>partialIndicator</Name>
@@ -200,6 +200,7 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.TextType">
     <Name>TextType</Name>
@@ -216,6 +217,7 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DocumentationText>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Datatype structures:id="xs.boolean">
     <Name>boolean</Name>

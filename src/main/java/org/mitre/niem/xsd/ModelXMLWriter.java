@@ -96,6 +96,7 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
         if (null != x.hasPropertyList()) 
             for (HasProperty z : x.hasPropertyList()) { addHasProperty(dom, e, z); }    
+        addSimpleChild(dom, e, "ReferenceCode", x.getReferenceCode());
         p.appendChild(e);
     }
     
@@ -241,7 +242,7 @@ public class ModelXMLWriter {
         }
         else {
             addComponentRef(dom, e, "Class", x.getClassType());
-            if (x.isReferenceable()) addSimpleChild(dom, e, "ReferenceableIndicator", "true");
+            addSimpleChild(dom, e, "ReferenceCode", x.getReferenceCode());
         }
         p.appendChild(e);
     }

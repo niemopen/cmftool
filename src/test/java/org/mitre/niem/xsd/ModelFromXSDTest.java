@@ -1116,6 +1116,30 @@ public class ModelFromXSDTest {
             assertEmptyLogs();
         }
     }
+    
+    @Test
+    public void testReferenceCode() throws Exception {
+        for (var tdir : testDirs) {
+            String sch = tdir + "/refCode-1.xsd";
+            File f = new File(sch);
+            if (!f.canRead()) {
+                continue;
+            }
+            ModelFromXSD mfact = new ModelFromXSD();
+            Model m = mfact.createModel(sch);
+            
+            var ct = m.getClassType("nc:PersonNameType");
+            assertEquals("NONE", ct.getReferenceCode());
+            ct = m.getClassType("nc:ProperNameTextType");
+            assertEquals("URI", ct.getReferenceCode());
+            ct = m.getClassType("nc:TextType");
+            assertEquals("ANY", ct.getReferenceCode());            
+            ct = m.getClassType("nc:PersonNameTextType");
+            assertEquals("REF", ct.getReferenceCode());    
+            ct = m.getClassType("nc:AnotherType");      // test default value
+            assertEquals("ANY", ct.getReferenceCode());    
+        }
+    }
 
     @Test
     public void testRefDocumentation() throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {

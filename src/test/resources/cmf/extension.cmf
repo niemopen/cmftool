@@ -56,7 +56,7 @@
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A first name of a person.</DocumentationText>
     <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
+    <ReferenceCode>ANY</ReferenceCode>
   </ObjectProperty>
   <DataProperty structures:id="nc.personNameInitialIndicator">
     <Name>personNameInitialIndicator</Name>
@@ -82,12 +82,14 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>True if value represents the first letter or initials of a persons name; false otherwise.</DocumentationText>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.ProperNameTextType">
     <Name>ProperNameTextType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for a word or phrase by which a person or thing is known, referred, or addressed.</DocumentationText>
     <ExtensionOfClass structures:ref="nc.TextType" xsi:nil="true"/>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.TextType">
     <Name>TextType</Name>
@@ -104,6 +106,7 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DocumentationText>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Datatype structures:id="xs.boolean">
     <Name>boolean</Name>

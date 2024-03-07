@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/domains/cbrn/6.0" version="1" xml:lang="en-US" xsi:schemaLocation="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/ ../utility/appinfo.xsd https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/ ../utility/conformanceTargets.xsd" ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+<xs:schema
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/domains/cbrn/6.0"
   xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
   xmlns:cbrn="https://docs.oasis-open.org/niemopen/ns/model/domains/cbrn/6.0"
   xmlns:cbrncl="https://docs.oasis-open.org/niemopen/ns/model/codes/cbrncl/6.0"
@@ -10,7 +11,11 @@
   xmlns:scr="https://docs.oasis-open.org/niemopen/ns/model/domains/screening/6.0"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+  version="1"
+  xml:lang="en-US"
+  xsi:schemaLocation="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/ ../utility/appinfo.xsd https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/ ../utility/conformanceTargets.xsd">
   <xs:annotation>
     <xs:documentation>Test handling of element with type from structures namespace</xs:documentation>
   </xs:annotation>

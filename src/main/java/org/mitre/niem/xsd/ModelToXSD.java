@@ -624,6 +624,8 @@ public abstract class ModelToXSD {
         if (ct.isAbstract())   cte.setAttribute("abstract", "true");
         if (ct.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
         if (ct.isExternal())   addAppinfoAttribute(dom, cte, "externalAdapterTypeIndicator", "true");
+        if (!"ANY".equals(ct.getReferenceCode()))
+            addAppinfoAttribute(dom, cte, "referenceCode", ct.getReferenceCode());
         nsTypedefs.put(cname, cte);
         
         // Create simple content for class with FooLiteral property

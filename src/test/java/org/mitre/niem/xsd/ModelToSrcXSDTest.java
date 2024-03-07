@@ -78,6 +78,7 @@ public class ModelToSrcXSDTest extends ModelToXSDTest {
         "namespace-2.xsd",
         "noprefix.xsd",
         "proxy.xsd",
+        "refCode-2.xsd",
         "relProp.xsd",
         "restriction.xsd",
         "schemadoc.xsd",

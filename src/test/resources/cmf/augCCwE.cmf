@@ -98,7 +98,7 @@
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A person's educational background.</DocumentationText>
     <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
+    <ReferenceCode>ANY</ReferenceCode>
   </ObjectProperty>
   <Class structures:id="my.MessageType">
     <Name>MessageType</Name>
@@ -108,6 +108,7 @@
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.EducationType">
     <Name>EducationType</Name>
@@ -130,6 +131,7 @@
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
       <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.PersonType">
     <Name>PersonType</Name>
@@ -141,6 +143,7 @@
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Datatype structures:id="nc.TextType">
     <Name>TextType</Name>

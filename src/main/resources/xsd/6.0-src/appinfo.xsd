@@ -81,6 +81,19 @@
       </xs:restriction>
     </xs:simpleType>
   </xs:attribute>
+  <xs:attribute name="referenceCode">
+    <xs:annotation>
+      <xs:documentation>A code describing how a property may be referenced (or must appear inline).</xs:documentation>
+    </xs:annotation>
+    <xs:simpleType>
+      <xs:restriction base="xs:token">
+        <xs:enumeration value="NONE"/>
+        <xs:enumeration value="REF"/>
+        <xs:enumeration value="URI"/>
+        <xs:enumeration value="ANY"/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:attribute>
   <xs:attribute name="referenceableIndicator" type="xs:boolean">
     <xs:annotation>
       <xs:documentation>True if an element may be referenced; false if it can only be inline.</xs:documentation>

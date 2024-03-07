@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
   targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
   xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
   xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
   xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
@@ -9,9 +10,12 @@
   ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
   version="1"
   xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>Test of appinfo:referenceCode for m2xs</xs:documentation>
+  </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
-  <xs:complexType name="PersonNameTextType">
+  <xs:complexType name="PersonNameTextType" appinfo:referenceCode="REF">
     <xs:annotation>
       <xs:documentation>ClassType extending ProperNameTextType with one attribute property</xs:documentation>
     </xs:annotation>
@@ -21,7 +25,7 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:complexType name="PersonNameType">
+  <xs:complexType name="PersonNameType" appinfo:referenceCode="NONE">
     <xs:annotation>
       <xs:documentation>A data type for a combination of names and/or titles by which a person is known.</xs:documentation>
     </xs:annotation>
@@ -36,7 +40,7 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="ProperNameTextType">
+  <xs:complexType name="ProperNameTextType" appinfo:referenceCode="URI">
     <xs:annotation>
       <xs:documentation>ClassType extending TextType with no properties</xs:documentation>
     </xs:annotation>
@@ -48,6 +52,13 @@
     <xs:annotation>
       <xs:documentation>A data type for a character string.</xs:documentation>
     </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="niem-xs:string">
+        <xs:attribute ref="nc:partialIndicator" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="AnotherType">
     <xs:simpleContent>
       <xs:extension base="niem-xs:string">
         <xs:attribute ref="nc:partialIndicator" use="optional"/>

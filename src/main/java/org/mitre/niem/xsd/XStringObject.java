@@ -73,12 +73,14 @@ public class XStringObject extends XObjectType {
         case "DeprecatedIndicator":          xc.getObject().setIsDeprecated(val); break;
         case "ExternalAdapterTypeIndicator": xc.getObject().setIsExternal(val); break;      
         case "Name":                         xc.getObject().setName(val); break;
+        case "ReferenceCode":                xc.getObject().setReferenceCode(val); break;
         default:
                 LOG.error(String.format("can't add '%s' to ClassType", this.getComponentLname()));
                 break;
         }
     }
     
+    @Override
     public void addToCodeListBinding (XCodeListBinding cb) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
@@ -181,6 +183,7 @@ public class XStringObject extends XObjectType {
         case "DeprecatedIndicator":           xop.getObject().setIsDeprecated(val); break;  
         case "RefAttributeIndicator":         xop.getObject().setIsRefAttribute(val); break;
         case "ReferenceableIndicator":        xop.getObject().setIsReferenceable(val); break;
+        case "ReferenceCode":                 xop.getObject().setReferenceCode(val); break;
         case "RelationshipPropertyIndicator": xop.getObject().setIsRelationship(val); break;
         case "Name":                          xop.getObject().setName(val); break;
         default:

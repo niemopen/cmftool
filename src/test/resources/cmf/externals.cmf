@@ -103,7 +103,7 @@
     <DocumentationText>A 2D or 3D geometric point. A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DocumentationText>
     <SubPropertyOf structures:ref="nc.LocationGeospatialCoordinateAbstract" xsi:nil="true"/>
     <Class structures:ref="geo.PointAdapterType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
+    <ReferenceCode>ANY</ReferenceCode>
   </ObjectProperty>
   <DataProperty structures:id="gml.Point">
     <Name>Point</Name>
@@ -132,6 +132,7 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DocumentationText>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="ns.TrackPointType">
     <Name>TrackPointType</Name>
@@ -142,5 +143,6 @@
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
 </Model>

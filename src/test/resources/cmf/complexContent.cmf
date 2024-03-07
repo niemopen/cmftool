@@ -56,14 +56,14 @@
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A first name of a person.</DocumentationText>
     <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
+    <ReferenceCode>ANY</ReferenceCode>
   </ObjectProperty>
   <ObjectProperty structures:id="nc.PersonMiddleName">
     <Name>PersonMiddleName</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A middle name of a person.</DocumentationText>
     <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
+    <ReferenceCode>ANY</ReferenceCode>
   </ObjectProperty>
   <DataProperty structures:id="nc.personNameCommentText">
     <Name>personNameCommentText</Name>
@@ -84,7 +84,7 @@
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A last name or family name of a person.</DocumentationText>
     <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-    <ReferenceableIndicator>true</ReferenceableIndicator>
+    <ReferenceCode>ANY</ReferenceCode>
   </ObjectProperty>
   <DataProperty structures:id="nc.TextLiteral">
     <Name>TextLiteral</Name>
@@ -103,6 +103,7 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>True if value represents the first letter or initials of a persons name; false otherwise.</DocumentationText>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.PersonNameType">
     <Name>PersonNameType</Name>
@@ -129,12 +130,14 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>A comment about a kind of name for a person.</DocumentationText>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.ProperNameTextType">
     <Name>ProperNameTextType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>ClassType extending TextType with no properties</DocumentationText>
     <ExtensionOfClass structures:ref="nc.TextType" xsi:nil="true"/>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.TextType">
     <Name>TextType</Name>
@@ -151,6 +154,7 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DocumentationText>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Datatype structures:id="xs.boolean">
     <Name>boolean</Name>

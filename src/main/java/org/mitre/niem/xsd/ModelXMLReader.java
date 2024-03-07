@@ -275,6 +275,7 @@ public class ModelXMLReader {
                 case "PositiveValue":
                 case "RefAttributeIndicator":
                 case "ReferenceableIndicator":
+                case "ReferenceCode":
                 case "RelationshipPropertyIndicator":
                 case "SchemaLanguageName":
                 case "SchemaVersionText":

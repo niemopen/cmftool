@@ -85,6 +85,7 @@
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Datatype structures:id="nc.PercentType">
     <Name>PercentType</Name>

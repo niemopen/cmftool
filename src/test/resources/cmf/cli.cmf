@@ -109,6 +109,7 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>A universal identifier for a code list.</DocumentationText>
     </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Datatype structures:id="xs.anyURI">
     <Name>anyURI</Name>

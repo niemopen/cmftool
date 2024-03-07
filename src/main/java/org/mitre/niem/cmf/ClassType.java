@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import java.util.List;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ClassType extends Component {
+    private String refCode = "ANY";
     private boolean isAugmentable = false;
     private boolean isExternal = false;
     private ClassType extensionOfClass  = null;
@@ -45,12 +46,14 @@ public class ClassType extends Component {
         type = C_CLASSTYPE;
     }
 
+    public void setReferenceCode (String s)       { refCode = s; }
     public void setIsAugmentable (boolean f)      { isAugmentable = f; }
     public void setIsAugmentable (String s)       { isAugmentable = "true".equals(s); }
     public void setIsExternal (boolean f)         { isExternal = f; }    
     public void setIsExternal (String s)          { isExternal = "true".equals(s); }
     public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
     
+    public String getReferenceCode()              { return refCode; }
     public boolean isAugmentable ()               { return isAugmentable; }
     public boolean isExternal ()                  { return isExternal; }
     public ClassType getExtensionOfClass ()       { return extensionOfClass; }
