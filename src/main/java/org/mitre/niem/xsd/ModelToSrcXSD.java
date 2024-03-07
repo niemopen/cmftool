@@ -39,7 +39,7 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelToSrcXSD extends ModelToXSD {
-    public ModelToSrcXSD () { super(); }
+
     public ModelToSrcXSD (Model m) { super(m); }
     
     // Convert NIEM v3-5 ctargs to NIEM 6.

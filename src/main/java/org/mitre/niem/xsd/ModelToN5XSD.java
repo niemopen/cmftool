@@ -34,7 +34,6 @@ import org.mitre.niem.cmf.Model;
  */
 public class ModelToN5XSD extends ModelToXSD {
     
-    public ModelToN5XSD () { super(); }
     public ModelToN5XSD (Model m) { super(m); }
     
     @Override

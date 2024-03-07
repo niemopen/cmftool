@@ -63,6 +63,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
 import org.mitre.niem.cmf.AugmentRecord;
+import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
@@ -124,12 +125,10 @@ public abstract class ModelToXSD {
     protected String clsaURI = null;                          // clsa namespace
     protected String proxyURI = null;                         // proxy namespace URI
     protected String structURI = null;                        // structures namespace URI
-
-
     protected Element root = null;                            // current document element
 
-    
-    public ModelToXSD () {
+    // Don't let anyone create an object without a Model.
+    private ModelToXSD () { 
         ns2file        = new HashMap<>();
         nsfiles        = new HashSet<>();
         utilityNSuri   = new HashSet<>();
@@ -137,7 +136,7 @@ public abstract class ModelToXSD {
         litTypes       = new HashSet<>();
         litProps       = new HashSet<>(); 
         needSimpleType = new HashSet<>();
-    }
+    }   
     
     public ModelToXSD (Model m) {
         this();
@@ -157,9 +156,21 @@ public abstract class ModelToXSD {
      * If namespace FOO has an augmentation, or a substitution for another namespace,
      * and FOO is not imported by any other schema document in the pile, then the
      * root schema document imports FOO.
-     * @param uri -- namespace URI of root schema document
+     * @param s -- namespace prefix or URI of root schema document
+     * @throws org.mitre.niem.cmf.CMFException
      */
-    public void setMessageNamespace (String uri) { messageNSuri = uri; }
+    public void setMessageNamespace (String s) throws CMFException {
+        Namespace msgNS;
+        boolean isURI    = s.contains(":");
+        if (isURI) msgNS = m.getNamespaceByURI(s);
+        else msgNS = m.getNamespaceByPrefix(s);
+        if (null == msgNS) {
+            throw(new CMFException(String.format(
+                    "namespace %s '%s' is not in the model",
+                    (isURI ? "URI" : "prefix"), s)));
+        }
+        messageNSuri = msgNS.getNamespaceURI();
+    }
     
     // Write the Model to an XML Schema pile in directory "od".
     // Target directory should be empty.  If it isn't, you'll get munged

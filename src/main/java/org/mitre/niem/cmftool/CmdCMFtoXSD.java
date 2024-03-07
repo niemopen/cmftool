@@ -38,6 +38,7 @@ import javax.xml.transform.TransformerException;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.xsd.ModelToMsgXSD;
 import org.mitre.niem.xsd.ModelToN5XSD;
@@ -66,8 +67,8 @@ class CmdCMFtoXSD implements JCCommand {
     @Parameter(order = 2, names = "--catalog", description = "write XML catalog into this file")
     private String catPath = null;
     
-    @Parameter(order = 3, names = "--msgNS", description = "set this URI as message schema root namespace")
-    private String messageNSuri = null;
+    @Parameter(order = 3, names = "--msgNS", description = "set namespace with this prefix or URI as message schema root")
+    private String messageNS = null;
     
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
@@ -209,18 +210,13 @@ class CmdCMFtoXSD implements JCCommand {
                 System.exit(1);
             }        
         }
-        mw.setCatalog(catPath);
-        mw.setMessageNamespace(messageNSuri);
         try {
+            mw.setCatalog(catPath);
+            mw.setMessageNamespace(messageNS);
             mw.writeXSD(od);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(CmdCMFtoXSD.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ParserConfigurationException ex) {
-            Logger.getLogger(CmdCMFtoXSD.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (TransformerException ex) {
-            Logger.getLogger(CmdCMFtoXSD.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(CmdCMFtoXSD.class.getName()).log(Level.SEVERE, null, ex);           
+        } catch(Exception ex) {
+            System.err.println("error: " + ex.getMessage());
+            System.exit(1);
         }
         System.exit(0);
     }    

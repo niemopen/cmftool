@@ -39,7 +39,6 @@ import org.w3c.dom.Document;
  */
 public class ModelToMsgXSD extends ModelToXSD {
     
-    public ModelToMsgXSD () { super(); }
     public ModelToMsgXSD (Model m) { super(m); }
     
     // For a message schema, we create a simple type declaration from a Datatype object (FooType)
