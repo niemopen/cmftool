@@ -110,7 +110,8 @@ public class ModelFromXSD {
     private Namespace xsdns = null;                         // XSD namespace object in model
     private Namespace xmlns = null;                         // XML namespace object in model (null if no xml: attributes)
     private Namespace structNS = null;                      // structures namespace object in model
-    private boolean hasGlobalAug = false;                   // true if global element/attribute augmentations exist
+    private boolean hasGElementAug = false;                 // true if model has global element augmentations
+    private boolean hasGAttributeAug = false;               // true if model has global attribute augmentations
     private XMLSchema s = null;                             // schema from which we are creating the model
     private XSModel xs = null;                              // from the XMLSchema object    
     private Map<String,XMLSchemaDocument> sdoc = null;      // map nsURI -> XMLSchemaDocument object from XMLSchema object
@@ -224,27 +225,27 @@ public class ModelFromXSD {
     }
     
     // We need to know early whether there are any global augmentations,
-    // because if so, there are no Datatypes; everything is a Class.
-    // Create ClassType and Property objects for structures:AssociationType
-    // and ObjectType if needed.
+    // because if so, there are no Datatypes (other than XSD builtins; 
+    // everything is a Class.  Create ClassType and Property objects for 
+    // structures:AssociationType and ObjectType if needed.
     private void checkGlobalAugmentations () {
         
         // Is any declaration subsitutable for augmentation point in structures?
         var snuri = structNS.getNamespaceURI();
         var xmap  = xs.getComponents(ELEMENT_DECLARATION);
-        for (int i = 0; i < xmap.getLength() && !hasGlobalAug; i++) {
+        for (int i = 0; i < xmap.getLength() && !hasGElementAug; i++) {
             var xobj  = (XSElementDeclaration)xmap.item(i);
             var xsbg  = xobj.getSubstitutionGroupAffiliation();
             if (null == xsbg) continue;
             var suri  = xsbg.getNamespace();
             var sname = xsbg.getName();
             if (suri.equals(snuri)) {
-                if (sname.endsWith("AugmentationPoint")) hasGlobalAug = true;
+                if (sname.endsWith("AugmentationPoint")) hasGElementAug = true;
             }
         }
         // Are there augmentation attributes for ObjectType or AssociationType?
         xmap = xs.getComponentsByNamespace(TYPE_DEFINITION, snuri);
-        for (int i = 0; i < xmap.getLength() && !hasGlobalAug; i++) {
+        for (int i = 0; i < xmap.getLength() && !hasGAttributeAug; i++) {
             var xobj  = (XSTypeDefinition)xmap.item(i);
             if (COMPLEX_TYPE != xobj.getTypeCategory()) continue;
             var xctype = (XSComplexTypeDefinition)xobj;
@@ -253,22 +254,25 @@ public class ModelFromXSD {
                 var xattr = (XSAttributeUse)xattrs.item(j);
                 var xattd = xattr.getAttrDeclaration();
                 var anuri = xattd.getNamespace();
-                if (!snuri.equals(anuri)) hasGlobalAug = true;
+                if (!snuri.equals(anuri)) hasGAttributeAug = true;
             }
         }
-        if (!hasGlobalAug) return;
-        
-        var ct = new ClassType(structNS, "ObjectType");
-        var ap = new Property(structNS, "ObjectAugmentationPoint");
-        ct.setIsAugmentable(true);
-        m.addComponent(ct);
-        m.addComponent(ap);
+        // Create Class and Property for global element augmentations.
+        // Use them to add augmentation properties to every Class.
+        // We won't actually write these into the model.
+        if (hasGElementAug) {
+            var ct = new ClassType(structNS, "ObjectType");
+            var ap = new Property(structNS, "ObjectAugmentationPoint");
+            ct.setIsAugmentable(true);
+            m.addComponent(ct);
+            m.addComponent(ap);
 
-        ct = new ClassType(structNS, "AssociationType");
-        ap = new Property(structNS, "AssociationAugmentationPoint");
-        ct.setIsAugmentable(true);
-        m.addComponent(ct);
-        m.addComponent(ap);
+            ct = new ClassType(structNS, "AssociationType");
+            ap = new Property(structNS, "AssociationAugmentationPoint");
+            ct.setIsAugmentable(true);
+            m.addComponent(ct);
+            m.addComponent(ap);
+        }
     }
     
     // Schema level documentation and appinfo is parsed in the XMLSchemaDocument object
@@ -277,7 +281,8 @@ public class ModelFromXSD {
         sdoc.forEach((nsuri, sd) -> {
             var ns = m.getNamespaceByURI(nsuri);
             if (null != ns) {
-                if (!sd.documentationStrings().isEmpty()) ns.setDocumentation(sd.documentationStrings().get(0));
+                if (!sd.documentationStrings().isEmpty()) 
+                    ns.setDocumentation(sd.documentationStrings().get(0));
                 for (var lt : sd.localTerms()) ns.addLocalTerm(lt);
             }
         });       
@@ -431,7 +436,7 @@ public class ModelFromXSD {
                 // Complex type can be a class or a datatype object.
                 // Simple content without model attributes is a Datatype object
                 // Everything is a class if there are global augmentations.
-                boolean hasModelAttributes = hasGlobalAug;
+                boolean hasModelAttributes = false;
                 var qname  = ns.getNamespacePrefix() + ":" + lname;
                 var xctype = (XSComplexTypeDefinition)xtype;
                 var atts   = xctype.getAttributeUses();
@@ -1271,7 +1276,8 @@ public class ModelFromXSD {
             }         
         }
         // All augmentations processed. Remove augmentation types,
-        // augmentation points, and augmentation elements from model
+        // augmentation points, and augmentation elements from model.
+        // Special dance to avoid changing a list while iterating over it.
         List<Component> delComps = new ArrayList<>();
         for (Component c : m.getComponentList()) {
             String lname = c.getName();
@@ -1280,6 +1286,33 @@ public class ModelFromXSD {
                     || lname.endsWith("Augmentation")) delComps.add(c);
         }
         for (Component c : delComps) { m.removeComponent(c); }
+    }
+    
+    // Add augmentation property to a Class.  Handle difference between
+    // properties with an augmentation type and properties without.
+    private void processOneElementAugmentation (ClassType augmented, Property augp) {
+          // If property has an augmentation type, add type children to the augmented type
+            ClassType ptype = augp.getClassType();
+            if (null != ptype && ptype.getName().endsWith("AugmentationType")) {
+                LOG.debug("Augmenting {} with augmentation type {}", augmented.getQName(), ptype.getQName());
+                int index = 0;
+                for (HasProperty hp : ptype.hasPropertyList()) {
+                    addAugmentPropertyToClass(augmented, augp.getNamespace(), hp);
+                    addAugmentRecord(ptype.getNamespace(), augmented, hp, index++);
+                }
+                LOG.debug("Done with augmentation type {}", ptype.getQName());
+            }
+            // Otherwise add augmentation property p to the augmented type
+            else {
+                LOG.debug("Augmenting {} with augmentation property {}", augmented.getQName(), augp.getQName());
+                HasProperty ahp = new HasProperty();
+                ahp.setProperty(augp);
+                ahp.setMinOccurs(0);
+                ahp.setMaxUnbounded(true); 
+                addAugmentPropertyToClass(augmented, augp.getNamespace(), ahp);
+                addAugmentRecord(augp.getNamespace(), augmented, ahp, -1);
+                augp.setSubPropertyOf(null);    // remove AugmentationPoint subpropertyOf
+            }                 
     }
     
     // Special handing for attribute augmentations. These are marked in XSD
