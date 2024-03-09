@@ -182,7 +182,6 @@ public class XStringObject extends XObjectType {
         case "DocumentationText":             xop.getObject().setDocumentation(val); break;
         case "DeprecatedIndicator":           xop.getObject().setIsDeprecated(val); break;  
         case "RefAttributeIndicator":         xop.getObject().setIsRefAttribute(val); break;
-        case "ReferenceableIndicator":        xop.getObject().setIsReferenceable(val); break;
         case "ReferenceCode":                 xop.getObject().setReferenceCode(val); break;
         case "RelationshipPropertyIndicator": xop.getObject().setIsRelationship(val); break;
         case "Name":                          xop.getObject().setName(val); break;

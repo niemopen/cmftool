@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,11 @@ public class Model extends ObjectType {
     // that are not part of the model (but still need to be unique).  Code for
     // processing XML schema piles is allowed to use this.
     private final NamespaceMap nsmap = new NamespaceMap();
+    
+    // Global augmentations from structures.xsd apply to every class
+    private final List<AugmentRecord> augmentList = new ArrayList<>();
+    public List<AugmentRecord> augmentList()       { return augmentList; }    
+    public void addAugmentRecord (AugmentRecord r) { augmentList.add(r);}
     
     // Index of model children (components and namespaces)
     // Built-in namespaces do not appear in these data structures.

@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2023 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,12 @@ public class XAugmentRecord extends XObjectType {
         child.addToAugmentRecord(this);
         super.addAsChild(child);
     }
-   
+    
+    @Override
+    public void addToModel (XModel x) { 
+        x.getObject().addAugmentRecord(this.getObject());
+    }   
+    
     @Override
     public void addToNamespace (XNamespace x) { 
         x.getObject().addAugmentRecord(this.getObject());

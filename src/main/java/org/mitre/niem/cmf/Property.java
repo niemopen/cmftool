@@ -35,7 +35,6 @@ public class Property extends Component {
     private String refCode = null;          // default to ClassType if not set
     private boolean isAttribute = false; 
     private boolean isRefAttribute = false;
-    private boolean isReferenceable = false;
     private boolean isRelationship = false;
 
     public Property () { super(); type = C_OBJECTPROPERTY; }
@@ -52,20 +51,22 @@ public class Property extends Component {
     public void setIsAttribute (String s)         { isAttribute = null != s && "true".equals(s); }
     public void setIsRefAttribute (boolean f)     { isRefAttribute = f; }
     public void setIsRefAttribute (String s)      { isRefAttribute = null != s && "true".equals(s); }
-    public void setReferenceCode (String s)       { refCode = s; }
-    public void setIsReferenceable (boolean f)    { isReferenceable = f; }
-    public void setIsReferenceable (String s)     { isReferenceable = "true".equals(s); }     
+    public void setReferenceCode (String s)       { refCode = s; }   
     public void setIsRelationship (boolean f)     { isRelationship = f; }
     public void setIsRelationship (String s)      { isRelationship = "true".equals(s); } 
     
     public Property getSubPropertyOf ()           { return subPropertyOf; }
     public ClassType getClassType ()              { return classType; }
     public Datatype getDatatype()                 { return datatype; }
-    public String getReferenceCode()              { return refCode; }
     public boolean isAttribute()                  { return isAttribute; }
     public boolean isRefAttribute()               { return isRefAttribute; }
-    public boolean isReferenceable()              { return isReferenceable; }  
     public boolean isRelationship()               { return isRelationship; } 
+    
+    public String getReferenceCode() {
+        if (null != refCode) return refCode;
+        if (null != classType) return classType.getReferenceCode();
+        return "";
+    }
     
     @Override
     public void addToModel (Model m) {

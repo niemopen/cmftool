@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,11 +86,13 @@ import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_CLSA;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_PROXY;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XSD;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
+import static org.mitre.niem.cmf.NamespaceKind.uriBuiltinNum;
 import org.mitre.niem.cmf.NamespaceMap;
 import org.w3c.dom.Element;
 
@@ -107,6 +109,8 @@ public class ModelFromXSD {
     private NamespaceMap nsmap = null;                      // namespace prefix/URI mapping handler in model
     private Namespace xsdns = null;                         // XSD namespace object in model
     private Namespace xmlns = null;                         // XML namespace object in model (null if no xml: attributes)
+    private Namespace structNS = null;                      // structures namespace object in model
+    private boolean hasGlobalAug = false;                   // true if global element/attribute augmentations exist
     private XMLSchema s = null;                             // schema from which we are creating the model
     private XSModel xs = null;                              // from the XMLSchema object    
     private Map<String,XMLSchemaDocument> sdoc = null;      // map nsURI -> XMLSchemaDocument object from XMLSchema object
@@ -151,6 +155,7 @@ public class ModelFromXSD {
         referencedProps      = new HashSet<>();
          
         generateNamespaces();           // normalize namespace prefixes so we can use QNames
+        checkGlobalAugmentations();     // global augmentations? create ClassType and Property objects for structures
         processSchemaAnnotations();     // get documentation and local terms from schema annotations
         processAppinfoAttributes();     // index all the appinfo attributes by QName for easy retrieval
         initializeDeclarations();       // create properties for element and attribute declarations
@@ -163,6 +168,7 @@ public class ModelFromXSD {
         processProperties();            // populate all fields of property objects from schema
         processElementAugmentations();  // add augmentation elements to augmented class objects
         processAttributeAugmentations();// add augmentation attributes to augmented class objects
+        handleGlobalAugmentations();
         return m;
     }
     
@@ -203,6 +209,7 @@ public class ModelFromXSD {
                 n.setSchemaVersion(sd.schemaVersion());
                 n.setLanguage(sd.language());
                 LOG.debug("Created namespace {}", nsuri);
+                if (NSK_BUILTIN == kind && NIEM_STRUCTURES == uriBuiltinNum(nsuri)) structNS = n;
             }
         });        
         // Add namespace for XSD to model if it isn't already there
@@ -214,6 +221,54 @@ public class ModelFromXSD {
             try { m.addNamespace(xsdns); } catch (CMFException ex) { }    // CAN'T HAPPEN
             LOG.debug("Created namespace {}", W3C_XML_SCHEMA_NS_URI);
         }
+    }
+    
+    // We need to know early whether there are any global augmentations,
+    // because if so, there are no Datatypes; everything is a Class.
+    // Create ClassType and Property objects for structures:AssociationType
+    // and ObjectType if needed.
+    private void checkGlobalAugmentations () {
+        
+        // Is any declaration subsitutable for augmentation point in structures?
+        var snuri = structNS.getNamespaceURI();
+        var xmap  = xs.getComponents(ELEMENT_DECLARATION);
+        for (int i = 0; i < xmap.getLength() && !hasGlobalAug; i++) {
+            var xobj  = (XSElementDeclaration)xmap.item(i);
+            var xsbg  = xobj.getSubstitutionGroupAffiliation();
+            if (null == xsbg) continue;
+            var suri  = xsbg.getNamespace();
+            var sname = xsbg.getName();
+            if (suri.equals(snuri)) {
+                if (sname.endsWith("AugmentationPoint")) hasGlobalAug = true;
+            }
+        }
+        // Are there augmentation attributes for ObjectType or AssociationType?
+        xmap = xs.getComponentsByNamespace(TYPE_DEFINITION, snuri);
+        for (int i = 0; i < xmap.getLength() && !hasGlobalAug; i++) {
+            var xobj  = (XSTypeDefinition)xmap.item(i);
+            if (COMPLEX_TYPE != xobj.getTypeCategory()) continue;
+            var xctype = (XSComplexTypeDefinition)xobj;
+            var xattrs = xctype.getAttributeUses();
+            for (int j = 0; j < xattrs.getLength(); j++) {
+                var xattr = (XSAttributeUse)xattrs.item(j);
+                var xattd = xattr.getAttrDeclaration();
+                var anuri = xattd.getNamespace();
+                if (!snuri.equals(anuri)) hasGlobalAug = true;
+            }
+        }
+        if (!hasGlobalAug) return;
+        
+        var ct = new ClassType(structNS, "ObjectType");
+        var ap = new Property(structNS, "ObjectAugmentationPoint");
+        ct.setIsAugmentable(true);
+        m.addComponent(ct);
+        m.addComponent(ap);
+
+        ct = new ClassType(structNS, "AssociationType");
+        ap = new Property(structNS, "AssociationAugmentationPoint");
+        ct.setIsAugmentable(true);
+        m.addComponent(ct);
+        m.addComponent(ap);
     }
     
     // Schema level documentation and appinfo is parsed in the XMLSchemaDocument object
@@ -350,7 +405,7 @@ public class ModelFromXSD {
     // Sometimes iterating through the XSNamedMap hits the same component more
     // than once. This happens when we create the entire NIEM model by
     // supplying domains/*.xsd and codes/*.xsd to XMLSchema.initialSchemaDocs
-    private void initializeDefinitions () throws CMFException {
+    private void initializeDefinitions () throws CMFException {     
         HashSet<String>seen = new HashSet<>();
         XSNamedMap xmap = xs.getComponents(TYPE_DEFINITION);
         for (int i = 0; i < xmap.getLength(); i++) {
@@ -375,7 +430,8 @@ public class ModelFromXSD {
             else {
                 // Complex type can be a class or a datatype object.
                 // Simple content without model attributes is a Datatype object
-                boolean hasModelAttributes = false;
+                // Everything is a class if there are global augmentations.
+                boolean hasModelAttributes = hasGlobalAug;
                 var qname  = ns.getNamespacePrefix() + ":" + lname;
                 var xctype = (XSComplexTypeDefinition)xtype;
                 var atts   = xctype.getAttributeUses();
@@ -575,10 +631,21 @@ public class ModelFromXSD {
                         p.setSubPropertyOf(m.getProperty(xesubg.getNamespace(), xesubg.getName()));
                     }    
                     p.setIsAbstract(xedecl.getAbstract());
-                    p.setIsReferenceable(xedecl.getNillable());
+                    
+                    var nlbf  = xedecl.getNillable();
+                    var rcode = getAppinfoAttribute(p.getQName(), null, "referenceCode");
+                    if (rcode.isBlank()) {
+                        rcode = nlbf ? "ANY" : "NONE";
+                    }
+                    p.setReferenceCode(rcode);
                 }
             }
         }
+    }
+    
+    
+    private void handleGlobalAugmentations () {
+        
     }
        
     // Time to complete all the class objects.  Documentation is handled here.

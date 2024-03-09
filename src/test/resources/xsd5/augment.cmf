@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="j">
+    <NamespaceURI>http://release.niem.gov/niem/domains/jxdm/7.0/</NamespaceURI>
+    <NamespacePrefixText>j</NamespacePrefixText>
+    <DocumentationText>Justice domain.</DocumentationText>
+    <NamespaceKindCode>DOMAIN</NamespaceKindCode>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>augment-niem/domains/jxdm.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <ObjectProperty structures:ref="j.AddressCommentText" xsi:nil="true"/>
+      <AugmentationIndex>0</AugmentationIndex>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentRecord>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <DataProperty structures:ref="j.AddressVerifiedDate" xsi:nil="true"/>
+      <AugmentationIndex>1</AugmentationIndex>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </AugmentRecord>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <DataProperty structures:ref="j.AnotherAddress" xsi:nil="true"/>
+      <AugmentationIndex>-1</AugmentationIndex>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </AugmentRecord>
+  </Namespace>
+  <Namespace structures:id="nc">
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DocumentationText>NIEM Core.</DocumentationText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>augment-niem/niem-core.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="niem-xs">
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>augment-niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <LocalTerm>
+      <TermName>maxInclusive</TermName>
+      <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
+    </LocalTerm>
+  </Namespace>
+  <Namespace structures:id="structures">
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <DocumentFilePathText>augment-niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="test">
+    <NamespaceURI>http://example.com/dummyAugmentation/</NamespaceURI>
+    <NamespacePrefixText>test</NamespacePrefixText>
+    <DocumentationText>Augmentation test schema</DocumentationText>
+    <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>augment.xsd</DocumentFilePathText>
+    <NIEMVersionText>5.0</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <ObjectProperty structures:ref="j.AddressCommentText" xsi:nil="true"/>
+      <AugmentationIndex>1</AugmentationIndex>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentRecord>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <DataProperty structures:ref="test.BoogalaText" xsi:nil="true"/>
+      <AugmentationIndex>0</AugmentationIndex>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentRecord>
+    <AugmentRecord>
+      <Class structures:ref="nc.AddressType" xsi:nil="true"/>
+      <DataProperty structures:ref="test.boogalaProp" xsi:nil="true"/>
+      <AugmentationIndex>2</AugmentationIndex>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentRecord>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <ObjectProperty structures:id="j.AddressCommentText">
+    <Name>AddressCommentText</Name>
+    <Namespace structures:ref="j" xsi:nil="true"/>
+    <DocumentationText>A comment about an address.</DocumentationText>
+    <Class structures:ref="nc.TextType" xsi:nil="true"/>
+    <ReferenceCode>ANY</ReferenceCode>
+  </ObjectProperty>
+  <DataProperty structures:id="j.AddressVerifiedDate">
+    <Name>AddressVerifiedDate</Name>
+    <Namespace structures:ref="j" xsi:nil="true"/>
+    <DocumentationText>A date on which the address was verified.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="j.AnotherAddress">
+    <Name>AnotherAddress</Name>
+    <Namespace structures:ref="j" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.AddressFullText">
+    <Name>AddressFullText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A complete address.</DocumentationText>
+    <Class structures:ref="nc.TextType" xsi:nil="true"/>
+    <ReferenceCode>ANY</ReferenceCode>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.partialIndicator">
+    <Name>partialIndicator</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DocumentationText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="nc.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A literal value for a character string.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="test.boogalaProp">
+    <Name>boogalaProp</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="test.BoogalaText">
+    <Name>BoogalaText</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>A date on which the address was verified.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="nc.AddressType">
+    <Name>AddressType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a geophysical location described by postal information.</DocumentationText>
+    <AugmentableIndicator>true</AugmentableIndicator>
+    <HasProperty>
+      <ObjectProperty structures:ref="nc.AddressFullText" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <ObjectProperty structures:ref="j.AddressCommentText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
+      <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="j.AddressVerifiedDate" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+      <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="j.AnotherAddress" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+      <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="test.BoogalaText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="test.boogalaProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
+    </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
+  </Class>
+  <Class structures:id="nc.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <HasProperty>
+      <DataProperty structures:ref="nc.TextLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="nc.partialIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DocumentationText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DocumentationText>
+    </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
+  </Class>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

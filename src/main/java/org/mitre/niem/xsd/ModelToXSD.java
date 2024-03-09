@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,6 +161,7 @@ public abstract class ModelToXSD {
      */
     public void setMessageNamespace (String s) throws CMFException {
         Namespace msgNS;
+        if (null == s) return;
         boolean isURI    = s.contains(":");
         if (isURI) msgNS = m.getNamespaceByURI(s);
         else msgNS = m.getNamespaceByPrefix(s);
@@ -896,7 +897,9 @@ public abstract class ModelToXSD {
         if (isAttribute) pe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
         else pe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
         pe.setAttribute("name", p.getName());
-        if (p.isReferenceable()) pe.setAttribute("nillable", "true");
+        var pqn = p.getQName();
+        var pqc = p.getReferenceCode();
+        if (isPropertyNillable(p)) pe.setAttribute("nillable", "true");
         if (p.isAbstract())      pe.setAttribute("abstract", "true");
         if (p.isDeprecated())    addAppinfoAttribute(dom, pe, "deprecated", "true");
         if (p.isRefAttribute())  addAppinfoAttribute(dom, pe, "referenceAttributeIndicator", "true");
@@ -1120,6 +1123,8 @@ public abstract class ModelToXSD {
     }
     
     protected String getShareSuffix () { return ""; }
+    
+    protected abstract boolean isPropertyNillable (Property p);
     
     protected String structuresBaseType (String compName) {
         var bt = structPrefix + ":";

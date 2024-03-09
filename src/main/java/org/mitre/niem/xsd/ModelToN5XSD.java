@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2023 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 package org.mitre.niem.xsd;
 
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.Property;
 
 /**
  * Generates a NIEM 5 schema document pile from a CMF model
@@ -46,7 +47,15 @@ public class ModelToN5XSD extends ModelToXSD {
     
     @Override
     protected String getDefaultNIEMVersion()  { return "5"; }
-
+    
+    // In NIEM 5 all properties are nillable unless otherwise specified.
+    @Override
+    protected boolean isPropertyNillable (Property p) {
+        if (p.isAttribute()) return false;
+        if (p.isAbstract())  return false;
+        return !"NONE".equals(p.getReferenceCode());
+    }
+    
     @Override
     protected String structuresBaseType (String compName) {
         var bt = structPrefix + ":";

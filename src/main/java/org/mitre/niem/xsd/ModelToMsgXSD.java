@@ -29,6 +29,7 @@ import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
+import org.mitre.niem.cmf.Property;
 import org.w3c.dom.Document;
 
 /**
@@ -117,6 +118,17 @@ public class ModelToMsgXSD extends ModelToXSD {
     @Override
     protected String getShareSuffix () { return "-msg"; }
     
+    // In a message schema, object properties are nillable unless otherwise
+    // specified. Data properties are never nillable -- if you make a property
+    // referencable with appinfo:referenceCode, it becomes an object property.
+    @Override
+    protected boolean isPropertyNillable (Property p) {
+        if (p.isAttribute()) return false;
+        if (p.isAbstract())  return false;
+        if (null == p.getClassType()) return false; // a data property
+        return !"NONE".equals(p.getReferenceCode());
+    }    
+
     // Don't convert "xs:foo" to "xs-proxy:foo" in message schema documents
     @Override
     protected String proxifiedDatatypeQName (Datatype dt) {

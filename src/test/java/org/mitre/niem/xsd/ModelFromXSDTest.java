@@ -1077,11 +1077,11 @@ public class ModelFromXSDTest {
 
             Property p = m.getProperty("nc:ConfidencePercent");
             assertNotNull(p);
-            assertTrue(p.isReferenceable());
+            assertEquals("ANY", p.getReferenceCode());
 
             p = m.getProperty("nc:SomeText");
             assertNotNull(p);
-            assertFalse(p.isReferenceable());
+            assertEquals("NONE", p.getReferenceCode());
             assertEmptyLogs();
         }
     }

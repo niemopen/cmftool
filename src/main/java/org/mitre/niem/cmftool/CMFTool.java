@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,10 @@ public class CMFTool {
          
     // Uncomment arguments for debugging:
      
-    String xtd = "src/test/resources/xsd/";
-    String dir = "tmp/02-NoAug/";
+    String xtd = "src/test/resources/xsd6/";
     if (0 == args.length) {
-        args = new String[]{"x2m", "src/test/resources/xsd/clsa.xsd"};
+        args = new String[]{"x2m", "-d", xtd + "globalAug-1.xsd"};
+//        args = new String[]{"x2m", xtd + "complexContent.xsd"};
 
 //        args = new String[]{"m2xm", "-o", "examples/Claim-iepd/tmp", "examples/Claim-iepd/claim.cmf"};
 //        args = new String[]{"x2m", "-o", "tmp/aug/x.cmf", "tmp/aug/messageModel.xsd", "tmp/aug/niem-core.xsd" };

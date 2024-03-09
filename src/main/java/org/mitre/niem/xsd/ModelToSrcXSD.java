@@ -28,6 +28,7 @@ import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
+import org.mitre.niem.cmf.Property;
 
 /**
  *
@@ -83,4 +84,13 @@ public class ModelToSrcXSD extends ModelToXSD {
     
     @Override
     protected String getShareSuffix ()      { return "-src"; }    
+    
+    // In a source schema, properties are nillable unless otherwise
+    // specified. 
+    @Override
+    protected boolean isPropertyNillable (Property p) {
+        if (p.isAttribute()) return false;
+        if (p.isAbstract())  return false;
+        return !"NONE".equals(p.getReferenceCode());
+    }
 }
