@@ -56,7 +56,7 @@ public class ModelToSrcXSD extends ModelToXSD {
         var sep  = "";
         for (String cta : ctas) {
             if (cta.startsWith(n5pf)) {
-                var targ = NamespaceKind.targetFromCTA(cta);
+                var targ = NamespaceKind.cta2Target(cta);
                 cta = n6pf + DEFAULT_NIEM_VERSION + "/" + targ;
             }
             cta = cta.replace("MessageSchemaDocument", "SubsetSchemaDocument");

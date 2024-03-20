@@ -62,6 +62,7 @@ public class ModelToSrcXSDTest extends ModelToXSDTest {
         "deprecated.xsd",
         "doubleType.xsd",
         "externals.xsd",
+        "globalAug-1.xsd",
         "isRefAtt.xsd",
         "list.xsd",
         "listSimpleType.xsd",

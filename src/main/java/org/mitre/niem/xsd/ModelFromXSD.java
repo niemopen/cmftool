@@ -68,6 +68,9 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import static org.apache.xerces.xs.XSTypeDefinition.COMPLEX_TYPE;
 import static org.apache.xerces.xs.XSTypeDefinition.SIMPLE_TYPE;
 import org.mitre.niem.cmf.AugmentRecord;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_ASSOC;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_NONE;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_OBJECT;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
@@ -92,9 +95,9 @@ import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XSD;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
-import static org.mitre.niem.cmf.NamespaceKind.uriBuiltinNum;
 import org.mitre.niem.cmf.NamespaceMap;
 import org.w3c.dom.Element;
+import static org.mitre.niem.cmf.NamespaceKind.uri2Builtin;
 
 
 /**
@@ -109,7 +112,6 @@ public class ModelFromXSD {
     private NamespaceMap nsmap = null;                      // namespace prefix/URI mapping handler in model
     private Namespace xsdns = null;                         // XSD namespace object in model
     private Namespace xmlns = null;                         // XML namespace object in model (null if no xml: attributes)
-    private Namespace structNS = null;                      // structures namespace object in model
     private boolean hasGElementAug = false;                 // true if model has global element augmentations
     private boolean hasGAttributeAug = false;               // true if model has global attribute augmentations
     private XMLSchema s = null;                             // schema from which we are creating the model
@@ -169,13 +171,12 @@ public class ModelFromXSD {
         processProperties();            // populate all fields of property objects from schema
         processElementAugmentations();  // add augmentation elements to augmented class objects
         processAttributeAugmentations();// add augmentation attributes to augmented class objects
-        handleGlobalAugmentations();
         return m;
     }
     
     // Create namespace objects for all namespaces in the model.  After this, we
     // have a unique prefix for each namespace, so we can use QNames instead of uri,lname.
-    private void generateNamespaces () {
+    private void generateNamespaces () throws CMFException {
         // Generate namespace prefix map from sorted list of all namespace declarations in schema
         // Prefer prefix bindings from schema documents in this order:
         // 1. extension schema documents
@@ -210,9 +211,8 @@ public class ModelFromXSD {
                 n.setSchemaVersion(sd.schemaVersion());
                 n.setLanguage(sd.language());
                 LOG.debug("Created namespace {}", nsuri);
-                if (NSK_BUILTIN == kind && NIEM_STRUCTURES == uriBuiltinNum(nsuri)) structNS = n;
             }
-        });        
+        });         
         // Add namespace for XSD to model if it isn't already there
         // (Sometimes people import it, sometimes they don't)
         xsdns = m.getNamespaceByURI(W3C_XML_SCHEMA_NS_URI);
@@ -224,14 +224,14 @@ public class ModelFromXSD {
         }
     }
     
-    // We need to know early whether there are any global augmentations,
+    // We need to know early whether there are any global attribute augmentations,
     // because if so, there are no Datatypes (other than XSD builtins; 
     // everything is a Class.  Create ClassType and Property objects for 
     // structures:AssociationType and ObjectType if needed.
     private void checkGlobalAugmentations () {
         
         // Is any declaration subsitutable for augmentation point in structures?
-        var snuri = structNS.getNamespaceURI();
+        var strns = new HashSet<String>();
         var xmap  = xs.getComponents(ELEMENT_DECLARATION);
         for (int i = 0; i < xmap.getLength() && !hasGElementAug; i++) {
             var xobj  = (XSElementDeclaration)xmap.item(i);
@@ -239,36 +239,39 @@ public class ModelFromXSD {
             if (null == xsbg) continue;
             var suri  = xsbg.getNamespace();
             var sname = xsbg.getName();
-            if (suri.equals(snuri)) {
-                if (sname.endsWith("AugmentationPoint")) hasGElementAug = true;
+            if (sname.endsWith("AugmentationPoint") && NIEM_STRUCTURES == uri2Builtin(suri)) {
+                hasGElementAug = true;
+                strns.add(suri);
             }
         }
-        // Are there augmentation attributes for ObjectType or AssociationType?
-        xmap = xs.getComponentsByNamespace(TYPE_DEFINITION, snuri);
+        // Are there augmentation attributes for structures:ObjectType or AssociationType?
+        xmap = xs.getComponents(TYPE_DEFINITION);
         for (int i = 0; i < xmap.getLength() && !hasGAttributeAug; i++) {
             var xobj  = (XSTypeDefinition)xmap.item(i);
             if (COMPLEX_TYPE != xobj.getTypeCategory()) continue;
+            if (NIEM_STRUCTURES != uri2Builtin(xobj.getNamespace())) continue;
             var xctype = (XSComplexTypeDefinition)xobj;
             var xattrs = xctype.getAttributeUses();
             for (int j = 0; j < xattrs.getLength(); j++) {
                 var xattr = (XSAttributeUse)xattrs.item(j);
                 var xattd = xattr.getAttrDeclaration();
                 var anuri = xattd.getNamespace();
-                if (!snuri.equals(anuri)) hasGAttributeAug = true;
+                if (NIEM_STRUCTURES == uri2Builtin(anuri)) hasGAttributeAug = true;
             }
         }
-        // Create Class and Property for global element augmentations.
-        // Use them to add augmentation properties to every Class.
-        // We won't actually write these into the model.
-        if (hasGElementAug) {
-            var ct = new ClassType(structNS, "ObjectType");
-            var ap = new Property(structNS, "ObjectAugmentationPoint");
+        // Create Class and Property in structures namespace for global element 
+        // augmentations.  Use them to add augmentation properties to every Class.
+        // We won't actually keep these in the completed Model object.
+        for (var suri : strns) {
+            var sns = m.getNamespaceByURI(suri);
+            var ct  = new ClassType(sns, "ObjectType");
+            var ap  = new Property(sns, "ObjectAugmentationPoint");
             ct.setIsAugmentable(true);
             m.addComponent(ct);
             m.addComponent(ap);
 
-            ct = new ClassType(structNS, "AssociationType");
-            ap = new Property(structNS, "AssociationAugmentationPoint");
+            ct = new ClassType(sns, "AssociationType");
+            ap = new Property(sns, "AssociationAugmentationPoint");
             ct.setIsAugmentable(true);
             m.addComponent(ct);
             m.addComponent(ap);
@@ -369,7 +372,7 @@ public class ModelFromXSD {
             if (seen.contains(clkN)) continue;      // weird repeats in XSNamedMap
             seen.add(clkN);           
             var xet  = xobj.getTypeDefinition();
-            var xetu = NamespaceKind.uriBuiltinNum(xet.getNamespace());
+            var xetu = NamespaceKind.uri2Builtin(xet.getNamespace());
             if (NIEM_STRUCTURES == xetu && xet.getName().endsWith("AugmentationType")) {
                 LOG.info(String.format("Discarding element %s:%s; type structures:AugmentationType not allowed",
                         nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
@@ -444,7 +447,7 @@ public class ModelFromXSD {
                     var au    = (XSAttributeUse)atts.item(j);
                     var adecl = au.getAttrDeclaration();
                     var ans   = adecl.getNamespace();
-                    if (NIEM_STRUCTURES != NamespaceKind.uriBuiltinNum(ans)) {    // attributes in structures NS don't count
+                    if (NIEM_STRUCTURES != NamespaceKind.uri2Builtin(ans)) {    // attributes in structures NS don't count
                         hasModelAttributes = true;                          // found a model attribute; we're done
                         break;
                     }
@@ -502,7 +505,9 @@ public class ModelFromXSD {
         for (var ct : classXSobj.keySet()) {
             var xctype = classXSobj.get(ct);
             var xbase  = xctype.getBaseType();
-            var bct    = m.getClassType(xbase.getNamespace(), xbase.getName());
+            var xbns   = xbase.getNamespace();
+            if (NIEM_STRUCTURES == uri2Builtin(xbns)) continue;
+            var bct    = m.getClassType(xbns, xbase.getName());
             if (null != bct) {
                 ct.setExtensionOfClass(bct);
                 LOG.debug("class " + ct.getQName() + " extends class " + bct.getQName());                
@@ -622,7 +627,7 @@ public class ModelFromXSD {
                 var xedecl = (XSElementDeclaration)xobj;
                 var xetype = xedecl.getTypeDefinition();
                 var xet    = xetype.getNamespace();
-                var xetb   = NamespaceKind.uriBuiltinNum(xet);
+                var xetb   = NamespaceKind.uri2Builtin(xet);
                 if (NIEM_STRUCTURES == xetb) {
                     LOG.warn(String.format("Element %s:%s has type is from structures namespace (not allowed in NIEM 6)",
                         nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
@@ -646,11 +651,6 @@ public class ModelFromXSD {
                 }
             }
         }
-    }
-    
-    
-    private void handleGlobalAugmentations () {
-        
     }
        
     // Time to complete all the class objects.  Documentation is handled here.
@@ -768,7 +768,7 @@ public class ModelFromXSD {
             XSAttributeUse au = (XSAttributeUse)atl.item(i);
             XSAttributeDeclaration a = au.getAttrDeclaration();
             // Don't add attributes from the structures namespace
-            if (NIEM_STRUCTURES != NamespaceKind.uriBuiltinNum(a.getNamespace())) 
+            if (NIEM_STRUCTURES != NamespaceKind.uri2Builtin(a.getNamespace())) 
                 aset.add(au);
         }
         // Now remove attribute uses in the base types
@@ -1228,93 +1228,7 @@ public class ModelFromXSD {
         }
         return false;
     }
-
-    // Special handling for element augmentations.  Augmentation types do not 
-    // appear in the model.  Instead, their properties are added to the property 
-    // list of the augmented type.
-    private void processElementAugmentations () {
-        // Find all elements substitutable for an augmentation point
-        for (Component c : m.getComponentList()) {
-            Property p = c.asProperty();
-            if (null == p || null == p.getSubPropertyOf()) continue;
-            if (!p.getSubPropertyOf().getName().endsWith("AugmentationPoint")) continue;
-            
-            // Property p is substitutable for an augmentation point; find the augmented type
-            String atqn = new String(p.getSubPropertyOf().getQName()).replace("AugmentationPoint", "Type");
-            ClassType augmented = m.getClassType(atqn);
-            if (null == augmented) {
-                LOG.warn("Augmentation {} found, but no corresponding augmentable type {}", p.getQName(), atqn);
-                continue;
-            }
-            if (!augmented.isAugmentable()) {
-                LOG.warn("Augmentation {} found, but {} is not augmentable", p.getQName(), atqn);
-                continue;
-            }
-            LOG.debug("{} augments {}", p.getQName(), augmented.getQName());
-            
-            // If Property p has an augmentation type, add type children to the augmented type
-            ClassType ptype = p.getClassType();
-            if (null != ptype && ptype.getName().endsWith("AugmentationType")) {
-                LOG.debug("Augmenting {} with augmentation type {}", augmented.getQName(), ptype.getQName());
-                int index = 0;
-                for (HasProperty hp : ptype.hasPropertyList()) {
-                    addAugmentPropertyToClass(augmented, p.getNamespace(), hp);
-                    addAugmentRecord(ptype.getNamespace(), augmented, hp, index++);
-                }
-                LOG.debug("Done with augmentation type {}", ptype.getQName());
-            }
-            // Otherwise add augmentation property p to the augmented type
-            else {
-                LOG.debug("Augmenting {} with augmentation property {}", augmented.getQName(), p.getQName());
-                HasProperty ahp = new HasProperty();
-                ahp.setProperty(p);
-                ahp.setMinOccurs(0);
-                ahp.setMaxUnbounded(true); 
-                addAugmentPropertyToClass(augmented, p.getNamespace(), ahp);
-                addAugmentRecord(p.getNamespace(), augmented, ahp, -1);
-                p.setSubPropertyOf(null);    // remove AugmentationPoint subpropertyOf
-            }         
-        }
-        // All augmentations processed. Remove augmentation types,
-        // augmentation points, and augmentation elements from model.
-        // Special dance to avoid changing a list while iterating over it.
-        List<Component> delComps = new ArrayList<>();
-        for (Component c : m.getComponentList()) {
-            String lname = c.getName();
-            if (lname.endsWith("AugmentationType")
-                    || lname.endsWith("AugmentationPoint")
-                    || lname.endsWith("Augmentation")) delComps.add(c);
-        }
-        for (Component c : delComps) { m.removeComponent(c); }
-    }
-    
-    // Add augmentation property to a Class.  Handle difference between
-    // properties with an augmentation type and properties without.
-    private void processOneElementAugmentation (ClassType augmented, Property augp) {
-          // If property has an augmentation type, add type children to the augmented type
-            ClassType ptype = augp.getClassType();
-            if (null != ptype && ptype.getName().endsWith("AugmentationType")) {
-                LOG.debug("Augmenting {} with augmentation type {}", augmented.getQName(), ptype.getQName());
-                int index = 0;
-                for (HasProperty hp : ptype.hasPropertyList()) {
-                    addAugmentPropertyToClass(augmented, augp.getNamespace(), hp);
-                    addAugmentRecord(ptype.getNamespace(), augmented, hp, index++);
-                }
-                LOG.debug("Done with augmentation type {}", ptype.getQName());
-            }
-            // Otherwise add augmentation property p to the augmented type
-            else {
-                LOG.debug("Augmenting {} with augmentation property {}", augmented.getQName(), augp.getQName());
-                HasProperty ahp = new HasProperty();
-                ahp.setProperty(augp);
-                ahp.setMinOccurs(0);
-                ahp.setMaxUnbounded(true); 
-                addAugmentPropertyToClass(augmented, augp.getNamespace(), ahp);
-                addAugmentRecord(augp.getNamespace(), augmented, ahp, -1);
-                augp.setSubPropertyOf(null);    // remove AugmentationPoint subpropertyOf
-            }                 
-    }
-    
+     
     // Special handing for attribute augmentations. These are marked in XSD
     // by appinfo:augmentingNamespace.
     private void processAttributeAugmentations () {
@@ -1339,7 +1253,7 @@ public class ModelFromXSD {
                             }
                             LOG.debug("{} augments {} with attribute {}", ansuri, cqn, prop);
                             hp.augmentingNS().add(ans);
-                            addAugmentRecord(ans, ct, hp, -1);
+                            addAugmentRecord(hp.getProperty(), ct, hp, -1, AUG_NONE);
                         }            
                     }
                 }
@@ -1347,45 +1261,167 @@ public class ModelFromXSD {
         }
     }
     
+    private void processElementAugmentations () {
+        // Collect all the properties substitutable for an augmentation point
+        var augProps = new ArrayList<Property>();
+        for (var c : m.getComponentList()) {
+            var p = c.asProperty();
+            if (null == p) continue;
+            if (null == p.getSubPropertyOf()) continue;
+            if (!p.getSubPropertyOf().getName().endsWith("AugmentationPoint")) continue;
+            augProps.add(p);
+        }
+        // Now handle each augmentation property
+        for (var augp : augProps) {
+            // Subproperty of structures:*AugmentationPoint is a global augmentation
+            // Apply augmentation to every augmentable class
+            var subp     = augp.getSubPropertyOf();         // augmentation point
+            var subNSuri = subp.getNamespaceURI();          // augmentation point NS uri
+            var subNS    = m.getNamespaceByURI(subNSuri);   // augmentation point Namespace
+            if (NIEM_STRUCTURES == uri2Builtin(subNSuri)) {
+                var vers  = subNS.getNIEMVersion();
+                var acode = subp.getName().startsWith("Object") ? AUG_OBJECT : AUG_ASSOC;
+                for (var c : m.getComponentList()) {
+                    var ct = c.asClassType();
+                    if (null == ct) continue;
+                    if (!ct.isAugmentable()) continue;
+                    if (NIEM_STRUCTURES == uri2Builtin(ct.getNamespaceURI())) continue;
+                    if (!vers.equals(ct.getNamespace().getNIEMVersion())) continue;
+                    processOneElementAugmentation(ct, augp, acode);
+                }
+            }
+            // Ordinary augmentation; find and augment the augmented class
+            else {
+                var aptqn = subp.getQName();
+                var atqn  = aptqn.replaceFirst("AugmentationPoint$", "Type");
+                var augct = m.getClassType(atqn);
+                if (null == augct) {
+                    LOG.warn("Augmentation {} found, but no corresponding augmentable type {}", augp.getQName(), atqn);
+                    continue;
+                }
+                if (!augct.isAugmentable()) {
+                    LOG.warn("Augmentation {} found, but {} is not augmentable", augp.getQName(), atqn);
+                    continue;
+                }
+                processOneElementAugmentation(augct, augp, AUG_NONE);
+            }
+        }
+        // All augmentations processed. Remove augmentation types,
+        // augmentation points, and augmentation elements from model.
+        // Special dance to avoid changing a list while iterating over it.
+        List<Component> delComps = new ArrayList<>();
+        for (Component c : m.getComponentList()) {
+            String lname = c.getName();
+            if (lname.endsWith("AugmentationType")
+                    || lname.endsWith("AugmentationPoint")
+                    || lname.endsWith("Augmentation")) delComps.add(c);
+        }
+        for (Component c : delComps) { m.removeComponent(c); }
+        
+        // We don't need ObjectType and AssociationType in structures NS any more
+        if (hasGElementAug) {
+            for (var ns : m.getNamespaceList()) {
+                var nsuri = ns.getNamespaceURI();
+                if (NIEM_STRUCTURES == uri2Builtin(nsuri)) { 
+                    var ct = m.getClassType(nsuri, "AssociationType");
+                    if (null != ct) m.removeComponent(ct);
+                    ct = m.getClassType(nsuri, "ObjectType");
+                    if (null != ct) m.removeComponent(ct);
+                }
+            }
+        }
+    }
+    
+    // Add augmentation property to a Class.  Handle difference between
+    // properties with an augmentation type and properties without.
+    // augmented: the class being augmented.
+    // augp: property substituable for the augmentation point in augmented.
+    private void processOneElementAugmentation (ClassType augmented, Property augp, int augCode) {
+        // If property has an augmentation type, add type children to the augmented type
+        ClassType ptype = augp.getClassType();
+        if (null != ptype && ptype.getName().endsWith("AugmentationType")) {
+            LOG.debug("Augmenting {} with augmentation type {}", augmented.getQName(), ptype.getQName());
+            int index = 0;
+            for (HasProperty hp : ptype.hasPropertyList()) {
+                addAugmentPropertyToClass(augmented, augp.getNamespace(), hp);
+                addAugmentRecord(augp, augmented, hp, index++, augCode);
+            }
+            LOG.debug("Done with augmentation type {}", ptype.getQName());
+        }
+        // Otherwise add augmentation property p to the augmented type
+        else {
+            LOG.debug("Augmenting {} with augmentation property {}", augmented.getQName(), augp.getQName());
+            HasProperty ahp = new HasProperty();
+            ahp.setProperty(augp);
+            ahp.setMinOccurs(0);
+            ahp.setMaxUnbounded(true); 
+            addAugmentPropertyToClass(augmented, augp.getNamespace(), ahp);
+            addAugmentRecord(augp, augmented, ahp, -1, augCode);
+            augp.setSubPropertyOf(null);    // remove AugmentationPoint subpropertyOf
+        }                 
+    }
+    
     // Adds augmentation property to the augmented class
     // aug = augmented class
     // ans = namespace of the augmentation property
     // ahp = augmentation property, with min/max occurs
-    // fromAugType = true if ahp is member of an augmentation type
-    private void addAugmentPropertyToClass (ClassType aug, Namespace ans, HasProperty ahp) {
+    private void addAugmentPropertyToClass (ClassType augCT, Namespace ans, HasProperty ahp) {
+        var augQN = augCT.getQName();   // QName of the class to be augmented
+        var augp  = ahp.getProperty();  // Property to augment the class
+        var apQN  = augp.getQName();    // QName of the property to augment the class
+        
         // See if augmentation property is already a class member
         HasProperty augHP = null;
-        for (HasProperty hp : aug.hasPropertyList()) {
+        for (HasProperty hp : augCT.hasPropertyList()) {
             if (hp.getProperty() == ahp.getProperty()) { augHP = hp; break; }
         }
         // Not there?  Create new HasProperty and add to class
         if (null == augHP) {
-            LOG.debug("Augmenting {} with new augmentation {}", aug.getQName(), ahp.getProperty().getQName());
+            LOG.debug("Augmenting {} with new augmentation {}", augQN, apQN);
             augHP = new HasProperty();
             augHP.setProperty(ahp.getProperty());
             augHP.setMaxUnbounded(ahp.maxUnbounded());
             augHP.setMaxOccurs(ahp.maxOccurs());    // maxOccurs from aug type (assume aug element not repeated)
             augHP.setMinOccurs(0);                  // augmentation properties always optional
-            aug.addHasProperty(augHP);
+            augCT.addHasProperty(augHP);
         }
-        // Already there?  Perhaps adjust max occurs
+        // Already there as an ordinary property?  No augmentation needed
+        else if (null == augHP.augmentingNS() || augHP.augmentingNS().isEmpty()) {
+            LOG.debug("Augmenting {} with {}, but it is already a class property", augQN, apQN);
+        }
+        // Already an augmentation?  Perhaps adjust max occurs
         else {
-            LOG.debug("Augmenting {} with repeated augmentation {}", aug.getQName(), ahp.getProperty().getQName());
+            LOG.debug("Augmenting {} with repeated augmentation {}", augQN, apQN);
             if (ahp.maxUnbounded()) augHP.setMaxUnbounded(true);
             else if (!augHP.maxUnbounded()) augHP.setMaxOccurs(max(augHP.maxOccurs(), ahp.maxOccurs()));
         }
-        LOG.debug("Class {} hasPropertyList:", aug.getQName());
-        for (var xhp : aug.hasPropertyList()) LOG.debug("  " + xhp.getProperty().getQName());
+        LOG.debug("Class {} hasPropertyList:", augQN);
+        for (var xhp : augCT.hasPropertyList()) LOG.debug("  " + xhp.getProperty().getQName());
         augHP.augmentingNS().add(ans);
     }
     
-    // Adds an Augmenting element to the Property object, recording that
+    // Adds an Augmenting element to the Property object.
+    // augp: property substitutable for an augmentation point.
+    // ct:   class that was augmented
+    // hp:   HasProperty of augmentation property in ct.
     // Property hp.getProperty() is a useful augmentation for Class ct,
     // according to the owner of Namespace augn.
-    private void addAugmentRecord (Namespace augn, ClassType ct, HasProperty hp, int index) {
-        for (var ar : augn.augmentList()) {
+    private void addAugmentRecord (Property augp, ClassType ct, HasProperty hp, int index, int augCode) {
+        var augn   = augp.getNamespace();                               // augmenting namespace
+        var auglst = augn.augmentList();                                // write AugRec into augmentation NS
+        var ctqn   = ct.getQName();
+        if (AUG_NONE != augCode) {
+            var apnt  = augp.getSubPropertyOf();
+            var aname = apnt.getName().replaceFirst("AugmentationPoint$", "");
+            ct = null;
+            ctqn = "global Object";            
+        }     
+        for (var ar : auglst) {
             if (ar.getClassType() != ct) continue;
-            if (ar.getProperty() == hp.getProperty()) return;
+            if (ar.getProperty() == hp.getProperty()) {
+                ar.addGlobalAug(augCode);
+                return;
+            }
         }
         var ar = new AugmentRecord();
         ar.setClassType(ct);
@@ -1394,9 +1430,10 @@ public class ModelFromXSD {
         ar.setMinOccurs(hp.minOccurs());
         ar.setMaxOccurs(hp.maxOccurs());
         ar.setMaxUnbounded(hp.maxUnbounded());
-        augn.addAugmentRecord(ar);
+        ar.addGlobalAug(augCode);
+        auglst.add(ar);
         LOG.debug(String.format("namespace %s augments %s with %s (index %d)", 
-                augn.getNamespacePrefix(), ct.getQName(), hp.getProperty().getQName(), index));
+                augn.getNamespacePrefix(), ctqn, hp.getProperty().getQName(), index));
     }
  
     // Retrieve appinfo attribute value for a global component or an element reference.
@@ -1430,7 +1467,7 @@ public class ModelFromXSD {
     // If you ask for any type in the XML namespace, you get xs:string.  
     // If you ask for xs:anyType or xs:anySimpleType, you get null.
     private Datatype getDatatype (String nsuri, String lname) throws CMFException {
-        if (NIEM_PROXY == NamespaceKind.uriBuiltinNum(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
+        if (NIEM_PROXY == NamespaceKind.uri2Builtin(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
         var dtqn = getQN(nsuri, lname);
         var res  = datatypeMap.get(dtqn);
         if (null != res)                   return res;
@@ -1459,7 +1496,7 @@ public class ModelFromXSD {
     }
     
     private String getQN (String nsuri, String lname) throws CMFException {
-        if (NIEM_PROXY == NamespaceKind.uriBuiltinNum(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
+        if (NIEM_PROXY == NamespaceKind.uri2Builtin(nsuri)) nsuri = W3C_XML_SCHEMA_NS_URI;     // replace proxy types with XSD
         var ns = m.getNamespaceByURI(nsuri);
         if (null == ns) 
             throw new CMFException(String.format("no namespace object for %s", nsuri));

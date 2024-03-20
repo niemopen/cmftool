@@ -127,7 +127,7 @@ public class NamespaceKind {
     };
 
     // The seven kinds of builtin namespace.  Note that while code-lists-instance is 
-    // a builtin namespace, it has kind NSK_OTHERNIEM (not NSK_UTITLTY), because 
+    // a builtin namespace, it has kind NSK_OTHERNIEM (not NSK_BUILTIN), because 
     // it defines components that belong in a CMF model. The xml namespace isn't
     // defined by NIEM, but we treat it as a builtin anyway.
     // The code for a builtin namespace is also the preferred namespace prefix.
@@ -294,11 +294,12 @@ public class NamespaceKind {
         return rec.kind();
     }
     
-    public static int uriBuiltinNum (String nsuri) {
+    public static int uri2Builtin (String nsuri) {
         var rec = lookup(nsuri);
         return rec.builtin();
     }
     
+    // Returns "3", "4", "5", etc.
     // Returns "" if NIEM version is unknown; never returns null
     public static String uri2Version (String nsuri) {
         var rec = lookup(nsuri);
@@ -318,7 +319,7 @@ public class NamespaceKind {
     
     // Determine architecture from conformance target assertions.
     // Returns empty string if CTA doesn't match any architecture.
-    public static String archFromCTA (String cta) {
+    public static String cta2Arch (String cta) {
         for (var arch : archpat.keySet()) {
             var apat = archpat.get(arch);
             var m = apat.matcher(cta);
@@ -328,9 +329,10 @@ public class NamespaceKind {
     }
     
     // Determine NIEM version from conformance target assertions
+    // Returns first number in (#) or (#.#) following CTA prefix; eg. "3", "4"
     // Returns "" if version is unknown; never returns null
-    private static final Pattern versPat = Pattern.compile("((\\d)(\\.\\d+)?)/");
-    public static String versionFromCTA (String cta) {
+    private static final Pattern versPat = Pattern.compile("((\\d+))(\\.\\d+)?/");
+    public static String cta2Version (String cta) {
         for (var arch : archpat.keySet()) {
             var apat = archpat.get(arch);
             Matcher m = apat.matcher(cta);
@@ -345,7 +347,7 @@ public class NamespaceKind {
     
     // Return the target from a conformance target assertion
     // Returns "" instead of null.
-    public static String targetFromCTA (String cta) {
+    public static String cta2Target (String cta) {
         for (var arch : archpat.keySet()) {
             var apat = archpat.get(arch);
             var m    = apat.matcher(cta);
@@ -416,7 +418,7 @@ public class NamespaceKind {
                     return builtinTab[i + 4];
             }
         }
-        if (null == uri) LOG.error(String.format("could not find URI for %s '%s' version '%s'", arch, ustr));
+        if (null == uri) LOG.error(String.format("could not find URI for %s '%s' version '%s'", arch, ustr, version));
         return uri;
     }
     

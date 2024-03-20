@@ -51,7 +51,7 @@ public class XAugmentRecord extends XObjectType {
     
     @Override
     public void addToModel (XModel x) { 
-        x.getObject().addAugmentRecord(this.getObject());
+//        x.getObject().addAugmentRecord(this.getObject());
     }   
     
     @Override

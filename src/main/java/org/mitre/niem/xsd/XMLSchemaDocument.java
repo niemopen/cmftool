@@ -38,6 +38,7 @@ import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_APPINFO;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_CTAS;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTENSION;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import org.xml.sax.Attributes;
@@ -79,6 +80,7 @@ public class XMLSchemaDocument {
     private final List<LocalTerm> localTerms = new ArrayList<>();
     private final List<AppinfoAttribute> appinfoAtts = new ArrayList<>();
     private String targetNS = null;
+    private String structNS = null;
     private String confTargs = null;
     private String niemArch = null;
     private String niemVersion = null;
@@ -93,6 +95,7 @@ public class XMLSchemaDocument {
     public List<String>documentationStrings()               { return docStrings; }      // schema-level documentation strings
     public List<LocalTerm> localTerms()                     { return localTerms; }      // LocalTerm objects from schema appinfo
     public String targetNamespace ()                        { return targetNS; }        // target namespace URI of document
+    public String structuresNamespace ()                    { return structNS; }        // imported structures namespace URI
     public String conformanceTargets ()                     { return confTargs; }       // value of @ct:conformanceTargets in <xs:schema>
     public String niemArch ()                               { return niemArch; }        // derived from conformance assertions or target NS
     public String niemVersion ()                            { return niemVersion; }     // derived from conformance assertions or target NS
@@ -132,7 +135,7 @@ public class XMLSchemaDocument {
         @Override
         public void startPrefixMapping (String prefix, String uri) {
             if (prefix.isEmpty()) return;
-            if (NIEM_APPINFO == NamespaceKind.uriBuiltinNum(uri)) appinfoURI.push(uri);
+            if (NIEM_APPINFO == NamespaceKind.uri2Builtin(uri)) appinfoURI.push(uri);
             nsm.onStartPrefixMapping(prefix, uri);
             int line = docloc.getLineNumber();
             var nsd = new XMLNamespaceDeclaration(prefix, uri, line, depth, null, NSK_UNKNOWN);  // don't know target NS or kind yet
@@ -141,7 +144,7 @@ public class XMLSchemaDocument {
         
         @Override
         public void endPrefixMapping(String uri) {
-            if (NIEM_APPINFO == NamespaceKind.uriBuiltinNum(uri)) appinfoURI.pop();            
+            if (NIEM_APPINFO == NamespaceKind.uri2Builtin(uri)) appinfoURI.pop();            
         }
         
         private static final Pattern xsComponentPat = Pattern.compile("(attribute)|(element)|(complexType)");
@@ -168,7 +171,7 @@ public class XMLSchemaDocument {
                 // Get conformance target assertion
                 for (int i = 0; i < atts.getLength(); i++) {
                     var auri = atts.getURI(i);
-                    int util = NamespaceKind.uriBuiltinNum(auri);
+                    int util = NamespaceKind.uri2Builtin(auri);
                     if (NIEM_CTAS == util) {
                         if (CONFORMANCE_ATTRIBUTE_NAME.equals(atts.getLocalName(i))) {                        
                             confTargs = atts.getValue(i);
@@ -176,8 +179,8 @@ public class XMLSchemaDocument {
                                 var ctlist = confTargs.split("\\s+");
                                 for (int j = 0; j < ctlist.length; j++) {
                                     var ct = ctlist[j];
-                                    if (niemArch.isBlank())    niemArch = NamespaceKind.archFromCTA(ct);
-                                    if (niemVersion.isBlank()) niemVersion = NamespaceKind.versionFromCTA(ct);
+                                    if (niemArch.isBlank())    niemArch = NamespaceKind.cta2Arch(ct);
+                                    if (niemVersion.isBlank()) niemVersion = NamespaceKind.cta2Version(ct);
                                     if (!niemArch.isBlank() && !niemVersion.isBlank()) break;
                                 }                               
                             }
@@ -193,8 +196,9 @@ public class XMLSchemaDocument {
             // Handle xs:import elements
             else if ("import".equals(elname)) {
                 String importNS = atts.getValue("namespace");
+                if (NIEM_STRUCTURES == NamespaceKind.uri2Builtin(importNS)) structNS = importNS;
                 for (int i = 0; i < atts.getLength(); i++) {
-                    if (NIEM_APPINFO == NamespaceKind.uriBuiltinNum(atts.getURI(i)))
+                    if (NIEM_APPINFO == NamespaceKind.uri2Builtin(atts.getURI(i)))
                         if ("externalImportIndicator".equals(atts.getLocalName(i))) {
                             if ("true".equals(atts.getValue(i))) externalImports.add(importNS);
                             break;

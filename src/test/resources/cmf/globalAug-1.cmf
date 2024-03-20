@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DocumentationText>global element augmentation test case -- object and association</DocumentationText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>globalAug-1.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <AugmentRecord>
+      <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
+      <AugmentationIndex>0</AugmentationIndex>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <GlobalAugmentationCode>ASSOCIATION</GlobalAugmentationCode>
+      <GlobalAugmentationCode>OBJECT</GlobalAugmentationCode>
+    </AugmentRecord>
+  </Namespace>
+  <Namespace structures:id="niem-xs">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <LocalTerm>
+      <TermName>maxInclusive</TermName>
+      <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
+    </LocalTerm>
+  </Namespace>
+  <Namespace structures:id="structures">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <DataProperty structures:id="nc.Classification">
+    <Name>Classification</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.Education">
+    <Name>Education</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Class structures:ref="nc.EducationType" xsi:nil="true"/>
+    <ReferenceCode>NONE</ReferenceCode>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.EducationDescriptionText">
+    <Name>EducationDescriptionText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A description of a person's educational background.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="nc.EducationInProgressIndicator">
+    <Name>EducationInProgressIndicator</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>True if a person's formal education is still in progress; false otherwise.</DocumentationText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="nc.ItemName">
+    <Name>ItemName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Datatype structures:ref="nc.TextType" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="nc.EducationType">
+    <Name>EducationType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a person's educational background.</DocumentationText>
+    <AugmentableIndicator>true</AugmentableIndicator>
+    <HasProperty>
+      <DataProperty structures:ref="nc.EducationDescriptionText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="nc.EducationInProgressIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationNamespace structures:ref="nc" xsi:nil="true"/>
+    </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
+  </Class>
+  <Class structures:id="nc.ItemType">
+    <Name>ItemType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for an article or thing.</DocumentationText>
+    <AugmentableIndicator>true</AugmentableIndicator>
+    <HasProperty>
+      <DataProperty structures:ref="nc.ItemName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationNamespace structures:ref="nc" xsi:nil="true"/>
+    </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
+  </Class>
+  <Datatype structures:id="nc.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <RestrictionOf>
+      <Datatype structures:ref="xs.string" xsi:nil="true"/>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

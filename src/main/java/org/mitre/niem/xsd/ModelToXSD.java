@@ -63,6 +63,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
 import org.mitre.niem.cmf.AugmentRecord;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_ASSOC;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_MAX;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_NONE;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_OBJECT;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.CodeListBinding;
@@ -245,7 +249,7 @@ public abstract class ModelToXSD {
         // Collect all the NIEM versions, establish builtin namespace prefixes
         ArrayList<String> allVers = new ArrayList<>();
         m.getNamespaceList().forEach((ns) -> {
-            String nvers = ns.getNiemVersion();
+            String nvers = ns.getNIEMVersion();
             if (null != nvers && !nvers.isBlank() && !allVers.contains(nvers)) allVers.add(nvers);
         });
         if (allVers.isEmpty()) allVers.add(getDefaultNIEMVersion());
@@ -310,7 +314,7 @@ public abstract class ModelToXSD {
             var is = getBuiltinSchemaStream(uri);
             if (null != is) {
                 createParentDirectories(df);
-                if (NIEM_PROXY == NamespaceKind.uriBuiltinNum(uri)) writeProxyDocument(uri, is, df);
+                if (NIEM_PROXY == NamespaceKind.uri2Builtin(uri)) writeProxyDocument(uri, is, df);
                 else copyInputStreamToFile(is, df);
             }
         }
@@ -404,7 +408,7 @@ public abstract class ModelToXSD {
         
         var  ns       = m.getNamespaceByURI(nsuri);   // current namespace object
         var arch      = getArchitecture();
-        nsNIEMVersion = ns.getNiemVersion();
+        nsNIEMVersion = ns.getNIEMVersion();
         if (null == nsNIEMVersion) nsNIEMVersion = getDefaultNIEMVersion();
 
         appinfoURI    = NamespaceKind.getBuiltinNS(NIEM_APPINFO, arch, nsNIEMVersion);
@@ -545,32 +549,50 @@ public abstract class ModelToXSD {
     // Use the augmentation info in each Namespace to generate augmentation 
     // types, and elements required for this namespace.
     protected void generateAugmentationComponents (String nsuri) {
-        var class2Aug = new HashMap<ClassType,List<AugmentRecord>>();
+        var class2Aug = new HashMap<String,List<AugmentRecord>>();
         var ns = m.getNamespaceByURI(nsuri);
+        var arch = getArchitecture();
+        var vers = ns.getNIEMVersion();
+        var structURI = NamespaceKind.getBuiltinNS(NIEM_STRUCTURES, arch, vers);
+        var structNS  = m.getNamespaceByURI(structURI);
+        var structPre = structNS.getNamespacePrefix();
 
-        // Create map from Class to list of its augmentations in this namespace
+        // Create map from augmented class QName to list of its augmentations in this namespace
         for (AugmentRecord ar : ns.augmentList()) {
-            var targCT = ar.getClassType();
-            var arlist = class2Aug.get(targCT);
-            if (null == arlist) {
-                arlist = new ArrayList<>();
-                class2Aug.put(targCT, arlist);
+            for (int i = 0; i <= AUG_MAX; i++) {
+                String ctqn=  null;
+                switch (i) {
+                case AUG_NONE:   if (null != ar.getClassType()) ctqn = ar.getClassType().getQName(); break;
+                case AUG_OBJECT:
+                case AUG_ASSOC: 
+                    if (!ar.hasGlobalAug(i)) break;
+                    var which = AUG_OBJECT == i ? "Object" : "Association";
+                    var apt   = new Property(structNS, which + "AugmentationPoint");
+                    ctqn      = structPre + ":" + which + "Type";
+                    m.addComponent(apt);
+                    break;
+                default:
+                }
+                if (null != ctqn) {
+                    var arlist = class2Aug.get(ctqn);
+                    if (null == arlist) arlist = new ArrayList<>();
+                    class2Aug.put(ctqn, arlist);
+                    arlist.add(ar);
+                }
             }
-            arlist.add(ar);
         }
         // Handle augmentations for each class augmented in this namespace
-        for (var targCT : class2Aug.keySet()) {
-            var targNS     = targCT.getNamespace();
-            var targNSuri  = targNS.getNamespaceURI();
-            var targCTName = targCT.getName();                                      // FooType
-            var targName   = targCTName.substring(0, targCTName.length()-4);        // FooType -> Foo
-            var augElName  = targName + "Augmentation";                             // fooType -> FooAugmentation
-            var augTpName  = augElName + "Type";                                    // FooType => FooAugmentationType
-            var augPtName  = targName + "AugmentationPoint";                        // FooType -> FooAugmentationPoint
-            var augPoint   = m.getProperty(targNSuri, augPtName);                       // augmentation point Property
-          
+        for (var targQN : class2Aug.keySet()) {
+            var part = targQN.split(":");
+            var targPre    = part[0];
+            var targCTName = part[1];                                           // FooType
+            var augElName  = targCTName.replaceFirst("Type$", "Augmentation");  // FooType -> FooAugmentation
+            var augTpName  = augElName + "Type";                                // FooType -> FooAugmentationType
+            var augPtName  = augElName + "Point";                               // FooType -> FooAugmentationPoint
+            var augPoint   = m.getProperty(targPre + ":" + augPtName);          // augmentation point Property
+             
             // Create ordered list of augmenting properties
-            var arlist = class2Aug.get(targCT);
+            var arlist = class2Aug.get(targQN);
             Collections.sort(arlist, Comparator.comparing(AugmentRecord::indexInType));
             
             // Handle augmentation elements (not part of an augmentation type
@@ -767,7 +789,7 @@ public abstract class ModelToXSD {
         }        
         if (needSimpleType.contains(dt)) {
             var stqn = dt.getQName().replaceFirst("Type$", "SimpleType");
-            addEmptyExtensionElement(dom, sce, stqn);
+            addEmptyExtensionElement(dom, sce, dt, stqn);
         }
         else {
             var r     = dt.getRestrictionOf();
@@ -775,7 +797,7 @@ public abstract class ModelToXSD {
             var rbdqn = proxifiedDatatypeQName(rbdt);
             var rfl   = r.getFacetList();
             if (W3C_XML_SCHEMA_NS_URI.equals(rbdt.getNamespaceURI()) && rfl.isEmpty())
-                addEmptyExtensionElement(dom, sce, rbdt.getQName());
+                addEmptyExtensionElement(dom, sce, rbdt, rbdt.getQName());
             else
                 addRestrictionElement(dom, sce, dt, r.getDatatype(), rbdqn);
         }
@@ -784,12 +806,18 @@ public abstract class ModelToXSD {
     }
     
     // Adds <xs:extension base="baseQN"> with SimpleObjectAttributeGroup
-    protected void addEmptyExtensionElement (Document dom, Element sce, String baseQN) {
+    // Or adds <xs:extension base="niem-xs:name"/>
+    protected void addEmptyExtensionElement (Document dom, Element sce, Datatype dt, String baseQN) {
         var exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
-        var atg = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
-        atg.setAttribute("ref", structPrefix + ":SimpleObjectAttributeGroup");
+        if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) {
+            baseQN = proxifiedDatatypeQName(dt);
+        }
+        else {
+            var atg = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
+            atg.setAttribute("ref", structPrefix + ":SimpleObjectAttributeGroup");
+            exe.appendChild(atg);        
+        }
         exe.setAttribute("base", baseQN);
-        exe.appendChild(atg);
         sce.appendChild(exe);   
     }
     
@@ -873,7 +901,7 @@ public abstract class ModelToXSD {
         return dtqn;
     }
     
-    // Convert "xs:foo" to "xs-proxy:foo"
+    // Convert "xs:foo" to "niem-proxy:foo"
     protected String proxifiedDatatypeQName (Datatype dt) {
         String dtqn = dt.getQName();
         if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) {
@@ -980,7 +1008,7 @@ public abstract class ModelToXSD {
         else {
             var vsuf = getShareSuffix();                                // "", "-src", "-msg"
             var vers = NamespaceKind.uri2Version(nsuri) + ".0" + vsuf;  // eg. "6.0-arc"
-            int util = NamespaceKind.uriBuiltinNum(nsuri);              // eg. NIEM_PROXY
+            int util = NamespaceKind.uri2Builtin(nsuri);              // eg. NIEM_PROXY
             var bfp  = NamespaceKind.defaultBuiltinPath(util);          // eg. "utility/structures.xsd"
             bfn = FilenameUtils.getName(bfp);                           // eg. "structures.xsd"
             bfn = vers + "/" + bfn;                                     // eg. "6.0-src/structures.xsd"     
@@ -1013,7 +1041,7 @@ public abstract class ModelToXSD {
     private String genSchemaFilePath (String nsuri, String hint, File outputDir) throws IOException {
         if (ns2file.containsKey(nsuri)) return ns2file.get(nsuri);
         if (null == hint) {
-            int util = NamespaceKind.uriBuiltinNum(nsuri);
+            int util = NamespaceKind.uri2Builtin(nsuri);
             if (util < NIEM_NOTBUILTIN) hint = NamespaceKind.defaultBuiltinPath(util);
             else {
                 var m = nsnamePat.matcher(nsuri);

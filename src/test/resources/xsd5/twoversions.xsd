@@ -14,7 +14,7 @@
   <xs:annotation>
     <xs:documentation>NIEM Core</xs:documentation>
   </xs:annotation>
-  <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="twoversions-1.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="twoversions-niem/twoversions-1.xsd"/>
   <xs:import namespace="http://release.niem.gov/niem/proxy/xsd/4.0/" schemaLocation="twoversions-niem/4.0/proxy/xsd/4.0/xs.xsd"/>
   <xs:import namespace="http://release.niem.gov/niem/structures/4.0/" schemaLocation="twoversions-niem/4.0/utility/structures/4.0/structures.xsd"/>
   <xs:complexType name="PercentType">

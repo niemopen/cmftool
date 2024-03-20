@@ -7,19 +7,19 @@
   <Namespace structures:id="nc">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
     <NamespacePrefixText>nc</NamespacePrefixText>
-    <DocumentationText>global element augmentation test case</DocumentationText>
+    <DocumentationText>global element augmentation test case -- only object</DocumentationText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
     <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>globalAug-1.xsd</DocumentFilePathText>
-    <NIEMVersionText>6.0</NIEMVersionText>
+    <DocumentFilePathText>globalAug-2.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
     <AugmentRecord>
-      <Class structures:ref="structures.ObjectType" xsi:nil="true"/>
       <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
       <AugmentationIndex>0</AugmentationIndex>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <GlobalAugmentationCodeList>OBJECT</GlobalAugmentationCodeList>
     </AugmentRecord>
   </Namespace>
   <Namespace structures:id="niem-xs">
@@ -75,12 +75,16 @@
     <DocumentationText>True if a person's formal education is still in progress; false otherwise.</DocumentationText>
     <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
   </DataProperty>
+  <DataProperty structures:id="nc.ItemName">
+    <Name>ItemName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Datatype structures:ref="nc.TextType" xsi:nil="true"/>
+  </DataProperty>
   <Class structures:id="nc.EducationType">
     <Name>EducationType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for a person's educational background.</DocumentationText>
     <AugmentableIndicator>true</AugmentableIndicator>
-    <ExtensionOfClass structures:ref="structures.ObjectType" xsi:nil="true"/>
     <HasProperty>
       <DataProperty structures:ref="nc.EducationDescriptionText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
@@ -91,18 +95,6 @@
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </HasProperty>
-    <ReferenceCode>ANY</ReferenceCode>
-  </Class>
-  <Class structures:id="structures.AssociationType">
-    <Name>AssociationType</Name>
-    <Namespace structures:ref="structures" xsi:nil="true"/>
-    <AugmentableIndicator>true</AugmentableIndicator>
-    <ReferenceCode>ANY</ReferenceCode>
-  </Class>
-  <Class structures:id="structures.ObjectType">
-    <Name>ObjectType</Name>
-    <Namespace structures:ref="structures" xsi:nil="true"/>
-    <AugmentableIndicator>true</AugmentableIndicator>
     <HasProperty>
       <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
@@ -111,6 +103,32 @@
     </HasProperty>
     <ReferenceCode>ANY</ReferenceCode>
   </Class>
+  <Class structures:id="nc.ItemType">
+    <Name>ItemType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for an article or thing.</DocumentationText>
+    <AugmentableIndicator>true</AugmentableIndicator>
+    <HasProperty>
+      <DataProperty structures:ref="nc.ItemName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationNamespace structures:ref="nc" xsi:nil="true"/>
+    </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
+  </Class>
+  <Datatype structures:id="nc.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <RestrictionOf>
+      <Datatype structures:ref="xs.string" xsi:nil="true"/>
+    </RestrictionOf>
+  </Datatype>
   <Datatype structures:id="xs.boolean">
     <Name>boolean</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>

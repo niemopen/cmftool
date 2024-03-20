@@ -50,6 +50,8 @@ import org.w3c.dom.Element;
 import static org.mitre.niem.NIEMConstants.CMF_NS_URI;
 import static org.mitre.niem.NIEMConstants.CMF_STRUCTURES_NS_URI;
 import org.mitre.niem.cmf.AugmentRecord;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_MAX;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_NONE;
 import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.LocalTerm;
 import static org.mitre.niem.cmf.NamespaceKind.namespaceKind2Code;
@@ -180,7 +182,7 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "NamespaceKindCode", namespaceKind2Code(nsk));
         addSimpleChild(dom, e, "ConformanceTargetURIList", x.getConfTargets());
         addSimpleChild(dom, e, "DocumentFilePathText", x.getFilePath());
-        addSimpleChild(dom, e, "NIEMVersionText", x.getNiemVersion());
+        addSimpleChild(dom, e, "NIEMVersionText", x.getNIEMVersion());
         addSimpleChild(dom, e, "SchemaVersionText", x.getSchemaVersion());
         addSimpleChild(dom, e, "SchemaLanguageName", x.getLanguage());
         Collections.sort(x.augmentList());
@@ -201,7 +203,10 @@ public class ModelXMLWriter {
         
         addSimpleChild(dom, e, "AugmentationIndex", ""+x.indexInType());
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());  
-        addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());     
+        addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());
+        for (int i = 1; i <= AUG_MAX; i++) 
+            if (x.hasGlobalAug(i))
+                addSimpleChild(dom, e, "GlobalAugmentationCode", x.getGlobalAugCode(i));
         p.appendChild(e);        
     }
     

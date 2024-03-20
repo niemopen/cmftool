@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.mitre.niem.cmf.AugmentRecord;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_OBJECT;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.CodeListBinding;
@@ -704,6 +705,25 @@ public class ModelFromXSDTest {
             assertNotNull(ct);
             assertFalse(ct.isExternal());
             assertEmptyLogs();
+        }
+    }
+    
+    @Test
+    public void testGlobalElementAug() throws Exception {
+        for (var tdir : testDirs) {
+            String sch = tdir + "/globalAug-2.xsd";
+            File f = new File(sch);
+            if (!f.canRead()) {
+                continue;
+            }
+            ModelFromXSD mfact = new ModelFromXSD();
+            Model m = mfact.createModel(sch);
+            
+            var ns  = m.getNamespaceByPrefix("nc");
+            var arl = ns.augmentList();
+            var ar  = arl.get(0);
+            assertEquals(1, arl.size());
+            assertEquals(AUG_OBJECT, ar.getGlobalAug());
         }
     }
 

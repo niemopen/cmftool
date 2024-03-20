@@ -80,20 +80,20 @@ public class NamespaceKindTest {
         assertEquals("NIEM5", NamespaceKind.uri2Architecture("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
         assertEquals("NIEM5", NamespaceKind.uri2Architecture("http://release.niem.gov/niem/structures/5.0/"));   
         
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("http://example.com/foo"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("http://example.com/foo/5.0/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum(W3C_XML_SCHEMA_NS_URI));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("http://release.niem.gov/niem/niem-core/5.0/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("http://release.niem.gov/niem/domains/humanServices/5.2/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("http://release.niem.gov/niem/auxiliary/cui/5.1/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("http://release.niem.gov/niem/codes/genc/5.0/"));         
-        assertEquals(NIEM_APPINFO, NamespaceKind.uriBuiltinNum("http://release.niem.gov/niem/appinfo/5.0/"));   
-        assertEquals(NIEM_CLI, NamespaceKind.uriBuiltinNum("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/"));   
-        assertEquals(NIEM_CLSA, NamespaceKind.uriBuiltinNum("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/"));    
-        assertEquals(NIEM_CTAS, NamespaceKind.uriBuiltinNum("http://release.niem.gov/niem/conformanceTargets/3.0/"));
-        assertEquals(NIEM_PROXY, NamespaceKind.uriBuiltinNum("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
-        assertEquals(NIEM_STRUCTURES, NamespaceKind.uriBuiltinNum("http://release.niem.gov/niem/structures/5.0/")); 
-        assertEquals(NIEM_XML, NamespaceKind.uriBuiltinNum(XML_NS_URI));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("http://example.com/foo"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("http://example.com/foo/5.0/"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin(W3C_XML_SCHEMA_NS_URI));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("http://release.niem.gov/niem/niem-core/5.0/"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("http://release.niem.gov/niem/domains/humanServices/5.2/"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("http://release.niem.gov/niem/auxiliary/cui/5.1/"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("http://release.niem.gov/niem/codes/genc/5.0/"));         
+        assertEquals(NIEM_APPINFO, NamespaceKind.uri2Builtin("http://release.niem.gov/niem/appinfo/5.0/"));   
+        assertEquals(NIEM_CLI, NamespaceKind.uri2Builtin("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/"));   
+        assertEquals(NIEM_CLSA, NamespaceKind.uri2Builtin("http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/"));    
+        assertEquals(NIEM_CTAS, NamespaceKind.uri2Builtin("http://release.niem.gov/niem/conformanceTargets/3.0/"));
+        assertEquals(NIEM_PROXY, NamespaceKind.uri2Builtin("http://release.niem.gov/niem/proxy/niem-xs/5.0/"));
+        assertEquals(NIEM_STRUCTURES, NamespaceKind.uri2Builtin("http://release.niem.gov/niem/structures/5.0/")); 
+        assertEquals(NIEM_XML, NamespaceKind.uri2Builtin(XML_NS_URI));
         
         assertEquals(NSK_UNKNOWN, NamespaceKind.uri2Kind("http://example.com/foo"));
         assertEquals(NSK_UNKNOWN, NamespaceKind.uri2Kind("http://example.com/foo/5.0/"));
@@ -130,11 +130,11 @@ public class NamespaceKindTest {
         assertEquals(NSK_EXTENSION, NamespaceKind.uri2Kind("http://example.com/foo"));
         
         var cta  = "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument";
-        var arch = NamespaceKind.archFromCTA(cta);
-        var vers = NamespaceKind.versionFromCTA(cta);
-        var targ = NamespaceKind.targetFromCTA(cta);
+        var arch = NamespaceKind.cta2Arch(cta);
+        var vers = NamespaceKind.cta2Version(cta);
+        var targ = NamespaceKind.cta2Target(cta);
         assertEquals("NIEM5", arch);
-        assertEquals("5.0", vers);
+        assertEquals("5", vers);
         assertEquals("#ReferenceSchemaDocument", targ);
     }
 
@@ -155,20 +155,20 @@ public class NamespaceKindTest {
         assertEquals("NIEM6", NamespaceKind.uri2Architecture("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
         assertEquals("NIEM6", NamespaceKind.uri2Architecture("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"));   
         
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("http://example.com/foo"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("http://example.com/foo/6.0/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum(W3C_XML_SCHEMA_NS_URI));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/model/domains/humanServices/6.0/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/model/cui/5.1/"));
-        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/model/codes/genc/6.0/"));         
-        assertEquals(NIEM_APPINFO, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"));   
-        assertEquals(NIEM_CLI, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/"));   
-        assertEquals(NIEM_CLSA, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/appinfo/"));    
-        assertEquals(NIEM_CTAS, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"));
-        assertEquals(NIEM_PROXY, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
-        assertEquals(NIEM_STRUCTURES, NamespaceKind.uriBuiltinNum("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/")); 
-        assertEquals(NIEM_XML, NamespaceKind.uriBuiltinNum(XML_NS_URI));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("http://example.com/foo"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("http://example.com/foo/6.0/"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin(W3C_XML_SCHEMA_NS_URI));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/model/domains/humanServices/6.0/"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/model/cui/5.1/"));
+        assertEquals(NIEM_NOTBUILTIN, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/model/codes/genc/6.0/"));         
+        assertEquals(NIEM_APPINFO, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"));   
+        assertEquals(NIEM_CLI, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/"));   
+        assertEquals(NIEM_CLSA, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/appinfo/"));    
+        assertEquals(NIEM_CTAS, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"));
+        assertEquals(NIEM_PROXY, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
+        assertEquals(NIEM_STRUCTURES, NamespaceKind.uri2Builtin("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/")); 
+        assertEquals(NIEM_XML, NamespaceKind.uri2Builtin(XML_NS_URI));
         
         assertEquals(NSK_UNKNOWN, NamespaceKind.uri2Kind("http://example.com/foo"));
         assertEquals(NSK_UNKNOWN, NamespaceKind.uri2Kind("http://example.com/foo/6.0/"));
@@ -205,11 +205,11 @@ public class NamespaceKindTest {
         assertEquals(NSK_EXTENSION, NamespaceKind.uri2Kind("http://example.com/foo"));
 
         var cta  = "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument";
-        var arch = NamespaceKind.archFromCTA(cta);
-        var vers = NamespaceKind.versionFromCTA(cta);
-        var targ = NamespaceKind.targetFromCTA(cta);
+        var arch = NamespaceKind.cta2Arch(cta);
+        var vers = NamespaceKind.cta2Version(cta);
+        var targ = NamespaceKind.cta2Target(cta);
         assertEquals("NIEM6", arch);
-        assertEquals("6.0", vers);
+        assertEquals("6", vers);
         assertEquals("#SubsetSchemaDocument", targ);
     }
 }

@@ -57,8 +57,8 @@ import org.mitre.niem.xsd.XMLSchema;
 import org.mitre.niem.xsd.XMLSchemaDocument;
 import org.xml.sax.SAXException;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
-import static org.mitre.niem.cmf.NamespaceKind.archFromCTA;
-import static org.mitre.niem.cmf.NamespaceKind.versionFromCTA;
+import static org.mitre.niem.cmf.NamespaceKind.cta2Arch;
+import static org.mitre.niem.cmf.NamespaceKind.cta2Version;
 
 /**
  *
@@ -223,7 +223,7 @@ class CmdXSDtoCMF implements JCCommand {
                     var ctl = cts.split("\\s+");
                     for (int i = 0; !mflg && i < ctl.length; i++) {
                         var ct = ctl[i];
-                        if (arch.equals(archFromCTA(ct))) {
+                        if (arch.equals(cta2Arch(ct))) {
                             conforming.add(ns);
                             mflg = true;
                         }

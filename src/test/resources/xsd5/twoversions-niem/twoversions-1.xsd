@@ -11,8 +11,8 @@
   ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
   version="1"
   xml:lang="en-US">
-  <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="twoversions-niem/5.0/adapters/niem-xs.xsd"/>
-  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="twoversions-niem/5.0/utility/structures.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="5.0/adapters/niem-xs.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="5.0/utility/structures.xsd"/>
   <xs:complexType name="PersonNameTextType">
     <xs:annotation>
       <xs:documentation>ClassType, niem version 5.</xs:documentation>

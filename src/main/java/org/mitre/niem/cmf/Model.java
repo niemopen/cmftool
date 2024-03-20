@@ -52,19 +52,20 @@ public class Model extends ObjectType {
     // processing XML schema piles is allowed to use this.
     private final NamespaceMap nsmap = new NamespaceMap();
     
-    // Global augmentations from structures.xsd apply to every class
-    private final List<AugmentRecord> augmentList = new ArrayList<>();
-    public List<AugmentRecord> augmentList()       { return augmentList; }    
-    public void addAugmentRecord (AugmentRecord r) { augmentList.add(r);}
-    
     // Index of model children (components and namespaces)
     // Built-in namespaces do not appear in these data structures.
     // Must update all three indices when child property changes (namespace, local name, NSprefix)
-    private Map<String,Component> components                = new HashMap<>();      // QName -> Component
-    private final Map<String,Namespace> prefix2NS           = new HashMap<>();      // prefix -> Namespace
-    private final Map<String,Namespace> uri2NS              = new HashMap<>();      // nsURI -> Namespace
-    private List<Component> orderedComponents               = null;                 // ordered by QName
-    private List<Namespace> orderedNamespaces               = null;                 // ordered by namespace prefix
+    private Map<String,Component> components        = new HashMap<>();      // QName -> Component
+    private final Map<String,Namespace> prefix2NS   = new HashMap<>();      // prefix -> Namespace
+    private final Map<String,Namespace> uri2NS      = new HashMap<>();      // nsURI -> Namespace
+    private List<Component> orderedComponents       = null;                 // ordered by QName
+    private List<Namespace> orderedNamespaces       = null;                 // ordered by namespace prefix
+    
+    private List<AugmentRecord> objectAugs          = new ArrayList<>();    // global augmentation on ObjectType
+    private List<AugmentRecord> assocAugs           = new ArrayList<>();    // global augmentation on AssociationType
+    
+    public List<AugmentRecord> objectAugmentations ()   { return objectAugs; }
+    public List<AugmentRecord> assocAugmentations ()    { return assocAugs; }
 
     public Model () { super(); }
     

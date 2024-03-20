@@ -43,12 +43,13 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     private String namespacePrefix = null;
     private String documentation = null;
     private int nsKind = NSK_UNKNOWN;
-    private String confTargs = null;
-    private String filepath = null;
-    private String niemVersion = null;
-    private String schemaVersion = null;
-    private String language = null;
-    private String importDoc = null;
+    private String confTargs = null;            // conformance target assertions
+    private String filepath = null;             // relative path from pile root
+    private String niemVersion = null;          // eg. "3","4","5","6"
+    private String schemaVersion = null;        // from @version
+    private String language = null;             // from @xml:lang
+    private String importDoc = null;            // documentation on xs:import of this namespace;
+                                                // if different imports have different doc, too bad!
     
     public Namespace () { super(); }
      
@@ -91,7 +92,7 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public boolean isExternal ()              { return nsKind == NSK_EXTERNAL; }
     public String getConfTargets ()           { return confTargs; }
     public String getFilePath ()              { return filepath; }
-    public String getNiemVersion ()           { return niemVersion; }
+    public String getNIEMVersion ()           { return niemVersion; }
     public String getSchemaVersion ()         { return schemaVersion; }
     public String getLanguage ()              { return language; }
     public String getImportDoc ()             { return importDoc; }

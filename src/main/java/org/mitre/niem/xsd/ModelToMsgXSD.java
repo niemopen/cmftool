@@ -63,7 +63,7 @@ public class ModelToMsgXSD extends ModelToXSD {
         }        
         if (needSimpleType.contains(dt)) {
             var stqn = dt.getQName().replaceFirst("Type$", "SimpleType");
-            addEmptyExtensionElement(dom, cte, stqn);
+            addEmptyExtensionElement(dom, cte, dt, stqn);
         }
         else {
             var r     = dt.getRestrictionOf();
@@ -91,7 +91,7 @@ public class ModelToMsgXSD extends ModelToXSD {
         var sep  = "";
         for (String cta : ctas) {
             if (cta.startsWith(n5pf)) {
-                var targ = NamespaceKind.targetFromCTA(cta);
+                var targ = NamespaceKind.cta2Target(cta);
                 cta = n6pf + DEFAULT_NIEM_VERSION + "/" + targ;
             }
             cta = cta.replace("SubsetSchemaDocument", "MessageSchemaDocument");

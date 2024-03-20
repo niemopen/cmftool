@@ -31,6 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.mitre.niem.cmf.AugmentRecord;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_ASSOC;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_OBJECT;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
@@ -318,6 +320,50 @@ public class ModelXMLReaderTest {
         assertEquals("99",   fl.get(8).getStringVal());    
         assertEquals("\\d{4}\\.\\d{2}",fl.get(9).getStringVal());    
         assertEquals("5",    fl.get(10).getStringVal());
+    }
+
+    @Test
+    public void testGlobalElementAug_1 () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "globalAug-1.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        assertEquals(0, mr.getMessages().size());
+        
+        var ns = m.getNamespaceByPrefix("nc");
+        var p  = m.getProperty("nc:Classification");
+        var ar = ns.augmentList().get(0);
+        assertEquals(p, ar.getProperty());
+        assertNull(ar.getClassType());
+        assertEquals(AUG_OBJECT|AUG_ASSOC, ar.getGlobalAug());   
+    }
+    
+    @Test
+    public void testGlobalElementAug_2 () {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(testDirPath, "globalAug-2.cmf");
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        assertEquals(0, mr.getMessages().size());
+        
+        var ns = m.getNamespaceByPrefix("nc");
+        var p  = m.getProperty("nc:Classification");
+        var ar = ns.augmentList().get(0);
+        assertEquals(p, ar.getProperty());
+        assertNull(ar.getClassType());
+        assertEquals(AUG_OBJECT, ar.getGlobalAug());   
     }
     
     @Test
