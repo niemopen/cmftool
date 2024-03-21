@@ -2,7 +2,7 @@
 <!--
      NIEM Model Version 6.0
      Project Specification 02
-     08 March 2024
+     21 March 2024
      Copyright (c) OASIS Open 2024. All Rights Reserved.
      Source: https://docs.oasis-open.org/niemopen/niem-model/v6.0/ps01/xsd/
      Latest stage of narrative specification: https://docs.oasis-open.org/niemopen/niem-model/v6.0/niem-model-v6.0.html
@@ -23,6 +23,7 @@
   <xs:simpleType name="URIListSimpleType">
     <xs:list itemType="xs:anyURI"/>
   </xs:simpleType>
+  
   <xs:attribute name="augmentingNamespace" type="appinfo:URIListSimpleType">
     <xs:annotation>
       <xs:documentation>A list of URIs for namespaces responsible for an augmentation.</xs:documentation>
