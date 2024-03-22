@@ -26,6 +26,7 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import nl.altindag.log.LogCaptor;
@@ -99,6 +100,24 @@ public class ModelFromXSDTest {
             assertThat(errors.isEmpty());
             assertThat(warns.isEmpty());
         }
+    }
+    
+    public List<String> getLogInfos() {
+        var allInfos = new ArrayList<String>();
+        for (var log : logs) {
+            var warns = log.getInfoLogs();
+            allInfos.addAll(warns);
+        }
+        return allInfos;
+    }
+
+     public List<String> getLogWarns() {
+        var allWarns = new ArrayList<String>();
+        for (var log : logs) {
+            var warns = log.getWarnLogs();
+            allWarns.addAll(warns);
+        }
+        return allWarns;
     }
 
     @Test
@@ -695,15 +714,12 @@ public class ModelFromXSDTest {
             else geopt = m.getClassType("geo:PointAdapterType");
             var hp = geopt.hasPropertyList().get(0);
             assertEquals(NSK_EXTERNAL, gmlns.getKind());
-            assertTrue(gmlns.isExternal());
-            assertTrue(geopt.isExternal());
             assertEquals(gmlpt, hp.getProperty());
             assertNull(gmlpt.getClassType());
             assertNull(gmlpt.getDatatype());
 
             var ct = m.getClassType("ns:TrackPointType");
             assertNotNull(ct);
-            assertFalse(ct.isExternal());
             assertEmptyLogs();
         }
     }
@@ -1084,29 +1100,6 @@ public class ModelFromXSDTest {
     }
 
     @Test
-    @DisplayName("Nillable")
-    public void testNillable() throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        for (var tdir : testDirs) {
-            String sch = tdir + "/proxy.xsd";
-            File f = new File(sch);
-            if (!f.canRead()) {
-                continue;
-            }
-            ModelFromXSD mfact = new ModelFromXSD();
-            Model m = mfact.createModel(sch);
-
-            Property p = m.getProperty("nc:ConfidencePercent");
-            assertNotNull(p);
-            assertEquals("ANY", p.getReferenceCode());
-
-            p = m.getProperty("nc:SomeText");
-            assertNotNull(p);
-            assertEquals("NONE", p.getReferenceCode());
-            assertEmptyLogs();
-        }
-    }
-
-    @Test
     @DisplayName("Proxy")
     public void testProxy() throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         for (var tdir : testDirs) {
@@ -1140,7 +1133,7 @@ public class ModelFromXSDTest {
     @Test
     public void testReferenceCode() throws Exception {
         for (var tdir : testDirs) {
-            String sch = tdir + "/refCode-1.xsd";
+            String sch = tdir + "/nillable.xsd";
             File f = new File(sch);
             if (!f.canRead()) {
                 continue;
@@ -1148,16 +1141,23 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
             
-            var ct = m.getClassType("nc:PersonNameType");
-            assertEquals("NONE", ct.getReferenceCode());
-            ct = m.getClassType("nc:ProperNameTextType");
-            assertEquals("URI", ct.getReferenceCode());
-            ct = m.getClassType("nc:TextType");
-            assertEquals("ANY", ct.getReferenceCode());            
-            ct = m.getClassType("nc:PersonNameTextType");
-            assertEquals("REF", ct.getReferenceCode());    
-            ct = m.getClassType("nc:AnotherType");      // test default value
-            assertEquals("ANY", ct.getReferenceCode());    
+            var warns = getLogWarns();
+            var infos = getLogInfos();
+            Collections.sort(infos);
+            Collections.sort(warns);
+            assertThat(infos.get(0)).containsPattern("nc:DataProp.*@nillable");
+            assertThat(infos.get(1)).containsPattern("nc:DataProp.*not allowed");
+            assertThat(infos.get(2)).containsPattern("nc:ObjPropAnyRef has appinfo:referenceCode");
+            
+            assertEquals("ANY", m.getClassType("nc:Class-1Type").getReferenceCode());
+            assertEquals("REF", m.getClassType("nc:Class-2Type").getReferenceCode());
+            assertEquals("", m.getProperty("nc:DataProp").getReferenceCode());
+            assertEquals("ANY", m.getProperty("nc:ObjPropAnyRef-1").getReferenceCode());
+            assertEquals("ANY", m.getProperty("nc:ObjPropAnyRef-2").getReferenceCode());
+            assertEquals("NONE", m.getProperty("nc:ObjPropNoRef-1").getReferenceCode());
+            assertEquals("NONE", m.getProperty("nc:ObjPropNoRef-2").getReferenceCode());
+            assertEquals("REF", m.getProperty("nc:ObjPropOnlyRef").getReferenceCode());
+            assertEquals("URI", m.getProperty("nc:ObjPropOnlyURI").getReferenceCode());
         }
     }
 

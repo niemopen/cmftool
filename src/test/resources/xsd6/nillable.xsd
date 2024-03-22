@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>Test of @nillable on object and data properties</xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:complexType name="Class-1Type" appinfo:referenceCode="ANY">
+    <xs:annotation>
+      <xs:documentation>Simple content with model attributes is a class.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="niem-xs:string">
+        <xs:attribute ref="nc:partialIndicator"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Class-2Type" appinfo:referenceCode="REF">
+    <xs:annotation>
+      <xs:documentation>Simple content marked referenceable is a class.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="niem-xs:string"/>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="MyDataType">
+    <xs:annotation>
+      <xs:documentation>Simple content w/o model attributes is a datatype.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="niem-xs:string"/>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:attribute name="partialIndicator" type="xs:boolean">
+    <xs:annotation>
+      <xs:documentation>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+  <xs:element name="DataProp" type="nc:MyDataType" appinfo:referenceCode="ANY" nillable="true"/>
+  <xs:element name="ObjPropAnyRef" type="nc:Class-1Type" appinfo:referenceCode="ANY"/>
+  <xs:element name="ObjPropAnyRef-1" type="nc:Class-1Type" nillable="true"/>
+  <xs:element name="ObjPropAnyRef-2" type="nc:Class-2Type" nillable="true"/>
+  <xs:element name="ObjPropNoRef-1" type="nc:Class-1Type"/>
+  <xs:element name="ObjPropNoRef-2" type="nc:Class-2Type"/>
+  <xs:element name="ObjPropOnlyRef" type="nc:Class-1Type" appinfo:referenceCode="REF" nillable="true"/>
+  <xs:element name="ObjPropOnlyURI" type="nc:Class-2Type" appinfo:referenceCode="URI" nillable="true"/>
+</xs:schema>

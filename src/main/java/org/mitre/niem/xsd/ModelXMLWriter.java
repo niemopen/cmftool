@@ -94,7 +94,6 @@ public class ModelXMLWriter {
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
         addComponentChildren(dom, e, x);
         if (x.isAugmentable()) addSimpleChild(dom, e, "AugmentableIndicator", "true");
-        if (x.isExternal())    addSimpleChild(dom, e, "ExternalAdapterTypeIndicator", "true");
         addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
         if (null != x.hasPropertyList()) 
             for (HasProperty z : x.hasPropertyList()) { addHasProperty(dom, e, z); }    

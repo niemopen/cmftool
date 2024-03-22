@@ -74,7 +74,7 @@ public class XMLSchemaDocument {
     static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(XMLSchemaDocument.class); 
     
     private final Stack<String> appinfoURI = new Stack<>();
-    private final List<XMLNamespaceDeclaration> nsdels = new ArrayList<>();
+    private final List<XMLNamespaceDeclaration> nsdecls = new ArrayList<>();
     private final List<String> externalImports = new ArrayList<>();
     private final List<String> docStrings = new ArrayList<>();
     private final List<LocalTerm> localTerms = new ArrayList<>();
@@ -89,7 +89,7 @@ public class XMLSchemaDocument {
     private String language = null;
     private int kind = NSK_UNKNOWN;
     
-    public List<XMLNamespaceDeclaration> namespaceDecls ()  { return nsdels; }          // all namespace declarations in document
+    public List<XMLNamespaceDeclaration> namespaceDecls ()  { return nsdecls; }         // all namespace declarations in document
     public List<String> externalImports ()                  { return externalImports; } // external namespaces imported in document
     public List<AppinfoAttribute> appinfoAtts ()            { return appinfoAtts; }     // appinfo attributes in document
     public List<String>documentationStrings()               { return docStrings; }      // schema-level documentation strings
@@ -112,7 +112,7 @@ public class XMLSchemaDocument {
         SAXParser saxp = ParserBootstrap.sax2Parser();
         XSDHandler h = new XSDHandler();
         saxp.parse(sdfuri, h);
-        for (var nsd : nsdels) {
+        for (var nsd : nsdecls) {
             nsd.setTargetNS(targetNS);
             nsd.setTargetKind(kind);
         }
@@ -130,8 +130,8 @@ public class XMLSchemaDocument {
         XSDHandler () { } 
         
         // Do two things with prefix maps.  Keep a list of all mappings in the document
-        // for prefix normalization occuring later.  Also keep a stack of the current 
-        // mappings to interpret QName in <xs:element ref="q:name" appinfo:foo="bar"/>
+        // for prefix normalization occuring later.  Also keep a stack of the appinfo namespace
+        // mappings so we can interpret "appinfo:foo" in eg. <xs:element ref="q:name" appinfo:foo="bar"/>
         @Override
         public void startPrefixMapping (String prefix, String uri) {
             if (prefix.isEmpty()) return;
@@ -139,7 +139,7 @@ public class XMLSchemaDocument {
             nsm.onStartPrefixMapping(prefix, uri);
             int line = docloc.getLineNumber();
             var nsd = new XMLNamespaceDeclaration(prefix, uri, line, depth, null, NSK_UNKNOWN);  // don't know target NS or kind yet
-            nsdels.add(nsd);
+            nsdecls.add(nsd);
         }        
         
         @Override
@@ -163,12 +163,13 @@ public class XMLSchemaDocument {
                 schemaVersion = atts.getValue("version");
                 language = atts.getValue(XML_NS_URI, "lang");
                 
-                // Get schema kind and niem version (maybe)
+                // Get schema kind and NIEM version from namespace URI (maybe)
                 kind        = NamespaceKind.uri2Kind(targetNS);
                 niemArch    = NamespaceKind.uri2Architecture(targetNS);
                 niemVersion = NamespaceKind.uri2Version(targetNS);
 
-                // Get conformance target assertion
+                // Get conformance target assertions
+                // Get NIEM version from CTA, if we didn't get it from namespace URI
                 for (int i = 0; i < atts.getLength(); i++) {
                     var auri = atts.getURI(i);
                     int util = NamespaceKind.uri2Builtin(auri);
@@ -227,7 +228,7 @@ public class XMLSchemaDocument {
                             case "sourceURIs": lterm.setSourceURIs(aval); break;
                             case "term":       lterm.setTerm(aval); break;
                             default:
-                                LOG.warn(String.format("strange attribute %s in LocalTerm, %s, line %d",
+                                LOG.warn(String.format("strange attribute %s in LocalTerm, %s:%d",
                                         aln, docloc.getSystemId(), docloc.getLineNumber()));
                         }
                 }                
@@ -240,7 +241,9 @@ public class XMLSchemaDocument {
                 for (int i = 0; i < atts.getLength(); i++) {
                     if (atts.getURI(i).equals(appinfoURI.peek())) {
                         var een = Pair.with(targetNS, atts.getValue("name"));
-                        appinfoAtts.add(new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), een, null));
+                        appinfoAtts.add(new AppinfoAttribute(
+                                docloc.getSystemId(), docloc.getLineNumber(), 
+                                atts.getLocalName(i), atts.getValue(i), een, null));
                     }
                 } 
             }
@@ -251,8 +254,9 @@ public class XMLSchemaDocument {
                 if (null != ctypeEN && null != eref && null != een) {
                     for (int i = 0; i < atts.getLength(); i++) {
                         if (atts.getURI(i).equals(appinfoURI.peek())) {
-                            AppinfoAttribute a = new AppinfoAttribute(atts.getLocalName(i), atts.getValue(i), ctypeEN, een);
-                            appinfoAtts.add(a);
+                            appinfoAtts.add(new AppinfoAttribute(
+                                    docloc.getSystemId(), docloc.getLineNumber(), 
+                                    atts.getLocalName(i), atts.getValue(i), ctypeEN, een));
                         }
                     }
                 }

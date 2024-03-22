@@ -21,7 +21,7 @@
       <xs:extension base="xs-proxy:decimal"/>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:element name="ConfidencePercent" type="nc:PercentType" nillable="true">
+  <xs:element name="ConfidencePercent" type="nc:PercentType">
     <xs:annotation>
       <xs:documentation>A value that indicates belief that content is accurate or trustworthy.</xs:documentation>
     </xs:annotation>

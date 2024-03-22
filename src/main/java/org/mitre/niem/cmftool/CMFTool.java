@@ -47,7 +47,7 @@ public class CMFTool {
      
     String xtd = "src/test/resources/xsd6/";
     if (0 == args.length) {
-        args = new String[]{"m2xs", "-o", "src/test/resources/xsd6/tmp", "-d", xtd + "globalAug-1.cmf"};
+        args = new String[]{"m2xs", "-o", "src/test/resources/xsd6/tmp", "-d", xtd + "nillable.cmf"};
 //        args = new String[]{"x2m", xtd + "globalAug-1.xsd"};
 
 //        args = new String[]{"m2xm", "-o", "examples/Claim-iepd/tmp", "examples/Claim-iepd/claim.cmf"};

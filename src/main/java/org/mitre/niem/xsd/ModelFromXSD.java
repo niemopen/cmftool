@@ -298,11 +298,15 @@ public class ModelFromXSD {
     private void processAppinfoAttributes () {
         sdoc.forEach((ns,sd) -> {
             for (var arec : sd.appinfoAtts()) {
-                String cnsuri = arec.componentEQN().getValue0();
-                String cln    = arec.componentEQN().getValue1();
-                String cqn    = m.getNamespaceByURI(cnsuri).getNamespacePrefix() + ":" + cln;
+                // Get QName of the schema component with the appinfo.
+                // We have its namespace URI; need the namespace prefix.
+                var cnsuri = arec.componentEQN().getValue0();       // compnent ns uri
+                var cln    = arec.componentEQN().getValue1();       // component name
+                var clns   = m.getNamespaceByURI(cnsuri);           // component Namespace
+                var cqn    = clns.getNamespacePrefix() + ":" + cln; // component QName
                 
-                // Component appinfo; add arec to appinfo list for this component
+                // Component appinfo; eg. <xs:element name="Element" appinfo:deprecated="true">.
+                // Add arec to appinfo list for this component.
                 if (null == arec.elementEQN()) {
                     var arlist = globalAppinfo.get(cqn);
                     if (null == arlist) {
@@ -311,13 +315,16 @@ public class ModelFromXSD {
                     }
                     arlist.add(arec);
                 }
-                // Element or attribute reference appinfo; add arec to list for this component and element ref
+                // Element or attribute reference appinfo; 
+                // eg. <xs:element ref="my:Element" appinfo:orderedPropertyIndicator="true"/>.
+                // Add arec to list for this component and element ref.
                 else {
-                    var ensuri = arec.elementEQN().getValue0();
-                    var eln    = arec.elementEQN().getValue1();
-                    var ens    = m.getNamespaceByURI(ensuri);
+                    var ensuri = arec.elementEQN().getValue0(); // URI of ref namespace; eg. "my"
+                    var eln    = arec.elementEQN().getValue1(); // local name; eg. "Element"
+                    var ens    = m.getNamespaceByURI(ensuri);   // Namespace object for ref namespace
                     if (null == ens) {
-                        LOG.warn(String.format("no NIEM namespace for appinfo namespace=\"%s\"", ensuri));
+                        LOG.warn(String.format("no namespace for %s at %s:%d (appinfo ignored)",
+                                arec.attValue(), arec.sdocName(), arec.sdocLine()));
                     }
                     else {
                         String eqn = ens.getNamespacePrefix() + ":" + eln;
@@ -374,7 +381,7 @@ public class ModelFromXSD {
             var xet  = xobj.getTypeDefinition();
             var xetu = NamespaceKind.uri2Builtin(xet.getNamespace());
             if (NIEM_STRUCTURES == xetu && xet.getName().endsWith("AugmentationType")) {
-                LOG.info(String.format("Discarding element %s:%s; type structures:AugmentationType not allowed",
+                LOG.info(String.format("Discarding element %s:%s with type structures:AugmentationType (not allowed)",
                         nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
                 continue;
             }
@@ -427,7 +434,8 @@ public class ModelFromXSD {
             var ns    = m.getNamespaceByURI(nsuri);
             int kind  = namespaceKindFromSchema(nsuri);
             if (kind > NSK_OTHERNIEM) continue;
-
+            var qname  = ns.getNamespacePrefix() + ":" + lname;
+                
             // Simple type is always a Datatype object
             if (SIMPLE_TYPE == xtype.getTypeCategory()) {
                 var dt   = new Datatype(ns, lname);
@@ -440,7 +448,6 @@ public class ModelFromXSD {
                 // Simple content without model attributes is a Datatype object
                 // Everything is a class if there are global augmentations.
                 boolean hasModelAttributes = false;
-                var qname  = ns.getNamespacePrefix() + ":" + lname;
                 var xctype = (XSComplexTypeDefinition)xtype;
                 var atts   = xctype.getAttributeUses();
                 for (int j = 0; j < atts.getLength(); j++) {        // iterate over all attributes, incl. inherited
@@ -448,12 +455,15 @@ public class ModelFromXSD {
                     var adecl = au.getAttrDeclaration();
                     var ans   = adecl.getNamespace();
                     if (NIEM_STRUCTURES != NamespaceKind.uri2Builtin(ans)) {    // attributes in structures NS don't count
-                        hasModelAttributes = true;                          // found a model attribute; we're done
+                        hasModelAttributes = true;                              // found a model attribute; we're done
                         break;
                     }
                 }
-                boolean isSimple = CONTENTTYPE_SIMPLE == xctype.getContentType();
-                if (isSimple && !hasModelAttributes) {   // it's a Datatype
+                var refCode = getAppinfoAttribute(qname, null, "referenceCode");  
+                var isMarkedRefable = (!refCode.isBlank() && !"NONE".equals(refCode));
+                var isSimpleContent = CONTENTTYPE_SIMPLE == xctype.getContentType();
+             
+                if (isSimpleContent && !isMarkedRefable && !hasModelAttributes) {   // it's a Datatype
                     var dt   = new Datatype(ns, lname);               
                     datatypeXSobj.put(dt, xtype);
                     datatypeMap.put(dt.getQName(), dt);
@@ -461,6 +471,7 @@ public class ModelFromXSD {
                 }
                 // Complex, mixed, empty content is a ClassType object
                 // Simple content with model attributes anywhere in derivation is a ClassType object
+                // Simple content marked with appinfo:ReferenceCode!="NONE" is a ClassType object
                 else {
                     initializeXMLattributes(xctype);
                     var ct   = new ClassType(ns, lname);                    
@@ -614,6 +625,7 @@ public class ModelFromXSD {
             }
             LOG.debug("processing property " + p.getQName());
             var xobj = propertyXSobj.get(p);
+            var rcode = getAppinfoAttribute(p.getQName(), null, "referenceCode");
             p.setIsDeprecated(getAppinfoAttribute(p.getQName(), null, "deprecated"));
             p.setIsRefAttribute(getAppinfoAttribute(p.getQName(), null, "referenceAttributeIndicator"));
             p.setIsRelationship(getAppinfoAttribute(p.getQName(), null, "relationshipPropertyIndicator"));            
@@ -622,14 +634,16 @@ public class ModelFromXSD {
                 var xatype = xadecl.getTypeDefinition();
                 var dt     = getDatatype(xatype.getNamespace(), xatype.getName());
                 p.setDatatype(dt);
-               }
+                if (!rcode.isBlank())
+                    LOG.warn("appinfo:referenceCode is not allowed on attribute {}, ignored", p.getQName());
+            }
             else {
                 var xedecl = (XSElementDeclaration)xobj;
                 var xetype = xedecl.getTypeDefinition();
                 var xet    = xetype.getNamespace();
                 var xetb   = NamespaceKind.uri2Builtin(xet);
                 if (NIEM_STRUCTURES == xetb) {
-                    LOG.warn(String.format("Element %s:%s has type is from structures namespace (not allowed in NIEM 6)",
+                    LOG.warn(String.format("Element %s:%s has type from structures namespace (not allowed, ignored)",
                         nsmap.getPrefix(xobj.getNamespace()), xobj.getName()));
                 }
                 else {
@@ -642,10 +656,22 @@ public class ModelFromXSD {
                     }    
                     p.setIsAbstract(xedecl.getAbstract());
                     
+                    // Data properties never have a referenceCode.
+                    // Object properties have reference Code from appinfo, or inferred from nillable.
                     var nlbf  = xedecl.getNillable();
-                    var rcode = getAppinfoAttribute(p.getQName(), null, "referenceCode");
-                    if (rcode.isBlank()) {
-                        rcode = nlbf ? "ANY" : "NONE";
+                    if (null == pclass) {
+                        if (xedecl.getNillable())
+                            LOG.info("element {} is a data property, @nillable=\"true\" ignored", p.getQName());
+                        if (!rcode.isBlank() && !"NONE".equals(rcode)) {
+                            LOG.info("element {} is a data property, appinfo:referenceCode is not allowed (ignored)", p.getQName());
+                            rcode = "";
+                        }
+                    }
+                    else {
+                        if (!rcode.isBlank() && !"NONE".equals(rcode) && !nlbf)
+                            LOG.info("element {} has appinfo:referenceCode=\"{}\"; setting @nillable=\"true\"", 
+                                    p.getQName(), rcode);
+                        if (rcode.isBlank()) rcode = nlbf ? "ANY" : "NONE";
                     }
                     p.setReferenceCode(rcode);
                 }
@@ -667,8 +693,6 @@ public class ModelFromXSD {
             var xsbase  = xctype.getSimpleType();           // base type XSSimpleTypeDefinition (possibly null)
             ct.setIsAbstract(xctype.getAbstract());
             ct.setIsDeprecated(getAppinfoAttribute(ct.getQName(), null, "deprecated"));
-            ct.setIsExternal("true".equals(getAppinfoAttribute(ct.getQName(), null, "externalAdapterTypeIndicator"))
-                                || ct.getName().endsWith("AdapterType"));
             
             var rcode = getAppinfoAttribute(ct.getQName(), null, "referenceCode");
             if (!rcode.isBlank()) ct.setReferenceCode(rcode);
@@ -1248,7 +1272,9 @@ public class ModelFromXSD {
                             var ansuri = ansList[i];
                             var ans = m.getNamespaceByURI(ansuri);
                             if (null == ans) {
-                                LOG.warn(String.format("augmenting namespace %s is not NIEM-conforming in schema", ansuri));
+                                LOG.warn(String.format(
+                                        "augmentingNamespace %s does not exist (at %s:%d) (ignored)",
+                                         ansuri, arec.sdocName(), arec.sdocLine()));
                                 continue;
                             }
                             LOG.debug("{} augments {} with attribute {}", ansuri, cqn, prop);

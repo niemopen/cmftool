@@ -566,7 +566,6 @@ public class ModelXMLReaderTest {
         
         ClassType geoP = m.getClassType("geo:PointAdapterType");
         assertNotNull(geoP);
-        assertTrue(geoP.isExternal());
         
         ClassType tpt = m.getClassType("ns:TrackPointType");
         assertNotNull(tpt);

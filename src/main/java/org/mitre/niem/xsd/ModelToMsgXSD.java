@@ -31,6 +31,7 @@ import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 import org.mitre.niem.cmf.Property;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * A class to generate a NIEM 6 message schema from a Model
@@ -63,7 +64,10 @@ public class ModelToMsgXSD extends ModelToXSD {
         }        
         if (needSimpleType.contains(dt)) {
             var stqn = dt.getQName().replaceFirst("Type$", "SimpleType");
-            addEmptyExtensionElement(dom, cte, dt, stqn);
+            var rse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:restriction");
+            rse.setAttribute("base", stqn);
+            cte.appendChild(rse);
+//            addEmptyExtensionElement(dom, cte, dt, stqn);
         }
         else {
             var r     = dt.getRestrictionOf();

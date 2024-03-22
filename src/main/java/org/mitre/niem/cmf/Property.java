@@ -50,19 +50,20 @@ public class Property extends Component {
     public void setIsAttribute (boolean f)        { isAttribute = f; }
     public void setIsAttribute (String s)         { isAttribute = null != s && "true".equals(s); }
     public void setIsRefAttribute (boolean f)     { isRefAttribute = f; }
-    public void setIsRefAttribute (String s)      { isRefAttribute = null != s && "true".equals(s); }
-    public void setReferenceCode (String s)       { refCode = s; }   
+    public void setIsRefAttribute (String s)      { isRefAttribute = null != s && "true".equals(s); } 
     public void setIsRelationship (boolean f)     { isRelationship = f; }
     public void setIsRelationship (String s)      { isRelationship = "true".equals(s); } 
+    public void setReferenceCode (String s)       { refCode = s; }  
     
     public Property getSubPropertyOf ()           { return subPropertyOf; }
     public ClassType getClassType ()              { return classType; }
     public Datatype getDatatype()                 { return datatype; }
     public boolean isAttribute()                  { return isAttribute; }
     public boolean isRefAttribute()               { return isRefAttribute; }
-    public boolean isRelationship()               { return isRelationship; } 
+    public boolean isRelationship()               { return isRelationship; }
+    public String getReferenceCode ()             { return null == refCode ? "" : refCode ; }
     
-    public String getReferenceCode() {
+    public String getInheritedReferenceCode() {
         if (null != refCode) return refCode;
         if (null != classType) return classType.getReferenceCode();
         return "";

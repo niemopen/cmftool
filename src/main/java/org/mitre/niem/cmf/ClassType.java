@@ -35,7 +35,6 @@ import java.util.List;
 public class ClassType extends Component {
     private String refCode = "ANY";
     private boolean isAugmentable = false;
-    private boolean isExternal = false;
     private ClassType extensionOfClass  = null;
     private final List<HasProperty> hasPropertyList = new ArrayList<>();
     
@@ -49,13 +48,12 @@ public class ClassType extends Component {
     public void setReferenceCode (String s)       { refCode = s; }
     public void setIsAugmentable (boolean f)      { isAugmentable = f; }
     public void setIsAugmentable (String s)       { isAugmentable = "true".equals(s); }
-    public void setIsExternal (boolean f)         { isExternal = f; }    
-    public void setIsExternal (String s)          { isExternal = "true".equals(s); }
     public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
     
     public String getReferenceCode()              { return refCode; }
     public boolean isAugmentable ()               { return isAugmentable; }
-    public boolean isExternal ()                  { return isExternal; }
+    public boolean isAdapter ()                   { return getName().endsWith("AdapterType"); }
+    public boolean isReferenceable ()             { return !refCode.isBlank() && !"NONE".equals(refCode); }
     public ClassType getExtensionOfClass ()       { return extensionOfClass; }
             
     public List<HasProperty> hasPropertyList ()   { return hasPropertyList; }

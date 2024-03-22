@@ -285,16 +285,19 @@ public class NamespaceKind {
     
     // Returns "" if NIEM architecture is unknown; never returns null
     public static String uri2Architecture (String nsuri) {
+        if (null == nsuri) return "";
         var rec = lookup(nsuri);
         return rec.arch();
     }
     
     public static int uri2Kind (String nsuri) {
+        if (null == nsuri) return NSK_UNKNOWN;
         var rec = lookup(nsuri);
         return rec.kind();
     }
     
     public static int uri2Builtin (String nsuri) {
+        if (null == nsuri) return NIEM_NOTBUILTIN;
         var rec = lookup(nsuri);
         return rec.builtin();
     }
@@ -302,6 +305,7 @@ public class NamespaceKind {
     // Returns "3", "4", "5", etc.
     // Returns "" if NIEM version is unknown; never returns null
     public static String uri2Version (String nsuri) {
+        if (null == nsuri) return "";
         var rec = lookup(nsuri);
         return rec.version();
     }

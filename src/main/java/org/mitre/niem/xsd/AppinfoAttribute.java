@@ -65,8 +65,10 @@ import org.javatuples.Pair;
 
 
 public record AppinfoAttribute (
-    String attLname,                    // appinfo attribute local name (in appinfo namespace)
-    String attValue,                    // appinfo attribute value
-    Pair<String,String> componentEQN,   // namespace and lname of global decl/defn with this appinfo attribute
-    Pair<String,String> elementEQN      // namespace and lname of element with appinfo within complex type defn (or null)
+    String sdocName,                    // schema document (for log messages)
+    int sdocLine,                       // line in schema document
+    String attLname,                    // appinfo attribute name (eg. appinfo:name="value")
+    String attValue,                    // appinfo attribute value (eg. appinfo:name="value")
+    Pair<String,String> componentEQN,   // namespace URI and lname of global decl/defn with this appinfo attribute
+    Pair<String,String> elementEQN      // namespace URI and lname of element with appinfo within complex type defn (or null)
     ) { }

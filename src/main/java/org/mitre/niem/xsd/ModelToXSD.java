@@ -90,6 +90,8 @@ import static org.mitre.niem.cmf.NamespaceKind.NIEM_PROXY;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTBUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_BUILTIN_COUNT;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import org.mitre.niem.cmf.ReferenceGraph;
 import static org.mitre.utility.IndefiniteArticle.articalize;
 
@@ -194,14 +196,14 @@ public abstract class ModelToXSD {
         }
         // Find the ClassType objects that will become CSCs with a FooLiteral property
         // First property in the type is a simple element named FooLiteral
-        // Either type has metadata, or >0 other properties that are all attributes
+        // Either type is referenceable, or has >0 other properties that are all attributes
         for (Component c : m.getComponentList()) {
-            ClassType ct = c.asClassType();
+            var ct = c.asClassType();
             if (null == ct) continue;
-            if (ct.hasPropertyList().size() < 2) continue;
+            if (ct.hasPropertyList().size() < 1) continue;
             var plist = ct.hasPropertyList();
             var prop  = plist.get(0).getProperty();
-            boolean cscflag = (null != prop.getDatatype() && prop.getName().endsWith("Literal"));
+            var cscflag = (null != prop.getDatatype() && prop.getName().endsWith("Literal"));
             for (int i = 1; i < plist.size(); i++) {
                 if (!plist.get(i).getProperty().isAttribute()) {
                     cscflag = false;
@@ -298,6 +300,8 @@ public abstract class ModelToXSD {
         for (Namespace ns : m.getNamespaceList()) {
             if (W3C_XML_SCHEMA_NS_URI.equals(ns.getNamespaceURI())) continue;
             if (XML_NS_URI.equals(ns.getNamespaceURI())) continue;  // copy it later
+            if (NSK_EXTERNAL == ns.getKind()) continue;             // don't write XSD for externals
+            if (NSK_UNKNOWN == ns.getKind()) continue;              // or for unknown namespaces
             var nsuri = ns.getNamespaceURI();
             var ofp    = ns2file.get(nsuri);
             var of     = new File(ofp);
@@ -657,8 +661,7 @@ public abstract class ModelToXSD {
         var ae = addDocumentation(dom, cte, null, ct.getDocumentation());
         if (ct.isAbstract())   cte.setAttribute("abstract", "true");
         if (ct.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
-        if (ct.isExternal())   addAppinfoAttribute(dom, cte, "externalAdapterTypeIndicator", "true");
-        if (!"ANY".equals(ct.getReferenceCode()))
+        if (!ct.getReferenceCode().isBlank() && !"ANY".equals(ct.getReferenceCode()))
             addAppinfoAttribute(dom, cte, "referenceCode", ct.getReferenceCode());
         nsTypedefs.put(cname, cte);
         
@@ -925,13 +928,18 @@ public abstract class ModelToXSD {
         if (isAttribute) pe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
         else pe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
         pe.setAttribute("name", p.getName());
-        var pqn = p.getQName();
-        var pqc = p.getReferenceCode();
-        if (isPropertyNillable(p)) pe.setAttribute("nillable", "true");
+        var pqn   = p.getQName();
+        var isnil = isPropertyNillable(p);
+        var rcode = p.getReferenceCode();
+        if (isnil)               pe.setAttribute("nillable", "true");
         if (p.isAbstract())      pe.setAttribute("abstract", "true");
         if (p.isDeprecated())    addAppinfoAttribute(dom, pe, "deprecated", "true");
         if (p.isRefAttribute())  addAppinfoAttribute(dom, pe, "referenceAttributeIndicator", "true");
         if (p.isRelationship())  addAppinfoAttribute(dom, pe, "relationshipPropertyIndicator", "true");
+        if (!rcode.isBlank()) {
+            if (isnil && !"ANY".equals(rcode))   addAppinfoAttribute(dom, pe, "referenceCode", rcode);
+            if (!isnil && !"NONE".equals(rcode)) addAppinfoAttribute(dom, pe, "referenceCode", rcode);
+        }
         var ae = addDocumentation(dom, pe, null, p.getDocumentation());
         // Handle property from element with type from structures; blech
         if (null == pct && null == pdt && !p.isAbstract() && !m.getNamespaceByURI(nsuri).isExternal()) {

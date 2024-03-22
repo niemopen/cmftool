@@ -71,8 +71,7 @@ public class XStringObject extends XObjectType {
         case "AbstractIndicator":            xc.getObject().setIsAbstract(val); break;
         case "AugmentableIndicator":         xc.getObject().setIsAugmentable(val); break;
         case "DocumentationText":            xc.getObject().setDocumentation(val); break;
-        case "DeprecatedIndicator":          xc.getObject().setIsDeprecated(val); break;
-        case "ExternalAdapterTypeIndicator": xc.getObject().setIsExternal(val); break;      
+        case "DeprecatedIndicator":          xc.getObject().setIsDeprecated(val); break;  
         case "Name":                         xc.getObject().setName(val); break;
         case "ReferenceCode":                xc.getObject().setReferenceCode(val); break;
         default:

@@ -11,7 +11,7 @@
 
 <xs:schema
   targetNamespace="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
-  version="psd01"
+  version="ps02"
   xml:lang="en-US"
   xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema">
