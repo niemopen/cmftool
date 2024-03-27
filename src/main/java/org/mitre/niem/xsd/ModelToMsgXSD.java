@@ -25,6 +25,7 @@ package org.mitre.niem.xsd;
 
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.mitre.niem.NIEMConstants.DEFAULT_NIEM_VERSION;
+import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.NamespaceKind;
@@ -42,6 +43,94 @@ import org.w3c.dom.Element;
 public class ModelToMsgXSD extends ModelToXSD {
     
     public ModelToMsgXSD (Model m) { super(m); }
+   
+    // Create xs:complexContent and xs:extension elements for this xs:complexType
+    // in a message schema.
+    @Override
+    protected Element handleComplexContentReferenceCode (Document dom, Element cte, Element sqe, ClassType ct) {
+
+        // Create xs:extension and xs:complexContent if this class has a model parent.
+        var attParent = cte;
+        var basect  = ct.getExtensionOfClass();
+        if (null != basect) {
+            var cce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
+            var exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
+            exe.setAttribute("base", basect.getQName());
+            attParent = exe;
+            nsNSdeps.add(basect.getNamespace().getNamespaceURI());
+            exe.appendChild(sqe);
+            cce.appendChild(exe);
+            cte.appendChild(cce);
+        }
+        // Otherwise there's no xs:extension; xs:complexType has xs:sequence, put attributes there
+        else cte.appendChild(sqe);
+        
+        var rcode = ct.getReferenceCode();
+        switch (rcode) {
+        case "NONE":
+            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
+            break;
+        case "REF":
+            addAttribute(dom, attParent, structPrefix + ":appliesToParent");
+            addAttribute(dom, attParent, structPrefix + ":id");
+            addAttribute(dom, attParent, structPrefix + ":ref");
+            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
+            break;
+        case "URI":
+            addAttribute(dom, attParent, structPrefix + ":appliesToParent");
+            addAttribute(dom, attParent, structPrefix + ":uri");
+            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
+            break;
+        case "ANY":
+        default:
+            addAttribute(dom, attParent, structPrefix + ":appliesToParent");
+            addAttribute(dom, attParent, structPrefix + ":id");
+            addAttribute(dom, attParent, structPrefix + ":ref");
+            addAttribute(dom, attParent, structPrefix + ":uri");
+            // refCode ANY is the default; don't add
+            break;
+        }
+        return attParent;
+    }
+    
+    // Add attribute group and reference code appinfo for a message schema.
+    @Override
+    protected void handleSimpleContentReferenceCode (Document dom, Element cte, Element exe, ClassType ct) { 
+        var rcode = ct.getReferenceCode();
+        switch (rcode) {
+        case "ANY":
+            addAttribute(dom, exe, structPrefix + ":id");
+            addAttribute(dom, exe, structPrefix + ":ref");
+            addAttribute(dom, exe, structPrefix + ":uri");
+            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
+            break;
+        case "REF":
+            addAttribute(dom, exe, structPrefix + ":id");
+            addAttribute(dom, exe, structPrefix + ":ref");
+            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
+            break;
+        case "URI":
+            addAttribute(dom, exe, structPrefix + ":uri");
+            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
+            break;
+        case "NONE":
+            break;
+        // Default is ANY if there are model attributes; otherwise NONE
+        default:
+            if (ct.hasPropertyList().size() < 2) break;
+            addAttribute(dom, exe, structPrefix + ":id");
+            addAttribute(dom, exe, structPrefix + ":ref");
+            addAttribute(dom, exe, structPrefix + ":uri");
+            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
+            break;
+        }       
+    }
+    
+    protected void addAttribute (Document dom, Element attParent, String atqn) {
+        var ate = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
+        ate.setAttribute("ref", atqn);
+        attParent.appendChild(ate);
+    }
     
     // For a message schema, we create a simple type declaration from a Datatype object (FooType)
     @Override
@@ -67,7 +156,6 @@ public class ModelToMsgXSD extends ModelToXSD {
             var rse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:restriction");
             rse.setAttribute("base", stqn);
             cte.appendChild(rse);
-//            addEmptyExtensionElement(dom, cte, dt, stqn);
         }
         else {
             var r     = dt.getRestrictionOf();

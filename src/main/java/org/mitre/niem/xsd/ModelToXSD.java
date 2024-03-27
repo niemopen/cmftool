@@ -483,8 +483,9 @@ public abstract class ModelToXSD {
         if (null != messageNSuri && nsuri.equals(messageNSuri)) {
             var rset = refGraph.reachableFrom(ns);
             for (var ons : m.getNamespaceList()) {
-                if (!rset.contains(ons))
-                    orderedDeps.add(ons.getNamespaceURI());
+                var uri = ons.getNamespaceURI();
+                if (!orderedDeps.contains(uri))
+                    orderedDeps.add(uri);
             }
         }
         Collections.sort(orderedDeps);
@@ -661,11 +662,15 @@ public abstract class ModelToXSD {
         var ae = addDocumentation(dom, cte, null, ct.getDocumentation());
         if (ct.isAbstract())   cte.setAttribute("abstract", "true");
         if (ct.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
-        if (!ct.getReferenceCode().isBlank() && !"ANY".equals(ct.getReferenceCode()))
-            addAppinfoAttribute(dom, cte, "referenceCode", ct.getReferenceCode());
         nsTypedefs.put(cname, cte);
         
-        // Create simple content for class with FooLiteral property
+        // Structures and model attribute refs are the children of xs:extension
+        // or xs:sequence, depending on refCode, simple/complex content, and
+        // whether we are generating a message, source, or NIEM5 schema.
+        // The handle*ReferenceCode routines take care of that mess.
+        Element attParent = null;
+        
+        // We create simple content for a class with a FooLiteral property
         if (litTypes.contains(ct)) {
             var sce   = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
             var plist = ct.hasPropertyList();
@@ -686,23 +691,20 @@ public abstract class ModelToXSD {
                 }
             }
             exe.setAttribute("base", lptqn);
-            if (lptqn.endsWith("SimpleType")) addSimpleTypeExtension(dom, exe);
-
+            handleSimpleContentReferenceCode(dom, cte, exe, ct);    // attribute group and appinfo
             litProps.add(lp);                   // remember we don't need an element for this
             plist.remove(0);                    // leaving the attribute properties for later
             cte.appendChild(sce);               // xs:complexType has xs:simpleContent
             sce.appendChild(exe);               // xs:simpleContent has xs:extension
+            attParent = exe;                    // add model attributes to xs:extension
         }
-        // Otherwise create complex content with sequence of element refs
+        // Otherwise create complex content with xs:sequence of element refs.
+        // The handleComplexContentReferenceCode decides whether there is an xs:extension
+        // (don't have one for certain refCodes in message schemas)
         else {
-            Element sqe = null;
-            var cce     = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
-            var basect  = ct.getExtensionOfClass();
-            if (null == basect) exe.setAttribute("base", structuresBaseType(cname));
-            else {
-                exe.setAttribute("base", basect.getQName());
-                nsNSdeps.add(basect.getNamespace().getNamespaceURI());
-            }
+            var sqe   = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");            
+            attParent = handleComplexContentReferenceCode(dom, cte, sqe, ct);
+            
             // Add element refs for element properties
             for (HasProperty hp : ct.hasPropertyList()) {
                 if (!hp.augmentingNS().isEmpty()) continue;
@@ -711,11 +713,8 @@ public abstract class ModelToXSD {
                 addElementRef(dom, sqe, hp);
                 nsNSdeps.add(hp.getProperty().getNamespace().getNamespaceURI());
             }
-            cte.appendChild(cce);                   // xs:complexType has xs:complexContent
-            cce.appendChild(exe);                   // xs:complexContent has xs:extension
-            if (null != sqe) exe.appendChild(sqe);  // xs:extension has xs:sequence
         }
-        // Now add attribute properties in hasProperty list to the xs:extension element
+        // Now add attribute properties in hasProperty list to the proper parent.
         // Do this for simple content or complex content
         for (HasProperty hp : ct.hasPropertyList()) {
             Property p = hp.getProperty();
@@ -739,18 +738,51 @@ public abstract class ModelToXSD {
                 }
                 if (!ulist.isEmpty()) {
                     addAppinfoAttribute(dom, ate, "augmentingNamespace", ulist.toString());
-                    exe.appendChild(ate);
+                    attParent.appendChild(ate);
                     nsNSdeps.add(p.getNamespace().getNamespaceURI());            
                 }
             }
             else {
-                exe.appendChild(ate);
+                attParent.appendChild(ate);
                 nsNSdeps.add(p.getNamespace().getNamespaceURI());
             }
         }
     }
     
-    protected void addSimpleTypeExtension (Document dom, Element exe) { 
+    // Create xs:complexContent and xs:extension elements for this xs:complexType.
+    // Different handling when creating a message schema (see ModelToMsgXSD).
+    protected Element handleComplexContentReferenceCode (Document dom, Element cte, Element sqe, ClassType ct) {
+        switch (ct.getReferenceCode()) {
+            case "NONE": addAppinfoAttribute(dom, cte, "referenceCode", "NONE"); break;
+            case "REF":  addAppinfoAttribute(dom, cte, "referenceCode", "REF"); break;
+            case "URI":  addAppinfoAttribute(dom, cte, "referenceCode", "URI"); break;
+            case "ANY": 
+            default:
+                break;
+        }
+        var exe     = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
+        var cce     = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
+        var basect  = ct.getExtensionOfClass();
+        if (null == basect) exe.setAttribute("base", structuresBaseType(ct.getName()));
+        else {
+            exe.setAttribute("base", basect.getQName());
+            nsNSdeps.add(basect.getNamespace().getNamespaceURI());
+        }
+        exe.appendChild(sqe);
+        cce.appendChild(exe);
+        cte.appendChild(cce);
+        return exe;
+    }
+    
+    // Add attribute group and reference code appinfo for a source or NIEM5 schema.
+    // Default reference code is NONE if the class has no model attribute properties.
+    // Different handling when creating a message schema (see ModelToMsgXSD).
+    protected void handleSimpleContentReferenceCode (Document dom, Element cte, Element exe, ClassType ct) { 
+        if (1 == ct.hasPropertyList().size()) {
+            var rcode = ct.getReferenceCode();
+            if (!rcode.isBlank() && !"NONE".equals(rcode))
+                addAppinfoAttribute(dom, cte, "referenceCode", rcode);
+        }
         var agqn = structPrefix + ":SimpleObjectAttributeGroup";
         var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
         age.setAttribute("ref", agqn);

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 
 /**
  * A class for a graph of references between Namespace objects.
@@ -110,6 +111,7 @@ public class ReferenceGraph {
     
     private void addRef (Namespace sns, Namespace tns) {
         if (sns == tns) return;
+        if (NSK_BUILTIN == tns.getKind()) return;
         var rset = graph.get(sns);
         if (null == rset) {
             rset = new HashSet<>();

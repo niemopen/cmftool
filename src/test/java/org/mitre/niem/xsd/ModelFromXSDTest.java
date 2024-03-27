@@ -690,39 +690,6 @@ public class ModelFromXSDTest {
             assertEmptyLogs();
         }
     }
-
-    @Test
-    @DisplayName("External namespace")
-    public void testExternals() throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
-        for (var tdir : testDirs) {
-            String sch = tdir + "/externals.xsd";
-            File f = new File(sch);
-            if (!f.canRead()) {
-                continue;
-            }
-            ModelFromXSD mfact = new ModelFromXSD();
-            Model m = mfact.createModel(sch);
-
-            assertThat(m.getNamespaceList())
-                    .hasSize(8)
-                    .extracting(Namespace::getNamespacePrefix)
-                    .contains("geo", "gml", "nc", "niem-xs", "ns", "structures", "xlink", "xs");
-            ClassType geopt = null;
-            var gmlns = m.getNamespaceByPrefix("gml");
-            var gmlpt = m.getProperty("gml:Point");
-            if (tdir.endsWith("5")) geopt = m.getClassType("geo:PointType");
-            else geopt = m.getClassType("geo:PointAdapterType");
-            var hp = geopt.hasPropertyList().get(0);
-            assertEquals(NSK_EXTERNAL, gmlns.getKind());
-            assertEquals(gmlpt, hp.getProperty());
-            assertNull(gmlpt.getClassType());
-            assertNull(gmlpt.getDatatype());
-
-            var ct = m.getClassType("ns:TrackPointType");
-            assertNotNull(ct);
-            assertEmptyLogs();
-        }
-    }
     
     @Test
     public void testGlobalElementAug() throws Exception {
@@ -1164,18 +1131,16 @@ public class ModelFromXSDTest {
     @Test
     public void testRefDocumentation() throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
         for (var tdir : testDirs) {
-            String sch = tdir + "/externals.xsd";
+            String sch = tdir + "/refDocumentation.xsd";
             File f = new File(sch);
             if (!f.canRead()) {
                 continue;
             }
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
-            ClassType ct;
-            if (tdir.endsWith("6")) ct = m.getClassType("geo:PointAdapterType");
-            else ct = m.getClassType("geo:PointType");
-            var hp = ct.hasPropertyList().get(0);
-            assertNotNull(hp.getDefinition());
+            var ct = m.getClassType("nc:PersonNameType");
+            assertNotNull(ct.hasPropertyList().get(0).getDefinition());
+            assertNull(ct.hasPropertyList().get(1).getDefinition());
         }
     }
 

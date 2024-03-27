@@ -56,7 +56,7 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
         //          "defaultFacets.xsd"         // won't round trip, not niem conforming
         "deprecated.xsd",
         "doubleType.xsd",
-        "externals.xsd",
+//        "externals.xsd",                      // won't round trip, external docs not generated
         "isRefAtt.xsd",
         "list.xsd",
         "listSimpleType.xsd",

@@ -113,18 +113,6 @@ public class NamespaceKind {
             "UNKNOWN",      // NSK_UNKNOWN
             "NOTNIEM"       // NSK_NOTNIEM
     };
-    private final static boolean[] nskindInCMF = { 
-            true,           // NSK_EXTENSION
-            true,           // NSK_DOMAIN
-            true,           // NSK_CORE
-            true,           // NSK_OTHERNIEM
-            false,          // NSK_BUILTIN
-            true,           // NSK_XSD
-            true,           // NSK_XML
-            true,           // NSK_EXTERNAL
-            false,          // NSK_UNKNOWN
-            false           // NSK_NOTNIEM
-    };
 
     // The seven kinds of builtin namespace.  Note that while code-lists-instance is 
     // a builtin namespace, it has kind NSK_OTHERNIEM (not NSK_BUILTIN), because 
@@ -383,10 +371,6 @@ public class NamespaceKind {
             return "NOTNIEM";
         }
         return nskind2code[kind];
-    }
-    
-    public static boolean isKindInCMF (int kind) {
-        return (kind >= 0 && kind <= NSK_NUMKINDS ? nskindInCMF[kind] : false);
     }
 
     public static int namespaceCode2Builtin (String code) {

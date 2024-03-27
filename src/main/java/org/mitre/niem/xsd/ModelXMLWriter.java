@@ -96,8 +96,9 @@ public class ModelXMLWriter {
         if (x.isAugmentable()) addSimpleChild(dom, e, "AugmentableIndicator", "true");
         addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
         if (null != x.hasPropertyList()) 
-            for (HasProperty z : x.hasPropertyList()) { addHasProperty(dom, e, z); }    
-        addSimpleChild(dom, e, "ReferenceCode", x.getReferenceCode());
+            for (HasProperty z : x.hasPropertyList()) { addHasProperty(dom, e, z); }
+        if (!x.getReferenceCode().isBlank())
+            addSimpleChild(dom, e, "ReferenceCode", x.getReferenceCode());
         p.appendChild(e);
     }
     

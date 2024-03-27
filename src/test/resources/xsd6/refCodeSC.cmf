@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DocumentationText>Test of referenceCode on simple content.</DocumentationText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>refCodeSC.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="niem-xs">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>ps02</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <LocalTerm>
+      <TermName>maxInclusive</TermName>
+      <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
+    </LocalTerm>
+  </Namespace>
+  <Namespace structures:id="structures">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>ps02</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <DataProperty structures:id="nc.SimpleContentAnyLiteral">
+    <Name>SimpleContentAnyLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>Referenceable simple content is a class.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.SimpleContentAnyProp">
+    <Name>SimpleContentAnyProp</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Class structures:ref="nc.SimpleContentAnyType" xsi:nil="true"/>
+    <ReferenceCode>ANY</ReferenceCode>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.SimpleContentNoneProp">
+    <Name>SimpleContentNoneProp</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Datatype structures:ref="nc.SimpleContentNoneType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="nc.SimpleContentRefLiteral">
+    <Name>SimpleContentRefLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>Referenceable simple content is a class.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.SimpleContentRefProp">
+    <Name>SimpleContentRefProp</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Class structures:ref="nc.SimpleContentRefType" xsi:nil="true"/>
+    <ReferenceCode>ANY</ReferenceCode>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.SimpleContentURILiteral">
+    <Name>SimpleContentURILiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>Referenceable simple content is a class.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.SimpleContentURIProp">
+    <Name>SimpleContentURIProp</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <Class structures:ref="nc.SimpleContentURIType" xsi:nil="true"/>
+    <ReferenceCode>ANY</ReferenceCode>
+  </ObjectProperty>
+  <Class structures:id="nc.SimpleContentAnyType">
+    <Name>SimpleContentAnyType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>Referenceable simple content is a class.</DocumentationText>
+    <HasProperty>
+      <DataProperty structures:ref="nc.SimpleContentAnyLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
+  </Class>
+  <Class structures:id="nc.SimpleContentRefType">
+    <Name>SimpleContentRefType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>Referenceable simple content is a class.</DocumentationText>
+    <HasProperty>
+      <DataProperty structures:ref="nc.SimpleContentRefLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <ReferenceCode>REF</ReferenceCode>
+  </Class>
+  <Class structures:id="nc.SimpleContentURIType">
+    <Name>SimpleContentURIType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>Referenceable simple content is a class.</DocumentationText>
+    <HasProperty>
+      <DataProperty structures:ref="nc.SimpleContentURILiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <ReferenceCode>URI</ReferenceCode>
+  </Class>
+  <Datatype structures:id="nc.SimpleContentNoneType">
+    <Name>SimpleContentNoneType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>Referenceable simple content is a class.</DocumentationText>
+    <RestrictionOf>
+      <Datatype structures:ref="xs.string" xsi:nil="true"/>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

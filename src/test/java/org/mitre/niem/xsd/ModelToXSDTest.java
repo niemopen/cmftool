@@ -84,7 +84,7 @@ public class ModelToXSDTest {
     
     public void testRT(String testDir, String sourceXSD) throws Exception {
     
-        // Create CMF from input schema, weite to temp directory #1
+        // Create CMF from input schema, write to temp directory #1
         String[] schemaArgs = { testDir + sourceXSD };
         File modelFP = new File(tempD1, "model.cmf");
         createCMF(schemaArgs, modelFP);
@@ -94,9 +94,6 @@ public class ModelToXSDTest {
 
         // Valid XSD?
         File newSchema = new File(tempD2, sourceXSD);
-        if (!isValidXSD(newSchema)) {
-            int i = 0;
-        }
         assertTrue(isValidXSD(newSchema));
         
         // Now create CMF from the schema in temp directory #2        

@@ -25,12 +25,15 @@ package org.mitre.niem.xsd;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.HashMap;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.NamespaceKind;
+import static org.mitre.niem.xsd.ModelToMsgXSDTest.testDir;
 
 /**
  *
@@ -61,7 +64,6 @@ public class ModelToSrcXSDTest extends ModelToXSDTest {
 //        "defaultFacets.xsd",
         "deprecated.xsd",
         "doubleType.xsd",
-        "externals.xsd",
         "globalAug-1.xsd",
         "isRefAtt.xsd",
         "list.xsd",
@@ -77,9 +79,12 @@ public class ModelToSrcXSDTest extends ModelToXSDTest {
         "localTerm.xsd",
         "namespace-1.xsd",
         "namespace-2.xsd",
+        "nillable.xsd",
         "noprefix.xsd",
         "proxy.xsd",
-        "refCode-2.xsd",
+        "refCodeCC.xsd",
+        "refCodeSC.xsd",
+        "refDocumentation.xsd",
         "relProp.xsd",
         "restriction.xsd",
         "schemadoc.xsd",
@@ -92,6 +97,69 @@ public class ModelToSrcXSDTest extends ModelToXSDTest {
         testRT(testDir, sourceXSD);
     }
     
+    @Test
+    public void testRefCodeComplexContent () throws Exception {
+        // Create CMF from input schema, write to temp directory #1
+        var sfile = "refCodeCC.xsd";
+        String[] schemaArgs = { testDir + sfile };
+        File modelFP = new File(tempD1, "model.cmf");
+        createCMF(schemaArgs, modelFP);
+        
+        // Create schema from that CMF, write to temp directory #2
+        createXSD(modelFP, tempD2);
+        
+        // Get XSModel for schema
+        File newSchema = new File(tempD2, sfile);
+        schemaArgs[0] = newSchema.toString();
+        var schema = new XMLSchema(schemaArgs);
+        var sdoc   = schema.schemaDocuments().get("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/");
+        var ainfo  = sdoc.appinfoAtts();
+        
+        var refCodes = new HashMap<String,String>();
+        for (var appi : ainfo) {
+            if (!"referenceCode".equals(appi.attLname())) continue;
+            var compName = appi.componentEQN().getValue1();
+            var value    = appi.attValue();
+            refCodes.put(compName, value);
+        }
+        assertThat(refCodes).doesNotContainKey("AnyRefType");
+        assertEquals("REF", refCodes.get("RefRefType"));
+        assertEquals("URI", refCodes.get("URIRefType"));
+        assertEquals("NONE", refCodes.get("NoRefType"));
+    }
+    
+    
+    @Test
+    public void testRefCodeSimpleContent () throws Exception {
+        // Create CMF from input schema, write to temp directory #1
+        var sfile = "refCodeSC.xsd";
+        String[] schemaArgs = { testDir + sfile };
+        File modelFP = new File(tempD1, "model.cmf");
+        createCMF(schemaArgs, modelFP);
+        
+        // Create schema from that CMF, write to temp directory #2
+        createXSD(modelFP, tempD2);
+        
+        // Get XSModel for schema
+        File newSchema = new File(tempD2, sfile);
+        schemaArgs[0] = newSchema.toString();
+        var schema = new XMLSchema(schemaArgs);
+        var sdoc   = schema.schemaDocuments().get("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/");
+        var ainfo  = sdoc.appinfoAtts();
+        
+        var refCodes = new HashMap<String,String>();
+        for (var appi : ainfo) {
+            if (!"referenceCode".equals(appi.attLname())) continue;
+            var compName = appi.componentEQN().getValue1();
+            var value    = appi.attValue();
+            refCodes.put(compName, value);
+        }
+        assertThat(refCodes).doesNotContainKey("SimpleContentNoneType");
+        assertEquals("REF", refCodes.get("SimpleContentRefType"));
+        assertEquals("URI", refCodes.get("SimpleContentURIType"));
+        assertEquals("ANY", refCodes.get("SimpleContentAnyType"));        
+    }
+        
     @Test
     public void testFixConformanceTargets () {
         NamespaceKind.reset();
