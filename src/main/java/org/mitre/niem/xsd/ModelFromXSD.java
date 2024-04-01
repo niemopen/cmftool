@@ -815,11 +815,11 @@ public class ModelFromXSD {
     // Returns a list of elements declared by this complex type.  The Xerces API 
     // gives us those elements plus all elements inherited from the base types.
     // We have to remove the inherited elements.
-    private List<XSParticle> collectClassElements (XSComplexTypeDefinition ct) {
+    private List<XSParticle> collectClassElements (XSComplexTypeDefinition xct) {
         List<XSParticle> el = new ArrayList<>();        // element particles in this type
         List<XSParticle> bl = new ArrayList<>();        // element particles from base types
-        XSTypeDefinition base = ct.getBaseType();
-        XSParticle par = ct.getParticle();
+        XSTypeDefinition base = xct.getBaseType();
+        XSParticle par = xct.getParticle();
         collectElements(par, el);                       // all elements in this type & base types 
         
         // Now collect elements from just the base types

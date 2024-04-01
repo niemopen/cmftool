@@ -23,10 +23,16 @@
  */
 package org.mitre.niem.xsd;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.mitre.niem.NIEMConstants.DEFAULT_NIEM_VERSION;
+import org.mitre.niem.cmf.AugmentRecord;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
+import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
@@ -47,83 +53,140 @@ public class ModelToMsgXSD extends ModelToXSD {
     // Create xs:complexContent and xs:extension elements for this xs:complexType
     // in a message schema.
     @Override
-    protected Element handleComplexContentReferenceCode (Document dom, Element cte, Element sqe, ClassType ct) {
+    protected void createComplexTypeFromClass (Document dom, String nsuri, ClassType ct) { 
+        if (null == ct) return;
+        var cname = ct.getName();
+        if (nsTypedefs.containsKey(cname)) return;              // already created
+        if (!nsuri.equals(ct.getNamespaceURI())) return;        // different namespace
+        var cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
 
-        // Create xs:extension and xs:complexContent if this class has a model parent.
-        var attParent = cte;
-        var basect  = ct.getExtensionOfClass();
-        if (null != basect) {
-            var cce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
-            var exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
-            exe.setAttribute("base", basect.getQName());
-            attParent = exe;
-            nsNSdeps.add(basect.getNamespace().getNamespaceURI());
-            exe.appendChild(sqe);
-            cce.appendChild(exe);
-            cte.appendChild(cce);
-        }
-        // Otherwise there's no xs:extension; xs:complexType has xs:sequence, put attributes there
-        else cte.appendChild(sqe);
+        cte.setAttribute("name", cname);
+        var ae = addDocumentation(dom, cte, null, ct.getDocumentation());
+        if (ct.isAbstract())   cte.setAttribute("abstract", "true");
+        if (ct.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
+        nsTypedefs.put(cname, cte);
+
+        // Create list of class inheritances, deepest class first
+        var ctList = new ArrayList<ClassType>();
+        var ctNext = ct;
+        var ctname = ct.getQName();
+        do {
+            ctList.add(0, ctNext);
+            ctNext = ctNext.getExtensionOfClass();
+        } while (null != ctNext);
         
-        var rcode = ct.getReferenceCode();
-        switch (rcode) {
-        case "NONE":
-            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
-            break;
-        case "REF":
-            addAttribute(dom, attParent, structPrefix + ":appliesToParent");
-            addAttribute(dom, attParent, structPrefix + ":id");
-            addAttribute(dom, attParent, structPrefix + ":ref");
-            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
-            break;
-        case "URI":
-            addAttribute(dom, attParent, structPrefix + ":appliesToParent");
-            addAttribute(dom, attParent, structPrefix + ":uri");
-            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
-            break;
-        case "ANY":
-        default:
-            addAttribute(dom, attParent, structPrefix + ":appliesToParent");
-            addAttribute(dom, attParent, structPrefix + ":id");
-            addAttribute(dom, attParent, structPrefix + ":ref");
-            addAttribute(dom, attParent, structPrefix + ":uri");
-            // refCode ANY is the default; don't add
-            break;
+        // Look at the deepest type; does it have a FooLiteral property?
+        // If it does, then we have complexType -> simpleContent -> extension
+        // All other properties are attributes and belong to xs:extension.
+        Element aParent = null;
+        ClassType ct0   = ctList.get(0);
+        var ct0name = ct0.getQName();
+        if (litTypes.contains(ct0)) {
+            var hp = ct0.hasPropertyList().get(0);
+            var p  = hp.getProperty();                  // FooLiteral property
+            var lpt   = p.getDatatype();                // datatype for FooLiteral
+            var lptqn = lpt.getQName();                 // datatype QName (not proxified)
+            if (needSimpleType.contains(lpt)) {
+                lptqn = lptqn.replaceFirst("Type$", "SimpleType");
+                lptqn = lptqn.replaceFirst("Datatype$", "SimpleType");
+            }
+            litProps.add(p);                    // don't need FooLiteral property
+            var sce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
+            aParent  = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
+            aParent.setAttribute("base", lptqn);
+            sce.appendChild(aParent);           // xs:simpleContent has xs:extension
+            cte.appendChild(sce);               // xs:complexType has xs:simpleContent            
         }
-        return attParent;
+        // Otherwise we have complexType -> sequence.
+        // Add element references, depth first; add attribute refs later
+        else {
+            var sqe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");
+            cte.appendChild(sqe);               // xs:complexType has xs:sequence
+            aParent = cte;                      // attribute refs belong to xs:complexType
+            if (hasGEAug && !cname.endsWith("AugmentationType")) {
+                var which = cname.endsWith("AssociationType")  ? "Association" : "Object";                
+                var sApQN = structPrefix + ":" + which + "AugmentationPoint";
+                var sAp   = m.getProperty(sApQN);
+                if (null != sAp) addElementAnyRef(dom, sqe, sAp);
+            }
+            for (var nextCT : ctList) {
+                for (var hp : nextCT.hasPropertyList()) {
+                    if (!hp.augmentingNS().isEmpty()) continue; // will be child of FooAugmentation
+                    var p    = hp.getProperty();
+                    var pqn  = p.getQName();
+                    var subs = substituteMap.get(p);
+                    if (null != subs) addSubstitutingElements(dom, sqe, hp);
+                    else if (!p.isAbstract()) addElementRef(dom, sqe, hp);
+                }
+             
+            }
+        }
+        // Now add model attribute references to the appropriate parent element.
+        // Works the same for simple and complex content (because of aParent).
+        var attList = new ArrayList<AttProp>();
+        handleAttributeProperties(attList, ct);
+        addAttributeElements(dom, aParent, attList);   
+        
+        // Augmentation types don't have refs or referenceCode.
+        // Add structures @id, @ref, @uri based on reference code to other types.
+        if (!ct.getName().endsWith("AugmentationType")) {
+            switch (ct.getReferenceCode()) {
+            case "NONE":
+                break;
+            case "REF":
+                addAttribute(dom, aParent, structPrefix + ":appliesToParent");
+                addAttribute(dom, aParent, structPrefix + ":id");
+                addAttribute(dom, aParent, structPrefix + ":ref");
+                break;
+            case "URI":
+                addAttribute(dom, aParent, structPrefix + ":appliesToParent");
+                addAttribute(dom, aParent, structPrefix + ":uri");
+                break;
+            case "ANY":
+            default:
+                addAttribute(dom, aParent, structPrefix + ":appliesToParent");
+                addAttribute(dom, aParent, structPrefix + ":id");
+                addAttribute(dom, aParent, structPrefix + ":ref");
+                addAttribute(dom, aParent, structPrefix + ":uri");
+                break;
+            }        
+            // Set appinfo:referenceCode if needed
+            switch (ct.getReferenceCode()) {
+            case "NONE": addAppinfoAttribute(dom, cte, "referenceCode", "NONE"); break;
+            case "REF":  addAppinfoAttribute(dom, cte, "referenceCode", "REF"); break;
+            case "URI":  addAppinfoAttribute(dom, cte, "referenceCode", "URI"); break;
+            case "ANY": 
+            default:     // ANY is the default for complex content in a message schema
+                break;
+            }
+        }       
+    }
+   
+    // A depth-first recursion through class inheritance to add all the
+    // attribute properties to the complex type.
+    protected void handleAttributeProperties (List<AttProp> alist, ClassType ct) {
+        var parent = ct.getExtensionOfClass();
+        if (null != parent) handleAttributeProperties(alist, parent);
+        buildAttributeList(alist, ct);
     }
     
-    // Add attribute group and reference code appinfo for a message schema.
-    @Override
-    protected void handleSimpleContentReferenceCode (Document dom, Element cte, Element exe, ClassType ct) { 
-        var rcode = ct.getReferenceCode();
-        switch (rcode) {
-        case "ANY":
-            addAttribute(dom, exe, structPrefix + ":id");
-            addAttribute(dom, exe, structPrefix + ":ref");
-            addAttribute(dom, exe, structPrefix + ":uri");
-            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
-            break;
-        case "REF":
-            addAttribute(dom, exe, structPrefix + ":id");
-            addAttribute(dom, exe, structPrefix + ":ref");
-            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
-            break;
-        case "URI":
-            addAttribute(dom, exe, structPrefix + ":uri");
-            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
-            break;
-        case "NONE":
-            break;
-        // Default is ANY if there are model attributes; otherwise NONE
-        default:
-            if (ct.hasPropertyList().size() < 2) break;
-            addAttribute(dom, exe, structPrefix + ":id");
-            addAttribute(dom, exe, structPrefix + ":ref");
-            addAttribute(dom, exe, structPrefix + ":uri");
-            addAppinfoAttribute(dom, cte, "referenceCode", rcode);
-            break;
-        }       
+    protected void addSubstitutingElements (Document dom, Element sqe, HasProperty hp) {
+        var prop = hp.getProperty();
+        var subs = substituteMap.get(prop);
+        if (prop.isAbstract() && subs.isEmpty()) return;    // omit abstract element with no subs
+        if (prop.isAbstract() && 1 == subs.size()) {        // replace abstract element with 1 sub
+            for (var sp : subs) addElementRef(dom, sqe, hp, sp);
+        }
+        // Not abstract, or more than 1 sub? Create a choice
+        else {
+            var che = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:choice");
+            if (1 != hp.minOccurs()) che.setAttribute("minOccurs", "" + hp.minOccurs());
+            if (hp.maxUnbounded())   che.setAttribute("maxOccurs", "unbounded");
+            else if (1 != hp.maxOccurs()) che.setAttribute("maxOccurs", "" + hp.maxOccurs());
+            sqe.appendChild(che);
+            if (!prop.isAbstract()) addElementOnceRef(dom, che, prop);
+            for (var sp : subs) addElementOnceRef(dom, che, sp);
+        }
     }
     
     protected void addAttribute (Document dom, Element attParent, String atqn) {

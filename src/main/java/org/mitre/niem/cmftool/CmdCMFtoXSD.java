@@ -216,6 +216,11 @@ class CmdCMFtoXSD implements JCCommand {
             mw.writeXSD(od);
         } catch(Exception ex) {
             System.err.println("error: " + ex.getMessage());
+            var trace = ex.getStackTrace();
+            for (int i = 0; i < trace.length; i++) {
+                var tr = trace[i];
+                System.err.println("  at " + tr.getFileName() + ", line " + tr.getLineNumber());
+            }
             System.exit(1);
         }
         System.exit(0);

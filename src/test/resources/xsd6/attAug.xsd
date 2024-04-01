@@ -35,16 +35,6 @@
       <xs:extension base="xs:string"/>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:element name="Date" type="xs:date" substitutionGroup="nc:DateRepresentation" nillable="true">
-    <xs:annotation>
-      <xs:documentation>A full date.</xs:documentation>
-    </xs:annotation>
-  </xs:element>
-  <xs:element name="DateRepresentation" abstract="true">
-    <xs:annotation>
-      <xs:documentation>A data concept for a representation of a date.</xs:documentation>
-    </xs:annotation>
-  </xs:element>
   <xs:element name="EducationAugmentationPoint" abstract="true">
     <xs:annotation>
       <xs:documentation>An augmentation point for EducationType.</xs:documentation>

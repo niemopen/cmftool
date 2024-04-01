@@ -85,7 +85,7 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
         "xml-lang.xsd"
         })
     public void testRoundTrip(String sourceXSD) throws Exception {
-        testRT(testDir, sourceXSD);
+        testRoundTrip(testDir, sourceXSD);
     }
         
     @Override

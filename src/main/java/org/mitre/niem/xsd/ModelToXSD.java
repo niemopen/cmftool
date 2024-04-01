@@ -104,7 +104,8 @@ import static org.mitre.utility.IndefiniteArticle.articalize;
  */
 public abstract class ModelToXSD {
     static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
-        
+    
+    // These are the same for the whole schema
     protected Model m = null;
     protected String catPath = null;                          // path to created XML catalog file, if one is wanted
     protected String messageNSuri = null;                     // URI of message schema "root namespace"
@@ -112,10 +113,12 @@ public abstract class ModelToXSD {
     protected final Map<String, String> ns2file;              // map nsURI -> absolute schema document file path
     protected final Set<String> nsfiles;                      // set of schema document file paths
     protected final Set<String> utilityNSuri;                 // set of utility namespaces needed in schema document pile
+    protected final Map<Property,Set<Property>> substituteMap;// map Property -> all subprops in a message schema
     protected final Map<String, List<String>> subpropDeps;    // map nsURI -> list of subproperty Namespace dependency URIs
     protected final Set<ClassType> litTypes;                  // set of ClassType objects that will become complex type, simple content
     protected final Set<Property> litProps;                   // set of literal properties not needed in XSD
     protected final Set<Datatype> needSimpleType;             // Union, list, or non-empty restriction datatypes
+    protected boolean hasGEAug = false;                       // global augmentation for associations or objects?
     
     // These change as each namespace is processed
     protected Map<String,Element> nsAttributeDecls = null;    // map name -> schema declaration of attribute in a namespace
@@ -138,6 +141,7 @@ public abstract class ModelToXSD {
         ns2file        = new HashMap<>();
         nsfiles        = new HashSet<>();
         utilityNSuri   = new HashSet<>();
+        substituteMap  = new HashMap<>();
         subpropDeps    = new HashMap<>();
         litTypes       = new HashSet<>();
         litProps       = new HashSet<>(); 
@@ -183,16 +187,24 @@ public abstract class ModelToXSD {
     // Target directory should be empty.  If it isn't, you'll get munged
     // file names whenever the preferred file name already exists.
     public void writeXSD (File od) throws FileNotFoundException, ParserConfigurationException, TransformerException, IOException {
-         // Remember cross-namespace subproperties; need these for import dependencies
-        for (Namespace ns : m.getNamespaceList()) { subpropDeps.put(ns.getNamespaceURI(), new ArrayList<>()); }
-        for (Component c : m.getComponentList()) {
-            Property subp = c.asProperty();
-            if (null == subp) continue;
-            if (null == subp.getSubPropertyOf()) continue;
-            Namespace subpns = subp.getNamespace();                     // namespace of subp (which is a subproperty)
-            Namespace parpns =  subp.getSubPropertyOf().getNamespace(); // subp is subproperty of property in this namespace
-            if (subpns != parpns)
-                subpropDeps.get(parpns.getNamespaceURI()).add(subpns.getNamespaceURI());
+        
+        // Add all the augmentation points and components to the Model object
+        generateAugmentationComponents();
+
+        // Build a map of substitutions from subproperties.
+        // Remember cross-namespace subproperties; need these for import dependencies
+        for (var ns : m.getNamespaceList()) { subpropDeps.put(ns.getNamespaceURI(), new ArrayList<>()); }
+        for (var c : m.getComponentList()) {
+            var subp = c.asProperty();
+            if (null == subp) continue;            
+            var p = subp.getSubPropertyOf();
+            if (null == p) continue;
+            if (p.isAbstract()) continue;
+            var sns = subp.getNamespace();          // sns is the namespace; sns:subp is the subproperty
+            var pns =  p.getNamespace();            // pns is the namespace; pns:p is the property
+            addToPropMap(substituteMap, p, subp);   // sns:subp has @substitutionGroup pns:p
+            if (sns != pns)
+                subpropDeps.get(pns.getNamespaceURI()).add(sns.getNamespaceURI());
         }
         // Find the ClassType objects that will become CSCs with a FooLiteral property
         // First property in the type is a simple element named FooLiteral
@@ -270,8 +282,6 @@ public abstract class ModelToXSD {
                 m.namespaceMap().assignPrefix(uprefix, nsuri);            
             }
         }
-        // Generate augmentation points for all augmentable ClassTypes in the model.
-        generateAugmentationPoints();
         
         // Make sure we have a new file with a unique name for all the schema documents.
         // Schema document file paths can be suggested in the Namespace object, otherwise default
@@ -427,14 +437,10 @@ public abstract class ModelToXSD {
         nsAttributeDecls = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         nsElementDecls   = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);        
         nsTypedefs  = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        var deps    = subpropDeps.get(nsuri);
         nsNSdeps.addAll(subpropDeps.get(nsuri));
         nsNSdeps.add(structURI);
         utilityNSuri.add(structURI);
-        
-        // Create augmentation points, types, elements
         LOG.debug("Writing schema document for {}", nsuri);
-        generateAugmentationComponents(nsuri);
         
         // Add namespace version number and language attribute, if specified
         String lang = ns.getLanguage();
@@ -468,8 +474,10 @@ public abstract class ModelToXSD {
         // Create type definitions for ClassType objects
         // Then create typedefs for Datatype objects (when not already created)
         // Remember external namespaces when encountered
-        for (Component c : m.getComponentList()) createComplexTypeFromClass(dom, nsuri, c.asClassType());
-        for (Component c : m.getComponentList()) createTypeFromDatatype(dom, nsuri, c.asDatatype());
+        for (Component c : m.getComponentList()) 
+            createComplexTypeFromClass(dom, nsuri, c.asClassType());
+        for (Component c : m.getComponentList()) 
+            createTypeFromDatatype(dom, nsuri, c.asDatatype());
         for (Datatype dt : needSimpleType)       createSimpleTypeFromDatatype(dom, nsuri, dt);
         
         // Create elements and attributes for Property objects
@@ -530,7 +538,34 @@ public abstract class ModelToXSD {
     // Iterate through all the ClassType objects in the model; create an
     // augmentation point property for each augmentable ClassType.  Need to 
     // do this for the whole model before trying to create augmentation elements.
-    protected void generateAugmentationPoints () {
+//    protected void generateAugmentationPoints () {
+//        for (var c : m.getComponentList()) {
+//            var targCT = c.asClassType();
+//            if (null == targCT) continue;               // not a ClassType
+//            if (!targCT.isAugmentable()) continue;      // not augmentable
+//            var targCTns   = targCT.getNamespace();
+//            var targCTName = targCT.getName();                                      // FooType
+//            var targName   = targCTName.substring(0, targCTName.length()-4);        // FooType -> Foo
+//            var augPtName  = targName + "AugmentationPoint";                        // FooType -> FooAugmentationPoint
+//            var augPoint = new Property(targCTns, augPtName);
+//            augPoint.setDocumentation("An augmentation point for " + targCTName + ".");
+//            augPoint.setIsAbstract(true);
+//            m.addComponent(augPoint);
+//            var hp = new HasProperty();
+//            hp.setProperty(augPoint);
+//            hp.setMinOccurs(0);
+//            hp.setMaxUnbounded(true);
+//            targCT.addHasProperty(hp);        
+//        }        
+//    }
+
+    // Use the augmentation info in each Namespace to generate augmentation 
+    // types, augmentation elements, and augmentation points.
+    protected void generateAugmentationComponents () {
+
+        // Iterate through all the ClassType objects in the model; create an
+        // augmentation point property for each augmentable ClassType.  Need to 
+        // do this for the whole model before trying to create augmentation elements.
         for (var c : m.getComponentList()) {
             var targCT = c.asClassType();
             if (null == targCT) continue;               // not a ClassType
@@ -548,95 +583,108 @@ public abstract class ModelToXSD {
             hp.setMinOccurs(0);
             hp.setMaxUnbounded(true);
             targCT.addHasProperty(hp);        
-        }        
-    }
-    
-    // Use the augmentation info in each Namespace to generate augmentation 
-    // types, and elements required for this namespace.
-    protected void generateAugmentationComponents (String nsuri) {
-        var class2Aug = new HashMap<String,List<AugmentRecord>>();
-        var ns = m.getNamespaceByURI(nsuri);
-        var arch = getArchitecture();
-        var vers = ns.getNIEMVersion();
-        var structURI = NamespaceKind.getBuiltinNS(NIEM_STRUCTURES, arch, vers);
-        var structNS  = m.getNamespaceByURI(structURI);
-        var structPre = structNS.getNamespacePrefix();
+        } 
+        // Now use the augmentation info in each Namespace to generate augmentation 
+        // types, augmentation elements, and augmentation points.
+        for (var ns : m.getNamespaceList()) {
+            var arch = getArchitecture();
+            var vers = ns.getNIEMVersion();
+            var strURI = NamespaceKind.getBuiltinNS(NIEM_STRUCTURES, arch, vers);
+            var strNS  = m.getNamespaceByURI(strURI);
+            var strPre = strNS.getNamespacePrefix();
 
-        // Create map from augmented class QName to list of its augmentations in this namespace
-        for (AugmentRecord ar : ns.augmentList()) {
-            for (int i = 0; i <= AUG_MAX; i++) {
-                String ctqn=  null;
-                switch (i) {
-                case AUG_NONE:   if (null != ar.getClassType()) ctqn = ar.getClassType().getQName(); break;
-                case AUG_OBJECT:
-                case AUG_ASSOC: 
-                    if (!ar.hasGlobalAug(i)) break;
-                    var which = AUG_OBJECT == i ? "Object" : "Association";
-                    var apt   = new Property(structNS, which + "AugmentationPoint");
-                    ctqn      = structPre + ":" + which + "Type";
-                    m.addComponent(apt);
-                    break;
-                default:
-                }
-                if (null != ctqn) {
+            // Create map from augmented class QName to list of its augmentations in this namespace
+            // Each augmentation record can be any of an ordinary augmentation, a global association 
+            // augmentation, and a global object augmentation, so we iterate to handle them all.
+            var class2Aug = new HashMap<String, List<AugmentRecord>>();
+            for (var ar : ns.augmentList()) {
+                for (int i = 0; i <= AUG_MAX; i++) {
+                    String ctqn = null;
+                    switch (i) {
+                        case AUG_NONE:
+                            if (null != ar.getClassType()) ctqn = ar.getClassType().getQName();
+                            break;
+                        case AUG_OBJECT:
+                        case AUG_ASSOC:
+                            if (!ar.hasGlobalAug(i)) break;
+                            hasGEAug = true;
+                            var which = AUG_OBJECT == i ? "Object" : "Association";
+                            var apt = new Property(strNS, which + "AugmentationPoint");
+                            ctqn = strPre + ":" + which + "Type";
+                            m.addComponent(apt);
+                            break;
+                        default:
+                    }
+                    if (null == ctqn) continue;
                     var arlist = class2Aug.get(ctqn);
                     if (null == arlist) arlist = new ArrayList<>();
                     class2Aug.put(ctqn, arlist);
                     arlist.add(ar);
                 }
             }
-        }
-        // Handle augmentations for each class augmented in this namespace
-        for (var targQN : class2Aug.keySet()) {
-            var part = targQN.split(":");
-            var targPre    = part[0];
-            var targCTName = part[1];                                           // FooType
-            var augElName  = targCTName.replaceFirst("Type$", "Augmentation");  // FooType -> FooAugmentation
-            var augTpName  = augElName + "Type";                                // FooType -> FooAugmentationType
-            var augPtName  = augElName + "Point";                               // FooType -> FooAugmentationPoint
-            var augPoint   = m.getProperty(targPre + ":" + augPtName);          // augmentation point Property
-             
-            // Create ordered list of augmenting properties
-            var arlist = class2Aug.get(targQN);
-            Collections.sort(arlist, Comparator.comparing(AugmentRecord::indexInType));
-            
-            // Handle augmentation elements (not part of an augmentation type
-            int indx;
-            for (indx = 0; indx < arlist.size(); indx++) {
-                var ar = arlist.get(indx);
-                if (ar.indexInType() >= 0) break;
-                var augp = ar.getProperty();
-                if (!augp.isAttribute()) augp.setSubPropertyOf(augPoint);
-            }
-            // If no properties left, we're done; don't need an augmentation type or element
-            if (indx >= arlist.size()) continue;
-            
-            // Otherwise create augmentation type for remaining properties
-            String typePhrase = typeNameToPhrase(targCTName);
-            ClassType augCT = new ClassType(ns, augTpName);
-            augCT.setDocumentation("A data type for additional information about " + typePhrase + ".");
-            while (indx < arlist.size()) {
-                var ar = arlist.get(indx++);
-                var hp = new HasProperty();
-                hp.setProperty(ar.getProperty());
-                hp.setMinOccurs(ar.minOccurs());
-                hp.setMaxOccurs(ar.maxOccurs());
-                hp.setMaxUnbounded(ar.maxUnbounded());
-                hp.setOrderedProperties(ar.orderedProperties());
-                augCT.addHasProperty(hp);
-            }
-            m.addComponent(augCT);
-          
-            // Create an augmentation element
-            var augP = new Property(ns, augElName);
-            augP.setDocumentation("Additional information about " + typePhrase + ".");
-            augP.setClassType(augCT);
-            augP.setSubPropertyOf(augPoint);
-            m.addComponent(augP);
-        }        
+            // Iterate over the augmented classes to create augmentation components
+            for (var targQN : class2Aug.keySet()) {                                 // ns:FooType
+                var part = targQN.split(":");
+                var targPre = part[0];                                              // ns
+                var targCTName = part[1];                                           // FooType
+                var augElName = targCTName.replaceFirst("Type$", "Augmentation");   // FooAugmentation
+                var augTpName = augElName + "Type";                                 // FooAugmentationType
+                var augPtName = augElName + "Point";                                // FooAugmentationPoint
+                var augPoint = m.getProperty(targPre + ":" + augPtName);            // augmentation point Property
 
-    }
+                // Create ordered list of augmentation records for this class
+                var arlist = class2Aug.get(targQN);
+                Collections.sort(arlist, Comparator.comparing(AugmentRecord::indexInType));
+
+                // All of the augmentation elements have index -1, so they will be
+                // first in the ordered list.  Handle those now.
+                int arIndex;
+                for (arIndex = 0; arIndex < arlist.size(); arIndex++) {
+                    var ar = arlist.get(arIndex);
+                    if (ar.indexInType() >= 0) break;       // all augmentation elements processed
+                    else {
+                        var augp = ar.getProperty();        // augmentation element?
+                        if (augp.isAttribute()) continue;   // no, it's an attribute
+                        if (null != augp.getSubPropertyOf()) {
+                            var opqn = augp.getSubPropertyOf().getQName();
+                            LOG.error("{} augments {} but is already subPropertyOf {}", augp.getQName(), targQN, opqn);
+                        } 
+                        else augp.setSubPropertyOf(augPoint);
+                    }
+                }
+                // If no properties left, we're done; don't need an augmentation type or element
+                if (arIndex >= arlist.size()) continue;
+
+                // Otherwise create an augmentation type for remaining augmentation records
+                String typePhrase = typeNameToPhrase(targCTName);
+                ClassType augCT = new ClassType(ns, augTpName);
+                augCT.setDocumentation("A data type for additional information about " + typePhrase + ".");
+                while (arIndex < arlist.size()) {
+                    var ar = arlist.get(arIndex++);
+                    var hp = new HasProperty();
+                    var p  = ar.getProperty();
+//                    addToPropMap(substituteMap, augPoint, p);
+                    hp.setProperty(p);
+                    hp.setMinOccurs(ar.minOccurs());
+                    hp.setMaxOccurs(ar.maxOccurs());
+                    hp.setMaxUnbounded(ar.maxUnbounded());
+                    hp.setOrderedProperties(ar.orderedProperties());
+                    augCT.addHasProperty(hp);
+                }
+                m.addComponent(augCT);
+
+                // Create an augmentation element
+                var augEP = new Property(ns, augElName);
+                augEP.setDocumentation("Additional information about " + typePhrase + ".");
+                augEP.setClassType(augCT);
+                augEP.setSubPropertyOf(augPoint);
+                addToPropMap(substituteMap, augPoint, augEP);
+                m.addComponent(augEP);
+            }
+        }
     
+    }    
+
     // Add @appinfo:appatt="value" to an element.  Get the right namespace prefix and URI
     // for the current document.  Add the namespace declaration for appinfo, but
     // don't import it.
@@ -653,26 +701,19 @@ public abstract class ModelToXSD {
     // Otherwise it has complexContent
     protected void createComplexTypeFromClass (Document dom, String nsuri, ClassType ct) { 
         if (null == ct) return;
-        String cname = ct.getName();
+        var cname = ct.getName();
         if (nsTypedefs.containsKey(cname)) return;              // already created
         if (!nsuri.equals(ct.getNamespaceURI())) return;        // different namespace
-        Element cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
-        Element exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
+        var cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
+        var exe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
         cte.setAttribute("name", cname);
         var ae = addDocumentation(dom, cte, null, ct.getDocumentation());
         if (ct.isAbstract())   cte.setAttribute("abstract", "true");
         if (ct.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
         nsTypedefs.put(cname, cte);
         
-        // Structures and model attribute refs are the children of xs:extension
-        // or xs:sequence, depending on refCode, simple/complex content, and
-        // whether we are generating a message, source, or NIEM5 schema.
-        // The handle*ReferenceCode routines take care of that mess.
-        Element attParent = null;
-        
-        // We create simple content for a class with a FooLiteral property
+        // Create simple content for a class with a FooLiteral property
         if (litTypes.contains(ct)) {
-            var sce   = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
             var plist = ct.hasPropertyList();
             var lp    = plist.get(0).getProperty();     // FooLiteral property
             var lpt   = lp.getDatatype();               // datatype for FooLiteral
@@ -690,117 +731,156 @@ public abstract class ModelToXSD {
                         lptqn = proxifiedDatatypeQName(r.getDatatype());
                 }
             }
+            litProps.add(lp);       // don't need FooLiteral, don't create it later
+            var sce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
             exe.setAttribute("base", lptqn);
-            handleSimpleContentReferenceCode(dom, cte, exe, ct);    // attribute group and appinfo
-            litProps.add(lp);                   // remember we don't need an element for this
-            plist.remove(0);                    // leaving the attribute properties for later
-            cte.appendChild(sce);               // xs:complexType has xs:simpleContent
-            sce.appendChild(exe);               // xs:simpleContent has xs:extension
-            attParent = exe;                    // add model attributes to xs:extension
+            cte.appendChild(sce);   // xs:complexType has xs:simpleContent
+            sce.appendChild(exe);   // xs:simpleContent has xs:extension
+            
+            // Add SimpleObjectAttributeGroup to xs:extension
+            var agqn = structPrefix + ":SimpleObjectAttributeGroup";
+            var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
+            age.setAttribute("ref", agqn);
+            exe.appendChild(age); 
+
+            // Set appinfo:referenceCode if needed
+            if (1 == ct.hasPropertyList().size()) {
+                var rcode = ct.getReferenceCode();
+                if (!rcode.isBlank() && !"NONE".equals(rcode))
+                    addAppinfoAttribute(dom, cte, "referenceCode", rcode);
+            }
         }
         // Otherwise create complex content with xs:sequence of element refs.
-        // The handleComplexContentReferenceCode decides whether there is an xs:extension
-        // (don't have one for certain refCodes in message schemas)
         else {
-            var sqe   = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");            
-            attParent = handleComplexContentReferenceCode(dom, cte, sqe, ct);
+            var cce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");     
+            var sqe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");
+            exe.appendChild(sqe);   // xs:extension has xs:sequence
+            cce.appendChild(exe);   // xs:complexContent has xs:extension
+            cte.appendChild(cce);   // xs:complexType has xs:complexContent
             
-            // Add element refs for element properties
+            // Set xs:extension base from the class parent or a structures type
+            var basect  = ct.getExtensionOfClass();
+            if (null == basect) exe.setAttribute("base", structuresBaseType(ct.getName()));
+            else {
+                exe.setAttribute("base", basect.getQName());
+                nsNSdeps.add(basect.getNamespace().getNamespaceURI());
+            }       
+            // Add element refs for element properties (but not element augmentations)
             for (HasProperty hp : ct.hasPropertyList()) {
                 if (!hp.augmentingNS().isEmpty()) continue;
                 if (hp.getProperty().isAttribute()) continue;
                 if (null == sqe) sqe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");
                 addElementRef(dom, sqe, hp);
-                nsNSdeps.add(hp.getProperty().getNamespace().getNamespaceURI());
             }
-        }
-        // Now add attribute properties in hasProperty list to the proper parent.
-        // Do this for simple content or complex content
-        for (HasProperty hp : ct.hasPropertyList()) {
-            Property p = hp.getProperty();
-            if (!p.isAttribute()) continue;
-            var ate = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
-            ate.setAttribute("ref", p.getQName());
-            if (0 != hp.minOccurs()) ate.setAttribute("use", "required");
-            
-            // Only add augmenting attributes that are not part of an augmentation type
-            // Attributes in an augmentation type have an index >= 0
-            if (!hp.augmentingNS().isEmpty()) {
-                var ulist = new StringBuilder();
-                var sep = "";
-                for (var ns : hp.augmentingNS()) {
-                    var ar = ns.findAugmentRecord(ct, p);
-                    if (null != ar && ar.indexInType() < 0) {
-                        ulist.append(sep);
-                        ulist.append(ns.getNamespaceURI());
-                        sep = " ";         
-                    }
-                }
-                if (!ulist.isEmpty()) {
-                    addAppinfoAttribute(dom, ate, "augmentingNamespace", ulist.toString());
-                    attParent.appendChild(ate);
-                    nsNSdeps.add(p.getNamespace().getNamespaceURI());            
+            // Set appinfo:referenceCode if needed (never for augmentation types)
+            if (!ct.getName().endsWith("AugmentationType")) {
+                switch (ct.getReferenceCode()) {
+                case "NONE": addAppinfoAttribute(dom, cte, "referenceCode", "NONE"); break;
+                case "REF":  addAppinfoAttribute(dom, cte, "referenceCode", "REF"); break;
+                case "URI":  addAppinfoAttribute(dom, cte, "referenceCode", "URI"); break;
+                case "ANY": 
+                default:     // ANY is the default for complex content in source or NIEM5 schema
+                    break;
                 }
             }
-            else {
-                attParent.appendChild(ate);
-                nsNSdeps.add(p.getNamespace().getNamespaceURI());
-            }
         }
+        // For simple or complex content, build list of attribute properties, 
+        // then add them to xs:extension.
+        var attList = new ArrayList<AttProp>();
+        buildAttributeList(attList, ct);
+        addAttributeElements(dom, exe, attList);
     }
-    
-    // Create xs:complexContent and xs:extension elements for this xs:complexType.
-    // Different handling when creating a message schema (see ModelToMsgXSD).
-    protected Element handleComplexContentReferenceCode (Document dom, Element cte, Element sqe, ClassType ct) {
-        switch (ct.getReferenceCode()) {
-            case "NONE": addAppinfoAttribute(dom, cte, "referenceCode", "NONE"); break;
-            case "REF":  addAppinfoAttribute(dom, cte, "referenceCode", "REF"); break;
-            case "URI":  addAppinfoAttribute(dom, cte, "referenceCode", "URI"); break;
-            case "ANY": 
-            default:
-                break;
-        }
-        var exe     = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
-        var cce     = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
-        var basect  = ct.getExtensionOfClass();
-        if (null == basect) exe.setAttribute("base", structuresBaseType(ct.getName()));
-        else {
-            exe.setAttribute("base", basect.getQName());
-            nsNSdeps.add(basect.getNamespace().getNamespaceURI());
-        }
-        exe.appendChild(sqe);
-        cce.appendChild(exe);
-        cte.appendChild(cce);
-        return exe;
-    }
-    
-    // Add attribute group and reference code appinfo for a source or NIEM5 schema.
-    // Default reference code is NONE if the class has no model attribute properties.
-    // Different handling when creating a message schema (see ModelToMsgXSD).
-    protected void handleSimpleContentReferenceCode (Document dom, Element cte, Element exe, ClassType ct) { 
-        if (1 == ct.hasPropertyList().size()) {
-            var rcode = ct.getReferenceCode();
-            if (!rcode.isBlank() && !"NONE".equals(rcode))
-                addAppinfoAttribute(dom, cte, "referenceCode", rcode);
-        }
-        var agqn = structPrefix + ":SimpleObjectAttributeGroup";
-        var age = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
-        age.setAttribute("ref", agqn);
-        exe.appendChild(age);   
-    }
-    
-    // Create <xs:element ref="foo">, append it to some <xs:sequence>
-    protected void addElementRef (Document dom, Element sqe, HasProperty hp) {
+
+    // Create <xs:element ref="foo"> from a HasProperty object, append it to a sequence or choice
+    protected void addElementRef (Document dom, Element parent, HasProperty hp) {
         if (hp.getProperty().isAttribute()) return;
+        addElementRef(dom, parent, hp, hp.getProperty());
+    }
+
+    // Create element ref for a QName, with minOccurs = maxOccurs = 1.
+    protected void addElementOnceRef (Document dom, Element parent, Property p) {
+        var hp = new HasProperty();
+        hp.setMaxOccurs(1);
+        hp.setMinOccurs(1);
+        addElementRef(dom, parent, hp, p);
+    } 
+    
+    // Create element ref for a QName, with minOccurs = maxOccurs = 1.
+    protected void addElementAnyRef (Document dom, Element parent, Property p) {
+        var hp = new HasProperty();
+        hp.setMinOccurs(0);
+        hp.setMaxUnbounded(true);
+        addElementRef(dom, parent, hp, p);
+    } 
+    
+    // Create an element ref for Property p, using min/maxoccurs from hp
+    protected void addElementRef (Document dom, Element parent, HasProperty hp, Property p) {
+        if (p.isAttribute()) return;
         var hpe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
-        hpe.setAttribute("ref", hp.getProperty().getQName());
+        hpe.setAttribute("ref", p.getQName());
         if (1 != hp.minOccurs()) hpe.setAttribute("minOccurs", "" + hp.minOccurs());
         if (hp.maxUnbounded())   hpe.setAttribute("maxOccurs", "unbounded");
         else if (1 != hp.maxOccurs()) hpe.setAttribute("maxOccurs", "" + hp.maxOccurs());
         if (hp.orderedProperties())
             addAppinfoAttribute(dom, hpe, "orderedPropertyIndicator", "true");
         addDocumentation(dom, hpe, null, hp.getDefinition());
-        sqe.appendChild(hpe);
+        parent.appendChild(hpe);        
+        nsNSdeps.add(p.getNamespaceURI());
+    }
+    
+    // Build a list of attribute properties to be added to a complex type.
+    // Why this complexity? In a message schema a complex type has the attribute properties
+    // from all the inherited classes. Need to collect them all (and handle
+    // duplicates) before appending xs:attribute elements.
+    protected class AttProp implements Comparable<AttProp> {
+        protected String qname            = null;
+        protected boolean required        = false;
+        protected Set<Namespace> augNSset = new HashSet<>();
+        protected AttProp () { };
+        protected AttProp (String qn, boolean req) { qname = qn; required = req; }
+        protected String getAugNSlist () { 
+            var sep = "";
+            var rv  = "";
+            for (var ns : augNSset) {
+                rv  = rv + sep + ns.getNamespaceURI();
+                sep = " ";
+            }
+            return rv;
+        }
+        @Override
+        public int compareTo(AttProp o) { return o.qname.compareTo(this.qname); }
+    }
+    protected void buildAttributeList (List<AttProp> alist, ClassType ct) {
+        for (HasProperty hp : ct.hasPropertyList()) {
+            var p = hp.getProperty();
+            if (!p.isAttribute()) continue;
+            AttProp arec = null;
+            for (var a : alist) if (a.qname.equals(p.getQName())) arec = a;
+            if (null == arec) arec = new AttProp(p.getQName(), hp.minOccurs() > 0);
+            
+            // Build list of augmenting namespaces if this property is an augmentation.
+            // Ignore properties from an augmentation type (those have index >= 0).
+            for (var ns : hp.augmentingNS()) {
+                var ar = ns.findAugmentRecord(ct, p);
+                if (null != ar && ar.indexInType() < 0) arec.augNSset.add(ns);
+            }
+            if (!hp.augmentingNS().isEmpty() && arec.augNSset.isEmpty()) continue;
+            nsNSdeps.add(p.getNamespace().getNamespaceURI()); 
+            alist.add(arec);
+        }        
+    }
+    // Add the xs:attribute elements specified in the AttProp list.
+    protected void addAttributeElements (Document dom, Element attParent, List<AttProp> alist) {
+        Collections.sort(alist);
+        for (var arec : alist) {
+            var ae = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
+            ae.setAttribute("ref", arec.qname);
+            if (arec.required) ae.setAttribute("use", "required");
+            if (!arec.augNSset.isEmpty())
+                addAppinfoAttribute(dom, ae, "augmentingNamespace", arec.getAugNSlist());
+            attParent.appendChild(ae);
+           
+        }
     }
     
     // Create a complex type declaration from a Datatype object (FooType)
@@ -812,11 +892,13 @@ public abstract class ModelToXSD {
         if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespaceURI())) return; // don't create XSD builtins        
         
         var cte = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
-        var sce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
         cte.setAttribute("name", cname);        
         var ae = addDocumentation(dom, cte, null, dt.getDocumentation());
         if (dt.isDeprecated()) addAppinfoAttribute(dom, cte, "deprecated", "true");
         
+        var sce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
+        cte.appendChild(sce);   // xs:complexType has xs:simpleContent
+
         if (null != dt.getCodeListBinding()) {
             ae = addAnnotation(dom, cte, ae);
             var ap = addAppinfo(dom, ae, null);
@@ -836,7 +918,6 @@ public abstract class ModelToXSD {
             else
                 addRestrictionElement(dom, sce, dt, r.getDatatype(), rbdqn);
         }
-        cte.appendChild(sce);   // xs:complexType has xs:simpleContent
         nsTypedefs.put(cname, cte);
     }
     
@@ -1174,6 +1255,15 @@ public abstract class ModelToXSD {
         var res = buf.toString();
         res = articalize(res);
         return res;
+    }
+    
+    protected void addToPropMap (Map<Property,Set<Property>>map, Property key, Property val) {
+        var set = map.get(key);
+        if (null == set) {
+            set = new HashSet<Property>();
+            map.put(key, set);
+        }
+        set.add(val);
     }
     
     // Difference between subset schemas and message schemas is implemented by 

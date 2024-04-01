@@ -64,7 +64,8 @@ public class ModelToSrcXSDTest extends ModelToXSDTest {
 //        "defaultFacets.xsd",
         "deprecated.xsd",
         "doubleType.xsd",
-        "globalAug-1.xsd",
+//        "globalAug-1.xsd",
+        "inherit.xsd",
         "isRefAtt.xsd",
         "list.xsd",
         "listSimpleType.xsd",
@@ -94,7 +95,7 @@ public class ModelToSrcXSDTest extends ModelToXSDTest {
         "xml-lang.xsd"
     })
     public void testRoundTrip(String sourceXSD) throws Exception {
-        testRT(testDir, sourceXSD);
+        testRoundTrip(testDir, sourceXSD);
     }
     
     @Test

@@ -82,7 +82,7 @@ public class ModelToXSDTest {
         for (var log : logs) log.close();
     }
     
-    public void testRT(String testDir, String sourceXSD) throws Exception {
+    public void testRoundTrip(String testDir, String sourceXSD) throws Exception {
     
         // Create CMF from input schema, write to temp directory #1
         String[] schemaArgs = { testDir + sourceXSD };
@@ -133,13 +133,27 @@ public class ModelToXSDTest {
             assertThat(errors.isEmpty());
             assertThat(warns.isEmpty());
         }
-    }      
+    }
+    
+    public Model createModel (File f) throws Exception {
+        return createModel(f.toString()); 
+    }
+    
+    public Model createModel (String sdoc) throws Exception {
+        String[] schemaArgs = { sdoc };
+        return createModel(schemaArgs);
+    }
+    
+    public Model createModel (String[] schemaArgs) throws Exception {
+        var mfact = new ModelFromXSD();
+        var m = mfact.createModel(schemaArgs); 
+        return m;
+    }
     
     public void createCMF (String[] schemaArgs, File modelFP) throws Exception {    
-        FileOutputStream os = new FileOutputStream(modelFP);
-        ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel(schemaArgs);     
-        ModelXMLWriter mw = new ModelXMLWriter();
+        var m  = createModel(schemaArgs);
+        var os = new FileOutputStream(modelFP);
+        var mw = new ModelXMLWriter();
         mw.writeXML(m, os); 
         os.close();   
     }

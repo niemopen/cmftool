@@ -60,12 +60,6 @@ public class Model extends ObjectType {
     private final Map<String,Namespace> uri2NS      = new HashMap<>();      // nsURI -> Namespace
     private List<Component> orderedComponents       = null;                 // ordered by QName
     private List<Namespace> orderedNamespaces       = null;                 // ordered by namespace prefix
-    
-    private List<AugmentRecord> objectAugs          = new ArrayList<>();    // global augmentation on ObjectType
-    private List<AugmentRecord> assocAugs           = new ArrayList<>();    // global augmentation on AssociationType
-    
-    public List<AugmentRecord> objectAugmentations ()   { return objectAugs; }
-    public List<AugmentRecord> assocAugmentations ()    { return assocAugs; }
 
     public Model () { super(); }
     

@@ -48,7 +48,8 @@ public class XSDWriter extends XMLWriter {
                 { "xs:import", "namespace", "schemaLocation" },
                 { "xs:complexType", "name", "type" },
                 { "xs:attribute", "name", "ref", "type", "use" },
-                { "appinfo:LocalTerm", "term" }
+                { "appinfo:LocalTerm", "term" },
+                { "xs:choice", "minOccurs", "maxOccurs" }
         };
     
     public XSDWriter (Document d, OutputStream s) {

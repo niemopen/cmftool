@@ -65,10 +65,11 @@ public class AugmentRecord extends ObjectType implements Comparable<AugmentRecor
     public boolean orderedProperties ()         { return orderedProperty; }
     
     // Global augmentation codes are represented internally as a bitmap
-    public static final int AUG_NONE   = 0;
-    public static final int AUG_ASSOC  = 1;
-    public static final int AUG_OBJECT = 2;
-    public static final int AUG_SIMPLE = 4;
+    // AUG_NONE, AUG_ASSOC, and AUG_OBJECT are mutually exclusive!
+    public static final int AUG_NONE   = 0;     // not a global augmentation
+    public static final int AUG_ASSOC  = 1;     // global augmentation for associations
+    public static final int AUG_OBJECT = 2;     // global augmentation for objects
+    public static final int AUG_SIMPLE = 4;     // global augmentation for simple content
     public static final int AUG_MAX    = 4;
     public static String[] augCode = { "NONE", "ASSOCIATION", "OBJECT", null, "SIMPLE" };
     
@@ -82,8 +83,7 @@ public class AugmentRecord extends ObjectType implements Comparable<AugmentRecor
             if (null != augCode[i] && augCode[i].equals(s)) addGlobalAug(i);
     }
     public String getGlobalAugCode (int i)      { return augCode[i]; }
-
-    
+        
     public AugmentRecord () {}
     
     @Override

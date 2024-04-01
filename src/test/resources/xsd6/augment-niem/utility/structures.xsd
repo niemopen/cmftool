@@ -18,10 +18,13 @@
 
   <xs:annotation>
     <xs:documentation>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</xs:documentation>
-    <xs:documentation>Structures in a message schema does not include attribute wildcards, or any attributes in SimpleObjectAttributeGroup.</xs:documentation>
   </xs:annotation>
 
   <xs:attributeGroup name="SimpleObjectAttributeGroup">
+    <xs:attribute ref="structures:id" />
+    <xs:attribute ref="structures:ref" />
+    <xs:attribute ref="structures:uri" />
+    <xs:anyAttribute processContents="strict" namespace="##other" />
   </xs:attributeGroup>
 
   <xs:complexType name="AdapterType" abstract="true">
@@ -35,6 +38,7 @@
     <xs:attribute ref="structures:id" />
     <xs:attribute ref="structures:ref" />
     <xs:attribute ref="structures:uri" />
+    <xs:anyAttribute processContents="strict" namespace="##other" />
   </xs:complexType>
 
   <xs:complexType name="AssociationType" abstract="true">
@@ -48,6 +52,7 @@
     <xs:attribute ref="structures:id" />
     <xs:attribute ref="structures:ref" />
     <xs:attribute ref="structures:uri" />
+    <xs:anyAttribute processContents="strict" namespace="##other" />
   </xs:complexType>
 
   <xs:complexType name="AugmentationType" abstract="true">
@@ -67,6 +72,7 @@
     <xs:attribute ref="structures:id" />
     <xs:attribute ref="structures:ref" />
     <xs:attribute ref="structures:uri" />
+    <xs:anyAttribute processContents="strict" namespace="##other" />
   </xs:complexType>
 
   <xs:element name="AssociationAugmentationPoint" abstract="true">

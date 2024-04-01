@@ -24,17 +24,22 @@
 package org.mitre.niem.xsd;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
+import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
+import static org.apache.xerces.xs.XSConstants.MODEL_GROUP;
+import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSModel;
+import org.apache.xerces.xs.XSModelGroup;
+import org.apache.xerces.xs.XSObjectList;
+import org.apache.xerces.xs.XSParticle;
+import org.apache.xerces.xs.XSTerm;
 import static org.apache.xerces.xs.XSTypeDefinition.COMPLEX_TYPE;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.NamespaceKind;
 
 /**
@@ -49,90 +54,71 @@ public class ModelToMsgXSDTest extends ModelToXSDTest {
     }
     
     @Test
+    public void testInherit () throws Exception {
+        var sf = new File(testDir, "inherit.xsd");
+        var mf = createMessageXSD(sf);
+        var m  = createModel(mf);
+        var xs = createXSmodel(mf);     
+        var ns = m.getNamespaceByPrefix("nc");
+        var nc = ns.getNamespaceURI();
+               
+        assertThat(getElementNames(xs, "ConveyanceType", nc)).containsOnly(
+                "ItemModelName",
+                "ItemName",
+                "ItemAugmentation", // my:ItemAugmentation
+                "ConveyanceCargoText",
+                "ConveyanceEngineQuantity");
+        assertThat(getElementNames(xs, "IdentificationType", nc)).containsOnly(
+                "IdentificationID",
+                "IdentificationJurisdiction");
+        assertThat(getElementNames(xs, "ItemType", nc)).containsOnly(
+                "ItemModelName",
+                "ItemName",
+                "ItemAugmentation");
+        assertThat(getElementNames(xs, "JurisdictionType", nc)).containsOnly(
+                "JurisdictionDescriptionText");
+        var foo = getElementNames(xs, "VesselType", nc);
+        assertThat(getElementNames(xs, "VesselType", nc)).containsOnly(
+                "ItemModelName",
+                "ItemName",
+                "ItemAugmentation",
+                "ConveyanceCargoText",
+                "ConveyanceEngineQuantity",
+                "VesselHullIdentification",
+                "VesselAugmentation");  // my:VesselAugmentation
+        assertThat(getElementNames(xs, "TextType", nc)).isEmpty();
+    }
+    
+    @Test
     public void testRefCodeComplexContent () throws Exception {
-        // Create CMF from input schema, write to temp directory #1
-        var sdoc = "refCodeCC.xsd";
-        String[] schemaArgs = { testDir + sdoc };
-        File modelFP = new File(tempD1, "model.cmf");
-        createCMF(schemaArgs, modelFP);
+        var sf = new File(testDir, "refCodeCC.xsd");
+        var mf = createMessageXSD(sf);
+        var m  = createModel(mf);
+        var xs = createXSmodel(mf);     
+        var ns = m.getNamespaceByPrefix("nc");
+        var nc = ns.getNamespaceURI();        
         
-        // Create schema from that CMF, write to temp directory #2
-        createXSD(modelFP, tempD2);
-        
-        // Get XSModel for schema
-        File newSchema = new File(tempD2, sdoc);
-        schemaArgs[0] = newSchema.toString();
-        var schema = new XMLSchema(schemaArgs);
-        var xs = schema.xsmodel();
-        
-        assertThat(getAttributeNames(xs, "AnyRefType", "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"))
-            .containsOnly("appliesToParent", "id", "ref", "uri");
-        
-        assertThat(getAttributeNames(xs, "RefRefType", "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"))
-            .containsOnly("appliesToParent", "id", "ref");
-        
-        assertThat(getAttributeNames(xs, "URIRefType", "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"))
-            .containsOnly("appliesToParent", "uri");
-        
-        assertThat(getAttributeNames(xs, "NoRefType", "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"))
-            .isEmpty();
+        assertThat(getAttributeNames(xs, "AnyRefType", nc)).containsOnly("appliesToParent", "id", "ref", "uri");        
+        assertThat(getAttributeNames(xs, "RefRefType", nc)).containsOnly("appliesToParent", "id", "ref");        
+        assertThat(getAttributeNames(xs, "URIRefType", nc)).containsOnly("appliesToParent", "uri");        
+        assertThat(getAttributeNames(xs, "NoRefType", nc)).isEmpty();
     }
 
     @Test
     public void testRefCodeSimpleContent () throws Exception {
-        // Create CMF from input schema, write to temp directory #1
-        var sdoc = "refCodeSC.xsd";
-        String[] schemaArgs = { testDir + sdoc };
-        File modelFP = new File(tempD1, "model.cmf");
-        createCMF(schemaArgs, modelFP);
-        
-        // Create schema from that CMF, write to temp directory #2
-        createXSD(modelFP, tempD2);
-        
-        // Get XSModel for schema
-        File newSchema = new File(tempD2, sdoc);
-        schemaArgs[0] = newSchema.toString();
-        var schema = new XMLSchema(schemaArgs);
-        var xs = schema.xsmodel();
-        
-        assertThat(getAttributeNames(xs, "SimpleContentAnyType", "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"))
-            .containsOnly("id", "ref", "uri");
-        
-        assertThat(getAttributeNames(xs, "SimpleContentRefType", "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"))
-            .containsOnly("id", "ref");
-        
-        assertThat(getAttributeNames(xs, "SimpleContentURIType", "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"))
-            .containsOnly("uri");
-        
-        assertThat(getAttributeNames(xs, "SimpleContentNoneType", "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"))
-            .isEmpty();
+        var sf = new File(testDir, "refCodeSC.xsd");
+        var mf = createMessageXSD(sf);
+        var m  = createModel(mf);
+        var xs = createXSmodel(mf);     
+        var ns = m.getNamespaceByPrefix("nc");
+        var nc = ns.getNamespaceURI(); 
+    
+        assertThat(getAttributeNames(xs, "SimpleContentAnyType", nc)).containsOnly("appliesToParent", "id", "ref", "uri");        
+        assertThat(getAttributeNames(xs, "SimpleContentRefType", nc)).containsOnly("appliesToParent", "id", "ref");        
+        assertThat(getAttributeNames(xs, "SimpleContentURIType", nc)).containsOnly("appliesToParent", "uri");        
+        assertThat(getAttributeNames(xs, "SimpleContentNoneType", nc)).isEmpty();
     }
     
-    public List<String> getAttributeNames (XSModel xs, String name, String nsuri) {
-        var res = new ArrayList<String>();
-        var xt  = xs.getTypeDefinition(name, nsuri);     
-        if (COMPLEX_TYPE != xt.getTypeCategory()) return res;
-        
-        var xct   = (XSComplexTypeDefinition)xt;
-        var xatts = xct.getAttributeUses();
-        for (int i = 0; i < xatts.getLength(); i++) {
-            var xause = (XSAttributeUse)xatts.get(i);
-            var xadec = xause.getAttrDeclaration();
-            var aname = xadec.getName();
-            res.add(aname);
-        }
-        return res;
-    }
-    
-    @Override
-    public void createXSD (File modelFP, File outDir) throws Exception {
-        FileInputStream mis = new FileInputStream(modelFP);
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(mis);
-        ModelToXSD mw  = new ModelToMsgXSD(m);
-        mw.writeXSD(outDir);
-    }        
-
     @Test
     public void testFixConformanceTargets () {
         NamespaceKind.reset();
@@ -159,4 +145,72 @@ public class ModelToMsgXSDTest extends ModelToXSDTest {
         assertEquals(rvs[2], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument");
     }
     
+    public List<String> getAttributeNames (XSModel xs, String name, String nsuri) {
+        var res = new ArrayList<String>();
+        var xt  = xs.getTypeDefinition(name, nsuri);     
+        if (COMPLEX_TYPE != xt.getTypeCategory()) return res;
+        
+        var xct   = (XSComplexTypeDefinition)xt;
+        var xatts = xct.getAttributeUses();
+        for (int i = 0; i < xatts.getLength(); i++) {
+            var xause = (XSAttributeUse)xatts.get(i);
+            var xadec = xause.getAttrDeclaration();
+            var aname = xadec.getName();
+            res.add(aname);
+        }
+        return res;
+    }
+    
+    public List<String> getElementNames (XSModel xs, String name, String nsuri) {
+        var res = new ArrayList<String>();
+        var xt  = xs.getTypeDefinition(name, nsuri);     
+        if (COMPLEX_TYPE != xt.getTypeCategory()) return res;
+        var xct    = (XSComplexTypeDefinition)xt;
+        var par    = xct.getParticle();
+        var xplist = new ArrayList<XSParticle>();
+        collectElements(par, xplist);
+        for (var xp : xplist) {
+            var xterm  = xp.getTerm();
+            var xed    = (XSElementDeclaration)xterm;
+            res.add(xed.getName());
+        }
+        return res;        
+    }
+
+    // Recursively descend through model groups, collecting element declarations
+    public void collectElements (XSParticle par, List<XSParticle> epars) {
+        if (null == par) return;
+        XSTerm pt = par.getTerm();
+        if (null == pt) return;
+        switch (pt.getType()) {
+            case ELEMENT_DECLARATION:
+                epars.add(par);
+                break;
+            case MODEL_GROUP:
+                XSModelGroup mg = (XSModelGroup)pt;
+                XSObjectList objs = mg.getParticles();
+                for (int i = 0; i < objs.getLength(); i++) {
+                    XSParticle pp = (XSParticle)objs.item(i);
+                    collectElements(pp, epars);
+                }    
+                break;
+        }
+    }    
+    
+    public File createMessageXSD (File f) throws Exception {
+        var dir = f.getParent();
+        var fn  = f.getName();
+        var m   = createModel(f);
+        var mw  = new ModelToMsgXSD(m);
+        mw.writeXSD(tempD1);
+        var rf  = new File(tempD1, fn);
+        return rf;
+    } 
+
+    public XSModel createXSmodel (File f) throws Exception {
+        // Create CMF from input schema, write to temp directory #1
+        String[] schemaArgs = { f.toString() };
+        var xs = new XMLSchema(schemaArgs);
+        return xs.xsmodel();
+    }
 }
