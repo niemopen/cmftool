@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/colorUnionTest/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:test="http://example.com/colorUnionTest/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:simpleType name="ColorCodeSimpleType">
+    <xs:annotation>
+      <xs:documentation>A data type for all the colors.</xs:documentation>
+    </xs:annotation>
+    <xs:union memberTypes="test:CoolColorCodeSimpleType test:WarmColorCodeSimpleType"/>
+  </xs:simpleType>
+  <xs:complexType name="ColorCodeType">
+    <xs:annotation>
+      <xs:documentation>A data type for all the colors.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="test:ColorCodeSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:simpleType name="CoolColorCodeSimpleType">
+    <xs:annotation>
+      <xs:documentation>A data type for the cool colors.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="green"/>
+      <xs:enumeration value="blue"/>
+      <xs:enumeration value="indigo"/>
+      <xs:enumeration value="violet"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="CoolColorCodeType">
+    <xs:annotation>
+      <xs:documentation>A data type for the warm colors.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="test:CoolColorCodeSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:simpleType name="WarmColorCodeSimpleType">
+    <xs:annotation>
+      <xs:documentation>A data type for the warm colors.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="red"/>
+      <xs:enumeration value="orange"/>
+      <xs:enumeration value="yellow"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="WarmColorCodeType">
+    <xs:annotation>
+      <xs:documentation>A data type for the warm colors.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="test:WarmColorCodeSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+</xs:schema>

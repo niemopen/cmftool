@@ -47,6 +47,7 @@ public class XProperty extends XObjectType {
     XProperty (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
         obj = new Property();
+        
     }    
     
     @Override
@@ -54,6 +55,11 @@ public class XProperty extends XObjectType {
         child.addToProperty(this);
     } 
     
+    @Override
+    public void addToAugmentRecord (XAugmentRecord xar) {
+        xar.getObject().setProperty(this.getObject());
+    }
+
     @Override
     public void addToHasProperty(XHasProperty x) {
         x.getObject().setProperty(this.getObject());

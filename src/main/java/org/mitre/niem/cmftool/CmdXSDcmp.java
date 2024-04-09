@@ -63,7 +63,7 @@ public class CmdXSDcmp implements JCCommand {
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "two lists of schema files (s1.xsd,cat1.xml,... s2.xsd,cat2.xml,...)")
+    @Parameter(description = "s1.xsd,cat1.xml,... s2.xsd,cat2.xml,...")
     private List<String> mainArgs;
     
     static final Logger LOG = LogManager.getLogger(CmdXSDcmp.class);    
@@ -86,14 +86,14 @@ public class CmdXSDcmp implements JCCommand {
         JCommander jc = new JCommander(this);
         CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("XSDcanonicalize");
+        jc.setProgramName("XSDcmp");
         jc.parse(args);
         run(jc);
     }
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool xsdcanon");
+        cob.setProgramName("cmftool xcmp");
         run(cob);
     }    
     

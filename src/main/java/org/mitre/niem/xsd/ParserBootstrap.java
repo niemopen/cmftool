@@ -96,6 +96,7 @@ public class ParserBootstrap {
         }
         if (0 != (which | BOOTSTRAP_DOCUMENTBUILDER)) {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
             try {
                 Holder.instance.db = dbf.newDocumentBuilder();
             }
@@ -135,6 +136,7 @@ public class ParserBootstrap {
     
     public static DocumentBuilder docBuilder () throws ParserConfigurationException {
         init(BOOTSTRAP_DOCUMENTBUILDER);
+        Holder.instance.db.reset();
         return Holder.instance.db;
     }
 

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<c:catalog xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
-           xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:c="urn:oasis:names:tc:entity:xmlns:xml:catalog"
-           prefer="public">
-  <c:uri name="http://example.org/claim/1/" uri="extension/claim.xsd"/>         
-  <c:nextCatalog catalog="niem/xml-catalog.xml"/>
-</c:catalog>

@@ -69,8 +69,7 @@ public class XNamespace extends XObjectType {
     @Override
     public void addToHasProperty (XHasProperty hp) {
         switch(this.getComponentLname()) {
-        case "AugmentationElementNamespace":  hp.getObject().setAugmentElementNS(this.getObject()); break;
-        case "AugmentationTypeNamespace":     hp.getObject().augmentTypeNS().add(this.getObject()); break;
+        case "AugmentationNamespace":     hp.getObject().augmentingNS().add(this.getObject()); break;
         }
     }
     

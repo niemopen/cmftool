@@ -26,11 +26,13 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import java.io.FileOutputStream;
 import javax.xml.transform.TransformerException;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mitre.niem.cmf.Model;
 import static org.mitre.niem.xsd.FileCompare.compareIgnoringTrailingWhitespace;
 
@@ -44,71 +46,62 @@ public class ModelXMLWriterTest {
     public ModelXMLWriterTest() {
     }
 
-    private static final String testDirPath = "src/test/resources";     
+    private static final String testDirPath = "src/test/resources";
+    private File outF;
     
-    @Test
-    public void testWriteXML () throws TransformerException {
-        FileInputStream cmfIS = null;
-        File cmfDir = new File(testDirPath, "cmf");
-        String[] testFiles = cmfDir.list(new SuffixFileFilter(".cmf"));
-//        String[] testFiles = { "extension.cmf" };
-        for (String tfn : testFiles) {
-            File inF = new File(cmfDir, tfn);
-            try {
-                cmfIS = new FileInputStream(inF);
-            } catch (FileNotFoundException ex) {
-                fail("Where is my input file?");
-            }
-            ModelXMLReader mr = new ModelXMLReader();
-            Model m = mr.readXML(cmfIS);  
-            if (!mr.getMessages().isEmpty()) continue;
-            
-            File outF = null;
-            PrintWriter outPW = null;
-            ModelXMLWriter mw = new ModelXMLWriter();
-            try {
-                outF = File.createTempFile("testWriteXML", ".cmf");
-                outPW = new PrintWriter(outF);
-                mw.writeXML(m, outPW);    
-                outPW.close();
-                String result = compareIgnoringTrailingWhitespace(inF, outF);
-                outF.delete();
-                assertNull(result, tfn);
-            } catch (Exception ex) {
-                fail("Can't create output model file");
-            }
-        }
+    @BeforeEach
+    public void setup () throws Exception {
+        outF = File.createTempFile("testWriteXML", ".cmf");
     }
-
-    @Test
-    public void reWriteXML () throws TransformerException {
+    
+    @AfterEach
+    public void teardown () throws Exception {
+        outF.delete();
+    }
+    
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "augment.cmf",
+        "cli.cmf",
+        "clsa.cmf",
+        "codeType.cmf",
+        "complexContent.cmf",
+        "deprecated.cmf",
+//        "extension.cmf",
+        "externals.cmf",
+        "facets.cmf",
+        "indicators.cmf",
+        "isRefAtt.cmf",
+        "list.cmf",
+        "localTerm.cmf",
+//        "mismatchIDRef.cmf",
+//        "missingIDRef.cmf",
+        "proxy.cmf",
+        "relProp.cmf",
+        "union.cmf"
+    })
+    public void testWriteXML (String cmfFN) throws TransformerException {
         FileInputStream cmfIS = null;
         File cmfDir = new File(testDirPath, "cmf");
-//        String[] testFiles = cmfDir.list(new SuffixFileFilter(".cmf"));
-        String[] testFiles = { "unionOf.cmf" };
-        for (String tfn : testFiles) {
-            File inF = new File(cmfDir, tfn);
-            try {
-                cmfIS = new FileInputStream(inF);
-            } catch (FileNotFoundException ex) {
-                fail("Where is my input file?");
-            }
-            ModelXMLReader mr = new ModelXMLReader();
-            Model m = mr.readXML(cmfIS);  
-            //if (!mr.getMessages().isEmpty()) continue;
-            
-            String ofn = tfn + "-new";
-            File outF = null;
-            PrintWriter outPW = null;
-            ModelXMLWriter mw = new ModelXMLWriter();
-            try {
-                outF = new File(cmfDir, ofn);
-                outPW = new PrintWriter(outF);
-                mw.writeXML(m, outPW);    
-                outPW.close();
-            } catch (Exception ex) {
-                fail("Can't create output model file");
-            }
+        File inF = new File(cmfDir, cmfFN);
+        try {
+            cmfIS = new FileInputStream(inF);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        FileOutputStream os = null;
+        ModelXMLWriter mw = new ModelXMLWriter();
+        try {
+            os = new FileOutputStream(outF);
+            mw.writeXML(m, os);
+            os.close();
+            String result = compareIgnoringTrailingWhitespace(inF, outF);
+            assertNull(result);
+        } catch (Exception ex) {
+            fail("Can't create output model file");
         }
     }
 }

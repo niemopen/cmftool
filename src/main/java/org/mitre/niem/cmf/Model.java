@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,22 +46,7 @@ import static org.mitre.niem.cmf.Component.C_OBJECTPROPERTY;
  */
 public class Model extends ObjectType {
     static final Logger LOG = LogManager.getLogger(Model.class);
-    
-    // Info about schema documents needed when writing the model as XSD
-    static private final SchemaDocument none            = new SchemaDocument(null,null,null,null,null, null);
-    private final Map<String,SchemaDocument> schemadoc  = new HashMap<>();           // nsURI -> schema info
-    
-    public Map<String,SchemaDocument> schemadoc () { return schemadoc; }
-    public void addSchemaDoc(String nsuri, SchemaDocument doc) {
-        schemadoc.put(nsuri, doc);
-    }
-    public String conformanceTargets (String ns)    { return schemadoc.getOrDefault(ns,none).confTargets(); }
-    public String filePath (String ns)              { return schemadoc.getOrDefault(ns,none).filePath(); }
-    public String niemVersion (String ns)           { return schemadoc.getOrDefault(ns,none).niemVersion(); }
-    public String schemaLanguage (String ns)        { return schemadoc.getOrDefault(ns,none).language(); }
-    public String schemaVersion (String ns)         { return schemadoc.getOrDefault(ns,none).schemaVersion(); }
-
-    
+   
     // Map of namespace prefix and URI.  Includes mappings for built-in namespaces 
     // that are not part of the model (but still need to be unique).  Code for
     // processing XML schema piles is allowed to use this.
@@ -70,15 +55,25 @@ public class Model extends ObjectType {
     // Index of model children (components and namespaces)
     // Built-in namespaces do not appear in these data structures.
     // Must update all three indices when child property changes (namespace, local name, NSprefix)
-    private Map<String,Component> components                = new HashMap<>();      // QName -> Component
-    private final Map<String,Namespace> prefix2NS           = new HashMap<>();      // prefix -> Namespace
-    private final Map<String,Namespace> uri2NS              = new HashMap<>();      // nsURI -> Namespace
-    private List<Component> orderedComponents               = null;                 // ordered by QName
-    private List<Namespace> orderedNamespaces               = null;                 // ordered by namespace prefix
+    private Map<String,Component> components        = new HashMap<>();      // QName -> Component
+    private final Map<String,Namespace> prefix2NS   = new HashMap<>();      // prefix -> Namespace
+    private final Map<String,Namespace> uri2NS      = new HashMap<>();      // nsURI -> Namespace
+    private List<Component> orderedComponents       = null;                 // ordered by QName
+    private List<Namespace> orderedNamespaces       = null;                 // ordered by namespace prefix
 
     public Model () { super(); }
     
     public NamespaceMap namespaceMap () { return nsmap; }
+    
+    // Convenience routine to get URI for this prefix from the namespace map.
+    public String getPrefix (String uri) {
+        return nsmap.getPrefix(uri);
+    }
+    
+    // Convenience routine to get prefix for this URI from the namespace map.
+    public String getURI (String prefix) {
+        return nsmap.getURI(prefix);
+    }
 
     // Returns a list of Component objects in the model, ordered by QName.
     // Generates sorted list when necessary, caches for later.
@@ -105,10 +100,16 @@ public class Model extends ObjectType {
     }
  
     public Component getComponent (String nsuri, String lname) {
-        Namespace n = uri2NS.get(nsuri);
-        if (null == n) return null;
-        String qn = n.getNamespacePrefix() + ":" + lname;
-        return components.get(qn);
+        var qn = getQN(nsuri, lname);
+        if (null == qn) return null;
+        else return components.get(qn);
+    }
+    
+    // Convenience function to generate QName from namespace and name
+    public String getQN (String nsuri, String lname) {
+        var ns = uri2NS.get(nsuri);
+        if (null == ns) return null;
+        else return ns.getNamespacePrefix() + ":" + lname;
     }
        
     public ClassType getClassType (String qname) {
@@ -191,40 +192,66 @@ public class Model extends ObjectType {
 //    }
     
     // Must be called by a component when namespace or local name is changed
-    public void childChanged (Component c) {
+    public void componentChange (Component c) {
         components.values().removeIf(v -> c == v);  // remove old mapping QName->Component
         components.put(c.getQName(), c);            // add new mapping
         orderedComponents = null;                   // now we need to regenerate sorted component list
     }
     
-    // Must be called by a namespace object when its prefix or URI is changed.
-    // Enforces unique prefix mapping.
-    public void childChanged (Namespace n, String oldPrefix) throws CMFException {
-        String newPrefix  = n.getNamespacePrefix();
-        String nsuri      = n.getNamespaceURI();
-        String currentURI = nsmap.getURI(newPrefix);
-        if (null != currentURI && !currentURI.equals(nsuri)) {
-             throw new CMFException(
-                String.format("Can't add namespace %s=%s to model (prefix already assigned to %s)",
-                        newPrefix, nsuri, currentURI));            
-        }
-        uri2NS.values().removeIf(v -> n == v);      // remove old mapping prefix->Namespace
-        uri2NS.put(n.getNamespaceURI(), n);         // add new mapping prefix->Namespace
-        nsmap.changePrefix(newPrefix, nsuri);
+    // Must be called by a namespace object when changing its prefix
+    // Enforces unique prefix <-> URI mapping, maintains QName->component map
+    public void namespacePrefixChange (String nsuri, String opre, String npre) throws CMFException {
         
-        // If the prefix changes, a lot of QNames may also change
-        // We rebuild the QName->component map from scratch
-        if (null != oldPrefix && !oldPrefix.equals(n.getNamespacePrefix())) {
-            prefix2NS.remove(oldPrefix);
-            prefix2NS.put(n.getNamespacePrefix(), n);
-            Map<String,Component> nc = new HashMap<>();
-            components.values().forEach((Component c) -> {
-                nc.put(c.getQName(), c);
-            });
-            components = nc;
-        }
-        orderedNamespaces = null;   // now we need to regenerate sorted namespace list
+        // Nothing to do if old and new prefix are the same
+        if (opre.equals(npre)) return;
+        
+        // Fail if new prefix currently bound to a different URI
+        var npreURI = nsmap.getURI(npre);
+        if (null != npreURI && !npreURI.equals(nsuri)) {
+             throw new CMFException(
+                String.format("Can't assign prefix %s to %s (already assigned to URI %s)",
+                        npre, nsuri, npreURI));        
+        }     
+        // Update the prefix map and the namespace map object
+        var ns = getNamespaceByURI(nsuri);
+        prefix2NS.remove(opre);
+        prefix2NS.put(npre, ns);
+        nsmap.changePrefix(npre, nsuri);    // and update the namespace map object
+        
+        // When the prefix changes, a lot of QNames may also change
+        // Rebuild the QName->component map from scratch and regenerate 
+        // the sorted namespace list
+        Map<String,Component> nc = new HashMap<>();
+        components.values().forEach((Component c) -> {
+            var nqn = npre + ":" + c.getName();
+            nc.put(nqn, c);
+        });
+        components = nc;
+        orderedNamespaces = null;
     }
+  
+    // Must be called by a namespace object when changing its URI
+    // Enforces unique prefix <-> URI mapping
+    public void namespaceURIChange (String prefix, String ouri, String nuri) throws CMFException {
+        
+        // Nothing to do if old and new URI are the same
+        if (ouri.equals(nuri)) return;
+        
+        // Fail if new URI is currently bound to a different prefix
+        var nuriPre = nsmap.getPrefix(nuri);
+        if (null != nuriPre && !nuriPre.equals(prefix)) {
+             throw new CMFException(
+                String.format("Can't change URI for prefix %s to %s (already has prefix %s)",
+                        prefix, nuri, nuriPre));                
+        }
+        // Update the URI map and the namespace map object
+        var ns = getNamespaceByPrefix(prefix);
+        uri2NS.remove(ouri);
+        uri2NS.put(nuri, ns);
+        nsmap.removePrefix(prefix);
+        nsmap.assignPrefix(prefix, nuri);
+    }
+
     
 }
  

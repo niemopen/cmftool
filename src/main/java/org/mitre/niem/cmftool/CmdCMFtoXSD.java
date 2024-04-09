@@ -31,19 +31,18 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.xsd.ModelToMsgXSD;
+import org.mitre.niem.xsd.ModelToN5XSD;
+import org.mitre.niem.xsd.ModelToSrcXSD;
 import org.mitre.niem.xsd.ModelToXSD;
 import org.mitre.niem.xsd.ModelXMLReader;
 import org.mitre.niem.xsd.ParserBootstrap;
 import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -51,12 +50,21 @@ import org.xml.sax.SAXException;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "write a NIEM model instance as a NIEM schema")
+@Parameters(commandDescription = "write a NIEM model as a NIEM schema")
         
 class CmdCMFtoXSD implements JCCommand {
     
-    @Parameter(names = "-o", description = "output directory for schema pile")
+    @Parameter(order = 0, names = "-o", description = "write schema pile into this directory")
     private String outputDir = "";
+
+    @Parameter(order = 1, names = "-c", description = "generate xml-catalog.xml file")
+    private boolean catFlag = false;
+    
+    @Parameter(order = 2, names = "--catalog", description = "write XML catalog into this file")
+    private String catPath = null;
+    
+    @Parameter(order = 3, names = "--msgNS", description = "set namespace with this prefix or URI as message schema root")
+    private String messageNS = null;
     
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
@@ -64,7 +72,7 @@ class CmdCMFtoXSD implements JCCommand {
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "model.cmf [modelExt.cmx]")
+    @Parameter(description = "modelFile.cmf")
     private List<String> mainArgs;
     
     CmdCMFtoXSD () {
@@ -83,18 +91,30 @@ class CmdCMFtoXSD implements JCCommand {
         JCommander jc = new JCommander(this);
         CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("generateXSD");
+//        jc.setProgramName("generateXSD");
         jc.parse(args);
         run(jc);
     }
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool m2x");
+//        cob.setProgramName("cmftool m2x");
         run(cob);
     }    
     
-    private void run (JCommander cob) {
+    protected void run (JCommander cob) {
+        // Make sure the command is valid
+        String cmdName = cob.getProgramName();
+        switch (cmdName) {
+            case "m2x5":           // model to N5 schema
+            case "m2xs":          // model to N6 source schema (ref or ext)
+            case "m2xm": break;   // model to N6 message schema
+            default:
+                System.err.println("unknown command: cmftool " + cmdName);
+                System.exit(1);
+        }
+        cob.setProgramName("cmftool " + cmdName);
+        
         if (help) {
             cob.usage();
             System.exit(0);
@@ -117,7 +137,14 @@ class CmdCMFtoXSD implements JCCommand {
                 cob.usage();
                 System.exit(1);
             }
-        }       
+        }      
+        // Sanity checking
+        if (catFlag && null != catPath && !"xml-catalog.xml".equals(catPath)) {
+            System.err.println("-c and --catalog options are in conflict");
+            System.exit(1);
+        }
+        if (catFlag) catPath = "xml-catalog.xml";
+        
         // If output directory exists, make sure it's empty
         File od = new File(outputDir);
         try {
@@ -168,18 +195,29 @@ class CmdCMFtoXSD implements JCCommand {
                 System.exit(1);
             }
         }
-        // Write the NIEM model instance to the output stream
-        ModelToXSD mw = new ModelToXSD(m);
+        // Write the proper kind of NIEM model XSD to the output stream
+        ModelToXSD mw = null;
+        switch (cmdName) {
+            case "m2x5" -> mw = new ModelToN5XSD(m);
+            case "m2xs" -> mw = new ModelToSrcXSD(m);
+            case "m2xm" -> mw = new ModelToMsgXSD(m);
+            default -> {
+                System.err.println("unknown command: cmftool " + cmdName);
+                System.exit(1);
+            }        
+        }
         try {
+            mw.setCatalog(catPath);
+            mw.setMessageNamespace(messageNS);
             mw.writeXSD(od);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(CmdCMFtoXSD.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ParserConfigurationException ex) {
-            Logger.getLogger(CmdCMFtoXSD.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (TransformerException ex) {
-            Logger.getLogger(CmdCMFtoXSD.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(CmdCMFtoXSD.class.getName()).log(Level.SEVERE, null, ex);           
+        } catch(Exception ex) {
+            System.err.println("error: " + ex.getMessage());
+            var trace = ex.getStackTrace();
+            for (int i = 0; i < trace.length; i++) {
+                var tr = trace[i];
+                System.err.println("  at " + tr.getFileName() + ", line " + tr.getLineNumber());
+            }
+            System.exit(1);
         }
         System.exit(0);
     }    

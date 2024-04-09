@@ -23,8 +23,9 @@
  */
 package org.mitre.niem.xsd;
 
-import static org.mitre.niem.NIEMConstants.STRUCTURES_NS_URI_PREFIX;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.NamespaceKind;
+import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
 import org.mitre.niem.cmf.ObjectType;
 import org.xml.sax.Attributes;
 
@@ -52,7 +53,7 @@ public class XObjectType {
         componentLname = eln;
         lineNumber = line;
         for (int i = 0; i < a.getLength(); i++) {
-            if (a.getURI(i).startsWith(STRUCTURES_NS_URI_PREFIX)) {
+            if (NIEM_STRUCTURES == NamespaceKind.uri2Builtin(a.getURI(i))) {
                 if (null != a.getLocalName(i)) {
                     switch (a.getLocalName(i)) {
                         case "id":         id = a.getValue(i); break;
@@ -101,14 +102,16 @@ public class XObjectType {
         this.isEmpty = false; 
     }
   
+    public void addToAugmentRecord (XAugmentRecord r) { }
+    public void addToCodeListBinding (XCodeListBinding b) { }
     public void addToClassType (XClassType c) { }
     public void addToDatatype (XDatatype dt) { }
     public void addToFacet (XFacet f) { }
     public void addToHasProperty (XHasProperty h) { }
+    public void addToLocalTerm (XLocalTerm l) { }
     public void addToModel (XModel m) { }
     public void addToNamespace (XNamespace ns) { }
     public void addToProperty (XProperty op) { }
     public void addToRestrictionOf (XRestrictionOf r) { }
-    public void addToSchemaDocument (XSchemaDocument s) { }
     public void addToUnionOf (XUnionOf u) { }    
 }

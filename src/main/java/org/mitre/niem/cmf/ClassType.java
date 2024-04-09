@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,8 @@ import java.util.List;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ClassType extends Component {
+    private String refCode = null;
     private boolean isAugmentable = false;
-    private boolean isExternal = false;
-    private boolean canHaveMD = false;
     private ClassType extensionOfClass  = null;
     private final List<HasProperty> hasPropertyList = new ArrayList<>();
     
@@ -46,20 +45,25 @@ public class ClassType extends Component {
         type = C_CLASSTYPE;
     }
 
+    public void setReferenceCode (String s)       { refCode = s; }
     public void setIsAugmentable (boolean f)      { isAugmentable = f; }
     public void setIsAugmentable (String s)       { isAugmentable = "true".equals(s); }
-    public void setIsExternal (boolean f)         { isExternal = f; }    
-    public void setIsExternal (String s)          { isExternal = "true".equals(s); }
-    public void setCanHaveMD (boolean f)          { canHaveMD = f; }
-    public void setCanHaveMD (String s)           { canHaveMD = "true".equals(s); }
     public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
     
+    public String getReferenceCode()              { return refCode; }
     public boolean isAugmentable ()               { return isAugmentable; }
-    public boolean isExternal ()                  { return isExternal; }
-    public boolean canHaveMD ()                   { return canHaveMD; }
+    public boolean isAdapter ()                   { return getName().endsWith("AdapterType"); }
+    public boolean isReferenceable ()             { return !refCode.isBlank() && !"NONE".equals(refCode); }
     public ClassType getExtensionOfClass ()       { return extensionOfClass; }
             
     public List<HasProperty> hasPropertyList ()   { return hasPropertyList; }
+    
+    public HasProperty getHasProperty (String qname) {
+        for (var hp : hasPropertyList) {
+            if (qname.equals(hp.getProperty().getQName())) return hp;
+        }
+        return null;
+    }
 
     public void addHasProperty (HasProperty c) {
         this.hasPropertyList.add(c);
@@ -73,7 +77,6 @@ public class ClassType extends Component {
         int index = this.hasPropertyList.indexOf(op);
         if (index < 0) return;
         this.hasPropertyList.set(index, np);
-        
     }
            
     @Override

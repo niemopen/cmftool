@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>appinfo test case</xs:documentation>
+    <xs:appinfo>
+      <appinfo:LocalTerm term="2D" literal="Two-dimensional"/>
+      <appinfo:LocalTerm term="3D" definition="Three-dimensional"/>
+      <appinfo:LocalTerm term="Test" definition="only for test purposes" sourceURIs="http://example.com/1 http://example.com/2">
+        <appinfo:SourceText>citation #1</appinfo:SourceText>
+        <appinfo:SourceText>citation #2</appinfo:SourceText>
+      </appinfo:LocalTerm>
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+</xs:schema>

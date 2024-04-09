@@ -26,14 +26,18 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javax.xml.XMLConstants;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLEventReader;
@@ -48,6 +52,7 @@ import javax.xml.validation.SchemaFactory;
 import static org.apache.commons.lang3.StringUtils.getCommonPrefix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.xerces.dom.DOMInputImpl;
 import org.apache.xerces.impl.xs.util.StringListImpl;
 import org.apache.xerces.xs.StringList;
 import org.apache.xerces.xs.XSLoader;
@@ -55,7 +60,7 @@ import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamespaceItem;
 import org.apache.xerces.xs.XSNamespaceItemList;
 import static org.mitre.niem.NIEMConstants.XML_CATALOG_NS_URI;
-import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
+import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import org.w3c.dom.DOMConfiguration;
@@ -82,6 +87,7 @@ import org.xml.sax.SAXException;
  */
 public class XMLSchema {
     static final Logger LOG = LogManager.getLogger(XMLSchema.class);
+    private Object URIDecoder;
     
     /**
      * Returns the list of catalog file paths found in the constructor's arguments
@@ -90,7 +96,7 @@ public class XMLSchema {
      */
     public List<String> catalogs ()          { return catalogs; }
     /**
-     * Returns the list of file URIs for the intial schema documents assembled
+     * Returns the list of file URIs for the initial schema documents assembled
      * into the XML schema.  The list includes the schema document file paths, 
      * schema document file URIs, and resolved namespaced URIs found in the
      * constructor's arguments.
@@ -174,7 +180,7 @@ public class XMLSchema {
                 String furi = cf.toURI().toString();
                 String dkind = getXMLDocumentNamespace(path);
                 if (XML_CATALOG_NS_URI.equals(dkind)) catalogs.add(furi);
-                else if (XSD_NS_URI.equals(dkind))    schemaDocs.add(furi);
+                else if (W3C_XML_SCHEMA_NS_URI.equals(dkind))    schemaDocs.add(furi);
                 else throw new XMLSchemaException(String.format("%s is not a schema document or XML catalog", path));
             }
         }
@@ -197,7 +203,7 @@ public class XMLSchema {
                 throw new XMLSchemaException(String.format("%s resolves to %s -- not a local URI", ns, sf));                
             }
             String dkind = getXMLDocumentNamespace(sfu.getPath());
-            if (!XSD_NS_URI.equals(dkind)) {
+            if (!W3C_XML_SCHEMA_NS_URI.equals(dkind)) {
                 throw new XMLSchemaException(String.format("%s resolves to %s -- not a schema document", ns, sf));                    
             }
             String sftns = getXSDTargetNamespace(sfu.getPath());
@@ -209,6 +215,8 @@ public class XMLSchema {
         }
     }
 
+    // Reads an XML file to obtain the namespace URI of the XML document element.
+    // Returns an empty string if the file isn't XML.
     private static String getXMLDocumentNamespace (String path) throws IOException {
         String ns = null;
         try {
@@ -229,6 +237,9 @@ public class XMLSchema {
         return ns;
     }
     
+    // Reads an XML Schema file to obtain the target namespace URI.
+    // Returns an empty string if the file isn't XSD or doesn't declare a
+    // target namespace.
     private static String getXSDTargetNamespace (String path) throws IOException {
         String tns = null;
         try {
@@ -271,15 +282,17 @@ public class XMLSchema {
             LOG.error("can't create XSLoader: " + ex.getMessage());
             return null;
         }
-        XMLSchema.XSModelHandler handler = new XMLSchema.XSModelHandler();
+        xsmsgs = new ArrayList<>();
+        var handler = new XSModelHandler(xsmsgs);
+//        XMLSchema.XSModelHandler handler = new XMLSchema.XSModelHandler();
         DOMConfiguration config = loader.getConfig();
         config.setParameter("validate", true);
-        config.setParameter("error-handler",handler);
+        config.setParameter("error-handler", handler);
         if (null != resolver) config.setParameter("resource-resolver", resolver);
         StringList slist = new StringListImpl(
                 schemaDocs.toArray(new String[0]),
                 schemaDocs.size());
-        xsmsgs = new ArrayList<>();
+
         xs = loader.loadURIList(slist);
         return xs;        
     }
@@ -291,8 +304,9 @@ public class XMLSchema {
      */
     public List<String> xsModelMsgs () { if (null == xs) xsmodel(); return xsmsgs; }      
     
-    private class XSModelHandler implements DOMErrorHandler {
-        XSModelHandler () { super(); }
+    private static class XSModelHandler implements DOMErrorHandler {
+        private List<String> msgs;
+        XSModelHandler (List<String>m) { super(); msgs = m;}
         @Override
         public boolean handleError (DOMError e) {
             short sevCode = e.getSeverity();
@@ -311,7 +325,7 @@ public class XMLSchema {
                     fn = uri.substring(index + 1)+":";
                 }
             }
-            xsmsgs.add(String.format("%s %s %d:%d %s",
+            msgs.add(String.format("%s %s %d:%d %s",
                     sevstr,
                     fn,
                     loc.getLineNumber(),
@@ -321,6 +335,25 @@ public class XMLSchema {
         }
     }
     
+    // Returns an XSModel from an XSD input stream.  XML schema validation
+    // messages are returned in the list.  Best of luck with your imports!
+    public static XSModel xsmodelFromStream (InputStream is, List<String> msgs) {
+        XSLoader loader;
+        try {
+            loader = ParserBootstrap.xsLoader(); // don't reuse these, they keep state
+        } catch (ParserConfigurationException ex) {
+            LOG.error("can't create XSLoader: " + ex.getMessage());
+            return null;
+        }
+        var handler = new XSModelHandler(msgs);
+        DOMConfiguration config = loader.getConfig();
+        config.setParameter("validate", true);
+        config.setParameter("error-handler", handler);  
+        DOMInputImpl d = new DOMInputImpl();
+        d.setByteStream(is);
+        return loader.load(d);
+    }
+        
     ///// JAVAX schema stuff ////////////////////////////////////////
     
     private Schema javaxSchema = null;
@@ -408,7 +441,10 @@ public class XMLSchema {
         for (int i = 0; i < nslist.getLength(); i++) {
             XSNamespaceItem xnsi = nslist.item(i);
             StringList docl = xnsi.getDocumentLocations();
-            for (int j = 0; j < docl.size(); j++) alldocs.add(docl.item(j));
+            for (int j = 0; j < docl.size(); j++) {
+                String furi = xercesLocationURI(docl.item(j));
+                alldocs.add(furi);
+            }
         }
         // Now we know all the schema documents in the pile.  Add all the catalog
         // documents and find the greatest common prefix
@@ -416,6 +452,7 @@ public class XMLSchema {
         pileRoot = getCommonPrefix(alldocs.toArray(new String[0]));
         int prlen = pileRoot.lastIndexOf("/");
         if (prlen >= 0) pileRoot = pileRoot.substring(0, prlen + 1);
+        LOG.debug("pileRoot: " + pileRoot);
         
         // Iterate over XSNamespaceItems to process schema documents 
         // One entry for each namespace URI that was a @targetNamespace in any document
@@ -430,14 +467,15 @@ public class XMLSchema {
                 }
                 continue;
             }
-            if (docl.size() < 1 && !XSD_NS_URI.equals(nsuri))
+            if (sdocs.containsKey(nsuri)) continue;
+            if (docl.size() < 1 && !W3C_XML_SCHEMA_NS_URI.equals(nsuri))
                 throw new XMLSchemaException(String.format("Xerces weirdness: no schema document for namespace %s", nsuri)); 
             else {
                 if (docl.size() > 1) LOG.warn("Multiple documents listed for namespace {} in XSModel?", nsuri);
                 for (int j = 0; j < docl.getLength(); j++) {
-                    String sdfuri = docl.item(j);
+                    String sdfuri = xercesLocationURI(docl.item(j));
                     String sdpath = sdfuri.substring(prlen+1);
-                    LOG.debug("Processing file {} for namespace {}", sdfuri, nsuri);
+                    LOG.debug("Processing {} for namespace {}", sdfuri, nsuri);
                     var sd = new XMLSchemaDocument(sdfuri, sdpath);
                     var targetNS = sd.targetNamespace();
                     if (null != targetNS && !nsuri.equals(targetNS))
@@ -447,17 +485,33 @@ public class XMLSchema {
                 }
             }
         }
-        // Now we can mark the esternal namespaces
+        // Now we can mark the external namespaces
         LOG.debug("parseSchemaPile: marking externals");
         LOG.debug(String.format("sdocs.size() = %d", sdocs.size()));
         for (var sd : sdocs.values()) {
             for (var extns : sd.externalImports()) {
                 LOG.debug(String.format("%s imported external by %s", extns, sd.targetNamespace()));
-                LOG.debug(String.format("sdocs.size() = %d", sdocs.size()));
-                var esd = sdocs.get(extns);
-                if (NSK_UNKNOWN == esd.schemaKind()) esd.setSchemaKind(NSK_EXTERNAL);
+                var esd  = sdocs.get(extns);
+                int kind = NamespaceKind.uri2Kind(extns);
+                if (NSK_UNKNOWN == kind) {
+                    esd.setSchemaKind(NSK_EXTERNAL);
+                    NamespaceKind.setKind(extns, kind);
+                }
             }
         }
+    }
+    
+    // Xerces reports schema document location as file URIs that sometimes
+    // include percent-encoded backslash characters as separators.  Who knew?
+    private String xercesLocationURI (String locuri) {
+        var furi = locuri;
+        try {
+            furi = URLDecoder.decode(locuri, "UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            LOG.error("Can't decode UTF-8: " + ex.getMessage());
+        }
+        furi = furi.replace('\\', '/');
+        return furi;
     }
     
     public class XMLSchemaException extends Exception {

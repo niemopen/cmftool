@@ -24,129 +24,101 @@
 package org.mitre.niem.xsd;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.util.Map;
-import java.util.Scanner;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 
 /**
+ * A class to generate an output stream of readable NIEM XSD from a Document.
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class XSDWriter {
+public class XSDWriter extends XMLWriter {
     
-    // Writes the XSD document model.  Post-processing of XSLT output to do
-    // what XSLT should do, but doesn't.  You can't process arbitrary XML in
-    // this way, but we know what the XSLT output of a NIEM conforming
-    // schema document is going to be, so it works.
-    public static void writeDOM (Document dom, Writer w) 
-            throws TransformerConfigurationException, TransformerException, IOException {
-        
-        Transformer tr = TransformerFactory.newInstance().newTransformer();
-        tr.setOutputProperty(OutputKeys.INDENT, "yes");
-        tr.setOutputProperty(OutputKeys.METHOD, "xml");
-        tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        StringWriter ostr = new StringWriter();
-        tr.transform(new DOMSource(dom), new StreamResult(ostr));
-        
-        // process string by lines to do what XSLT won't do :-(
-        // For <xs:schema>, namespace decls and attributes on separate indented lines.
-        // For <xs:element>, order as @ref, @minOccurs, @maxOccurs, @name, @type, @substitutionGroup, then others
-        // For <xs:import>, order as @namespace, @schemaLocation, then others
-        Pattern linePat = Pattern.compile("^(\\s*)<([^\\s>]+)(.*)");
-        String[][]reorder = {
+    // process string by lines to do what XSLT won't do :-(
+    // For <xs:schema>, namespace decls and attributes on separate indented lines.
+    // For <xs:element>, order as @ref, @minOccurs, @maxOccurs, @name, @type, @substitutionGroup, then others
+    // For <xs:import>, order as @namespace, @schemaLocation, then others
+    private static final Pattern linePat = Pattern.compile("^(\\s*)<([^\\s>]+)(.*)");
+    private static final String[][]reorder = {
                 { "xs:element", "name", "ref", "type", "minOccurs", "maxOccurs", "substitutionGroup" },
                 { "xs:import", "namespace", "schemaLocation" },
                 { "xs:complexType", "name", "type" },
-                { "xs:attribute", "name", "type" }
+                { "xs:attribute", "name", "ref", "type", "use" },
+                { "appinfo:LocalTerm", "term" },
+                { "xs:choice", "minOccurs", "maxOccurs" }
         };
-        Scanner scn = new Scanner(ostr.toString());
-        String line = scn.nextLine();
-        w.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");    // don't want/need standalone="no"
-        while (scn.hasNextLine()) {           
-            line = scn.nextLine();
-            if (line.isBlank()) continue;
-            Matcher lineM = linePat.matcher(line);
-//            System.out.print(String.format("line:   '%s'\n", line));
-            if (!lineM.matches()) w.write(line);
-            else {
-                String indent = lineM.group(1);
-                String tag = lineM.group(2);
-                String res = lineM.group(3);
-                String end;
-                res = res.stripTrailing();
-                if (res.endsWith("/>")) end = "/>";
+    
+    public XSDWriter (Document d, OutputStream s) {
+        super(d, s);
+    }
+    
+    @Override
+    protected void handleLine (String line) throws IOException  {    
+        if (line.isBlank()) return;
+        Matcher lineM = linePat.matcher(line);
+        if (!lineM.matches()) ow.write(line);
+        else {
+            String indent = lineM.group(1);
+            String tag = lineM.group(2);
+            String res = lineM.group(3);
+            String end;
+            res = res.stripTrailing();
+            if (res.endsWith("/>")) end = "/>";
                 else end = ">";
                 res = res.substring(0, res.length() - end.length());
-//                System.out.print(String.format("indent: '%s'\n", indent));
-//                System.out.print(String.format("tag:    '%s'\n", tag));
-//                System.out.print(String.format("rest:   '%s'\n", res));
-//                System.out.print(String.format("end:    '%s'\n", end));
                 for (int i = 0; i < reorder.length; i++) {
                     if (tag.equals(reorder[i][0])) {
-                        w.write(indent);
-                        w.write("<" + tag);
+                        ow.write(indent);
+                        ow.write("<" + tag);
                         Map<String,String>tmap = keyValMap(res);
                         for (int j = 1; j < reorder[i].length; j++) {
                             String key = reorder[i][j];
                             if (null != tmap.get(key)) {
-                                w.write(" " + tmap.get(key));
+                                ow.write(String.format(" %s=\"%s\"", key, tmap.get(key)));
                                 tmap.remove(key);
                             }
                         }
-                        for (String str : tmap.values()) w.write(" " + str);
-                        w.write(end);
+                        for (String key : tmap.keySet()) 
+                            ow.write(String.format(" %s=\"%s\"", key, tmap.get(key)));                     
+                        ow.write(end);
                         line = null;
                         i = reorder.length;
                     }
                 }
+                // Rewrite the xs:schema element to make it pretty.
+                // targetNamespace comes first
+                // then namespace declarations, in prefix order, except xs and xsi are last
+                // then everything else, in alphabetical order
                 if (null != line && "xs:schema".equals(tag)) {
-                    w.write("<xs:schema");
+                    ow.write("<xs:schema");
                     Map<String,String>tmap = keyValMap(res);
-                    if (null != tmap.get("targetNamespace")) {
-                        w.write("\n  " + tmap.get("targetNamespace"));
+                    var tns = tmap.get("targetNamespace");
+                    if (null != tns) {
+                        ow.write(String.format("\n  targetNamespace=\"%s\"", tns));
                         tmap.remove("targetNamespace");
                     }
+                    var xsURI  = tmap.remove("xmlns:xs");
+                    var xsiURI = tmap.remove("xmlns:xsi");
                     for (Map.Entry<String,String>me : tmap.entrySet()) {
-                        if (me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
+                        if (me.getKey().startsWith("xmlns:")) 
+                            ow.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
                     }
+                    if (null != xsURI)  ow.write("\n  xmlns:xs=\"" + xsURI + "\"");
+                    if (null != xsiURI) ow.write("\n  xmlns:xsi=\"" + xsiURI + "\"");
                     for (Map.Entry<String,String>me : tmap.entrySet()) {
-                        if (!me.getKey().startsWith("xmlns:")) w.write("\n  " + me.getValue());
+                        if (!me.getKey().startsWith("xmlns:")) 
+                            ow.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
                     }     
-                    w.write(end);
+                    ow.write(end);
                     line = null;
                 }
-                if (null != line) w.write(line);
+                if (null != line) ow.write(line);
             }
-            w.write("\n");
+            ow.write("\n");
         }        
-    }
-    
-    private static final Pattern pairPat = Pattern.compile("\\s*([\\w:-]+)\\s*=\\s*(\"[^\"]*\")");
-    // Breaks a string of key="value" pairs into a sorted map
-    private static TreeMap<String,String> keyValMap (String s) {
-        TreeMap<String,String> kvm = new TreeMap<>();
-        Matcher pairMatch = pairPat.matcher(s);
-        while (pairMatch.lookingAt()) {
-            String key = pairMatch.group(1);
-            String val = pairMatch.group(2);
-            int ei = pairMatch.end();
-            pairMatch.region(ei, pairMatch.regionEnd());
-            kvm.put(key, key + "=" + val);
-        }
-        return kvm;
-    }    
+   
 }

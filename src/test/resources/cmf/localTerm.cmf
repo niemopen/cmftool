@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DocumentationText>appinfo test case</DocumentationText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>localTerm.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <LocalTerm>
+      <TermName>2D</TermName>
+      <TermLiteralText>Two-dimensional</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>3D</TermName>
+      <DocumentationText>Three-dimensional</DocumentationText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>Test</TermName>
+      <DocumentationText>only for test purposes</DocumentationText>
+      <SourceURIList>http://example.com/1 http://example.com/2</SourceURIList>
+      <SourceCitationText>citation #1</SourceCitationText>
+      <SourceCitationText>citation #2</SourceCitationText>
+    </LocalTerm>
+  </Namespace>
+  <Namespace structures:id="structures">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+</Model>

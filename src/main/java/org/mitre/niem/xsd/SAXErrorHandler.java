@@ -36,7 +36,7 @@ import org.xml.sax.SAXParseException;
  */
 public class SAXErrorHandler implements ErrorHandler {
     
-    private List<String> messages = new ArrayList<>();
+    private final List<String> messages = new ArrayList<>();
     
     public SAXErrorHandler () { 
         super();

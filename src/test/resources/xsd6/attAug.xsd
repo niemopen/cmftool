@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:my="http://example.com/N6AugEx/1.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument"
+  version="message-1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>NIEM Core.</xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="http://example.com/N6AugEx/1.0/" schemaLocation="attAug/msg.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="attAug/utility/structures.xsd"/>
+  <xs:complexType name="EducationType">
+    <xs:annotation>
+      <xs:documentation>A data type for a person's educational background.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="structures:ObjectType">
+        <xs:sequence>
+          <xs:element ref="nc:EducationDescriptionText" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="nc:EducationInProgressIndicator" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="nc:EducationAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute ref="my:privacyText" use="required" appinfo:augmentingNamespace="http://example.com/N6AugEx/1.0/"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="TextType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string"/>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:element name="EducationAugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for EducationType.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="EducationDescriptionText" type="nc:TextType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A description of a person's educational background.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="EducationInProgressIndicator" type="xs:boolean" nillable="true">
+    <xs:annotation>
+      <xs:documentation>True if a person's formal education is still in progress; false otherwise.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:attribute name="truncationIndicator" type="xs:boolean">
+    <xs:annotation>
+      <xs:documentation>True if the length of a string is greater than the length of the field within which the string was stored in the exporting system; false otherwise.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+</xs:schema>

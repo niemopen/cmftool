@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2022 The MITRE Corporation.
+ * Copyright 2020-2023 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +23,34 @@
  */
 package org.mitre.niem.xsd;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.PrintWriter;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import nl.altindag.log.LogCaptor;
 import org.apache.commons.io.FileUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mitre.niem.cmf.Model;
 
-
 /**
- *
+ * Common routines for model to schema pile tests.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelToXSDTest {
-   static String testDir = "src/test/resources/xsd/";
+    
+   static List<LogCaptor> logs;
       
     @TempDir
     File tempD1;
@@ -55,42 +62,29 @@ public class ModelToXSDTest {
     public ModelToXSDTest() {
     }
     
-    @AfterEach
-    public void tearDown() {
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { 
-            "augment-0.xsd",
-            "codelist.xsd",
-            "codelistClassType.xsd",
-            "codelistUnion.xsd",
-            "complexContent.xsd",
-            "deprecated.xsd",
-//            "externals.xsd",          // can't automate this one; m2x doesn't generate external documents (gml.xsd)
-            "list.xsd",
-            "literal-0.xsd",
-            "literal-1.xsd",
-            "literal-2.xsd",
-            "literal-3.xsd",
-            "literal-4.xsd",
-            "literal-5.xsd",
-            "literal-6.xsd",      
-            "literal-7.xsd",
-//            "nameinfo.xsd",
-//            "namespace-1.xsd",        // can't automate this one; prefixes are changed in created XSD
-//            "noprefix.xsd",
-            "proxy.xsd",
-            "restriction.xsd",
-            //"twoversions-0.xsd",      // can't automate this one; prefixes are changed in created XSD
-            "schemadoc.xsd",
-            "union.xsd",
-            "whitespace.xsd",
-            "xml-lang.xsd"
-        })
-    public void testRoundTrip(String sourceXSD) throws Exception {
     
-        // Create CMF from input schema, weite to temp directory #1
+    @BeforeAll
+    public static void setupLogCaptor () {
+        logs = new ArrayList<>();
+        logs.add(LogCaptor.forClass(ModelToXSD.class));
+        logs.add(LogCaptor.forClass(XMLSchema.class));
+        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
+        logs.add(LogCaptor.forClass(ModelXMLWriter.class));
+    }
+    
+    @AfterEach
+    public void clearLogs () {
+        for (var log : logs) log.clearLogs();;
+    }
+    
+    @AfterAll
+    public static void tearDown () {
+        for (var log : logs) log.close();
+    }
+    
+    public void testRoundTrip(String testDir, String sourceXSD) throws Exception {
+    
+        // Create CMF from input schema, write to temp directory #1
         String[] schemaArgs = { testDir + sourceXSD };
         File modelFP = new File(tempD1, "model.cmf");
         createCMF(schemaArgs, modelFP);
@@ -98,9 +92,11 @@ public class ModelToXSDTest {
         // Create schema from that CMF, write to temp directory #2
         createXSD(modelFP, tempD2);
 
-        // Now create CMF from the schema in temp directory #2
+        // Valid XSD?
         File newSchema = new File(tempD2, sourceXSD);
-        schemaArgs[0] = newSchema.toString();
+        assertTrue(isValidXSD(newSchema));
+        
+        // Now create CMF from the schema in temp directory #2        
         File newModelFP = new File(tempD1, "newModel.cmf");
         createCMF(schemaArgs, newModelFP);
         
@@ -123,26 +119,100 @@ public class ModelToXSDTest {
             String n3 = f3.getName();
             assertEquals(n2,n3);
             assertTrue(FileUtils.contentEquals(f2, f3));
+            if (!FileUtils.contentEquals(f2, f3)) {
+                int i = 0;
+            }
         }
-        int i = 0;
+        assertEmptyLogs();
+    }    
+    
+    public void assertEmptyLogs () {
+        for (var log : logs) {
+            var errors = log.getErrorLogs();
+            var warns  = log.getWarnLogs();
+            assertThat(errors.isEmpty());
+            assertThat(warns.isEmpty());
+        }
     }
     
-    private void createCMF (String[] schemaArgs, File modelFP) throws Exception {      
-        PrintWriter modelPW = new PrintWriter(modelFP);
-        ModelFromXSD mfact = new ModelFromXSD();
-        Model m = mfact.createModel(schemaArgs);     
-        ModelXMLWriter mw = new ModelXMLWriter();
-        mw.writeXML(m, modelPW); 
-        modelPW.close();   
+    public Model createModel (File f) throws Exception {
+        return createModel(f.toString()); 
     }
     
-    private void createXSD (File modelFP, File outDir) throws Exception {
-        FileInputStream mis = new FileInputStream(modelFP);
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(mis);
-        ModelToXSD mw = new ModelToXSD(m);
-        mw.writeXSD(outDir);
+    public Model createModel (String sdoc) throws Exception {
+        String[] schemaArgs = { sdoc };
+        return createModel(schemaArgs);
     }
     
+    public Model createModel (String[] schemaArgs) throws Exception {
+        var mfact = new ModelFromXSD();
+        var m = mfact.createModel(schemaArgs); 
+        return m;
+    }
     
+    public void createCMF (String[] schemaArgs, File modelFP) throws Exception {    
+        var m  = createModel(schemaArgs);
+        var os = new FileOutputStream(modelFP);
+        var mw = new ModelXMLWriter();
+        mw.writeXML(m, os); 
+        os.close();   
+    }
+    
+    public void createXSD (File modelFP, File outDir) throws Exception { }    
+    
+    public boolean isValidXSD (File sdoc) throws Exception {
+        String[] args = { sdoc.toString() };
+        XMLSchema s = new XMLSchema(args);
+        var xsdMsgs = s.javaXMsgs();
+        return (xsdMsgs.isEmpty());        
+    }
+    
+    public List<String> compareDirectories (File one, File two) throws Exception {
+        var result = new ArrayList<String>();
+        var sfone = FileUtils.listFiles(one, null, true).stream().sorted().collect(Collectors.toList());
+        var sftwo = FileUtils.listFiles(two, null, true).stream().sorted().collect(Collectors.toList());
+        int i2 = 0;
+        int i3 = 0;
+        while (i2 < sfone.size() && i3 < sftwo.size()) {
+            var f2 = sfone.get(i2);
+            var f3 = sftwo.get(i3);
+            var n2 = f2.getName();
+            var n3 = f3.getName();
+            int i = n2.compareTo(n3);
+            if (i < 0) {
+                result.add(String.format("Only in DIR1: %s", n2));
+                i2++;
+            }
+            else if (i > 0) {
+                result.add(String.format("Only in DIR2: %s", n3));
+                i3++;
+            }
+            else {
+                if (!FileUtils.contentEquals(f2, f3)) result.add(String.format("Different: %s", n2));
+                i2++;
+                i3++;
+            }
+        }
+        while (i2 < sfone.size()) result.add(String.format("Only in DIR1: %s", sfone.get(i2++).toString()));
+        while (i3 < sftwo.size()) result.add(String.format("Only in DIR2: %s", sftwo.get(i3++).toString()));
+        return result;
+    }
+    
+    public boolean fileContains (File f, String regex) throws Exception {
+        var pat  = Pattern.compile(regex);
+        var fr   = new FileReader(f);
+        var br   = new BufferedReader(fr);
+        var line = br.readLine();      
+        while (null != line) {
+            var mat = pat.matcher(line);
+            if (mat.find()) {
+                br.close();
+                return true;
+            }
+            line = br.readLine();
+        }
+        br.close();
+        return false;
+    }
+
 }

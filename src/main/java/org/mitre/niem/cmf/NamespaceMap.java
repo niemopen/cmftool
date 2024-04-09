@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2022 The MITRE Corporation.
+ * Copyright 2020-2023 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,11 @@ package org.mitre.niem.cmf;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import static org.mitre.niem.NIEMConstants.CMF_NS_URI;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import static javax.xml.XMLConstants.XML_NS_URI;
 import static org.mitre.niem.NIEMConstants.OWL_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDFS_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDF_NS_URI;
-import static org.mitre.niem.NIEMConstants.XML_NS_URI;
-import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
-import static org.mitre.niem.xsd.NIEMBuiltins.getBuiltinVersion;
-
 
 
 /**
@@ -51,21 +48,21 @@ public class NamespaceMap {
     
     public NamespaceMap () { 
         // Initialize the reserved namespace prefixes: cmf, owl, rdf, rdfs, xs, xsd, xml
-        prefix2URI.put("cmf", CMF_NS_URI);
+//        prefix2URI.put("cmf", CMF_NS_URI);
         prefix2URI.put("owl", OWL_NS_URI);
         prefix2URI.put("rdf", RDF_NS_URI);
         prefix2URI.put("rdfs", RDFS_NS_URI);
         prefix2URI.put("xml", XML_NS_URI);  
-        prefix2URI.put("xs", XSD_NS_URI);
-        prefix2URI.put("xsd", XSD_NS_URI);
+        prefix2URI.put("xs", W3C_XML_SCHEMA_NS_URI);
+        prefix2URI.put("xsd", W3C_XML_SCHEMA_NS_URI);
 
         // Map those namespaces to their reserved prefix
-        // Not quite the inverse:  XSD_NS_URI is only mapped to "xs"
-        uri2Prefix.put(CMF_NS_URI, "cmf");
+        // Not quite the inverse:  W3C_XML_SCHEMA_NS_URI is only mapped to "xs"
+//        uri2Prefix.put(CMF_NS_URI, "cmf");
         uri2Prefix.put(OWL_NS_URI, "owl");
         uri2Prefix.put(RDF_NS_URI, "rdf");
         uri2Prefix.put(RDFS_NS_URI, "rdfs");
-        uri2Prefix.put(XSD_NS_URI, "xs");
+        uri2Prefix.put(W3C_XML_SCHEMA_NS_URI, "xs");
         uri2Prefix.put(XML_NS_URI, "xml");
     }
     
@@ -73,8 +70,17 @@ public class NamespaceMap {
     public String getURI (String prefix)   { return prefix2URI.get(prefix); }    
     
     private static final Pattern mungPat = Pattern.compile("(.*)_\\d+$");
-    private static final Pattern versPat = Pattern.compile(".*/(\\d+)(\\.\\d+)*/?$");
-    
+    private static final Pattern versPat = Pattern.compile(".*/(\\d+)(\\.\\d+)*/?$");    
+
+    /**
+     * Assign a prefix to a namespace, if that prefix is not already bound.
+     * Assigns a munged prefix ("foo_1" instead of "foo") if prefix is already bound.
+     * Returns the prefix actually assigned to the namespace.
+     * 
+     * @param prefix -- desired prefix
+     * @param nsuri  -- namespace URI
+     * @return assigned prefix
+     */
     public String assignPrefix (String prefix, String nsuri) {
         if (uri2Prefix.containsKey(nsuri)) return prefix;   // already assigned
         if (!prefix2URI.containsKey(prefix)) {              // this prefix is available
@@ -82,25 +88,25 @@ public class NamespaceMap {
             uri2Prefix.put(nsuri, prefix);
             return prefix;
         }
-        // Avoid twice-munged prefix; eg. "foo_1_2"
+        // Desired prefix is already assigned to a different namespace
+        // So they get a munged prefix; eg. "foo_1" instead of "foo"
+        // First, get the munging base, to void twice-munged prefix; eg. "foo_1_2"
         String mungBase = prefix;
         String mungP = prefix;
         Matcher m = mungPat.matcher(nsuri);
         if (m.matches()) {
             mungBase = m.group(1);
         }
-        // If it's a builtin, try eg. "appinfo_4" for version 4
-        String bvers = getBuiltinVersion(nsuri);
-        if (null != bvers) {
-            int dp = bvers.indexOf(".");
-            if (dp > 0) bvers = bvers.substring(0, dp);
-            mungP = mungBase + "_" + bvers;
-        }
-        // If the URI seems to end in a version number, try eg. "nc_4" for version 4.0
+        // If the URI has a known version, or seems to end in a version number, 
+        // try eg. "nc_4" for version 4.0
         else {
-            m = versPat.matcher(nsuri);
-            if (m.matches()) {
-                mungP = mungBase + "_" + m.group(1);
+            String vstr = NamespaceKind.uri2Version(nsuri);
+            if (!vstr.isEmpty()) mungP = mungBase + "_" + vstr;
+            else {
+                Matcher vm = versPat.matcher(nsuri);
+                if (vm.matches()) {
+                    mungP = mungBase + "_" + vm.group(1);
+                }
             }
         }
         int mct = 0;
@@ -119,6 +125,12 @@ public class NamespaceMap {
             uri2Prefix.remove(nsuri);
         }
         return assignPrefix(newPrefix, nsuri);
+    }
+    
+    public void removePrefix (String prefix) {
+        var oldURI = prefix2URI.get(prefix);
+        prefix2URI.remove(prefix);
+        uri2Prefix.remove(oldURI);
     }
     
 }

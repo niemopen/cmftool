@@ -25,7 +25,7 @@ package org.mitre.niem.xsd;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -50,7 +50,7 @@ import org.xml.sax.SAXException;
  */
 public class CanonicalXSD {
 
-    public static void canonicalize(InputStream is, Writer w) throws ParserConfigurationException, SAXException, IOException, TransformerConfigurationException, TransformerException {
+    public static void canonicalize(InputStream is, OutputStream os) throws ParserConfigurationException, SAXException, IOException, TransformerConfigurationException, TransformerException {
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setValidating(false);
@@ -72,7 +72,8 @@ public class CanonicalXSD {
 
         List<Element> imports      = new ArrayList<>();
         List<Element> definitions  = new ArrayList<>();
-        List<Element> declarations = new ArrayList<>();
+        List<Element> attributes   = new ArrayList<>();
+        List<Element> elements     = new ArrayList<>();
         
         NodeList icl = iroot.getChildNodes();
         for (int i = 0; i < icl.getLength(); i++) {
@@ -91,9 +92,11 @@ public class CanonicalXSD {
                     definitions.add(e);
                     break;
                 case "element":
+                    elements.add(e);
+                    break;
                 case "attribute":
                 case "attributeGroup":
-                    declarations.add(e);
+                    attributes.add(e);
                     break;
             }
         }
@@ -117,12 +120,22 @@ public class CanonicalXSD {
                 return ns1.compareTo(ns2);
             }            
         };
+        System.out.println("before sort");
+        for (var e : elements) {
+            var name = e.getAttribute("name");
+            System.out.println("name="+name);
+        }
         Collections.sort(definitions, nameCmp);
-        Collections.sort(declarations, nameCmp);
-        for (Element e : definitions) oroot.appendChild(e);
-        for (Element e : declarations) oroot.appendChild(e);
+        Collections.sort(attributes, nameCmp);
+        Collections.sort(elements, nameCmp);
+        System.out.println("after sort");
+      
+        for (var e : definitions) oroot.appendChild(e);
+        for (var e : attributes)  oroot.appendChild(e);
+        for (var e : elements)    oroot.appendChild(e);
 
-        XSDWriter.writeDOM(odom, w);
+        var xsdw = new XSDWriter(odom, os);
+        xsdw.writeXML();
     }
 
 }

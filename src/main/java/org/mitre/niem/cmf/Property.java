@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,10 @@ public class Property extends Component {
     private Property subPropertyOf = null;
     private ClassType classType = null;
     private Datatype datatype = null;
+    private String refCode = null;
     private boolean isAttribute = false; 
-    private boolean isReferenceable = false;
-    private boolean canHaveMD = false;
+    private boolean isRefAttribute = false;
+    private boolean isRelationship = false;
 
     public Property () { super(); type = C_OBJECTPROPERTY; }
     
@@ -48,17 +49,25 @@ public class Property extends Component {
     public void setDatatype (Datatype d)          { datatype = d; }
     public void setIsAttribute (boolean f)        { isAttribute = f; }
     public void setIsAttribute (String s)         { isAttribute = null != s && "true".equals(s); }
-    public void setIsReferenceable (boolean f)    { isReferenceable = f; }
-    public void setIsReferenceable (String s)     { isReferenceable = "true".equals(s); }    
-    public void setCanHaveMD (boolean f)          { canHaveMD = f; }
-    public void setCanHaveMD (String s)           { canHaveMD = null != s && "true".equals(s); }    
-
+    public void setIsRefAttribute (boolean f)     { isRefAttribute = f; }
+    public void setIsRefAttribute (String s)      { isRefAttribute = null != s && "true".equals(s); } 
+    public void setIsRelationship (boolean f)     { isRelationship = f; }
+    public void setIsRelationship (String s)      { isRelationship = "true".equals(s); } 
+    public void setReferenceCode (String s)       { refCode = s; }  
+    
     public Property getSubPropertyOf ()           { return subPropertyOf; }
     public ClassType getClassType ()              { return classType; }
     public Datatype getDatatype()                 { return datatype; }
     public boolean isAttribute()                  { return isAttribute; }
-    public boolean isReferenceable()              { return isReferenceable; }
-    public boolean canHaveMD ()                   { return canHaveMD; }    
+    public boolean isRefAttribute()               { return isRefAttribute; }
+    public boolean isRelationship()               { return isRelationship; }
+    public String getReferenceCode ()             { return refCode; } 
+    
+    public String getInheritedReferenceCode() {
+        if (null != refCode) return refCode;
+        if (null != classType) return classType.getReferenceCode();
+        return null;
+    }
     
     @Override
     public void addToModel (Model m) {

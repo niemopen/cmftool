@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://release.niem.gov/niem/niem-core/4.0/"
+  xmlns:appinfo="http://release.niem.gov/niem/appinfo/4.0/"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:nc="http://release.niem.gov/niem/niem-core/4.0/"
+  xmlns:niem-xs="http://release.niem.gov/niem/proxy/xsd/4.0/"
+  xmlns:structures="http://release.niem.gov/niem/structures/4.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/4.0/#ReferenceSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>NIEM Core</xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="http://release.niem.gov/niem/niem-core/5.0/" schemaLocation="twoversions-niem/twoversions-1.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/proxy/xsd/4.0/" schemaLocation="twoversions-niem/4.0/proxy/xsd/4.0/xs.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/structures/4.0/" schemaLocation="twoversions-niem/4.0/utility/structures/4.0/structures.xsd"/>
+  <xs:complexType name="PercentType">
+    <xs:annotation>
+      <xs:documentation>Datatype, niem version 4.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="niem-xs:decimal"/>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="SecretPercentType">
+    <xs:annotation>
+      <xs:documentation>Datatype, niem version 4.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="nc:PercentType"/>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:element name="ConfidencePercent" type="nc:PercentType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>Property, niem version 4.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+</xs:schema>

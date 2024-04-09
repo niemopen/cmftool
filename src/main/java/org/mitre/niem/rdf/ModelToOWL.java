@@ -26,10 +26,10 @@ package org.mitre.niem.rdf;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.mitre.niem.NIEMConstants.OWL_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDFS_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDF_NS_URI;
-import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
@@ -71,7 +71,7 @@ public class ModelToOWL {
         ow.print(String.format("@prefix %-15s <%s#> .\n", "owl:", OWL_NS_URI));
         ow.print(String.format("@prefix %-15s <%s#> .\n", "rdfs:", RDFS_NS_URI));
         ow.print(String.format("@prefix %-15s <%s#> .\n", "rdf:", RDF_NS_URI));        
-        ow.print(String.format("@prefix %-15s <%s#> .\n", "xsd:", XSD_NS_URI)); 
+        ow.print(String.format("@prefix %-15s <%s#> .\n", "xsd:", W3C_XML_SCHEMA_NS_URI)); 
     }
     
     private String getPropertyKind (Property p) {
@@ -119,8 +119,8 @@ public class ModelToOWL {
             else {
                 ow.print("\n    a " + propKind);
             }
-            if (null != p.getDefinition()) {
-                ow.print(" ;\n    rdfs:comment \"" + p.getDefinition() + "\"");               
+            if (null != p.getDocumentation()) {
+                ow.print(" ;\n    rdfs:comment \"" + p.getDocumentation() + "\"");               
             }
             ow.println(" .");
         }
@@ -136,8 +136,8 @@ public class ModelToOWL {
             if (null != ct.getExtensionOfClass()) {
                 ow.print(" ;\n    rdfs:subClassOf " + ct.getExtensionOfClass().getQName());
             }
-            if (null != ct.getDefinition()) {
-                ow.print(" ;\n    rdfs:comment \"" + ct.getDefinition() + "\"");               
+            if (null != ct.getDocumentation()) {
+                ow.print(" ;\n    rdfs:comment \"" + ct.getDocumentation() + "\"");               
             }
             for (HasProperty hp : ct.hasPropertyList()) {
                 if (0 < hp.minOccurs()) {
@@ -162,7 +162,7 @@ public class ModelToOWL {
         for (Component c : m.getComponentList()) {
             Datatype dt = c.asDatatype();
             if (null == dt) continue;
-            if (XSD_NS_URI.equals(dt.getNamespace().getNamespaceURI())) continue;
+            if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespace().getNamespaceURI())) continue;
             if (null != dt.getListOf()) writeListOfDatatype(dt, ow);
             else if (null != dt.getUnionOf()) writeUnionOfDatatype(dt, ow);
             else if (null != dt.getRestrictionOf()) writeRestrictionOfDatatype(dt, ow);
@@ -184,7 +184,7 @@ public class ModelToOWL {
         ow.print("\n");
         ow.print(dt.getQName());
         ow.print("\n    a rdfs:Datatype");
-        if (null != dt.getDefinition()) ow.print(" ;\n    rdfs:comment \"" + dt.getDefinition() + "\"");
+        if (null != dt.getDocumentation()) ow.print(" ;\n    rdfs:comment \"" + dt.getDocumentation() + "\"");
         if (null != bdt) {
             ow.print(" ;\n    owl:equivalentClass ");
             if (fl.isEmpty()) ow.print(componentQName(bdt));
@@ -232,7 +232,7 @@ public class ModelToOWL {
     }
     
     private static String componentQName (Component c) {
-        if (XSD_NS_URI.equals(c.getNamespace().getNamespaceURI())) return("xsd:" + c.getName());
+        if (W3C_XML_SCHEMA_NS_URI.equals(c.getNamespace().getNamespaceURI())) return("xsd:" + c.getName());
         else return c.getQName();
     }
     

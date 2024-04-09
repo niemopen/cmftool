@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nc:Vessel xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+ xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+ xmlns:my="http://example.com/inheritance/1.0/"
+ xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+ xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+ xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/ file:/C:/Work/NetBeans/CMFTool/src/test/resources/xsd6/inheritance.xsd">
+  <nc:ItemModelName>ItemModelName0</nc:ItemModelName>
+  <nc:ItemName>ItemName0</nc:ItemName>
+  <nc:ConveyanceCargoText>ConveyanceCargoText0</nc:ConveyanceCargoText>
+  <nc:ConveyanceEngineQuantity>50</nc:ConveyanceEngineQuantity>
+  <nc:VesselHullIdentification>
+    <nc:IdentificationID>IdentificationID0</nc:IdentificationID>
+  </nc:VesselHullIdentification>
+  <my:VesselAugmentation>
+    <my:SomethingText>boogla</my:SomethingText>
+  </my:VesselAugmentation>
+</nc:Vessel>

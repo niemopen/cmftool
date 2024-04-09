@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://release.niem.gov/niem/niem-core/5.0/"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:simpleType name="EmploymentPositionBasisCodeSimpleType">
+    <xs:annotation>
+      <xs:documentation>A data type for a nature or duration of the employment position.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="contractor">
+        <xs:annotation>
+          <xs:documentation>A Contractor</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="non-permanent">
+        <xs:annotation>
+          <xs:documentation>Temp Worker</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="permanent">
+        <xs:annotation>
+          <xs:documentation>Permanent employess</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="EmploymentPositionBasisCodeType">
+    <xs:annotation>
+      <xs:documentation>A data type for a nature or duration of the employment position.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="nc:EmploymentPositionBasisCodeSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:element name="EmploymentPositionBasisAbstract" abstract="true">
+    <xs:annotation>
+      <xs:documentation>A data concept for a nature or duration of the position, such as permanent, non-permanent, or contractor.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="EmploymentPositionBasisCode" type="nc:EmploymentPositionBasisCodeType" substitutionGroup="nc:EmploymentPositionBasisAbstract" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A nature or duration of the position, such as permanent, non-permanent, or contractor.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+</xs:schema>

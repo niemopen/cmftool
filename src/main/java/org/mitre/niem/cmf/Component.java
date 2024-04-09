@@ -38,7 +38,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     protected short type;                   // component type (ClassType, Property, etc.)
     private String name = null;             // local name
     private Namespace namespace = null;     // namespace object
-    private String definition = null;       // xs:documentation string
+    private String documentation = null;       // xs:documentation string
     private boolean isAbstract = false;
     private boolean isDeprecated = false;
     
@@ -55,16 +55,16 @@ public abstract class Component extends ObjectType implements Comparable<Compone
 
     public void setName (String s) { 
         name = s;
-        if (null != getModel()) getModel().childChanged(this);
+        if (null != getModel()) getModel().componentChange(this);
     }
     
     public void setNamespace (Namespace ns) { 
         namespace = ns; 
-        if (null != getModel()) getModel().childChanged(this);
+        if (null != getModel()) getModel().componentChange(this);
     }
     
     void setModel (Model m)                 { model = m; }    
-    public void setDefinition (String s)    { definition = (null == s ? null : s.strip().replaceAll("\\s+", " ")); }
+    public void setDocumentation (String s) { documentation = (null == s ? null : s.strip().replaceAll("\\s+", " ")); }
     public void setIsAbstract(boolean f)    { isAbstract = f; }
     public void setIsDeprecated(boolean f)  { isDeprecated = f; }
     public void setIsAbstract (String s)    { isAbstract = "true".equals(s); }
@@ -75,7 +75,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     public String getName ()                { return name; }
     public Namespace getNamespace ()        { return namespace; }
     public String getNamespaceURI ()        { return namespace.getNamespaceURI(); }
-    public String getDefinition ()          { return definition; }
+    public String getDocumentation ()       { return documentation; }
     public boolean isAbstract ()            { return isAbstract; }
     public boolean isDeprecated ()          { return isDeprecated; }    
     
@@ -105,9 +105,9 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     // Model components are ordered by their QNames
     @Override
     public int compareTo (Component o) {
-        int rv = this.namespace.getNamespacePrefix().compareTo(o.namespace.getNamespacePrefix());
+        int rv = this.namespace.getNamespacePrefix().compareToIgnoreCase(o.namespace.getNamespacePrefix());
         if (rv != 0) return rv;
-        return this.name.compareTo(o.name);
+        return this.name.compareToIgnoreCase(o.name);
     }    
     
     public static String genURI (String nsuri, String lname) {

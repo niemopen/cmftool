@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  * 
- * Copyright 2020-2021 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,13 +45,25 @@ public class CMFTool {
          
     // Uncomment arguments for debugging:
      
-    String xtd = "src/test/resources/xsd/";
+    String xtd = "src/test/resources/xsd6/";
     if (0 == args.length) {
-        args = new String[]{"x2m", "-d", xtd+"createdProp.xsd"};
-//        args = new String[]{"xval", "-d", "-s", "examples/Claim-iepd/extension/claim.xsd", "examples/Claim-iepd/xml-catalog.xml"};
-//        args = new String[]{"xval", "-d", "-o", xtd, xtd+"twoversions-0.xsd" };
-//        args = new String[]{"xcmp", xtd+"nameinfo.xsd", xtd+"out/nameinfo.xsd"};
-//        args = new String[]{"m2x", "-d", "-o", xtd+"out", xtd+"twoversions-0.cmf", xtd+"twoversions-0.cmx"};
+//        var td = "src/main/CMF/";
+//        args = new String[]{"m2xm", "-o", td+"tmp", td+"model.cmf"};
+
+//        var td = "src/test/resources/xsd6/";
+//        args = new String[]{"m2xs", "-o", td+"tmp", td+"literal-2.cmf"};
+
+//        args = new String[]{"m2xs", "-o", "tmp/tmp", "tmp/m60.cmf"};
+//        var td = "../../NIEM/ntac-admin/examples/src/Augmentation/01-N6-Subset/";
+//        args = new String[]{"m2xs", "-o", td+"tmp", td+"subset.cmf"};
+
+//        var td = "../../NIEM/ntac-admin/examples/src/Augmentation/08-AugOTwithA/";
+//        args = new String[]{"m2xm", "-o", td+"tmp", td+"augOTwA.cmf"};
+        
+//        var td = "../../NIEM/ntac-admin/examples/src/Augmentation/07-AugOTwithE/";
+//        args = new String[]{"m2xs", "-o", td+"tmp", td+"augOTwE.cmf"};
+//        args = new String[]{"x2m", "-o", td+"foo", td+"model.xsd/messageModel.xsd"};
+//        args = new String[]{"m2xm", "-o", xtd + "tmp", xtd + "augment.cmf"};
     }
     
 
@@ -60,22 +72,28 @@ public class CMFTool {
         jc.setUsageFormatter(uf);
         jc.setProgramName("cmftool");
         
-        CmdCMFtoCMF cmfToCmfCmd = new CmdCMFtoCMF(jc);
-        CmdCMFtoOWL cmfToOwlCmd = new CmdCMFtoOWL(jc);
-        CmdCMFtoXSD cmfToXsdCmd = new CmdCMFtoXSD(jc);
-        CmdXSDtoCMF xsdToCmfCmd = new CmdXSDtoCMF(jc);       
-        CmdXSDcanonicalize xsdCanon = new CmdXSDcanonicalize(jc);
-        CmdXSDcmp xsdCmpCmd         = new CmdXSDcmp(jc);
-        CmdXSDvalidate xsValCmd     = new CmdXSDvalidate(jc);
-        CommandHelp helpCmd         = new CommandHelp(jc);    
-        jc.addCommand("m2m", cmfToCmfCmd);
-        jc.addCommand("m2o", cmfToOwlCmd);
-        jc.addCommand("m2x", cmfToXsdCmd);
-        jc.addCommand("x2m", xsdToCmfCmd);  
+        var cmfToCmfCmd    = new CmdCMFtoCMF(jc);
+        var cmfToN5XsdCmd  = new CmdCMFtoN5XSD(jc);
+        var cmfToMsgXsdCmd = new CmdCMFtoMsgXSD(jc);
+        var cmfToSrcXsdCmd = new CmdCMFtoSrcXSD(jc);
+        var cmfToOwlCmd    = new CmdCMFtoOWL(jc);
+        var n5To6Cmd       = new CmdN5To6(jc);
+        var xsdToCmfCmd    = new CmdXSDtoCMF(jc);       
+        var xsdCanon       = new CmdXSDcanonicalize(jc);
+        var xsdCmpCmd      = new CmdXSDcmp(jc);
+        var xsValCmd       = new CmdXSDvalidate(jc);
+        var helpCmd        = new CommandHelp(jc);    
+        jc.addCommand("m2m",    cmfToCmfCmd);
+        jc.addCommand("m2o",    cmfToOwlCmd);
+        jc.addCommand("m2xs",   cmfToSrcXsdCmd);
+        jc.addCommand("m2xm",   cmfToMsgXsdCmd);
+        jc.addCommand("m2x5",   cmfToN5XsdCmd);
+        jc.addCommand("n5to6",  n5To6Cmd);
+        jc.addCommand("x2m",    xsdToCmfCmd);  
         jc.addCommand("xcanon", xsdCanon);
-        jc.addCommand("xcmp", xsdCmpCmd);
-        jc.addCommand("xval", xsValCmd);
-        jc.addCommand("help", helpCmd, "usage");
+        jc.addCommand("xcmp",   xsdCmpCmd);
+        jc.addCommand("xval",   xsValCmd);
+        jc.addCommand("help",   helpCmd);
         
         if (args.length < 1) {
             System.out.println("Version: " + CMFTool.class.getPackage().getImplementationVersion());
@@ -100,7 +118,7 @@ public class CMFTool {
         cmd.runCommand(cob);               
     }    
     
-    @Parameters(commandDescription = "list of cmftool commands")
+    @Parameters(commandDescription = "this list of cmftool commands")
     private class CommandHelp implements JCCommand {
         
         @Parameter(description = "display help for this command")
@@ -127,8 +145,7 @@ public class CMFTool {
                 JCCommand cmd = (JCCommand) objs.get(0);  
                 CMFUsageFormatter cobuf = new CMFUsageFormatter(cob);        
                 cob.setUsageFormatter(cobuf);    
-                String[] ha = {"--help"};
-                cmd.runMain(ha);
+                cmd.runCommand(cob);
             }
             else {
                 jc.usage();

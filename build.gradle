@@ -17,8 +17,11 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
-project.version = '0.6'
-sourceCompatibility = 17
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+}
+
+project.version = '1.0-alpha.2'
 
 dependencies {
     implementation 'xerces:xercesImpl:2.12.2'
@@ -34,8 +37,10 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.2'
-    testImplementation 'io.github.hakky54:logcaptor:2.7.10'
+    testImplementation 'io.github.hakky54:logcaptor:2.9.0'
     testImplementation 'org.assertj:assertj-core:3.23.1'
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // JCommander is for command-line interface; not needed for the library API
     api 'xerces:xercesImpl:2.12.2'

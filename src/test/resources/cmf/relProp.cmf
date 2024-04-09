@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="ira">
+    <NamespaceURI>http://example.com/isRefAtt/6.0/</NamespaceURI>
+    <NamespacePrefixText>ira</NamespacePrefixText>
+    <DocumentationText>relationship property appinfo test</DocumentationText>
+    <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>relProp.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="niem-xs">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <LocalTerm>
+      <TermName>maxInclusive</TermName>
+      <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
+    </LocalTerm>
+  </Namespace>
+  <Namespace structures:id="structures">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaLanguageName>en-US</SchemaLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <DataProperty structures:id="ira.classification">
+    <Name>classification</Name>
+    <Namespace structures:ref="ira" xsi:nil="true"/>
+    <RelationshipPropertyIndicator>true</RelationshipPropertyIndicator>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="ira.partialIndicator">
+    <Name>partialIndicator</Name>
+    <Namespace structures:ref="ira" xsi:nil="true"/>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="ira.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="ira" xsi:nil="true"/>
+    <DocumentationText>A literal value for a character string.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="ira.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="ira" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <HasProperty>
+      <DataProperty structures:ref="ira.TextLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <HasProperty>
+      <DataProperty structures:ref="ira.classification" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+    <ReferenceCode>ANY</ReferenceCode>
+  </Class>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

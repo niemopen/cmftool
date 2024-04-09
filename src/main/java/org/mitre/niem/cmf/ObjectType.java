@@ -29,11 +29,7 @@ package org.mitre.niem.cmf;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ObjectType {
-    private String sequenceID = null;       // any model component can have a sequence number
 
-    public void setSequenceID (String s) { sequenceID = s; }
-
-    public String getSequenceID ()     { return sequenceID; }
     public boolean isModelChild ()     { return false; }        // override in Component and Namespace class
     
     public ObjectType () {

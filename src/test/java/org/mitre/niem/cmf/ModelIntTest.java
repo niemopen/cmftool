@@ -134,7 +134,20 @@ public class ModelIntTest {
         CMFException ex = assertThrows(
                 CMFException.class, () -> fish.setNamespacePrefix("dogs"),
                 "setNamespacePrefix failed to throw CMFException");
-        assertTrue(ex.getMessage().contains("prefix already assigned"));                
+        assertTrue(ex.getMessage().contains("Can't assign prefix"));                
+    }
+    
+    @Test
+    public void testSetNamespaceURI () {
+        try {
+            fish.setNamespaceURI("newfishnamespace");
+        } catch (CMFException ex) {
+            fail("setNamespaceURI shoudl not have thrown CMFException");
+        }
+        CMFException ex = assertThrows(
+                CMFException.class, () -> fish.setNamespaceURI("dogNamespace"),
+                "setNamespacePrefix failed to throw CMFException");
+        assertTrue(ex.getMessage().contains("Can't change URI"));
     }
     
     @Test

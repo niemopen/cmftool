@@ -29,7 +29,9 @@ import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -85,7 +87,7 @@ class CmdCMFtoCMF implements JCCommand {
         run(cob);
     }    
     
-    private void run (JCommander cob) {
+    private void run (JCommander cob)  {
 
         if (help) {
             cob.usage();
@@ -107,16 +109,15 @@ class CmdCMFtoCMF implements JCCommand {
             }
         }       
         // Make sure output file is writable
-        PrintWriter ow = new PrintWriter(System.out);
-        if (!"".equals(objFile)) {
-            try {
-                File of = new File(objFile);
-                ow = new PrintWriter(of);
-            } catch (FileNotFoundException ex) {
-                System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
-                System.exit(1);
-            }
+        OutputStream os = null;  
+        if ("".equals(objFile)) os = System.out;
+        else try {
+            os = new FileOutputStream(objFile);
+        } catch (FileNotFoundException ex) {
+            System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
+            System.exit(1);    
         }
+
         // Make sure the Xerces parser can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
@@ -152,14 +153,14 @@ class CmdCMFtoCMF implements JCCommand {
         // Write the NIEM model instance to the output stream
         ModelXMLWriter mw = new ModelXMLWriter();
         try {            
-            mw.writeXML(m, ow);
-            ow.close();
-        } catch (TransformerException ex) {
+            mw.writeXML(m, os);
+            os.close();
+        } catch (TransformerException | IOException ex) {
             System.err.println(String.format("Output error: %s", ex.getMessage()));
             System.exit(1);
         } catch (ParserConfigurationException ex) {
             // CAN'T HAPPEN
         }
         System.exit(0);
-    }
+        }
 }

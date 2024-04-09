@@ -56,7 +56,7 @@ class CmdXSDvalidate implements JCCommand {
     @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "--schema file... -file doc...")
+    @Parameter(description = "--schema f.xsd [...] --file doc.xml [...]")
     private List<String> mainArgs;
     
     CmdXSDvalidate () {
@@ -75,14 +75,14 @@ class CmdXSDvalidate implements JCCommand {
         JCommander jc = new JCommander(this);
         CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("compile");
+        jc.setProgramName("xsdvalidate");
         jc.parse(args);
         run(jc);
     }
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool x2m");
+        cob.setProgramName("cmftool xval");
         run(cob);
     }    
     

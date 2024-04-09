@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://release.niem.gov/niem/domains/cbrn/5.2/"
+  xmlns:cbrn="http://release.niem.gov/niem/domains/cbrn/5.2/"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:df="http://example.com/default/facets/1.0/"
+  xmlns:niem-xs="http://release.niem.gov/niem/proxy/niem-xs/5.0/"
+  xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:complexType name="DataFileType">
+    <xs:annotation>
+      <xs:documentation>A data type that defines a data file and its properties.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="structures:ObjectType">
+        <xs:sequence>
+          <xs:element ref="cbrn:DataFileName" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="cbrn:DataFileMetadata" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="cbrn:DataFileAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="DataFileAugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for cbrn:DataFileType.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="DataFileMetadata" type="structures:MetadataType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>Metadata about data file Security classification and marking attributes.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="DataFileName" type="niem-xs:string" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A Name of the data file</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+</xs:schema>

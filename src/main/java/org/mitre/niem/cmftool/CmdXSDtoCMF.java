@@ -27,8 +27,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +41,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Model;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_DOMAIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTENSION;
@@ -57,6 +56,8 @@ import static org.mitre.niem.xsd.ParserBootstrap.BOOTSTRAP_ALL;
 import org.mitre.niem.xsd.XMLSchema;
 import org.mitre.niem.xsd.XMLSchemaDocument;
 import org.xml.sax.SAXException;
+import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
+import static org.mitre.niem.cmf.NamespaceKind.cta2Arch;
 
 /**
  *
@@ -68,18 +69,9 @@ import org.xml.sax.SAXException;
 
 class CmdXSDtoCMF implements JCCommand {
 
-    @Parameter(names = "-o", description = "output directory for model files")
-    private String outputDir = ".";
-    
-    @Parameter(names = "-m", description = "base name for model files")
-    private String obase = null;
-    
-    @Parameter(names = "--cmf", description = "output model file")
+    @Parameter(names = "-o", description = "output model file")
     private String modelFN = null;
-    
-    @Parameter(names = "--cmx", description = "output model extension file")
-    private String mextFN = null;
-    
+
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
     
@@ -145,24 +137,21 @@ class CmdXSDtoCMF implements JCCommand {
             }
         }       
         // Figure out file names for model and extension
-        if (null == modelFN || null == mextFN) {
-            if (null == obase) {
-                obase = "Model";
-                for (String a : mainArgs) {
-                    if (a.endsWith(".xsd")) { obase = FilenameUtils.getBaseName(a); break; }
-                }
+        if (null == modelFN) {
+            var obase = "Model";
+            for (String a : mainArgs) {
+                if (a.endsWith(".xsd")) { obase = FilenameUtils.getBaseName(a); break; }
             }
-            if (null == modelFN) modelFN = obase + ".cmf";
+            modelFN = obase + ".cmf";
         }
-        // Make sure output files are writable
-        String modelFP = String.format("%s/%s", outputDir, modelFN); 
-        PrintWriter modelPW = null;
+        // Make sure output model file is writable      
+        FileOutputStream os = null;        
         try {
-            modelPW = new PrintWriter(modelFP);
+            os = new FileOutputStream(modelFN);        
         } catch (FileNotFoundException ex) {
-            System.err.println(String.format("Can't write output file %s: %s", modelFP, ex.getMessage()));
-            System.exit(1);
-        }        
+            System.err.println(String.format("Can't write to output file %s: %s", modelFN, ex.getMessage()));
+            System.exit(1);            
+        }       
         // Make sure the Xerces parsers can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
@@ -192,6 +181,11 @@ class CmdXSDtoCMF implements JCCommand {
         }
         // Report namespaces processed
         if (!quietFlag) {
+            if (!s.xsModelMsgs().isEmpty()) {
+                System.out.println("Schema assembly messages:");
+                for (var msg : s.xsModelMsgs()) System.out.println("  " + msg);                
+            }
+            List<String> model      = new ArrayList<>();
             List<String> conforming = new ArrayList<>();
             List<String> external   = new ArrayList<>();
             List<String> builtins   = new ArrayList<>();
@@ -202,7 +196,7 @@ class CmdXSDtoCMF implements JCCommand {
                     case NSK_DOMAIN:
                     case NSK_CORE:
                     case NSK_OTHERNIEM:
-                        conforming.add(nsuri);
+                        model.add(nsuri);
                         break;
                     case NSK_BUILTIN:
                     case NSK_XML:
@@ -213,10 +207,40 @@ class CmdXSDtoCMF implements JCCommand {
                     case NSK_UNKNOWN:  unknown.add(nsuri); break; 
                 }
             });
+            var hdr = "Namespaces with problems:\n";
+            for (var ns : model) {
+                var sd   = sdoc.get(ns);
+                var arch = sd.niemArch();
+                if (arch.isBlank()) {
+                    System.out.print(String.format("%s  %s [unknown NIEM architecture]\n", hdr, ns));
+                    hdr = "";
+                    continue;
+                }
+                var mflg = false;
+                var cts  = sd.conformanceTargets();
+                if (null != cts) {
+                    var ctl = cts.split("\\s+");
+                    for (int i = 0; !mflg && i < ctl.length; i++) {
+                        var ct = ctl[i];
+                        if (arch.equals(cta2Arch(ct))) {
+                            conforming.add(ns);
+                            mflg = true;
+                        }
+                    }
+                }
+                if (!mflg) {
+                    System.out.print(String.format("%s  %s [no valid conformance assertion]\n", hdr, ns));
+                    hdr = "";
+                }
+            }
             if (!conforming.isEmpty()) {
                 Collections.sort(conforming);
                 System.out.println("Conforming namespaces:");
-                conforming.forEach((ns) -> { System.out.println("  " + ns);});
+                for (var ns : conforming) {
+                    var sd  = sdoc.get(ns);
+                    var ver = sd.niemVersion();
+                    System.out.println(String.format("  %s [NIEM version='%s']", ns, ver));
+                }
             }
             if (!external.isEmpty()) {
                 Collections.sort(external);
@@ -237,8 +261,9 @@ class CmdXSDtoCMF implements JCCommand {
         // Write the NIEM model instance to the output stream
         ModelXMLWriter mw = new ModelXMLWriter();
         try {            
-            mw.writeXML(m, modelPW); modelPW.close();
-        } catch (TransformerException ex) {
+            mw.writeXML(m, os); 
+            os.close();
+        } catch (TransformerException | IOException ex) {
             System.err.println(String.format("Output error: %s", ex.getMessage()));
             System.exit(1);
         } catch (ParserConfigurationException ex) {
