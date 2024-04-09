@@ -392,7 +392,7 @@ public class NamespaceKind {
 
     // Returns the namespace URI for a utility namespace given the architecture
     // and version.  
-    public static String getBuiltinNS(int util, String arch, String version) {
+    public static String getBuiltinNS (int util, String arch, String version) {
         if (NIEM_XML == util) return XML_NS_URI;
         String ustr = namespaceUtil2Builtin(util);
         String uri = null;
@@ -408,6 +408,14 @@ public class NamespaceKind {
         }
         if (null == uri) LOG.error(String.format("could not find URI for %s '%s' version '%s'", arch, ustr, version));
         return uri;
+    }
+    
+    // Returns the namespace URI for a utility namespace, based on the
+    // URI of another utility namespace.
+    public static String getBuiltinNS (int util, String builtinURI) {
+        var arch = uri2Architecture(builtinURI);
+        var vers = uri2Version(builtinURI);
+        return getBuiltinNS(util, arch, vers);
     }
     
     // Default schema document file paths are properly not part of CMF, but it's

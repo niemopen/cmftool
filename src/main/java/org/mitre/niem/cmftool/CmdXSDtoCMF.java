@@ -58,7 +58,6 @@ import org.mitre.niem.xsd.XMLSchemaDocument;
 import org.xml.sax.SAXException;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.cta2Arch;
-import static org.mitre.niem.cmf.NamespaceKind.cta2Version;
 
 /**
  *

@@ -26,7 +26,6 @@ package org.mitre.niem.xsd;
 import static org.mitre.niem.NIEMConstants.DEFAULT_NIEM_VERSION;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.NamespaceKind;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import org.mitre.niem.cmf.Property;
 
@@ -80,17 +79,15 @@ public class ModelToSrcXSD extends ModelToXSD {
     } 
     
     @Override
-    protected String getArchitecture ()     { return "NIEM6"; }
+    protected String getArchitecture ()     { return "NIEM6"; }  
     
-    @Override
-    protected String getShareSuffix ()      { return "-src"; }    
-    
-    // In a source schema, properties are nillable unless otherwise
-    // specified. 
+    // In a source schema all properties are nillable unless refcode NONE is specified.
     @Override
     protected boolean isPropertyNillable (Property p) {
         if (p.isAttribute()) return false;
         if (p.isAbstract())  return false;
-        return !"NONE".equals(p.getReferenceCode());
+        var rc = p.getReferenceCode();
+        if (null == rc) return true;
+        return !"NONE".equals(rc);
     }
 }

@@ -262,7 +262,7 @@ public class ModelXMLReader {
                 case "DeprecatedIndicator":
                 case "DocumentFilePathText":
                 case "ExternalAdapterTypeIndicator":
-                case "GlobalAugmentationCode":
+                case "GlobalAugmented":
                 case "MaxOccursQuantity": 
                 case "MetadataIndicator":
                 case "MinOccursQuantity": 

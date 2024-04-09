@@ -86,6 +86,7 @@ public class XMLWriter {
             tr.setOutputProperty(OutputKeys.INDENT, "yes");
             tr.setOutputProperty(OutputKeys.METHOD, "xml");
             tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            tr.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
             tr.transform(new DOMSource(dom), new StreamResult(ostr));      
         } catch (TransformerConfigurationException ex) {
@@ -95,23 +96,44 @@ public class XMLWriter {
             LOG.error("DOM transformation error: " + ex.getMessage());
             return;
         }
-        // First line in transformer output is the XML prolog.
-        // We don't want or need the standalone="no" in the prolog.
-        var br = new BufferedReader(new StringReader(ostr.toString()));
-        var ln = br.readLine();
+        // Write our own XML declaration, without @standalone
         ow.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         
-        ln = br.readLine();
+        // If the input document begins with a comment, then there may be
+        // no newline between the --> and the start of the first element.
+        // Why is that? No fscking idea. Also sometimes the Transformer
+        // double-spaces the XML output, sometimes it doesn't.
+        var br = new BufferedReader(new StringReader(ostr.toString()));        
+        var ln = br.readLine();
+        while (null != ln) {
+            var m = commentTagPat.matcher(ln);
+            if (m.find()) {
+                var s = ln.substring(0, m.end()-2);
+                ln = ln.substring(m.end()-2);
+                ow.write(s);
+                ow.write("\n");
+                break;
+            }
+            m = tagPat.matcher(ln);
+            if (m.lookingAt()) break;
+            ow.write(ln);
+            ow.write("\n");
+            ln = br.readLine();
+        }
+        // Now we should have the line with the document element        
         do {
-            handleLine(ln);
+            if (!ln.isBlank()) handleLine(ln);
             ln = br.readLine();
         } while (null != ln);
         ow.flush();
-    }    
+    }
+    
+    private static Pattern commentTagPat = Pattern.compile("-->\\s*<\\w");
+    private static Pattern tagPat = Pattern.compile("^\\s*<\\w\\S+\\s*");
+    
     // Second line in the transformer output is the root element.
     // Rewrite to have namespace declarations and attributes on separate lines.
     // You can't handle arbitrary XML with regexes, but it works here.
-    private static Pattern tagPat = Pattern.compile("^\\s*<\\S+\\s*");
     protected void handleLine (String ln) throws IOException {
         if (!rootLine) { 
             ow.write(ln);

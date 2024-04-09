@@ -64,6 +64,16 @@ public class Model extends ObjectType {
     public Model () { super(); }
     
     public NamespaceMap namespaceMap () { return nsmap; }
+    
+    // Convenience routine to get URI for this prefix from the namespace map.
+    public String getPrefix (String uri) {
+        return nsmap.getPrefix(uri);
+    }
+    
+    // Convenience routine to get prefix for this URI from the namespace map.
+    public String getURI (String prefix) {
+        return nsmap.getURI(prefix);
+    }
 
     // Returns a list of Component objects in the model, ordered by QName.
     // Generates sorted list when necessary, caches for later.
@@ -90,10 +100,16 @@ public class Model extends ObjectType {
     }
  
     public Component getComponent (String nsuri, String lname) {
-        Namespace n = uri2NS.get(nsuri);
-        if (null == n) return null;
-        String qn = n.getNamespacePrefix() + ":" + lname;
-        return components.get(qn);
+        var qn = getQN(nsuri, lname);
+        if (null == qn) return null;
+        else return components.get(qn);
+    }
+    
+    // Convenience function to generate QName from namespace and name
+    public String getQN (String nsuri, String lname) {
+        var ns = uri2NS.get(nsuri);
+        if (null == ns) return null;
+        else return ns.getNamespacePrefix() + ":" + lname;
     }
        
     public ClassType getClassType (String qname) {

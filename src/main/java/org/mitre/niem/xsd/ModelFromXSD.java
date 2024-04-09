@@ -41,10 +41,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.xerces.xs.XSAnnotation;
 import org.apache.xerces.xs.XSAttributeDeclaration;
+import org.apache.xerces.xs.XSAttributeGroupDefinition;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import static org.apache.xerces.xs.XSComplexTypeDefinition.CONTENTTYPE_SIMPLE;
 import static org.apache.xerces.xs.XSConstants.ATTRIBUTE_DECLARATION;
+import static org.apache.xerces.xs.XSConstants.ATTRIBUTE_GROUP;
 import static org.apache.xerces.xs.XSConstants.DERIVATION_RESTRICTION;
 import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
 import static org.apache.xerces.xs.XSConstants.FACET;
@@ -89,7 +91,6 @@ import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_CLSA;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_PROXY;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_XML;
@@ -112,12 +113,13 @@ public class ModelFromXSD {
     private NamespaceMap nsmap = null;                      // namespace prefix/URI mapping handler in model
     private Namespace xsdns = null;                         // XSD namespace object in model
     private Namespace xmlns = null;                         // XML namespace object in model (null if no xml: attributes)
-    private boolean hasGElementAug = false;                 // true if model has global element augmentations
-    private boolean hasGAttributeAug = false;               // true if model has global attribute augmentations
+    private boolean hasGElementAug = false;                 // model has global element augmentations?
+    private boolean hasGAttAugOnSimple = false;             // model has global attribute augmentation on simple content?
     private XMLSchema s = null;                             // schema from which we are creating the model
     private XSModel xs = null;                              // from the XMLSchema object    
     private Map<String,XMLSchemaDocument> sdoc = null;      // map nsURI -> XMLSchemaDocument object from XMLSchema object
-    
+    private List<GAttAugRec> gAttAugList = null;            // global attribute augmentation facts for later processin
+
     // Global appinfo is a map of component QName -> list of appinfo records
     // Reference appinfo is a double map: Complex type QName,  Element/Attribute ref QName -> list of appinfo records
     private Map<String,List<AppinfoAttribute>> globalAppinfo = null;
@@ -148,6 +150,7 @@ public class ModelFromXSD {
         xs     = s.xsmodel();           // these methods can throw exceptions
         sdoc   = s.schemaDocuments();   // so let's get it over with here and now
         
+        gAttAugList          = new ArrayList<>();
         globalAppinfo        = new HashMap<>();
         refAppinfo           = new HashMap<>();
         propertyXSobj        = new HashMap<>();
@@ -157,20 +160,22 @@ public class ModelFromXSD {
         hasLiteralProperty   = new HashSet<>();
         referencedProps      = new HashSet<>();
          
-        generateNamespaces();           // normalize namespace prefixes so we can use QNames
-        checkGlobalAugmentations();     // global augmentations? create ClassType and Property objects for structures
-        processSchemaAnnotations();     // get documentation and local terms from schema annotations
-        processAppinfoAttributes();     // index all the appinfo attributes by QName for easy retrieval
-        initializeDeclarations();       // create properties for element and attribute declarations
-        initializeDefinitions();        // create class and datatype objects for type definitions
-        setClassInheritance();          // establish ClassType inheritance
-        findClassWithLiteralProperty();
-        handleSimpleTypes();
-        processClassTypes();            // populate all fields of class objects
-        processDatatypes();             // populate all fields of datatype objects
-        processProperties();            // populate all fields of property objects from schema
-        processElementAugmentations();  // add augmentation elements to augmented class objects
-        processAttributeAugmentations();// add augmentation attributes to augmented class objects
+        generateNamespaces();                       // normalize namespace prefixes so we can use QNames
+        processSchemaAnnotations();                 // get documentation and local terms from schema annotations
+        processAppinfoAttributes();                 // index all the appinfo attributes by QName for easy retrieval
+        initializeGlobalAttributeAugmentations();   // remember global attribute augmentations, process later
+        initializeGlobalElementAugmentations();     // create model objects for structures components (removed later)
+        initializeDeclarations();                   // create properties for element and attribute declarations
+        initializeDefinitions();                    // create class and datatype objects for type definitions
+        processGlobalAttributeAugmentations();               // we have Property objects! process global att augs
+        setClassInheritance();                      // establish ClassType inheritance
+        findClassWithLiteralProperty();             // well, find them! 
+        handleSimpleTypes();                        // build xs:simpleType components as needed
+        processClassTypes();                        // populate all fields of class objects
+        processDatatypes();                         // populate all fields of datatype objects
+        processProperties();                        // populate all fields of property objects from schema
+        processElementAugmentations();              // add augmentation elements to augmented class objects
+        processAttributeAugmentations();            // add augmentation attributes to augmented class objects
         return m;
     }
     
@@ -224,18 +229,70 @@ public class ModelFromXSD {
         }
     }
     
-    // We need to know early whether there are any global attribute augmentations,
-    // because if so, there are no Datatypes (other than XSD builtins; 
-    // everything is a Class.  Create ClassType and Property objects for 
-    // structures:AssociationType and ObjectType if needed.
-    private void checkGlobalAugmentations () {
+    // We need to know early whether there are any global attribute augmentations
+    // on simple content, before we initialize any definitions -- because if so, 
+    // then there are no Datatypes (other than XSD builtins; everything is a Class.  
+    // We have to remember the augmentation details now, and create AugmentRecords 
+    // later (after Property objects are initialized).
+    private record GAttAugRec (String parNSuri, String parName, String propertyQN, boolean isreq) {}
+    private void initializeGlobalAttributeAugmentations () {
+        var xmap = xs.getComponents(TYPE_DEFINITION);
+        for (int i = 0; i < xmap.getLength(); i++) {
+            var xobj   = (XSTypeDefinition)xmap.item(i);
+            var sturi  = xobj.getNamespace();                       // namespace with the xs:complexType
+            var stname = xobj.getName();                            // @name -- AdapterType, AssociationType, or ObjectType
+            if (COMPLEX_TYPE != xobj.getTypeCategory()) continue;   // ignore xs:simpleType
+            if (NIEM_STRUCTURES != uri2Builtin(sturi)) continue;    // only want types in structures NS
+            if ("AugmentationType".equals(stname)) continue;        // can't augment structures:AugmentationType
+            var xctype = (XSComplexTypeDefinition)xobj;
+            var xattus = xctype.getAttributeUses();
+            for (int j = 0; j < xattus.getLength(); j++) {
+                var xattu = (XSAttributeUse)xattus.item(j);
+                initializeOneGlobalAttAug(sturi, stname, xattu);
+            }
+        }
+        xmap = xs.getComponents(ATTRIBUTE_GROUP);
+        for (int i = 0; i < xmap.getLength(); i++) {
+            var xobj   = xmap.item(i);
+            var sturi  = xobj.getNamespace();                       // namespace of xs:attributeGroup
+            var stname = xobj.getName();                            // @name -- SimpleObjectAttributeGroup
+            if (NIEM_STRUCTURES != uri2Builtin(sturi)) continue;    // only want groups in structures NS
+            if (!"SimpleObjectAttributeGroup".equals(stname)) continue;
+            var xattg  = (XSAttributeGroupDefinition)xobj;
+            var xattus = xattg.getAttributeUses();
+            for (int j = 0; j < xattus.getLength(); j++) {
+                var xattu = (XSAttributeUse)xattus.item(j);
+                initializeOneGlobalAttAug(sturi, stname, xattu);
+            }
+       
+        }
+    }
+    
+    // Remember that the structures namespace parNSuri has a component parName
+    // that has a global attribute augmentation defined by xattu.
+    private void initializeOneGlobalAttAug (String parNSuri, String parName, XSAttributeUse xattu) {
+        var xattd = xattu.getAttrDeclaration();             // xs:attribute ref="ns:att" use="?"
+        var isreq = xattu.getRequired();                    // use="required"?
+        var aturi = xattd.getNamespace();                   // namespace uri of @ref
+        if (NIEM_STRUCTURES == uri2Builtin(aturi)) return;  // ignore structures attributes
+        var atns  = m.getNamespaceByURI(aturi);             // namespace object of @ref
+        var atpre = atns.getNamespacePrefix();              // prefix "ns" of @ref
+        var aname = xattd.getName();                        // "att" from @ref
+        var attqn = atpre + ":" + aname;                    // "ns:att" (finally!)
+        gAttAugList.add(new GAttAugRec(parNSuri, parName, attqn, isreq));
+        hasGAttAugOnSimple = true; 
+    }
+
+    // Create ClassType and Property objects for structures:AssociationType 
+    // and ObjectType if needed.
+    private void initializeGlobalElementAugmentations () {
         
         // Is any declaration subsitutable for augmentation point in structures?
         var strns = new HashSet<String>();
         var xmap  = xs.getComponents(ELEMENT_DECLARATION);
-        for (int i = 0; i < xmap.getLength() && !hasGElementAug; i++) {
-            var xobj  = (XSElementDeclaration)xmap.item(i);
-            var xsbg  = xobj.getSubstitutionGroupAffiliation();
+        for (int i = 0; i < xmap.getLength(); i++) {
+            var xel   = (XSElementDeclaration)xmap.item(i);
+            var xsbg  = xel.getSubstitutionGroupAffiliation();
             if (null == xsbg) continue;
             var suri  = xsbg.getNamespace();
             var sname = xsbg.getName();
@@ -244,22 +301,7 @@ public class ModelFromXSD {
                 strns.add(suri);
             }
         }
-        // Are there augmentation attributes for structures:ObjectType or AssociationType?
-        xmap = xs.getComponents(TYPE_DEFINITION);
-        for (int i = 0; i < xmap.getLength() && !hasGAttributeAug; i++) {
-            var xobj  = (XSTypeDefinition)xmap.item(i);
-            if (COMPLEX_TYPE != xobj.getTypeCategory()) continue;
-            if (NIEM_STRUCTURES != uri2Builtin(xobj.getNamespace())) continue;
-            var xctype = (XSComplexTypeDefinition)xobj;
-            var xattrs = xctype.getAttributeUses();
-            for (int j = 0; j < xattrs.getLength(); j++) {
-                var xattr = (XSAttributeUse)xattrs.item(j);
-                var xattd = xattr.getAttrDeclaration();
-                var anuri = xattd.getNamespace();
-                if (NIEM_STRUCTURES == uri2Builtin(anuri)) hasGAttributeAug = true;
-            }
-        }
-        // Create Class and Property in structures namespace for global element 
+        // Create Class and Property in each structures namespace for global element 
         // augmentations.  Use them to add augmentation properties to every Class.
         // We won't actually keep these in the completed Model object.
         for (var suri : strns) {
@@ -420,7 +462,7 @@ public class ModelFromXSD {
     // Sometimes iterating through the XSNamedMap hits the same component more
     // than once. This happens when we create the entire NIEM model by
     // supplying domains/*.xsd and codes/*.xsd to XMLSchema.initialSchemaDocs
-    private void initializeDefinitions () throws CMFException {     
+    private void initializeDefinitions () throws CMFException {         
         HashSet<String>seen = new HashSet<>();
         XSNamedMap xmap = xs.getComponents(TYPE_DEFINITION);
         for (int i = 0; i < xmap.getLength(); i++) {
@@ -459,19 +501,20 @@ public class ModelFromXSD {
                         break;
                     }
                 }
-                var refCode = getAppinfoAttribute(qname, null, "referenceCode");  
+                var refCode = getAppinfoAttributeValue(qname, null, "referenceCode");  
                 var isMarkedRefable = (!refCode.isBlank() && !"NONE".equals(refCode));
                 var isSimpleContent = CONTENTTYPE_SIMPLE == xctype.getContentType();
              
-                if (isSimpleContent && !isMarkedRefable && !hasModelAttributes) {   // it's a Datatype
+                // Complex, mixed, empty content is a ClassType object
+                // Simple content with model attributes anywhere in derivation is a ClassType object
+                // Simple content marked with appinfo:ReferenceCode!="NONE" is a ClassType object
+                // All CSCs are ClassType objects if there are global attribute augmentations
+                if (isSimpleContent && !isMarkedRefable && !hasModelAttributes && !hasGAttAugOnSimple) {
                     var dt   = new Datatype(ns, lname);               
                     datatypeXSobj.put(dt, xtype);
                     datatypeMap.put(dt.getQName(), dt);
                     LOG.debug("initialized datatype " + dt.getQName());                  
                 }
-                // Complex, mixed, empty content is a ClassType object
-                // Simple content with model attributes anywhere in derivation is a ClassType object
-                // Simple content marked with appinfo:ReferenceCode!="NONE" is a ClassType object
                 else {
                     initializeXMLattributes(xctype);
                     var ct   = new ClassType(ns, lname);                    
@@ -496,6 +539,7 @@ public class ModelFromXSD {
             if (null == xmlns) {                                    // create the XML namespace, we need it
                 String xmlPrefix = nsmap.getPrefix(XML_NS_URI);     // prefix is predefined in the NamespaceMap
                 xmlns = new Namespace(xmlPrefix, XML_NS_URI);
+                xmlns.setKind(NSK_XML);
                 m.addNamespace(xmlns);   
                 LOG.debug("Created namespace {}", XML_NS_URI);                
             }
@@ -507,6 +551,35 @@ public class ModelFromXSD {
                 propertyXSobj.put(p, adecl);
                 LOG.debug("initialized property " + p.getQName());         
             }
+        }
+    }
+    
+    // Now that we have initialized all of the Property objects, we can process 
+    // the XSObjects to create AugmentRecords for global attribute augmentations.
+    private void processGlobalAttributeAugmentations () {
+        for (var gatr : gAttAugList) {
+            var parns  = m.getNamespaceByURI(gatr.parNSuri);
+            var parpre = parns.getNamespacePrefix();
+            var parqn  = parpre + ":" + gatr.parName;
+            var attqn  = gatr.propertyQN;
+            var augr   = getAppinfoAttribute(parqn, attqn, "augmentingNamespace");
+            if (null == augr) {
+                LOG.error("xs:attribute ref=\"{}\" in {} does not have appinfo:augmentingNamespace", attqn, parqn);
+                continue;
+            }
+            var augNSuri = augr.attValue();
+            var augNS    = m.getNamespaceByURI(augNSuri);
+            if (null == augNS) {
+                LOG.error("augmentingNamespace {} does not exist ({}:{}", augNSuri, augr.sdocName(), augr.sdocLine());
+                continue;
+            }  
+            var ap     = m.getProperty(gatr.propertyQN);
+            var ar     = new AugmentRecord();
+            ar.setProperty(ap);
+            ar.setMaxOccurs(1);
+            ar.setMinOccurs(gatr.isreq ? 1 : 0);
+            ar.setGlobalAugmented(parqn);
+            augNS.addAugmentRecord(ar);
         }
     }
     
@@ -625,10 +698,10 @@ public class ModelFromXSD {
             }
             LOG.debug("processing property " + p.getQName());
             var xobj = propertyXSobj.get(p);
-            var rcode = getAppinfoAttribute(p.getQName(), null, "referenceCode");
-            p.setIsDeprecated(getAppinfoAttribute(p.getQName(), null, "deprecated"));
-            p.setIsRefAttribute(getAppinfoAttribute(p.getQName(), null, "referenceAttributeIndicator"));
-            p.setIsRelationship(getAppinfoAttribute(p.getQName(), null, "relationshipPropertyIndicator"));            
+            var rcode = getAppinfoAttributeValue(p.getQName(), null, "referenceCode");
+            p.setIsDeprecated(getAppinfoAttributeValue(p.getQName(), null, "deprecated"));
+            p.setIsRefAttribute(getAppinfoAttributeValue(p.getQName(), null, "referenceAttributeIndicator"));
+            p.setIsRelationship(getAppinfoAttributeValue(p.getQName(), null, "relationshipPropertyIndicator"));            
             if (p.isAttribute()) {
                 var xadecl = (XSAttributeDeclaration)xobj;
                 var xatype = xadecl.getTypeDefinition();
@@ -656,24 +729,16 @@ public class ModelFromXSD {
                     }    
                     p.setIsAbstract(xedecl.getAbstract());
                     
-                    // Data properties never have a referenceCode.
+                    // Putting a reference code on a data property makes it an object property. FIXME
                     // Object properties have reference Code from appinfo, or inferred from nillable.
                     var nlbf  = xedecl.getNillable();
-                    if (null == pclass) {
-                        if (xedecl.getNillable())
-                            LOG.info("element {} is a data property, @nillable=\"true\" ignored", p.getQName());
-                        if (!rcode.isBlank() && !"NONE".equals(rcode)) {
-                            LOG.info("element {} is a data property, appinfo:referenceCode is not allowed (ignored)", p.getQName());
-                            rcode = "";
-                        }
-                    }
-                    else {
+                    if (null != pclass) {
                         if (!rcode.isBlank() && !"NONE".equals(rcode) && !nlbf)
                             LOG.info("element {} has appinfo:referenceCode=\"{}\"; setting @nillable=\"true\"", 
                                     p.getQName(), rcode);
                         if (rcode.isBlank()) rcode = nlbf ? "ANY" : "NONE";
+                        p.setReferenceCode(rcode);
                     }
-                    p.setReferenceCode(rcode);
                 }
             }
         }
@@ -692,9 +757,9 @@ public class ModelFromXSD {
             var xbase   = xctype.getBaseType();             // base type XSTypeDefinition
             var xsbase  = xctype.getSimpleType();           // base type XSSimpleTypeDefinition (possibly null)
             ct.setIsAbstract(xctype.getAbstract());
-            ct.setIsDeprecated(getAppinfoAttribute(ct.getQName(), null, "deprecated"));
+            ct.setIsDeprecated(getAppinfoAttributeValue(ct.getQName(), null, "deprecated"));
             
-            var rcode = getAppinfoAttribute(ct.getQName(), null, "referenceCode");
+            var rcode = getAppinfoAttributeValue(ct.getQName(), null, "referenceCode");
             if (!rcode.isBlank()) ct.setReferenceCode(rcode);
 
             var docs = getDocumentation(xctype);
@@ -706,7 +771,7 @@ public class ModelFromXSD {
                 var npbase = replaceSuffix(ct.getName(), "Type", "");
                 var npln   = npbase + "Literal";
                 int mungct = 0;
-                // Already have FooLiteralValue?  GR##!!$^*
+                // Already have FooLiteral?  GR##!!$^*
                 while (null != m.getProperty(ctnsuri, npln))  {
                     npln = npbase + "Literal" + String.format("%02d", mungct++);
                 }
@@ -749,7 +814,7 @@ public class ModelFromXSD {
                         if (!refDocs.isEmpty()) hp.setDefinition(refDocs.get(0));
                         
                         var pqn = p.getQName();                        
-                        var opi = getAppinfoAttribute(ctqn, pqn, "orderedPropertyIndicator");
+                        var opi = getAppinfoAttributeValue(ctqn, pqn, "orderedPropertyIndicator");
                         hp.setOrderedProperties("true".equals(opi));
                         ct.addHasProperty(hp);
                     }
@@ -864,7 +929,7 @@ public class ModelFromXSD {
     private void processDatatypes () throws CMFException {
         for (var dt : datatypeXSobj.keySet()) {
             LOG.debug("processing datatype " + dt.getQName());
-            dt.setIsDeprecated(getAppinfoAttribute(dt.getQName(), null, "deprecated"));
+            dt.setIsDeprecated(getAppinfoAttributeValue(dt.getQName(), null, "deprecated"));
             m.addComponent(dt);
             if (xsdns == dt.getNamespace()) continue;               // nothing more to do for XSD types
 
@@ -1260,7 +1325,11 @@ public class ModelFromXSD {
             var ct      = m.getClassType(cqn);
             var propMap = refAppinfo.get(cqn);
             for (var prop : propMap.keySet()) {
-                var hp    = ct.getHasProperty(prop);
+                HasProperty hp = null;
+                if (null == ct) {
+                    
+                }
+                else hp = ct.getHasProperty(prop);
                 var alist = propMap.get(prop);
                 if (null == hp) continue;
                 for (var arec : alist) {
@@ -1344,7 +1413,8 @@ public class ModelFromXSD {
         }
         for (Component c : delComps) { m.removeComponent(c); }
         
-        // We don't need ObjectType and AssociationType in structures NS any more
+        // We don't need ObjectType and AssociationType in structures NS any more.
+        // Remove them so we don't write them into the CMF model.
         if (hasGElementAug) {
             for (var ns : m.getNamespaceList()) {
                 var nsuri = ns.getNamespaceURI();
@@ -1433,22 +1503,20 @@ public class ModelFromXSD {
     // Property hp.getProperty() is a useful augmentation for Class ct,
     // according to the owner of Namespace augn.
     private void addAugmentRecord (Property augp, ClassType ct, HasProperty hp, int index, int augCode) {
-        var augn   = augp.getNamespace();                               // augmenting namespace
-        var auglst = augn.augmentList();                                // write AugRec into augmentation NS
-        var ctqn   = ct.getQName();
+        var augn    = augp.getNamespace();              // augmenting namespace
+        var auglst  = augn.augmentList();               // write AugRec into augmentation NS
+        var ctqn    = ct.getQName();                    // QName of augmented class
+        String apqn = null;
         if (AUG_NONE != augCode) {
-            var apnt  = augp.getSubPropertyOf();
-            var aname = apnt.getName().replaceFirst("AugmentationPoint$", "");
-            ct = null;
+            apqn  = augp.getSubPropertyOf().getQName(); // QName of augmentation point in structures
+            ct = null;                                  // global augment doesn't have a class
             ctqn = "global Object";            
-        }     
-        for (var ar : auglst) {
-            if (ar.getClassType() != ct) continue;
-            if (ar.getProperty() == hp.getProperty()) {
-                ar.addGlobalAug(augCode);
-                return;
+            // Skip duplicate calls for global augmentations
+            for (var ar : auglst) {
+                if (ar.getClassType() != ct) continue;
+                if (ar.getProperty() == hp.getProperty()) return;
             }
-        }
+        }     
         var ar = new AugmentRecord();
         ar.setClassType(ct);
         ar.setProperty(hp.getProperty());
@@ -1456,7 +1524,7 @@ public class ModelFromXSD {
         ar.setMinOccurs(hp.minOccurs());
         ar.setMaxOccurs(hp.maxOccurs());
         ar.setMaxUnbounded(hp.maxUnbounded());
-        ar.addGlobalAug(augCode);
+        ar.setGlobalAugmented(apqn);
         auglst.add(ar);
         LOG.debug(String.format("namespace %s augments %s with %s (index %d)", 
                 augn.getNamespacePrefix(), ctqn, hp.getProperty().getQName(), index));
@@ -1468,24 +1536,32 @@ public class ModelFromXSD {
     //     getAppinfoAttribute("nc:ThingType", null, "deprecated")
     // For <xs:element ref="nc:Thing" appinfo:orderedPropertyIndicator="true", do
     //     getAppinfoAttribute("nc:ThingType", "nc:Prop", "orderedPropertyIndicator")
-    private String getAppinfoAttribute (String compQN, String erefQN, String alname) {
+    private String getAppinfoAttributeValue (String compQN, String erefQN, String alname) {
+        var rv = getAppinfoAttribute(compQN, erefQN, alname);
+        if (null == rv) return "";
+        return rv.attValue();
+    }
+
+    // Retrieve appinfo attribute record for a global component or an element reference,
+    // in case you want the source file/line info, or whatever.
+    private AppinfoAttribute getAppinfoAttribute (String compQN, String erefQN, String alname) {
         if (null == erefQN) {
             var arlist = globalAppinfo.get(compQN);
-            if (null == arlist) return "";
+            if (null == arlist) return null;
             for (var arec : arlist) {
-                if (arec.attLname().equals(alname)) return arec.attValue();
+                if (arec.attLname().equals(alname)) return arec;
             }
-            return "";
+            return null;
         }
         var eqnmap = refAppinfo.get(compQN);
-        if (null == eqnmap) return "";
+        if (null == eqnmap) return null;
         var arlist = eqnmap.get(erefQN);
-        if (null == arlist) return "";
+        if (null == arlist) return null;
         for (var arec : arlist) {
-            if (arec.attLname().equals(alname)) return arec.attValue();   
+            if (arec.attLname().equals(alname)) return arec;   
         }
-        return "";
-    }
+        return null;
+    }    
     
     // Retrieve an intialized datatype object by uri and local name.
     // If you ask for a proxy type, you get the underlying XSD type.  

@@ -23,6 +23,9 @@
  */
 package org.mitre.niem.cmf;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * A class for <cmf:NamespaceAugmentingRecord>
  * Records all the augmentations in a namespace.  If every augmentation was an
@@ -39,6 +42,8 @@ package org.mitre.niem.cmf;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class AugmentRecord extends ObjectType implements Comparable<AugmentRecord> {
+    static final Logger LOG = LogManager.getLogger(AugmentRecord.class);
+        
     private ClassType classType = null;         // the augmented Class
     private Property property = null;           // the agumenting Property
     private int indexInType = -1;               // index of Property in augmentation type, or -1 if no such type
@@ -46,7 +51,7 @@ public class AugmentRecord extends ObjectType implements Comparable<AugmentRecor
     private int maxQ = 0;                       // maxOccurs
     private boolean maxUnbounded = false;       // unbounded
     private boolean orderedProperty = false;    // is this property ordered?
-    private int globalAug = AUG_NONE;           // global augmentation? Of objects, associations, simple content?
+    private String globalAugComp = null;        // QName of global component augmented (eg. structures:ObjectType)
     
     public void setClassType (ClassType c)      { classType = c; }    
     public void setProperty (Property p)        { property = p; }
@@ -64,33 +69,34 @@ public class AugmentRecord extends ObjectType implements Comparable<AugmentRecor
     public boolean maxUnbounded ()              { return maxUnbounded; }
     public boolean orderedProperties ()         { return orderedProperty; }
     
-    // Global augmentation codes are represented internally as a bitmap
-    // AUG_NONE, AUG_ASSOC, and AUG_OBJECT are mutually exclusive!
-    public static final int AUG_NONE   = 0;     // not a global augmentation
-    public static final int AUG_ASSOC  = 1;     // global augmentation for associations
-    public static final int AUG_OBJECT = 2;     // global augmentation for objects
-    public static final int AUG_SIMPLE = 4;     // global augmentation for simple content
-    public static final int AUG_MAX    = 4;
-    public static String[] augCode = { "NONE", "ASSOCIATION", "OBJECT", null, "SIMPLE" };
+    public String getGlobalAugmented ()         { return globalAugComp; }
+    public void setGlobalAugmented (String s)   { globalAugComp = s; }
     
-    public void setGlobalAug (int i)            { globalAug = i; }
-    public boolean hasGlobalAug (int i)         { return 0 != (globalAug & i); }
-    public int getGlobalAug ()                  { return globalAug; }
-    public void addGlobalAug (int i)            { globalAug = globalAug | i; }
-    public void addGlobalAug (String s) {
-        if (null == s) return;
-        for (int i = 1; i <= AUG_MAX; i++)
-            if (null != augCode[i] && augCode[i].equals(s)) addGlobalAug(i);
+    // Global augmentation codes 
+    public static final int AUG_NONE   = 0;     // not a global augmentation
+    public static final int AUG_ASSOC  = 1;     // a global augmentation for associations
+    public static final int AUG_OBJECT = 2;     // a global augmentation for objects
+    public static final int AUG_SIMPLE = 3;     // a global augmentation for simple content
+    public static final int AUG_NUMCODES = 4;   // this many kinds of augmentations
+    
+    public int getGlobalAug () {
+        if (null == globalAugComp) return AUG_NONE;
+        var cname = globalAugComp.substring(globalAugComp.indexOf(":")+1);
+        if (cname.startsWith("Association")) return AUG_ASSOC;
+        if (cname.startsWith("Object")) return AUG_OBJECT;
+        if (cname.startsWith("Simple")) return AUG_SIMPLE;
+        LOG.error("unknown global augmented component {}", globalAugComp);
+        return AUG_NONE;
     }
-    public String getGlobalAugCode (int i)      { return augCode[i]; }
         
     public AugmentRecord () {}
     
     @Override
     public int compareTo (AugmentRecord o) {
-        int rv = this.classType.compareTo(o.classType);
-//        if (0 == rv) rv = this.indexInType - o.indexInType;
+        int rv = 0;
+        if (null != this.classType && null != o.classType) rv = this.classType.compareTo(o.classType);
         if (0 == rv) rv = this.property.getQName().compareTo(o.property.getQName());
+        if (0 == rv) rv = this.globalAugComp.compareTo(o.globalAugComp);
         return rv;
     }
 }

@@ -1112,13 +1112,13 @@ public class ModelFromXSDTest {
             var infos = getLogInfos();
             Collections.sort(infos);
             Collections.sort(warns);
-            assertThat(infos.get(0)).containsPattern("nc:DataProp.*@nillable");
-            assertThat(infos.get(1)).containsPattern("nc:DataProp.*not allowed");
-            assertThat(infos.get(2)).containsPattern("nc:ObjPropAnyRef has appinfo:referenceCode");
+            assertThat(infos.get(0)).containsPattern("nc:ObjPropAnyRef has appinfo:referenceCode");
             
             assertEquals("ANY", m.getClassType("nc:Class-1Type").getReferenceCode());
             assertEquals("REF", m.getClassType("nc:Class-2Type").getReferenceCode());
-            assertEquals("", m.getProperty("nc:DataProp").getReferenceCode());
+            var p = m.getProperty("nc:DataProp");
+            var rc = p.getReferenceCode();
+            assertEquals(null, m.getProperty("nc:DataProp").getReferenceCode());
             assertEquals("ANY", m.getProperty("nc:ObjPropAnyRef-1").getReferenceCode());
             assertEquals("ANY", m.getProperty("nc:ObjPropAnyRef-2").getReferenceCode());
             assertEquals("NONE", m.getProperty("nc:ObjPropNoRef-1").getReferenceCode());
@@ -1204,9 +1204,9 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
 
-            assertEquals("http://release.niem.gov/niem/niem-core/4.0/", m.getNamespaceByPrefix("nc_4").getNamespaceURI());
-            assertEquals("http://release.niem.gov/niem/niem-core/5.0/", m.getNamespaceByPrefix("nc").getNamespaceURI());
-            assertEquals("http://www.w3.org/2001/XMLSchema", m.getNamespaceByPrefix("xs").getNamespaceURI());
+            assertEquals("http://release.niem.gov/niem/niem-core/4.0/", m.getURI("nc_4"));
+            assertEquals("http://release.niem.gov/niem/niem-core/5.0/", m.getURI("nc"));
+            assertEquals("http://www.w3.org/2001/XMLSchema", m.getURI("xs"));
             assertNotNull(m.getProperty("nc_4:ConfidencePercent"));
             assertNotNull(m.getProperty("nc:PersonGivenName"));
             assertEmptyLogs();

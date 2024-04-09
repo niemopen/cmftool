@@ -94,7 +94,7 @@ public class ReferenceGraph {
         var duni = d.getUnionOf();
         var dlst = d.getListOf();
         if (null != dres) addRef(dns, dres.getDatatype().getNamespace());
-        if (null != dlst) addRef(dns, dlst.getListOf().getNamespace());
+        if (null != dlst) addRef(dns, d.getListOf().getNamespace());
         if (null != duni) 
             for (var udt : duni.getDatatypeList()) 
                 addRef(dns, udt.getNamespace());

@@ -24,12 +24,12 @@
 package org.mitre.niem.xsd;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.mitre.niem.NIEMConstants.DEFAULT_NIEM_VERSION;
-import org.mitre.niem.cmf.AugmentRecord;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_ASSOC;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_OBJECT;
+import static org.mitre.niem.cmf.AugmentRecord.AUG_SIMPLE;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.HasProperty;
@@ -49,7 +49,19 @@ import org.w3c.dom.Element;
 public class ModelToMsgXSD extends ModelToXSD {
     
     public ModelToMsgXSD (Model m) { super(m); }
-   
+    
+    // Don't create declaration of abstract elements; not needed in message schema.
+    @Override
+    protected void createDeclaration(Document dom, String nsuri, Property p) {
+        if (null == p) return;
+        if (p.isAbstract()) return;
+        super.createDeclaration(dom, nsuri, p);
+    }    
+
+    // Don't write @substitutionGroup in a message schema.
+    @Override
+    protected void handleSubproperty (Property p, Element pe) { }
+
     // Create xs:complexContent and xs:extension elements for this xs:complexType
     // in a message schema.
     @Override
@@ -107,7 +119,7 @@ public class ModelToMsgXSD extends ModelToXSD {
                 var which = cname.endsWith("AssociationType")  ? "Association" : "Object";                
                 var sApQN = structPrefix + ":" + which + "AugmentationPoint";
                 var sAp   = m.getProperty(sApQN);
-                if (null != sAp) addElementAnyRef(dom, sqe, sAp);
+                if (null != sAp) addOptionalSubstitutingElements(dom, sqe, sAp);
             }
             for (var nextCT : ctList) {
                 for (var hp : nextCT.hasPropertyList()) {
@@ -118,7 +130,6 @@ public class ModelToMsgXSD extends ModelToXSD {
                     if (null != subs) addSubstitutingElements(dom, sqe, hp);
                     else if (!p.isAbstract()) addElementRef(dom, sqe, hp);
                 }
-             
             }
         }
         // Now add model attribute references to the appropriate parent element.
@@ -130,7 +141,9 @@ public class ModelToMsgXSD extends ModelToXSD {
         // Augmentation types don't have refs or referenceCode.
         // Add structures @id, @ref, @uri based on reference code to other types.
         if (!ct.getName().endsWith("AugmentationType")) {
-            switch (ct.getReferenceCode()) {
+            var rc = ct.getReferenceCode();
+            if (null == rc) rc = "";            // not specified in CMF, use default
+            switch (rc) {
             case "NONE":
                 break;
             case "REF":
@@ -151,7 +164,7 @@ public class ModelToMsgXSD extends ModelToXSD {
                 break;
             }        
             // Set appinfo:referenceCode if needed
-            switch (ct.getReferenceCode()) {
+            switch (rc) {
             case "NONE": addAppinfoAttribute(dom, cte, "referenceCode", "NONE"); break;
             case "REF":  addAppinfoAttribute(dom, cte, "referenceCode", "REF"); break;
             case "URI":  addAppinfoAttribute(dom, cte, "referenceCode", "URI"); break;
@@ -168,12 +181,33 @@ public class ModelToMsgXSD extends ModelToXSD {
         var parent = ct.getExtensionOfClass();
         if (null != parent) handleAttributeProperties(alist, parent);
         buildAttributeList(alist, ct);
+        
+        // Now do the global attribute augmentations
+        var ctn = ct.getName();                     // FooAssociationType or FooType
+        for (var ar : gAttAugs) {
+            var ga = ar.getGlobalAug();
+            if (AUG_ASSOC == ga  && !ctn.endsWith("AssociationType")) continue;
+            if (AUG_OBJECT == ga && ctn.endsWith("AssociatinType")) continue;
+            if (AUG_SIMPLE == ga) continue;
+            var ap    = ar.getProperty();
+            var isreq = ar.minOccurs() > 0;
+            var arec = new AttProp(ap, isreq);
+            alist.add(arec);            
+        }
+    }
+    
+    protected void addOptionalSubstitutingElements (Document dom, Element sqe, Property p) {
+        var hp = new HasProperty();
+        hp.setProperty(p);
+        hp.setMaxUnbounded(true);
+        hp.setMinOccurs(0);
+        addSubstitutingElements(dom, sqe, hp);
     }
     
     protected void addSubstitutingElements (Document dom, Element sqe, HasProperty hp) {
         var prop = hp.getProperty();
         var subs = substituteMap.get(prop);
-        if (prop.isAbstract() && subs.isEmpty()) return;    // omit abstract element with no subs
+        if (prop.isAbstract() && null == subs) return;      // omit abstract element with no subs
         if (prop.isAbstract() && 1 == subs.size()) {        // replace abstract element with 1 sub
             for (var sp : subs) addElementRef(dom, sqe, hp, sp);
         }
@@ -184,9 +218,15 @@ public class ModelToMsgXSD extends ModelToXSD {
             if (hp.maxUnbounded())   che.setAttribute("maxOccurs", "unbounded");
             else if (1 != hp.maxOccurs()) che.setAttribute("maxOccurs", "" + hp.maxOccurs());
             sqe.appendChild(che);
-            if (!prop.isAbstract()) addElementOnceRef(dom, che, prop);
-            for (var sp : subs) addElementOnceRef(dom, che, sp);
+            addToChoice(dom, che, prop);
         }
+    }
+    
+    protected void addToChoice (Document dom, Element par, Property p) {
+        var subs = substituteMap.get(p);
+        if (!p.isAbstract()) addElementOnceRef(dom, par, p);
+        if (null != subs)
+            for (var sp : subs) addToChoice(dom, par, sp);
     }
     
     protected void addAttribute (Document dom, Element attParent, String atqn) {
@@ -197,7 +237,7 @@ public class ModelToMsgXSD extends ModelToXSD {
     
     // For a message schema, we create a simple type declaration from a Datatype object (FooType)
     @Override
-    protected void createTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
+    protected void createComplexTypeFromDatatype (Document dom, String nsuri, Datatype dt) {
         if (null == dt) return;
         var cname = dt.getName().replaceFirst("Datatype$", "Type");     // FooDatatype -> FooType
         if (nsTypedefs.containsKey(cname)) return;                      // already created xs:ComplexType for this
@@ -228,7 +268,24 @@ public class ModelToMsgXSD extends ModelToXSD {
             addRestrictionElement(dom, cte, dt, r.getDatatype(), rbdqn);
         }
         nsTypedefs.put(cname, cte);
-    }    
+    }   
+    
+   @Override
+   protected void editStructuresDocument (Document doc, String nsuri) {
+        super.editStructuresDocument(doc, nsuri);
+        var root = doc.getDocumentElement();       
+        var nl = root.getElementsByTagNameNS(W3C_XML_SCHEMA_NS_URI, "anyAttribute");
+        for (int i = nl.getLength() -1 ; i >= 0; i-- ) {
+            var e = nl.item(i);
+            var p = e.getParentNode();
+            var en = e.getNodeName();
+            var pn = p.getNodeName();
+            var r = p.removeChild(e);
+            var lc = p.getLastChild();
+            var lcn = lc.getNodeName();
+            int j = 0;
+        }
+   }    
 
     @Override
     protected String getArchitecture ()       { return "NIEM6"; }   
@@ -270,9 +327,6 @@ public class ModelToMsgXSD extends ModelToXSD {
         return "message"+rv;
     }    
     
-    @Override
-    protected String getShareSuffix () { return "-msg"; }
-    
     // In a message schema, object properties are nillable unless otherwise
     // specified. Data properties are never nillable -- if you make a property
     // referencable with appinfo:referenceCode, it becomes an object property.
@@ -281,12 +335,15 @@ public class ModelToMsgXSD extends ModelToXSD {
         if (p.isAttribute()) return false;
         if (p.isAbstract())  return false;
         if (null == p.getClassType()) return false; // a data property
-        return !"NONE".equals(p.getReferenceCode());
+        var crc = p.getReferenceCode();             // reference code for a class
+        if (null == crc) return true;               // nillable by default
+        return !"NONE".equals(p.getReferenceCode());// nillable unless refcode is NONE
     }    
 
     // Don't convert "xs:foo" to "xs-proxy:foo" in message schema documents
     @Override
     protected String proxifiedDatatypeQName (Datatype dt) {
-        return dt.getQName();
+        if (gAttAugs.isEmpty()) return dt.getQName();
+        else return super.proxifiedDatatypeQName(dt);
     }    
 }

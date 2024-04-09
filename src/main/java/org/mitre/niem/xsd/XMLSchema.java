@@ -26,6 +26,7 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -51,6 +52,7 @@ import javax.xml.validation.SchemaFactory;
 import static org.apache.commons.lang3.StringUtils.getCommonPrefix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.xerces.dom.DOMInputImpl;
 import org.apache.xerces.impl.xs.util.StringListImpl;
 import org.apache.xerces.xs.StringList;
 import org.apache.xerces.xs.XSLoader;
@@ -280,15 +282,17 @@ public class XMLSchema {
             LOG.error("can't create XSLoader: " + ex.getMessage());
             return null;
         }
-        XMLSchema.XSModelHandler handler = new XMLSchema.XSModelHandler();
+        xsmsgs = new ArrayList<>();
+        var handler = new XSModelHandler(xsmsgs);
+//        XMLSchema.XSModelHandler handler = new XMLSchema.XSModelHandler();
         DOMConfiguration config = loader.getConfig();
         config.setParameter("validate", true);
-        config.setParameter("error-handler",handler);
+        config.setParameter("error-handler", handler);
         if (null != resolver) config.setParameter("resource-resolver", resolver);
         StringList slist = new StringListImpl(
                 schemaDocs.toArray(new String[0]),
                 schemaDocs.size());
-        xsmsgs = new ArrayList<>();
+
         xs = loader.loadURIList(slist);
         return xs;        
     }
@@ -300,8 +304,9 @@ public class XMLSchema {
      */
     public List<String> xsModelMsgs () { if (null == xs) xsmodel(); return xsmsgs; }      
     
-    private class XSModelHandler implements DOMErrorHandler {
-        XSModelHandler () { super(); }
+    private static class XSModelHandler implements DOMErrorHandler {
+        private List<String> msgs;
+        XSModelHandler (List<String>m) { super(); msgs = m;}
         @Override
         public boolean handleError (DOMError e) {
             short sevCode = e.getSeverity();
@@ -320,7 +325,7 @@ public class XMLSchema {
                     fn = uri.substring(index + 1)+":";
                 }
             }
-            xsmsgs.add(String.format("%s %s %d:%d %s",
+            msgs.add(String.format("%s %s %d:%d %s",
                     sevstr,
                     fn,
                     loc.getLineNumber(),
@@ -330,6 +335,25 @@ public class XMLSchema {
         }
     }
     
+    // Returns an XSModel from an XSD input stream.  XML schema validation
+    // messages are returned in the list.  Best of luck with your imports!
+    public static XSModel xsmodelFromStream (InputStream is, List<String> msgs) {
+        XSLoader loader;
+        try {
+            loader = ParserBootstrap.xsLoader(); // don't reuse these, they keep state
+        } catch (ParserConfigurationException ex) {
+            LOG.error("can't create XSLoader: " + ex.getMessage());
+            return null;
+        }
+        var handler = new XSModelHandler(msgs);
+        DOMConfiguration config = loader.getConfig();
+        config.setParameter("validate", true);
+        config.setParameter("error-handler", handler);  
+        DOMInputImpl d = new DOMInputImpl();
+        d.setByteStream(is);
+        return loader.load(d);
+    }
+        
     ///// JAVAX schema stuff ////////////////////////////////////////
     
     private Schema javaxSchema = null;

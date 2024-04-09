@@ -48,12 +48,14 @@ public class ModelToN5XSD extends ModelToXSD {
     @Override
     protected String getDefaultNIEMVersion()  { return "5"; }
     
-    // In NIEM 5 all properties are nillable unless otherwise specified.
+    // In NIEM 5 all properties are nillable unless refcode NONE is specified.
     @Override
     protected boolean isPropertyNillable (Property p) {
         if (p.isAttribute()) return false;
         if (p.isAbstract())  return false;
-        return !"NONE".equals(p.getReferenceCode());
+        var rc = p.getReferenceCode();
+        if (null == rc) return true;
+        return !"NONE".equals(rc);
     }
     
     @Override

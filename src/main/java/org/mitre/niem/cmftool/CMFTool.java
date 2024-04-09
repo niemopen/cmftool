@@ -47,7 +47,22 @@ public class CMFTool {
      
     String xtd = "src/test/resources/xsd6/";
     if (0 == args.length) {
-        args = new String[]{"m2xm", "-o", "tmp/tmp", "tmp/07-AugOTwithE/augOTwE.cmf"};
+//        var td = "src/main/CMF/";
+//        args = new String[]{"m2xm", "-o", td+"tmp", td+"model.cmf"};
+
+//        var td = "src/test/resources/xsd6/";
+//        args = new String[]{"m2xs", "-o", td+"tmp", td+"literal-2.cmf"};
+
+//        args = new String[]{"m2xs", "-o", "tmp/tmp", "tmp/m60.cmf"};
+//        var td = "../../NIEM/ntac-admin/examples/src/Augmentation/01-N6-Subset/";
+//        args = new String[]{"m2xs", "-o", td+"tmp", td+"subset.cmf"};
+
+//        var td = "../../NIEM/ntac-admin/examples/src/Augmentation/08-AugOTwithA/";
+//        args = new String[]{"m2xm", "-o", td+"tmp", td+"augOTwA.cmf"};
+        
+//        var td = "../../NIEM/ntac-admin/examples/src/Augmentation/07-AugOTwithE/";
+//        args = new String[]{"m2xs", "-o", td+"tmp", td+"augOTwE.cmf"};
+//        args = new String[]{"x2m", "-o", td+"foo", td+"model.xsd/messageModel.xsd"};
 //        args = new String[]{"m2xm", "-o", xtd + "tmp", xtd + "augment.cmf"};
     }
     

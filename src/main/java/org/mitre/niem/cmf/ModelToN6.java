@@ -24,13 +24,10 @@
 package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
-import static org.mitre.niem.cmf.NamespaceKind.NIEM_NOTBUILTIN;
 
 /**
  * A class to convert a Model object to the NIEM 6 architecture

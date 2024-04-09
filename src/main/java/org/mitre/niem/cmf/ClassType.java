@@ -33,7 +33,7 @@ import java.util.List;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ClassType extends Component {
-    private String refCode = "";
+    private String refCode = null;
     private boolean isAugmentable = false;
     private ClassType extensionOfClass  = null;
     private final List<HasProperty> hasPropertyList = new ArrayList<>();

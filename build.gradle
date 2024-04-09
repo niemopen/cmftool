@@ -21,7 +21,7 @@ java {
     sourceCompatibility = JavaVersion.VERSION_17
 }
 
-project.version = '1.0-alpha.2 SNAPSHOT'
+project.version = '1.0-alpha.2'
 
 dependencies {
     implementation 'xerces:xercesImpl:2.12.2'

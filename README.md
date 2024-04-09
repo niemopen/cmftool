@@ -10,67 +10,41 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
-## What's new in version 1.0-alpha.1
+## CMFTool commands
 
-* Create NIEM 6 source and message document piles from NIEM 5 model
-* Every schema document gets a Namespace object; SchemaDocument removed
-* Fixed many URIs in source, resource, test files
-* DefinitionText changed to DocumentationText in CMF 1.0  
-* Recognize adapter representation term in addition to appinfo:externalAdapterTypeIndicator
-* Many changes to the JUnit tests.
+* `x2m` command generates CMF from a source or message XSD pile
+* `m2m` command generates a canonical version of a CMF file
+* `m2o` command generates OWL from CMF (needs work)
+* `m2xn5` command generates NIEM 5 XSD from CMF
+* `m2xs` command generates NIEM 6 source XSD from CMF
+* `m2xm` command generates NIEM 6 message XSD from CMF
+* `n5to6` command converts a NIEM 5 model (CMF or XSD) to NIEM 6 CMF, rewriting namespace URIs (needs fixing)
+* `xcanon` command generates a canonical version of an XSD document
+* `xcmp` command compares two XML schemas
 
-## What's new in version 0.7-alpha.6 (12 December)
+Every command accepts a `–help` argument, for providing, well… help.
 
-* CMF to message schema is working
-* Most of the augmentation examples are working (but not augmentations on every object)
-* Built-in schema documents are from the PS01 release
+## What's new in version 1.0-alpha.2
 
-## What's new in version 0.7-alpha.5 (14 November)
+* CMF now has `ObjectProperty` and `DataProperty`
+* `cmf:ReferenceCode` and `appinfo:referenceCode` is working
+* Global element augmentation is working
+* Message schema generation is working
+* Builtin schema documents are updated to version PS02
+  * Add `structures:appliesToParent` to `AssociationType` and `ObjectType` in *structures.xsd*
+  * Add proxies for xs:Name, NCName, QName to *niem-xs.xsd*
 
-* NIEM 6 XSD generation uses builtin schema documents from NIEM 6 PSD01
-* Entire NIEM 6 PSD 01 model converts to CMF and back to XSD
-* Handle several annoying differences between Windows and Linux JRE 
-* Many other bugs fixed
+## Still to be done
 
-## What's new in version 0.7-alpha.4 (26 September)
-
-* Many many bugs fixed
-* Entire NIEM 5 model converts to CMF and back to XSD
-* The usual builtin schema documents now obtained from the JAR file
-* NIEM 6 XSD generation still doesn't work
-
-## What's new in version 0.7-alpha.3 (9 August)
-
-* New features in CMF to XSD commands
-  * `cmftool m2xref` renamed to `cmftool m2xsrc`
-  * Option to generate xml-catalog.xsd file
-  * Option to specify name of generated XML Catalog file
-  * Option to specify message schema "root namespace" with all needed import elements
-
-## What's new in version 0.7-alpha.2
-
-* Now generates CMF version 0.8, which is based on NIEM 6
-* There are NIEM 6 builtin schema documents in *src/main/dist/share*.  These are based on the Wildcard Augmentation discussions.
-* **n5to6** command converts a NIEM 5 model (CMF or XSD) to NIEM 6, rewriting namespace URIs
-* CMF to XSD command split into three
-  * **m2xn5** command generates NIEM 5 XSD
-  * **m2xref** command generates NIEM 6 reference XSD
-  * **m2xmsg** command will generate NIEM 6 message XSD (not implemented yet)
-
-## What's new in version 0.7-alpha.1
-
-* Handling code-list-instance (CLI) properties
-* Handling code-list-schema-attribute (CLSA) appinfo
-* Augmentations are now primarily recorded as properties in the Namespace object
-* The CMF submodule is now in the OASIS repo
-
-## What's working now
-
-- NIEM XML schema pile to Common Model Format
-- Common Model Format to NIEM XML schema pile
-- NIEM 5.2 niem-core model converts from XSD to CMF and back to XSD with no significant change
-  (except LocalTerm appinfo is not handled yet)
-- Entire NIEM 5.2 model converts from XSD to CMF, and vice versa.  (Haven't looked for significant changes yet.)
+* Writing partial models in CMF, composing a model from parts
+* Handle `appinfo:relationshipPropertyIndicator`
+* Implement `appinfo:AttributeAugmentation` 
+* Corner cases for `xs:simpleType`
+* Ordered properties and xs:list
+* Definitions
+  * Repeated (with `xml:lang`), including inside `LocalTerm` elements
+  * On element/attribute references (and HasProperty objects)
+  * On `xs:import elements`
 
 ## Quick start
 
@@ -85,15 +59,15 @@ Run "cmftool help" for a list of commands.
 
 ## Examples
 
-There is an "examples" directory, with... examples.  But they are still NIEM 5 based.
+There is an "examples" directory, with... examples.  But they are still NIEM 5 based. 
 
 ## Testing
 
-The directory "src/test/resources" contains resources for the JUnit tests.
+The directory "src/test/resources" contains resources for the JUnit tests.  Many, many examples there.
 
 ## Building
 
-This project was built with NetBeans 10.0, Gradle 8.3, and Oracle JDK 17.0.9
+This project was built with NetBeans 21.0, Gradle 8.6, and Oracle JDK 21.0.2
 Try "gradle installDist" 
 
 ## Other assets

@@ -25,6 +25,7 @@ package org.mitre.niem.xsd;
 
 import java.io.File;
 import java.io.FileInputStream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mitre.niem.cmf.Model;
@@ -40,6 +41,11 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
 
     
     public ModelToN5XSDTest() {
+    }
+    
+    @Test
+    public void testOneRoundTrip () throws Exception {
+        testRoundTrip(testDir, "clsa.xsd");
     }
     
     @ParameterizedTest

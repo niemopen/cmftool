@@ -32,7 +32,7 @@ public class Property extends Component {
     private Property subPropertyOf = null;
     private ClassType classType = null;
     private Datatype datatype = null;
-    private String refCode = null;          // default to ClassType if not set
+    private String refCode = null;
     private boolean isAttribute = false; 
     private boolean isRefAttribute = false;
     private boolean isRelationship = false;
@@ -61,12 +61,12 @@ public class Property extends Component {
     public boolean isAttribute()                  { return isAttribute; }
     public boolean isRefAttribute()               { return isRefAttribute; }
     public boolean isRelationship()               { return isRelationship; }
-    public String getReferenceCode ()             { return null == refCode ? "" : refCode ; }
+    public String getReferenceCode ()             { return refCode; } 
     
     public String getInheritedReferenceCode() {
         if (null != refCode) return refCode;
         if (null != classType) return classType.getReferenceCode();
-        return "";
+        return null;
     }
     
     @Override

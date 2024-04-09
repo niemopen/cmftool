@@ -47,6 +47,7 @@ public class XProperty extends XObjectType {
     XProperty (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
         obj = new Property();
+        
     }    
     
     @Override

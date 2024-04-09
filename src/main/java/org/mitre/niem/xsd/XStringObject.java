@@ -51,9 +51,9 @@ public class XStringObject extends XObjectType {
     public void addToAugmentRecord (XAugmentRecord xar) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-            case "AugmentationIndex":      xar.getObject().setIndexInType(toInt(val)); break;
-            case "GlobalAugmentationCode": xar.getObject().addGlobalAug(val); break;
-            case "MinOccursQuantity":      xar.getObject().setMinOccurs(toInt(val)); break;
+            case "AugmentationIndex":  xar.getObject().setIndexInType(toInt(val)); break;
+            case "GlobalAugmented":    xar.getObject().setGlobalAugmented(val); break;
+            case "MinOccursQuantity":  xar.getObject().setMinOccurs(toInt(val)); break;
             case "MaxOccursQuantity": 
                 if ("unbounded".equals(val)) xar.getObject().setMaxUnbounded(true);
                 else xar.getObject().setMaxOccurs(toInt(val)); 

@@ -73,7 +73,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class XMLSchemaDocument {
     static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(XMLSchemaDocument.class); 
     
-    private final Stack<String> appinfoURI = new Stack<>();
+    private final Stack<String> appinfoURI = new Stack<>();                             // current xmlns for appinfo namespace
     private final List<XMLNamespaceDeclaration> nsdecls = new ArrayList<>();
     private final List<String> externalImports = new ArrayList<>();
     private final List<String> docStrings = new ArrayList<>();
@@ -233,8 +233,10 @@ public class XMLSchemaDocument {
                         }
                 }                
             }
-            // Remember the QName of the global complex type we are defining
-            else if (1 == depth && "complexType".equals(elname)) ctypeEN = Pair.with(targetNS, atts.getValue("name"));
+            // Remember the QName of the global xs:complexType or xs:attributeGroup we are defining
+            else if (1 == depth)
+                if ("complexType".equals(elname) || "attributeGroup".equals(elname)) 
+                    ctypeEN = Pair.with(targetNS, atts.getValue("name"));
                 
             // Look for appinfo attributes on global definitions and declarations
             if (1 == depth && xsComponentPat.matcher(elname).lookingAt()) {   
@@ -247,7 +249,8 @@ public class XMLSchemaDocument {
                     }
                 } 
             }
-            // Look for appinfo attributes on attribute and element references within complex type definition
+            // Look for appinfo attributes on attribute and element references 
+            // within xs:complexType and xs:attributeGroup
             if ("element".equals(elname) || "attribute".equals(elname)) {
                 String eref = atts.getValue("ref");
                 Pair<String, String> een = nsm.expandQName(eref);
