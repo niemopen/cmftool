@@ -91,11 +91,12 @@ public class ModelXMLWriter {
         Element e = dom.createElementNS(CMF_NS_URI, "Class");
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
         addComponentChildren(dom, e, x);
-        if (x.isAugmentable()) addSimpleChild(dom, e, "AugmentableIndicator", "true");
+        addOptionalIndicator(dom, e, "AbstractIndicator", x.isAbstract());
         addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
+        addOptionalIndicator(dom, e, "AugmentableIndicator", x.isAugmentable());
+        addSimpleChild(dom, e, "ReferenceCode", x.getReferenceCode());
         if (null != x.hasPropertyList()) 
             for (HasProperty z : x.hasPropertyList()) { addHasProperty(dom, e, z); }
-        addSimpleChild(dom, e, "ReferenceCode", x.getReferenceCode());
         p.appendChild(e);
     }
     
@@ -117,7 +118,7 @@ public class ModelXMLWriter {
         Element e = dom.createElementNS(CMF_NS_URI, "CodeListBinding");
         addSimpleChild(dom, e, "CodeListURI", x.getURI());
         addSimpleChild(dom, e, "CodeListColumnName", x.getColumn());
-        if (x.getIsConstraining()) addSimpleChild(dom, e, "CodeListConstrainingIndicator", "true");
+        addOptionalIndicator(dom, e, "CodeListConstrainingIndicator", x.isConstraining());
         p.appendChild(e);
     }
         
@@ -161,7 +162,7 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());            
         addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());
         addSimpleChild(dom, e, "DocumentationText", x.getDefinition());
-        if (x.orderedProperties()) addSimpleChild(dom, e, "OrderedPropertyIndicator", "true");
+        addOptionalIndicator(dom, e, "OrderedPropertyIndicator", x.orderedProperties());
         x.augmentingNS().stream().sorted().forEach((ns) -> {
             addNamespaceRef(dom, e, "AugmentationNamespace", ns);
         });        
@@ -232,13 +233,14 @@ public class ModelXMLWriter {
         
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
         addComponentChildren(dom, e, x);
+        addOptionalIndicator(dom, e, "AbstractIndicator", x.isAbstract());
         addComponentRef(dom, e, "SubPropertyOf", x.getSubPropertyOf());
-        if (x.isRelationship())  addSimpleChild(dom, e, "RelationshipPropertyIndicator", "true"); 
+        addOptionalIndicator(dom, e, "RelationshipPropertyIndicator", x.isRelationship()); 
         
         if (null == x.getClassType()) {
             addComponentRef(dom, e, "Datatype", x.getDatatype());            
-            if (x.isAttribute())     addSimpleChild(dom, e, "AttributeIndicator", "true");
-            if (x.isRefAttribute())  addSimpleChild(dom, e, "RefAttributeIndicator", "true");
+            addOptionalIndicator(dom, e, "AttributeIndicator", x.isAttribute());
+            addOptionalIndicator(dom, e, "RefAttributeIndicator", x.isRefAttribute());
         }
         else {
             addComponentRef(dom, e, "Class", x.getClassType());
@@ -277,8 +279,7 @@ public class ModelXMLWriter {
         addSimpleChild(dom, p, "Name", x.getName());
         addNamespaceRef(dom, p, "Namespace", x.getNamespace());
         addSimpleChild(dom, p, "DocumentationText", x.getDocumentation());
-        if (x.isAbstract())   addSimpleChild(dom, p, "AbstractIndicator", "true");
-        if (x.isDeprecated()) addSimpleChild(dom, p, "DeprecatedIndicator", "true");
+        addOptionalIndicator(dom, p, "DeprecatedIndicator", x.isDeprecated());
     }
     
     private void addSimpleChild (Document dom, Element p, String eln, String value) {
@@ -290,6 +291,10 @@ public class ModelXMLWriter {
     
     private void addSimpleChild (Document dom, Element p, String eln, boolean value) {
         addSimpleChild(dom, p, eln, value ? "true" : "false");
+    }
+    
+    private void addOptionalIndicator (Document dom, Element p, String eln, boolean value) {
+        if (value) addSimpleChild(dom, p, eln, "true");
     }
     
     private void addAttribute (Document dom, Element p, String an, String value) {

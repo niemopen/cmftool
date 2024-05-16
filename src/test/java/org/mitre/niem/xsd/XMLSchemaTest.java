@@ -28,10 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import nl.altindag.log.LogCaptor;
-import org.apache.xerces.xs.XSComplexTypeDefinition;
-import static org.apache.xerces.xs.XSConstants.TYPE_DEFINITION;
-import org.apache.xerces.xs.XSTypeDefinition;
-import static org.apache.xerces.xs.XSTypeDefinition.SIMPLE_TYPE;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -124,7 +120,7 @@ public class XMLSchemaTest {
     @DisplayName("not a schema or catalog")
     public void testGS04 () throws XMLSchema.XMLSchemaException, IOException {    
         var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga("/cmf/codeType.cmf"));
+           var s = new XMLSchema(ga("/cmf/clsa.cmf"));
         });
         assertThat(thrown.getMessage()).contains("not a schema document or XML catalog"); 
     }

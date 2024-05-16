@@ -12,7 +12,7 @@
     <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>niem/utility/code-lists-instance.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaVersionText>ps02</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </Namespace>
   <Namespace structures:id="nc">
@@ -33,7 +33,7 @@
     <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaVersionText>ps02</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
     <LocalTerm>
       <TermName>maxInclusive</TermName>
@@ -47,7 +47,7 @@
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaVersionText>ps02</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
@@ -109,7 +109,6 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>A universal identifier for a code list.</DocumentationText>
     </HasProperty>
-    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Datatype structures:id="xs.anyURI">
     <Name>anyURI</Name>

@@ -39,7 +39,7 @@ public class CodeListBinding extends ObjectType {
     
     public String getURI()              { return uri; }
     public String getColumn()           { return column; }
-    public boolean getIsConstraining()  { return isConstraining; }
+    public boolean isConstraining()     { return isConstraining; }
 
     public CodeListBinding () { super(); }
     

@@ -5,24 +5,24 @@
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Namespace structures:id="nc">
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
     <NamespacePrefixText>nc</NamespacePrefixText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>complexContent.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
     <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </Namespace>
   <Namespace structures:id="niem-xs">
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
+    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
     <NamespacePrefixText>niem-xs</NamespacePrefixText>
     <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>1</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
     <LocalTerm>
       <TermName>maxInclusive</TermName>
@@ -30,13 +30,13 @@
     </LocalTerm>
   </Namespace>
   <Namespace structures:id="structures">
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
     <NamespacePrefixText>structures</NamespacePrefixText>
     <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
+    <NIEMVersionText>5</NIEMVersionText>
+    <SchemaVersionText>5.0</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
@@ -103,7 +103,6 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>True if value represents the first letter or initials of a persons name; false otherwise.</DocumentationText>
     </HasProperty>
-    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.PersonNameType">
     <Name>PersonNameType</Name>
@@ -130,14 +129,12 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>A comment about a kind of name for a person.</DocumentationText>
     </HasProperty>
-    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.ProperNameTextType">
     <Name>ProperNameTextType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>ClassType extending TextType with no properties</DocumentationText>
     <ExtensionOfClass structures:ref="nc.TextType" xsi:nil="true"/>
-    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.TextType">
     <Name>TextType</Name>
@@ -154,7 +151,6 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>True if only partial information was available to the information source at the time when the data was captured in the system; false otherwise.</DocumentationText>
     </HasProperty>
-    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Datatype structures:id="xs.boolean">
     <Name>boolean</Name>

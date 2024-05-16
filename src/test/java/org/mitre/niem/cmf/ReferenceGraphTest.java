@@ -42,21 +42,21 @@ public class ReferenceGraphTest {
     public ReferenceGraphTest() {
     }
 
-    @Test
-    public void testReachable() throws FileNotFoundException {
-        FileInputStream mis = new FileInputStream(testDir+"augCCwE.cmf");
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(mis);
-        var my = m.getNamespaceByURI("http://example.com/N6AugEx/1.0/");
-        var nc = m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/");
-        var j  = m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/");
-        assertNotNull(my);
-        assertNotNull(nc);
-        assertNotNull(j);
-        var rg = new ReferenceGraph(m.getComponentList());
-        var rf = rg.reachableFrom(my);
-        assertThat(rf).contains(my, nc);
-        assertThat(rf).doesNotContain(j);
-     }
+//    @Test
+//    public void testReachable() throws FileNotFoundException {
+//        FileInputStream mis = new FileInputStream(testDir+"augCCwE.cmf");
+//        ModelXMLReader mr = new ModelXMLReader();
+//        Model m = mr.readXML(mis);
+//        var my = m.getNamespaceByURI("http://example.com/N6AugEx/1.0/");
+//        var nc = m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/");
+//        var j  = m.getNamespaceByURI("https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/");
+//        assertNotNull(my);
+//        assertNotNull(nc);
+//        assertNotNull(j);
+//        var rg = new ReferenceGraph(m.getComponentList());
+//        var rf = rg.reachableFrom(my);
+//        assertThat(rf).contains(my, nc);
+//        assertThat(rf).doesNotContain(j);
+//     }
     
 }

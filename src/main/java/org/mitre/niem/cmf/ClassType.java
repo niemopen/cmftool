@@ -33,6 +33,7 @@ import java.util.List;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ClassType extends Component {
+    private boolean isAbstract = false;
     private String refCode = null;
     private boolean isAugmentable = false;
     private ClassType extensionOfClass  = null;
@@ -44,17 +45,20 @@ public class ClassType extends Component {
         super(ns, lname);
         type = C_CLASSTYPE;
     }
-
-    public void setReferenceCode (String s)       { refCode = s; }
+    
+    public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
+    public void setIsAbstract(boolean f)          { isAbstract = f; }
     public void setIsAugmentable (boolean f)      { isAugmentable = f; }
     public void setIsAugmentable (String s)       { isAugmentable = "true".equals(s); }
-    public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
+    public void setReferenceCode (String s)       { refCode = s; }
     
+    public ClassType getExtensionOfClass ()       { return extensionOfClass; }
     public String getReferenceCode()              { return refCode; }
+    public boolean isAbstract ()                  { return isAbstract; }
     public boolean isAugmentable ()               { return isAugmentable; }
     public boolean isAdapter ()                   { return getName().endsWith("AdapterType"); }
     public boolean isReferenceable ()             { return !refCode.isBlank() && !"NONE".equals(refCode); }
-    public ClassType getExtensionOfClass ()       { return extensionOfClass; }
+
             
     public List<HasProperty> hasPropertyList ()   { return hasPropertyList; }
     

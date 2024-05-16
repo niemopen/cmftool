@@ -55,7 +55,7 @@
     <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaVersionText>ps02</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
     <LocalTerm>
       <TermName>maxInclusive</TermName>
@@ -80,7 +80,7 @@
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaVersionText>ps02</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </Namespace>
   <Namespace structures:id="xlink">
@@ -132,7 +132,6 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>A gml:Point is defined by a single coordinate tuple. The direct position of a point is specified by the gml:pos element which is of type gml:DirectPositionType.</DocumentationText>
     </HasProperty>
-    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="ns.TrackPointType">
     <Name>TrackPointType</Name>
@@ -143,6 +142,5 @@
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
-    <ReferenceCode>ANY</ReferenceCode>
   </Class>
 </Model>

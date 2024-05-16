@@ -1221,7 +1221,7 @@ public abstract class ModelToXSD {
         Element cbe = dom.createElementNS(clsaURI, clsaPrefix + ":" + "SimpleCodeListBinding");
         cbe.setAttribute("columnName", clb.getColumn());
         cbe.setAttribute("codeListURI", clb.getURI());
-        if (clb.getIsConstraining()) cbe.setAttribute("constrainingIndicator", "true");
+        if (clb.isConstraining()) cbe.setAttribute("constrainingIndicator", "true");
         e.appendChild(cbe);
         return cbe;
     }

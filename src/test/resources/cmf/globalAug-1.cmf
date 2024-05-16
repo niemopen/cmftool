@@ -19,8 +19,7 @@
       <AugmentationIndex>0</AugmentationIndex>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <GlobalAugmentationCode>ASSOCIATION</GlobalAugmentationCode>
-      <GlobalAugmentationCode>OBJECT</GlobalAugmentationCode>
+      <GlobalAugmented>structures:AssociationAugmentationPoint</GlobalAugmented>
     </AugmentRecord>
   </Namespace>
   <Namespace structures:id="niem-xs">
@@ -31,7 +30,7 @@
     <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaVersionText>ps02</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
     <LocalTerm>
       <TermName>maxInclusive</TermName>
@@ -45,7 +44,7 @@
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>psd01</SchemaVersionText>
+    <SchemaVersionText>ps02</SchemaVersionText>
     <SchemaLanguageName>en-US</SchemaLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
@@ -85,7 +84,6 @@
     <Name>EducationType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for a person's educational background.</DocumentationText>
-    <AugmentableIndicator>true</AugmentableIndicator>
     <HasProperty>
       <DataProperty structures:ref="nc.EducationDescriptionText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
@@ -102,13 +100,11 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <AugmentationNamespace structures:ref="nc" xsi:nil="true"/>
     </HasProperty>
-    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Class structures:id="nc.ItemType">
     <Name>ItemType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for an article or thing.</DocumentationText>
-    <AugmentableIndicator>true</AugmentableIndicator>
     <HasProperty>
       <DataProperty structures:ref="nc.ItemName" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
@@ -120,7 +116,6 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <AugmentationNamespace structures:ref="nc" xsi:nil="true"/>
     </HasProperty>
-    <ReferenceCode>ANY</ReferenceCode>
   </Class>
   <Datatype structures:id="nc.TextType">
     <Name>TextType</Name>

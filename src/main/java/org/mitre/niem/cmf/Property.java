@@ -33,6 +33,7 @@ public class Property extends Component {
     private ClassType classType = null;
     private Datatype datatype = null;
     private String refCode = null;
+    private boolean isAbstract = false;
     private boolean isAttribute = false; 
     private boolean isRefAttribute = false;
     private boolean isRelationship = false;
@@ -47,6 +48,7 @@ public class Property extends Component {
     public void setSubPropertyOf (Property s)     { subPropertyOf = s; }
     public void setClassType (ClassType c)        { classType = c; }
     public void setDatatype (Datatype d)          { datatype = d; }
+    public void setIsAbstract (boolean f)         { isAbstract = f; }
     public void setIsAttribute (boolean f)        { isAttribute = f; }
     public void setIsAttribute (String s)         { isAttribute = null != s && "true".equals(s); }
     public void setIsRefAttribute (boolean f)     { isRefAttribute = f; }
@@ -58,6 +60,7 @@ public class Property extends Component {
     public Property getSubPropertyOf ()           { return subPropertyOf; }
     public ClassType getClassType ()              { return classType; }
     public Datatype getDatatype()                 { return datatype; }
+    public boolean isAbstract()                   { return isAbstract; }
     public boolean isAttribute()                  { return isAttribute; }
     public boolean isRefAttribute()               { return isRefAttribute; }
     public boolean isRelationship()               { return isRelationship; }

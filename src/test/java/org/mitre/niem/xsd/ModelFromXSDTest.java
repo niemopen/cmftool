@@ -314,7 +314,7 @@ public class ModelFromXSDTest {
             assertNotNull(clb);
             assertEquals("http://api.nsgreg.nga.mil/geo-political/GENC/2/3-11", clb.getURI());
             assertEquals("foo", clb.getColumn());
-            assertTrue(clb.getIsConstraining());
+            assertTrue(clb.isConstraining());
 
             dt = m.getDatatype("genc:CountryAlpha3CodeType");
             clb = dt.getCodeListBinding();
@@ -322,7 +322,7 @@ public class ModelFromXSDTest {
             assertNotNull(clb);
             assertEquals("http://api.nsgreg.nga.mil/geo-political/GENC/3/3-11", clb.getURI());
             assertEquals("#code", clb.getColumn());
-            assertFalse(clb.getIsConstraining());
+            assertFalse(clb.isConstraining());
             assertEmptyLogs();
         }
     }

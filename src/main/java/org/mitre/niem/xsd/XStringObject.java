@@ -68,7 +68,7 @@ public class XStringObject extends XObjectType {
     public void addToClassType(XClassType xc) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "AbstractIndicator":            xc.getObject().setIsAbstract(val); break;
+        case "AbstractIndicator":            xc.getObject().setIsAbstract("true".equals(val)); break;
         case "AugmentableIndicator":         xc.getObject().setIsAugmentable(val); break;
         case "DocumentationText":            xc.getObject().setDocumentation(val); break;
         case "DeprecatedIndicator":          xc.getObject().setIsDeprecated(val); break;  
@@ -177,7 +177,7 @@ public class XStringObject extends XObjectType {
     public void addToProperty (XProperty xop) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "AbstractIndicator":             xop.getObject().setIsAbstract(val); break;
+        case "AbstractIndicator":             xop.getObject().setIsAbstract("true".equals(val)); break;
         case "AttributeIndicator":            xop.getObject().setIsAttribute(val); break;
         case "DocumentationText":             xop.getObject().setDocumentation(val); break;
         case "DeprecatedIndicator":           xop.getObject().setIsDeprecated(val); break;  
