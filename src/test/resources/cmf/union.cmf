@@ -8,7 +8,7 @@
     <NamespaceURI>http://example.com/codes/</NamespaceURI>
     <NamespacePrefixText>ns</NamespacePrefixText>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>union.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
   </Namespace>
@@ -19,8 +19,8 @@
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>ps02</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>

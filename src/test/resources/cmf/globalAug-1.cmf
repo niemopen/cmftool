@@ -9,11 +9,11 @@
     <NamespacePrefixText>nc</NamespacePrefixText>
     <DocumentationText>global element augmentation test case -- object and association</DocumentationText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>globalAug-1.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentRecord>
       <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
       <AugmentationIndex>0</AugmentationIndex>
@@ -27,11 +27,11 @@
     <NamespacePrefixText>niem-xs</NamespacePrefixText>
     <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>ps02</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <LocalTerm>
       <TermName>maxInclusive</TermName>
       <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
@@ -44,8 +44,8 @@
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>ps02</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
@@ -84,6 +84,7 @@
     <Name>EducationType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for a person's educational background.</DocumentationText>
+    <AugmentableIndicator>true</AugmentableIndicator>
     <HasProperty>
       <DataProperty structures:ref="nc.EducationDescriptionText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
@@ -105,6 +106,7 @@
     <Name>ItemType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for an article or thing.</DocumentationText>
+    <AugmentableIndicator>true</AugmentableIndicator>
     <HasProperty>
       <DataProperty structures:ref="nc.ItemName" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>

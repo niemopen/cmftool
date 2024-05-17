@@ -9,11 +9,11 @@
     <NamespacePrefixText>j</NamespacePrefixText>
     <DocumentationText>Justice domain.</DocumentationText>
     <NamespaceKindCode>DOMAIN</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>augment-niem/domains/jxdm.xsd</DocumentFilePathText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>augment/domains/jxdm.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
       <ObjectProperty structures:ref="j.AddressCommentText" xsi:nil="true"/>
@@ -41,22 +41,22 @@
     <NamespacePrefixText>nc</NamespacePrefixText>
     <DocumentationText>NIEM Core.</DocumentationText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>augment-niem/niem-core.xsd</DocumentFilePathText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>augment/niem-core.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="niem-xs">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
     <NamespacePrefixText>niem-xs</NamespacePrefixText>
     <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
-    <DocumentFilePathText>augment-niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>augment/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>ps02</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <LocalTerm>
       <TermName>maxInclusive</TermName>
       <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
@@ -67,21 +67,21 @@
     <NamespacePrefixText>structures</NamespacePrefixText>
     <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
-    <DocumentFilePathText>augment-niem/utility/structures.xsd</DocumentFilePathText>
+    <DocumentFilePathText>augment/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>ps02</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="test">
     <NamespaceURI>http://example.com/dummyAugmentation/</NamespaceURI>
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>Augmentation test schema</DocumentationText>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>augment.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
       <ObjectProperty structures:ref="j.AddressCommentText" xsi:nil="true"/>

@@ -64,7 +64,6 @@ public class ModelToN5XSDTest extends ModelToXSDTest {
         "doubleType.xsd",
 //        "externals.xsd",                      // won't round trip, external docs not generated
         "isRefAtt.xsd",
-        "list.xsd",
         "listSimpleType.xsd",
         "literal-0.xsd",
         "literal-1.xsd",

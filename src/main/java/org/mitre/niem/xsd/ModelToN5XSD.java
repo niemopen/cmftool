@@ -38,11 +38,6 @@ public class ModelToN5XSD extends ModelToXSD {
     public ModelToN5XSD (Model m) { super(m); }
     
     @Override
-    protected String fixConformanceTargets (String ctas) {
-        return ctas;
-    }
-
-    @Override
     protected String getArchitecture ()       { return "NIEM5"; }
     
     @Override

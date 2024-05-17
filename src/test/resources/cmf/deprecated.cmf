@@ -9,22 +9,22 @@
     <NamespacePrefixText>nc</NamespacePrefixText>
     <DocumentationText>appinfo test case</DocumentationText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>deprecated.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="niem-xs">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
     <NamespacePrefixText>niem-xs</NamespacePrefixText>
     <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>ps02</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <LocalTerm>
       <TermName>maxInclusive</TermName>
       <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
@@ -37,8 +37,8 @@
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>ps02</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>

@@ -91,7 +91,7 @@ public class XMLSchemaTest {
     @Test
     @DisplayName("file URI")
     public void testGS01 () throws XMLSchema.XMLSchemaException, IOException {
-        var s = new XMLSchema(ga("file:/C:/Work/NetBeans/CMFTool/src/test/resources/xsd5/list.xsd"));
+        var s = new XMLSchema(ga("file:/C:/Work/NetBeans/CMFTool/src/test/resources/xsd6/datatypes.xsd"));
         assertEquals(0, s.catalogs().size());
         assertEquals(1, s.initialSchemaDocs().size());
         assertEquals(0, s.initialNS().size());

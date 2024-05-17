@@ -144,6 +144,16 @@ public class ModelXMLReaderTest {
 //        assertEquals(p2.getDatatype(), d1);
 //        assertEquals(p2.getSubPropertyOf(), p1);
 //    }
+    
+   // Ensure can read Datatype and ListDatatype elements in CMF
+   @Test
+   public void testDatatypes () {
+       Model m = readModel(testDirPath, "datatypes.cmf");
+       assertNotNull(m);
+       var dtInt = m.getDatatype("xs:integer"); assertNotNull(dtInt);
+       var dtLst = m.getDatatype("test:ListType"); assertNotNull(dtLst);
+       assertEquals(dtInt, dtLst.getListOf());      
+   }
 
    @Test
     public void testDeprecated () {
@@ -276,34 +286,6 @@ public class ModelXMLReaderTest {
         assertNotNull(lsl.get(2).getDefinition());
         assertNotNull(lsl.get(2).getSourceURIs());
         assertEquals(2, lsl.get(2).citationList().size());        
-    }
-    
-    @Test
-    public void testListOf () {
-        FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "list.cmf");
-        try {
-            cmfIS = new FileInputStream(cmfFile);
-        } catch (FileNotFoundException ex) {
-            fail("Where is my input file?");
-        }
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(cmfIS);
-        assertNotNull(m);
-        assertEquals(0, mr.getMessages().size());
-        
-        assertEquals(3, m.getNamespaceList().size());
-        assertNotNull(m.getNamespaceByPrefix("nc"));
-        assertNotNull(m.getNamespaceByPrefix("structures"));
-        assertNotNull(m.getNamespaceByPrefix("xs"));
-        
-        assertEquals(2, m.getComponentList().size());
- 
-        Datatype dt = m.getDatatype("nc:TokenListType");
-        assertNotNull(dt);
-        assertNull(dt.getUnionOf());
-        assertNull(dt.getRestrictionOf());
-        assertEquals(dt.getListOf(), m.getDatatype("xs:token"));       
     }
     
     @Test
@@ -526,6 +508,19 @@ public class ModelXMLReaderTest {
         assertNull(m);
         assertEquals(1, mr.getMessages().size());
         assertTrue(mr.getMessages().get(0).contains("IDREF/URI type mismatch"));
+    }
+    
+    public Model readModel (String dir, String fname) {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(dir, fname);
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);  
+        return m;
     }
 
 //    // Not really a test, just some scaffolding for processing a Model object    

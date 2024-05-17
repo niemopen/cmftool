@@ -24,6 +24,7 @@
 package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
@@ -39,11 +40,11 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     private Model model = null;             // Namespace objects know the Model they are part of     
     private final List<AugmentRecord> augmentList = new ArrayList<>();
     private final List<LocalTerm> localTermList   = new ArrayList<>();
+    private final List<String> confTargList       = new ArrayList<>();
     private String namespaceURI = null;
     private String namespacePrefix = null;
     private String documentation = null;
     private int nsKind = NSK_UNKNOWN;
-    private String confTargs = null;            // conformance target assertions
     private String filepath = null;             // relative path from pile root
     private String niemVersion = null;          // eg. "3","4","5","6"
     private String schemaVersion = null;        // from @version
@@ -78,7 +79,6 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public void setDocumentation (String s)   { documentation = s.strip().replaceAll("\\s+", " "); }
     public void setKind (int k)               { nsKind = k; }
     public void setKind (String c)            { nsKind = namespaceCode2Kind(c); }
-    public void setConfTargets (String s)     { confTargs = s; }
     public void setFilePath (String s)        { filepath = s; }
     public void setNIEMversion (String s)     { niemVersion = s; }
     public void setSchemaVersion (String s)   { schemaVersion = s; }
@@ -90,7 +90,6 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public String getDocumentation ()         { return documentation; }
     public int getKind ()                     { return nsKind; }
     public boolean isExternal ()              { return nsKind == NSK_EXTERNAL; }
-    public String getConfTargets ()           { return confTargs; }
     public String getFilePath ()              { return filepath; }
     public String getNIEMVersion ()           { return niemVersion; }
     public String getSchemaVersion ()         { return schemaVersion; }
@@ -98,6 +97,7 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     public String getImportDoc ()             { return importDoc; }
     public List<AugmentRecord> augmentList()  { return augmentList; }
     public List<LocalTerm> localTermList()    { return localTermList; }
+    public List<String> confTargList()        { return confTargList; }
     
     public void addAugmentRecord (AugmentRecord r) {
         this.augmentList.add(r);
@@ -122,6 +122,14 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     
     public void addLocalTerm (LocalTerm lt) {
         this.localTermList.add(lt);
+    }
+    
+    // Add the items in a string list of conformance target URIs (from 
+    // @ct:conformanceTargets) to the  conformance targets for this namespace.
+    public void setConfTargets (String uriList) {
+        if (null == uriList || uriList.isBlank()) return;
+        String[] ctargs = uriList.split("\\s+");
+        confTargList.addAll(Arrays.asList(ctargs));
     }
     
     // Enforces guarantee that each namespace in a model has a unique prefix

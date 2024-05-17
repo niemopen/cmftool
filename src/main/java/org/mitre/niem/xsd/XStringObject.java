@@ -98,7 +98,7 @@ public class XStringObject extends XObjectType {
         String val = getStringVal();
         switch (this.getComponentLname()) {
         case "DocumentationText":   xdt.getObject().setDocumentation(val); break;
-        case "DeprecatedIndicator": xdt.getObject().setIsDeprecated(val); break;        
+        case "DeprecatedIndicator": xdt.getObject().setIsDeprecated(val); break;
         case "Name":                xdt.getObject().setName(val); break;
         default:
                 LOG.error(String.format("can't add '%s' to Datatype", this.getComponentLname()));
@@ -158,16 +158,15 @@ public class XStringObject extends XObjectType {
     public void addToNamespace(XNamespace xns) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "ConformanceTargetURIList": xns.getObject().setConfTargets(val); break;
+        case "ConformanceTargetURI":     xns.getObject().confTargList().add(val); break;
         case "DocumentFilePathText":     xns.getObject().setFilePath(val); break;
         case "DocumentationText":        xns.getObject().setDocumentation(val) ; break;
         case "NamespaceKindCode":        xns.getObject().setKind(val); break;
-        case "NamespacePrefixText": try { xns.getObject().setNamespacePrefix(val); } catch (CMFException ex) { } break;
-        case "NamespaceURI":        try { xns.getObject().setNamespaceURI(val); }    catch (CMFException ex) { } break;
+        case "NamespaceLanguageName":    xns.getObject().setLanguage(val); break;
+        case "NamespacePrefixText":      try { xns.getObject().setNamespacePrefix(val); } catch (CMFException ex) { } break;
+        case "NamespaceURI":             try { xns.getObject().setNamespaceURI(val); }    catch (CMFException ex) { } break;
+        case "NamespaceVersionText":     xns.getObject().setSchemaVersion(val); break;   
         case "NIEMVersionText":          xns.getObject().setNIEMversion(val); break;
-        case "SchemaLanguageName":       xns.getObject().setLanguage(val); break;
-        case "SchemaVersionText":        xns.getObject().setSchemaVersion(val); break;            
-
         default:
                 LOG.error(String.format("can't add '%s' to Namespace", this.getComponentLname()));
                 break;

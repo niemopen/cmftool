@@ -25,6 +25,7 @@ package org.mitre.niem.xsd;
 
 import static org.mitre.niem.NIEMConstants.DEFAULT_NIEM_VERSION;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import org.mitre.niem.cmf.Property;
@@ -42,28 +43,12 @@ public class ModelToSrcXSD extends ModelToXSD {
 
     public ModelToSrcXSD (Model m) { super(m); }
     
-    // Convert NIEM v3-5 ctargs to NIEM 6.
-    // Convert NIEM 6 message schema to subset schema ctarg.
+    // Convert NIEM 6 message schema ctarg to subset schema ctarg.
     @Override
-    protected String fixConformanceTargets (String ctaStr) {
-        if (null == ctaStr) return null;
-        if (ctaStr.isBlank()) return "";
-        var ctab = new StringBuilder();
-        var ctas = ctaStr.split("\\s+");
-        var n5pf = NamespaceKind.getCTPrefix("NIEM5");
-        var n6pf = NamespaceKind.getCTPrefix("NIEM6");
-        var sep  = "";
-        for (String cta : ctas) {
-            if (cta.startsWith(n5pf)) {
-                var targ = NamespaceKind.cta2Target(cta);
-                cta = n6pf + DEFAULT_NIEM_VERSION + "/" + targ;
-            }
-            cta = cta.replace("MessageSchemaDocument", "SubsetSchemaDocument");
-            ctab.append(sep).append(cta);
-            sep = " ";
-        }
-        ctaStr = ctab.toString();               
-        return ctaStr;
+    protected String genConformanceTargets (Namespace ns) {
+        var ctas = super.genConformanceTargets(ns);
+        ctas.replaceAll("#MessageSchemaDocument", "#SubsetSchemaDocument");
+        return ctas;
     }  
 
     // 

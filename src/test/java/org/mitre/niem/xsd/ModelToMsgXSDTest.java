@@ -119,31 +119,31 @@ public class ModelToMsgXSDTest extends ModelToXSDTest {
         assertThat(getAttributeNames(xs, "SimpleContentNoneType", nc)).isEmpty();
     }
     
-    @Test
-    public void testFixConformanceTargets () {
-        NamespaceKind.reset();
-        var mw   = new ModelToMsgXSD(null);
-        var ctas = "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument";
-        var rv   = mw.fixConformanceTargets(ctas);
-        assertEquals(rv, "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument");
-        
-        ctas = "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument";
-        rv   = mw.fixConformanceTargets(ctas);
-        assertEquals(rv, "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument");
-        
-        ctas = "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument";
-        rv   = mw.fixConformanceTargets(ctas);
-        assertEquals(rv, "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument");
-        
-        ctas = "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument " +
-               "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument " +
-               "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument";
-        rv   = mw.fixConformanceTargets(ctas);
-        var rvs = rv.split("\\s+");
-        assertEquals(rvs[0], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument");
-        assertEquals(rvs[1], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument");
-        assertEquals(rvs[2], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument");
-    }
+//    @Test
+//    public void testFixConformanceTargets () {
+//        NamespaceKind.reset();
+//        var mw   = new ModelToMsgXSD(null);
+//        var ctas = "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument";
+//        var rv   = mw.fixConformanceTargets(ctas);
+//        assertEquals(rv, "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument");
+//        
+//        ctas = "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument";
+//        rv   = mw.fixConformanceTargets(ctas);
+//        assertEquals(rv, "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument");
+//        
+//        ctas = "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument";
+//        rv   = mw.fixConformanceTargets(ctas);
+//        assertEquals(rv, "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument");
+//        
+//        ctas = "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument " +
+//               "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument " +
+//               "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument";
+//        rv   = mw.fixConformanceTargets(ctas);
+//        var rvs = rv.split("\\s+");
+//        assertEquals(rvs[0], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument");
+//        assertEquals(rvs[1], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument");
+//        assertEquals(rvs[2], "https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#MessageSchemaDocument");
+//    }
     
     public List<String> getAttributeNames (XSModel xs, String name, String nsuri) {
         var res = new ArrayList<String>();

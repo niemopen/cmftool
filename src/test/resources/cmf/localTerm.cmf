@@ -9,11 +9,11 @@
     <NamespacePrefixText>nc</NamespacePrefixText>
     <DocumentationText>appinfo test case</DocumentationText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
-    <ConformanceTargetURIList>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>localTerm.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <LocalTerm>
       <TermName>2D</TermName>
       <TermLiteralText>Two-dimensional</TermLiteralText>
@@ -37,8 +37,8 @@
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
-    <SchemaVersionText>ps02</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>

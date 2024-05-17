@@ -4,12 +4,12 @@ NIEM6 = \
   cli.cmf \
   clsa.cmf \
   complexContent.cmf \
+  datatypes.cmf \
   deprecated.cmf \
   externals.cmf \
   globalAug-1.cmf \
   globalAug-2.cmf \
   isRefAtt.cmf \
-  list.cmf \
   localTerm.cmf \
   proxy.cmf \
   relProp.cmf \

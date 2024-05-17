@@ -34,6 +34,7 @@ import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.NamespaceKind;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_CORE;
 import org.mitre.niem.cmf.Property;
@@ -289,31 +290,7 @@ public class ModelToMsgXSD extends ModelToXSD {
 
     @Override
     protected String getArchitecture ()       { return "NIEM6"; }   
-    
-    // Convert NIEM v3-5 ctargs to NIEM 6.
-    // Convert NIEM 6 message schema to subset schema ctarg.
-    @Override
-    protected String fixConformanceTargets (String ctaStr) {
-        if (null == ctaStr) return null;
-        if (ctaStr.isBlank()) return "";
-        var ctab = new StringBuilder();
-        var ctas = ctaStr.split("\\s+");
-        var n5pf = NamespaceKind.getCTPrefix("NIEM5");
-        var n6pf = NamespaceKind.getCTPrefix("NIEM6");
-        var sep  = "";
-        for (String cta : ctas) {
-            if (cta.startsWith(n5pf)) {
-                var targ = NamespaceKind.cta2Target(cta);
-                cta = n6pf + DEFAULT_NIEM_VERSION + "/" + targ;
-            }
-            cta = cta.replace("SubsetSchemaDocument", "MessageSchemaDocument");
-            ctab.append(sep).append(cta);
-            sep = " ";
-        }
-        ctaStr = ctab.toString();               
-        return ctaStr;    
-    }
-    
+       
     @Override
     protected String fixSchemaVersion (String nsuri) {
         var ns = m.getNamespaceByURI(nsuri);
@@ -326,6 +303,14 @@ public class ModelToMsgXSD extends ModelToXSD {
         else if (rv.startsWith("message")) rv = rv.substring(7);
         return "message"+rv;
     }    
+    
+    // Convert NIEM 6 subset schema ctarg to message schema ctarg.
+    @Override
+    protected String genConformanceTargets (Namespace ns) {
+        var ctas = super.genConformanceTargets(ns);
+        ctas.replaceAll("#SubsetSchemaDocument", "#MessageSchemaDocument");
+        return ctas;
+    }     
     
     // In a message schema, object properties are nillable unless otherwise
     // specified. Data properties are never nillable -- if you make a property

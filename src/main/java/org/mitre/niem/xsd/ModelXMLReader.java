@@ -226,8 +226,9 @@ public class ModelXMLReader {
                 case "Datatype":              o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "ExtensionOfClass":      o = new XClassType(m, p, ens, eln, atts, lineNum); break;
                 case "HasProperty":           o = new XHasProperty(m, p, ens, eln, atts, lineNum); break;
-                case "LocalTerm":             o = new XLocalTerm(m, p, ens, eln, atts, lineNum); break;
+                case "ListDatatype":          o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "ListOf":                o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "LocalTerm":             o = new XLocalTerm(m, p, ens, eln, atts, lineNum); break;
                 case "Model":                 o = new XModel(m, p, ens, eln, atts, lineNum); break;
                 case "Namespace":             o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
                 case "ObjectProperty":        o = new XProperty(m, p, ens, eln, atts, lineNum); break;
@@ -257,7 +258,7 @@ public class ModelXMLReader {
                 case "CodeListColumnName":
                 case "CodeListConstrainingIndicator":
                 case "CodeListURI":
-                case "ConformanceTargetURIList":
+                case "ConformanceTargetURI":
                 case "DocumentationText":   
                 case "DeprecatedIndicator":
                 case "DocumentFilePathText":
@@ -268,8 +269,10 @@ public class ModelXMLReader {
                 case "MinOccursQuantity": 
                 case "Name":          
                 case "NamespaceKindCode":
-                case "NamespacePrefixText":
-                case "NamespaceURI":       
+                case "NamespaceLanguageName":
+                case "NamespacePrefixText":                    
+                case "NamespaceURI": 
+                case "NamespaceVersionText":                          
                 case "NIEMVersionText":
                 case "NonNegativeValue": 
                 case "OrderedPropertyIndicator":
@@ -277,8 +280,6 @@ public class ModelXMLReader {
                 case "RefAttributeIndicator":
                 case "ReferenceCode":
                 case "RelationshipPropertyIndicator":
-                case "SchemaLanguageName":
-                case "SchemaVersionText":
                 case "SourceCitationText":
                 case "SourceURIList":
                 case "StringValue":    

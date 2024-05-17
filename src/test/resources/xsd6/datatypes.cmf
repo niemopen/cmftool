@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="niem-xs">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>augment/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+    <LocalTerm>
+      <TermName>maxInclusive</TermName>
+      <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
+    </LocalTerm>
+  </Namespace>
+  <Namespace structures:id="structures">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
+    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
+    <DocumentFilePathText>augment/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="test">
+    <NamespaceURI>http://example.com/datatype/</NamespaceURI>
+    <NamespacePrefixText>test</NamespacePrefixText>
+    <DocumentationText>Datatypes test schema</DocumentationText>
+    <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>datatypes.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceKindCode>XSD</NamespaceKindCode>
+  </Namespace>
+  <ListDatatype structures:id="test.ListType">
+    <Name>ListType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <ListOf structures:ref="xs.integer" xsi:nil="true"/>
+  </ListDatatype>
+  <Datatype structures:id="xs.integer">
+    <Name>integer</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

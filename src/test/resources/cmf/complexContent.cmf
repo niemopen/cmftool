@@ -5,39 +5,39 @@
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Namespace structures:id="nc">
-    <NamespaceURI>http://release.niem.gov/niem/niem-core/5.0/</NamespaceURI>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
     <NamespacePrefixText>nc</NamespacePrefixText>
     <NamespaceKindCode>CORE</NamespaceKindCode>
-    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>complexContent.xsd</DocumentFilePathText>
-    <NIEMVersionText>5</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="niem-xs">
-    <NamespaceURI>http://release.niem.gov/niem/proxy/niem-xs/5.0/</NamespaceURI>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
     <NamespacePrefixText>niem-xs</NamespacePrefixText>
     <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
-    <ConformanceTargetURIList>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURIList>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
-    <NIEMVersionText>5</NIEMVersionText>
-    <SchemaVersionText>1</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <LocalTerm>
       <TermName>maxInclusive</TermName>
       <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
     </LocalTerm>
   </Namespace>
   <Namespace structures:id="structures">
-    <NamespaceURI>http://release.niem.gov/niem/structures/5.0/</NamespaceURI>
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
     <NamespacePrefixText>structures</NamespacePrefixText>
     <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
     <NamespaceKindCode>BUILTIN</NamespaceKindCode>
     <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>5</NIEMVersionText>
-    <SchemaVersionText>5.0</SchemaVersionText>
-    <SchemaLanguageName>en-US</SchemaLanguageName>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>

@@ -102,6 +102,8 @@ public class ModelXMLWriter {
     
     private void addDatatype (Document dom, Element p, Datatype x) {
         if (null == x) return;
+        if (null != x.getListOf()) addListDatatype(dom, p, x);
+        else {
         LOG.debug("addDatatype {}", x.getQName());
         Element e = dom.createElementNS(CMF_NS_URI, "Datatype");
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
@@ -111,7 +113,18 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "ListOf", x.getListOf());
         addCodeListBinding(dom, e, x.getCodeListBinding());
         p.appendChild(e);
+        }
     }
+    
+    private void addListDatatype (Document dom, Element p, Datatype x) {
+        Element e = dom.createElementNS(CMF_NS_URI, "ListDatatype");
+        e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
+        addComponentChildren(dom, e, x);  
+        addComponentRef(dom, e, "ListOf", x.getListOf());
+        addOptionalIndicator(dom, e, "OrderedPropertyIndicator", x.getOrderedItems());
+        p.appendChild(e);
+    }
+
     
     private void addCodeListBinding (Document dom, Element p, CodeListBinding x) {
         if (null == x) return;
@@ -178,11 +191,11 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "DocumentationText", x.getDocumentation());
         int nsk = x.getKind();
         addSimpleChild(dom, e, "NamespaceKindCode", namespaceKind2Code(nsk));
-        addSimpleChild(dom, e, "ConformanceTargetURIList", x.getConfTargets());
+        for (var cta : x.confTargList()) addSimpleChild(dom, e, "ConformanceTargetURI", cta);
         addSimpleChild(dom, e, "DocumentFilePathText", x.getFilePath());
         addSimpleChild(dom, e, "NIEMVersionText", x.getNIEMVersion());
-        addSimpleChild(dom, e, "SchemaVersionText", x.getSchemaVersion());
-        addSimpleChild(dom, e, "SchemaLanguageName", x.getLanguage());
+        addSimpleChild(dom, e, "NamespaceVersionText", x.getSchemaVersion());
+        addSimpleChild(dom, e, "NamespaceLanguageName", x.getLanguage());
         Collections.sort(x.augmentList());
         Collections.sort(x.localTermList());
         for (AugmentRecord z : x.augmentList()) addAugmentRec(dom, e, z);

@@ -49,7 +49,6 @@ import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
-import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTERNAL;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.RestrictionOf;
@@ -554,6 +553,22 @@ public class ModelFromXSDTest {
             assertEquals("nc:AngularMinuteType", m.getProperty("test:AttributedAngularMinuteLiteral").getDatatype().getQName());
             assertEquals("xs:token", m.getProperty("test:SomeAtt").getDatatype().getQName());
             assertEmptyLogs();
+        }
+    }
+    
+    // Exercise List, Union, Restriction
+    @Test
+    public void testDatatypes() throws SAXException, ParserConfigurationException, IOException, XMLSchema.XMLSchemaException, CMFException {
+        for (var tdir : testDirs) {
+            String sch = tdir + "/datatypes.xsd";
+            File f = new File(sch);
+            if (!f.canRead()) continue;
+            ModelFromXSD mfact = new ModelFromXSD();
+            Model m = mfact.createModel(sch);
+            
+            var dtInt = m.getDatatype("xs:integer"); assertNotNull(dtInt);
+            var dtLst = m.getDatatype("test:ListType"); assertNotNull(dtLst);
+            assertEquals(dtInt, dtLst.getListOf());
         }
     }
 

@@ -543,7 +543,7 @@ public abstract class ModelToXSD {
         if (null != nsv && !nsv.isBlank())   root.setAttribute("version", nsv);
         
         // Add conformance target assertions, if any
-        String cta = fixConformanceTargets(m.getNamespaceByURI(nsuri).getConfTargets());
+        String cta = genConformanceTargets(m.getNamespaceByURI(nsuri));
         if (null != cta && !cta.isBlank()) {
             String ctns = NamespaceKind.getBuiltinNS(NIEM_CTAS, arch, nsNIEMVersion);
             String ctprefix;
@@ -1387,8 +1387,14 @@ public abstract class ModelToXSD {
     protected String getArchitecture ()       { return "NIEM6"; }
     protected String getDefaultNIEMVersion () { return "6"; }
     
-    protected String fixConformanceTargets (String nsuri) {
-        return m.getNamespaceByURI(nsuri).getConfTargets();
+    protected String genConformanceTargets (Namespace ns) {
+        var ctas = new StringBuilder();
+        var sep  = "";
+        for (var ct : ns.confTargList()) {
+            ctas.append(sep).append(ct);
+            sep = " ";
+        }
+        return ctas.toString();
     }
     
     protected String fixSchemaVersion (String nsuri) {

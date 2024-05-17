@@ -928,6 +928,7 @@ public class ModelFromXSD {
     // type with simple content and no attributes.
     private void processDatatypes () throws CMFException {
         for (var dt : datatypeXSobj.keySet()) {
+            var dtqn = dt.getQName();
             LOG.debug("processing datatype " + dt.getQName());
             dt.setIsDeprecated(getAppinfoAttributeValue(dt.getQName(), null, "deprecated"));
             m.addComponent(dt);
@@ -950,7 +951,9 @@ public class ModelFromXSD {
                     case VARIETY_LIST:
                         var xitem = xstype.getItemType();
                         var listdt = getDatatype(xitem.getNamespace(), xitem.getName());
+                        var opi = getAppinfoAttributeValue(dtqn, null, "orderedPropertyIndicator");
                         dt.setListOf(listdt);
+                        dt.setOrderedItems("true".equals(opi));
                         break;
                     default:
                         var xbase = xstype.getBaseType();
