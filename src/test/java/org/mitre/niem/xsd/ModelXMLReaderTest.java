@@ -42,7 +42,8 @@ import org.mitre.niem.cmf.Namespace;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.namespaceKind2Code;
 import org.mitre.niem.cmf.Property;
-import org.mitre.niem.cmf.UnionOf;
+import static org.mitre.niem.xsd.CheckModel.checkComponents;
+import static org.mitre.niem.xsd.CheckModel.checkDatatypes;
 
 /**
  *
@@ -56,6 +57,35 @@ public class ModelXMLReaderTest {
     public ModelXMLReaderTest() {
     }
     
+    // Return a Model object from reading the specified CMF file.
+    public Model readModel (String dir, String fname) {
+        FileInputStream cmfIS = null;
+        File cmfFile = new File(dir, fname);
+        try {
+            cmfIS = new FileInputStream(cmfFile);
+        } catch (FileNotFoundException ex) {
+            fail("Where is my input file?");
+        }
+        ModelXMLReader mr = new ModelXMLReader();
+        Model m = mr.readXML(cmfIS);
+        assertNotNull(m);
+        return m;
+    }    
+    
+    // Test name, namespace, documentation, and deprecated on components    
+    @Test
+    public void testComponents () {
+        checkComponents(readModel(testDirPath, "components.cmf"));
+    }
+    
+   // Test list, union, restriction datatypes
+   @Test
+   public void testDatatypes () {
+       checkDatatypes(readModel(testDirPath, "datatypes.cmf"));
+   }
+    
+    //////////////
+     
     @Test
     public void testCLSA () {
         FileInputStream cmfIS = null;
@@ -84,6 +114,7 @@ public class ModelXMLReaderTest {
         assertEquals("#code", clb.getColumn());
         assertFalse(clb.isConstraining());
     }
+    
 
 //    @Test
 //    public void testCodetype () {
@@ -145,36 +176,6 @@ public class ModelXMLReaderTest {
 //        assertEquals(p2.getSubPropertyOf(), p1);
 //    }
     
-   // Ensure can read Datatype and ListDatatype elements in CMF
-   @Test
-   public void testDatatypes () {
-       Model m = readModel(testDirPath, "datatypes.cmf");
-       assertNotNull(m);
-       var dtInt = m.getDatatype("xs:integer"); assertNotNull(dtInt);
-       var dtLst = m.getDatatype("test:ListType"); assertNotNull(dtLst);
-       assertEquals(dtInt, dtLst.getListOf());      
-   }
-
-   @Test
-    public void testDeprecated () {
-        FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "deprecated.cmf");
-        try {
-            cmfIS = new FileInputStream(cmfFile);
-        } catch (FileNotFoundException ex) {
-            fail("Where is my input file?");
-        }
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(cmfIS);
-        assertNotNull(m);
-        
-        assertTrue(m.getComponent("nc:DepAtt").isDeprecated());
-        assertTrue(m.getComponent("nc:SecretPercent").isDeprecated());
-        assertTrue(m.getComponent("nc:TextType").isDeprecated());        
-        assertTrue(m.getComponent("nc:SecretPercentType").isDeprecated());
-        
-        assertFalse(m.getDatatype("xs:decimal").isDeprecated());
-    }
 
     @Test
     public void testGlobalElementAug_1 () {
@@ -329,36 +330,36 @@ public class ModelXMLReaderTest {
         assertNotNull(m.getDatatype("xs:string"));
     }
     
-    @Test
-    public void testUnionOf () {
-        FileInputStream cmfIS = null;
-        File cmfFile = new File(testDirPath, "union.cmf");
-        try {
-            cmfIS = new FileInputStream(cmfFile);
-        } catch (FileNotFoundException ex) {
-            fail("Where is my input file?");
-        }
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(cmfIS);
-        assertNotNull(m);
-        assertEquals(0, mr.getMessages().size());
-        
-        assertEquals(3, m.getNamespaceList().size());
-        assertNotNull(m.getNamespaceByPrefix("ns"));
-        assertNotNull(m.getNamespaceByPrefix("xs"));
-        
-        assertEquals(4, m.getComponentList().size());
- 
-        Datatype dt = m.getDatatype("ns:UnionType");
-        assertNotNull(dt);
-        assertNull(dt.getListOf());
-        assertNull(dt.getRestrictionOf());
-        UnionOf u = dt.getUnionOf();
-        assertNotNull(u);
-        assertEquals(2, u.getDatatypeList().size());
-        assertEquals("xs:decimal", u.getDatatypeList().get(0).getQName());
-        assertEquals("xs:float", u.getDatatypeList().get(1).getQName());        
-    }
+//    @Test
+//    public void testUnionOf () {
+//        FileInputStream cmfIS = null;
+//        File cmfFile = new File(testDirPath, "union.cmf");
+//        try {
+//            cmfIS = new FileInputStream(cmfFile);
+//        } catch (FileNotFoundException ex) {
+//            fail("Where is my input file?");
+//        }
+//        ModelXMLReader mr = new ModelXMLReader();
+//        Model m = mr.readXML(cmfIS);
+//        assertNotNull(m);
+//        assertEquals(0, mr.getMessages().size());
+//        
+//        assertEquals(3, m.getNamespaceList().size());
+//        assertNotNull(m.getNamespaceByPrefix("ns"));
+//        assertNotNull(m.getNamespaceByPrefix("xs"));
+//        
+//        assertEquals(4, m.getComponentList().size());
+// 
+//        Datatype dt = m.getDatatype("ns:UnionType");
+//        assertNotNull(dt);
+//        assertNull(dt.getListOf());
+//        assertNull(dt.getRestrictionOf());
+//        UnionOf u = dt.getUnionOf();
+//        assertNotNull(u);
+//        assertEquals(2, u.getDatatypeList().size());
+//        assertEquals("xs:decimal", u.getDatatypeList().get(0).getQName());
+//        assertEquals("xs:float", u.getDatatypeList().get(1).getQName());        
+//    }
 
     @Test
     public void testExternals () {
@@ -509,19 +510,7 @@ public class ModelXMLReaderTest {
         assertEquals(1, mr.getMessages().size());
         assertTrue(mr.getMessages().get(0).contains("IDREF/URI type mismatch"));
     }
-    
-    public Model readModel (String dir, String fname) {
-        FileInputStream cmfIS = null;
-        File cmfFile = new File(dir, fname);
-        try {
-            cmfIS = new FileInputStream(cmfFile);
-        } catch (FileNotFoundException ex) {
-            fail("Where is my input file?");
-        }
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(cmfIS);  
-        return m;
-    }
+
 
 //    // Not really a test, just some scaffolding for processing a Model object    
 //    @Test

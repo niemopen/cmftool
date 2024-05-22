@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2022 The MITRE Corporation.
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,38 +23,16 @@
  */
 package org.mitre.niem.cmf;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class RestrictionOf extends ObjectType {
-    private Datatype datatype = null;
-    private final List<Facet> facetList = new ArrayList<>();
+public class RestrictionDatatype extends Datatype {
+     
+    public RestrictionDatatype () { }
     
-    public void setDatatype (Datatype dt) { datatype = dt; }
-    public Datatype getDatatype ()        { return datatype; }
-    
-    public List<Facet> getFacetList()     { return facetList; }
-    
-    public RestrictionOf () { super(); }
-      
-    public void addFacet (Facet c) {
-        this.facetList.add(c);
-    }
-    
-    public void removeFacet (Facet c) {
-        int index = this.facetList.indexOf(c);
-        if (index < 0) return;
-        this.facetList.remove(index);
-    }
-    
-    public void replaceFacet (Facet oc, Facet nc) {
-        int index = this.facetList.indexOf(oc);
-        if (index < 0) return;
-        this.facetList.set(index, nc);        
-    }       
+    public RestrictionDatatype (Namespace ns, String lname) {
+        super(ns, lname);
+    }   
 }

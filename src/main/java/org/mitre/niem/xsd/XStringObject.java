@@ -97,9 +97,10 @@ public class XStringObject extends XObjectType {
     public void addToDatatype(XDatatype xdt) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-        case "DocumentationText":   xdt.getObject().setDocumentation(val); break;
-        case "DeprecatedIndicator": xdt.getObject().setIsDeprecated(val); break;
-        case "Name":                xdt.getObject().setName(val); break;
+        case "DocumentationText":        xdt.getObject().setDocumentation(val); break;
+        case "DeprecatedIndicator":      xdt.getObject().setIsDeprecated(val); break;
+        case "Name":                     xdt.getObject().setName(val); break;
+        case "OrderedPropertyIndicator": xdt.getObject().setOrderedItems("true".equals(val)); break;
         default:
                 LOG.error(String.format("can't add '%s' to Datatype", this.getComponentLname()));
                 break;

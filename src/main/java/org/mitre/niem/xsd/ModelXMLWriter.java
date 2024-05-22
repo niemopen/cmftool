@@ -30,7 +30,6 @@ import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
-import org.mitre.niem.cmf.RestrictionOf;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.UnionOf;
 import org.mitre.niem.cmf.Facet;
@@ -102,17 +101,15 @@ public class ModelXMLWriter {
     
     private void addDatatype (Document dom, Element p, Datatype x) {
         if (null == x) return;
-        if (null != x.getListOf()) addListDatatype(dom, p, x);
-        else {
         LOG.debug("addDatatype {}", x.getQName());
-        Element e = dom.createElementNS(CMF_NS_URI, "Datatype");
-        e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
-        addComponentChildren(dom, e, x);  
-        addRestrictionOf(dom, e, x.getRestrictionOf());
-        addUnionOf(dom, e, x.getUnionOf());
-        addComponentRef(dom, e, "ListOf", x.getListOf());
-        addCodeListBinding(dom, e, x.getCodeListBinding());
-        p.appendChild(e);
+        if (null != x.getListOf()) addListDatatype(dom, p, x);
+        else if (!x.unionOf().isEmpty()) addUnionDatatype(dom, p, x);
+        else if (null != x.getRestrictionBase()) addRestrictionDatatype(dom, p, x);
+        else {
+            Element e = dom.createElementNS(CMF_NS_URI, "Datatype");
+            e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
+            addComponentChildren(dom, e, x);  
+            p.appendChild(e);
         }
     }
     
@@ -123,6 +120,24 @@ public class ModelXMLWriter {
         addComponentRef(dom, e, "ListOf", x.getListOf());
         addOptionalIndicator(dom, e, "OrderedPropertyIndicator", x.getOrderedItems());
         p.appendChild(e);
+    }
+    
+    private void addUnionDatatype (Document dom, Element p, Datatype x) {
+        Element e = dom.createElementNS(CMF_NS_URI, "UnionDatatype");
+        e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
+        addComponentChildren(dom, e, x);  
+        for (var udt : x.unionOf()) addComponentRef(dom, e, "UnionOf", udt);
+        p.appendChild(e);        
+    }
+    
+    private void addRestrictionDatatype (Document dom, Element p, Datatype x) {
+        Element e = dom.createElementNS(CMF_NS_URI, "RestrictionDatatype");
+        e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
+        addComponentChildren(dom, e, x);  
+        addComponentRef(dom, e, "RestrictionBase", x.getRestrictionBase());
+        for (var f : x.facetList()) addFacet(dom, e, f);
+        addCodeListBinding(dom, e, x.getCodeListBinding());
+        p.appendChild(e);        
     }
 
     
@@ -177,7 +192,7 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "DocumentationText", x.getDefinition());
         addOptionalIndicator(dom, e, "OrderedPropertyIndicator", x.orderedProperties());
         x.augmentingNS().stream().sorted().forEach((ns) -> {
-            addNamespaceRef(dom, e, "AugmentationNamespace", ns);
+            addNamespaceRef(dom, e, "AugmentingNamespace", ns);
         });        
         p.appendChild(e);
     }
@@ -205,7 +220,7 @@ public class ModelXMLWriter {
     
     private void addAugmentRec (Document dom, Element p, AugmentRecord x) {
         if (null == x) return;
-        Element e = dom.createElementNS(CMF_NS_URI, "AugmentRecord");
+        Element e = dom.createElementNS(CMF_NS_URI, "AugmentationRecord");
         addComponentRef(dom, e, "Class", x.getClassType());
         
         var pr = x.getProperty();
@@ -259,15 +274,6 @@ public class ModelXMLWriter {
             addComponentRef(dom, e, "Class", x.getClassType());
             addSimpleChild(dom, e, "ReferenceCode", x.getReferenceCode());
         }
-        p.appendChild(e);
-    }
-          
-    private void addRestrictionOf (Document dom, Element p, RestrictionOf x) {
-        if (null == x) return;
-        Element e = dom.createElementNS(CMF_NS_URI, "RestrictionOf");        
-        addComponentRef(dom, e, "Datatype", x.getDatatype());
-        if (null != x.getFacetList())
-            for (Facet z : x.getFacetList()) { addFacet(dom, e, z); }
         p.appendChild(e);
     }
       

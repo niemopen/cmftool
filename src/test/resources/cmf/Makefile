@@ -4,8 +4,8 @@ NIEM6 = \
   cli.cmf \
   clsa.cmf \
   complexContent.cmf \
+  components.cmf \
   datatypes.cmf \
-  deprecated.cmf \
   externals.cmf \
   globalAug-1.cmf \
   globalAug-2.cmf \

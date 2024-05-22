@@ -24,8 +24,6 @@
 package org.mitre.niem.rdf;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.mitre.niem.NIEMConstants.OWL_NS_URI;
 import static org.mitre.niem.NIEMConstants.RDFS_NS_URI;
@@ -33,12 +31,10 @@ import static org.mitre.niem.NIEMConstants.RDF_NS_URI;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
-import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
-import org.mitre.niem.cmf.RestrictionOf;
 
 /**
  *
@@ -164,8 +160,8 @@ public class ModelToOWL {
             if (null == dt) continue;
             if (W3C_XML_SCHEMA_NS_URI.equals(dt.getNamespace().getNamespaceURI())) continue;
             if (null != dt.getListOf()) writeListOfDatatype(dt, ow);
-            else if (null != dt.getUnionOf()) writeUnionOfDatatype(dt, ow);
-            else if (null != dt.getRestrictionOf()) writeRestrictionOfDatatype(dt, ow);
+            else if (null != dt.unionOf()) writeUnionOfDatatype(dt, ow);
+//            else if (null != dt.getRestrictionOf()) writeRestrictionOfDatatype(dt, ow); FIXME
         }
     }
     
@@ -177,59 +173,59 @@ public class ModelToOWL {
         
     }    
     
-    private void writeRestrictionOfDatatype (Datatype dt, PrintWriter ow) {
-        RestrictionOf r = dt.getRestrictionOf();
-        Datatype bdt    = r.getDatatype();
-        List<Facet> fl  = r.getFacetList();
-        ow.print("\n");
-        ow.print(dt.getQName());
-        ow.print("\n    a rdfs:Datatype");
-        if (null != dt.getDocumentation()) ow.print(" ;\n    rdfs:comment \"" + dt.getDocumentation() + "\"");
-        if (null != bdt) {
-            ow.print(" ;\n    owl:equivalentClass ");
-            if (fl.isEmpty()) ow.print(componentQName(bdt));
-            else {
-                ow.print("[");
-                ow.print("\n        a rdfs:Datatype");
-                ow.print(" ;\n        owl:onDatatype " + componentQName(bdt));
-
-                List<Facet> enums = new ArrayList<>();
-                List<Facet> resl  = new ArrayList<>();
-                for (Facet f : fl) {
-                    if ("Enumeration".equals(f.getFacetKind())) enums.add(f);
-                    else resl.add(f);
-                }
-                if (!enums.isEmpty()) {
-                    ow.print("  ;\n        owl:oneOf (");
-                    for (Facet f : enums) {
-                        ow.print("\n            \"" + f.getStringVal() + "\"");
-                    }
-                    ow.print("\n        )");
-                }
-                if (!resl.isEmpty()) {
-                    ow.print(" ;\n        owl:withRestrictions (");
-                    for (Facet f : resl) {
-                        ow.print(String.format("\n            [ xsd:%s \"%s\"", f.getXSDFacet(), f.getStringVal()));
-                        switch(f.getFacetKind()) {
-                            case "MaxExclusive":
-                            case "MaxInclusive":
-                            case "MinExclusive":
-                            case "MinInclusive":    ow.print("^^xsd:decimal"); break;
-                            case "FractionDigits":
-                            case "Length":
-                            case "MaxLength":
-                            case "MinLength":
-                            case "TotalDigits":     ow.print("^^xsd:nonNegativeInteger"); break;   
-                        }
-                        ow.print(" ]");
-                    }                           
-                    ow.print("\n        )");                        
-                }                
-                ow.print("\n    ]");
-            }
-        }
-        ow.println(" .");
-    }
+//    private void writeRestrictionOfDatatype (Datatype dt, PrintWriter ow) { FIXME
+//        RestrictionOf r = dt.getRestrictionOf();
+//        Datatype bdt    = r.getDatatype();
+//        List<Facet> fl  = r.getFacetList();
+//        ow.print("\n");
+//        ow.print(dt.getQName());
+//        ow.print("\n    a rdfs:Datatype");
+//        if (null != dt.getDocumentation()) ow.print(" ;\n    rdfs:comment \"" + dt.getDocumentation() + "\"");
+//        if (null != bdt) {
+//            ow.print(" ;\n    owl:equivalentClass ");
+//            if (fl.isEmpty()) ow.print(componentQName(bdt));
+//            else {
+//                ow.print("[");
+//                ow.print("\n        a rdfs:Datatype");
+//                ow.print(" ;\n        owl:onDatatype " + componentQName(bdt));
+//
+//                List<Facet> enums = new ArrayList<>();
+//                List<Facet> resl  = new ArrayList<>();
+//                for (Facet f : fl) {
+//                    if ("Enumeration".equals(f.getFacetKind())) enums.add(f);
+//                    else resl.add(f);
+//                }
+//                if (!enums.isEmpty()) {
+//                    ow.print("  ;\n        owl:oneOf (");
+//                    for (Facet f : enums) {
+//                        ow.print("\n            \"" + f.getStringVal() + "\"");
+//                    }
+//                    ow.print("\n        )");
+//                }
+//                if (!resl.isEmpty()) {
+//                    ow.print(" ;\n        owl:withRestrictions (");
+//                    for (Facet f : resl) {
+//                        ow.print(String.format("\n            [ xsd:%s \"%s\"", f.getXSDFacet(), f.getStringVal()));
+//                        switch(f.getFacetKind()) {
+//                            case "MaxExclusive":
+//                            case "MaxInclusive":
+//                            case "MinExclusive":
+//                            case "MinInclusive":    ow.print("^^xsd:decimal"); break;
+//                            case "FractionDigits":
+//                            case "Length":
+//                            case "MaxLength":
+//                            case "MinLength":
+//                            case "TotalDigits":     ow.print("^^xsd:nonNegativeInteger"); break;   
+//                        }
+//                        ow.print(" ]");
+//                    }                           
+//                    ow.print("\n        )");                        
+//                }                
+//                ow.print("\n    ]");
+//            }
+//        }
+//        ow.println(" .");
+//    }
     
     private static String componentQName (Component c) {
         if (W3C_XML_SCHEMA_NS_URI.equals(c.getNamespace().getNamespaceURI())) return("xsd:" + c.getName());

@@ -112,6 +112,4 @@ public class XObjectType {
     public void addToModel (XModel m) { }
     public void addToNamespace (XNamespace ns) { }
     public void addToProperty (XProperty op) { }
-    public void addToRestrictionOf (XRestrictionOf r) { }
-    public void addToUnionOf (XUnionOf u) { }    
 }

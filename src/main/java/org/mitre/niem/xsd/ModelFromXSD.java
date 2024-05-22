@@ -81,8 +81,6 @@ import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
-import org.mitre.niem.cmf.RestrictionOf;
-import org.mitre.niem.cmf.UnionOf;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.mitre.niem.cmf.CMFException;
@@ -946,7 +944,7 @@ public class ModelFromXSD {
                 var xstype = (XSSimpleTypeDefinition)xtype;
                 switch (xstype.getVariety()) {
                     case VARIETY_UNION:
-                        dt.setUnionOf(createUnionOf(xstype));
+                        createUnionOf(dt, xstype);
                         break;
                     case VARIETY_LIST:
                         var xitem = xstype.getItemType();
@@ -957,8 +955,7 @@ public class ModelFromXSD {
                         break;
                     default:
                         var xbase = xstype.getBaseType();
-                        var r = createRestrictionOf(xbase, xstype);
-                        dt.setRestrictionOf(r);
+                        processRestrictionDatatype(dt, xbase, xstype);
                         break;                
                 }
                 continue;
@@ -980,13 +977,10 @@ public class ModelFromXSD {
             
             // Handle a restriction with facets
             if (null != xbaseST) {
-                var r = createRestrictionOf(xbase, xbaseST);
-                dt.setRestrictionOf(r);
+                processRestrictionDatatype(dt, xbase, xbaseST);
             }
             else {
-                var r = new RestrictionOf();
-                r.setDatatype(baseDT);
-                dt.setRestrictionOf(r);
+                dt.setRestrictionBase(baseDT);
                 LOG.debug(String.format("%s is a restriction of %s", dt.getQName(), baseDT.getQName()));
             }
         }
@@ -1023,35 +1017,23 @@ public class ModelFromXSD {
            
     // Construct a UnionOf object from a schema simple type definition.  Member types
     // are already in the model, or are XSD types.
-    private UnionOf createUnionOf (XSSimpleTypeDefinition st) throws CMFException {
-        UnionOf u = new UnionOf();
+    private void createUnionOf (Datatype dt, XSSimpleTypeDefinition st) throws CMFException {
         XSObjectList members = st.getMemberTypes();
         if (null == members || members.getLength() < 1) 
             throw new CMFException(String.format("no members in union type {%s}%s??", st.getNamespace(), st.getName()));
         for (int i = 0; i < members.getLength(); i++) {
             XSSimpleTypeDefinition mt = (XSSimpleTypeDefinition)members.item(i);
             Datatype mdt = getDatatype(mt.getNamespace(), mt.getName());
-            if (null != mdt) u.addDatatype(mdt);
+            if (null != mdt) dt.unionOf().add(mdt);
             LOG.debug("  union includes: {}", mdt.getQName());
         }
-        return u;
     }
     
-    // Construct a RestrictionOf object from a schema simple type definition.
-    private RestrictionOf createRestrictionOf (XSSimpleTypeDefinition xstype) throws CMFException {
-        var xstypeName = xstype.getName();
-        var xbase = xstype.getBaseType();
-        var xbaseName = xbase.getName();
-        if (null == xbase || SIMPLE_TYPE != xbase.getTypeCategory())
-            throw new CMFException(
-                    String.format("schema has no simple base type for restriction of %s#%s", 
-                            xstype.getNamespace(), xstype.getName()));
-        // Ignore restrictions of xs:anyType
+    private void processRestrictionDatatype (Datatype dt, XSTypeDefinition xbase, XSSimpleTypeDefinition xstype) throws CMFException {
         var bt = getDatatype(xbase.getNamespace(), xbase.getName());
-        if (null == bt) return null;
+        if (null == bt) return;
         
-        RestrictionOf r = new RestrictionOf();
-        r.setDatatype(bt);
+        dt.setRestrictionBase(bt);
         XSObjectList flist = xstype.getFacets();
         for (int i = 0; i < flist.getLength(); i++) {
             var f    = (XSFacet)flist.item(i);
@@ -1062,7 +1044,7 @@ public class ModelFromXSD {
             if (!docs.isEmpty()) fo.setDefinition(docs.get(0));
             fo.setFacetKind(facetKind2Code(f.getFacetKind()));
             fo.setStringVal(f.getLexicalFacetValue());         
-            if (null != fo) r.addFacet(fo);
+            if (null != fo) dt.facetList().add(fo);
         }
         // Pattern and Extension facets are different.  We get parallel lists, one of
         // facet values, the other of facet annotations.
@@ -1084,56 +1066,10 @@ public class ModelFromXSD {
                 }
                 fo.setFacetKind(fkind);
                 fo.setStringVal(val);
-                r.addFacet(fo);
+                dt.facetList().add(fo);
             }
         }
-        Collections.sort(r.getFacetList());
-        return r;
-    }
-    
-    private RestrictionOf createRestrictionOf (XSTypeDefinition xbase, XSSimpleTypeDefinition xstype) throws CMFException {
-        var bt = getDatatype(xbase.getNamespace(), xbase.getName());
-        if (null == bt) return null;
-        
-        RestrictionOf r = new RestrictionOf();
-        r.setDatatype(bt);
-        XSObjectList flist = xstype.getFacets();
-        for (int i = 0; i < flist.getLength(); i++) {
-            var f    = (XSFacet)flist.item(i);
-            if (isXercesDefaultFacet(xbase, f.getFacetKind(), f.getLexicalFacetValue())) continue;
-            var fval = f.getLexicalFacetValue();
-            var fo   = new Facet();
-            var docs = getDocumentation (f);
-            if (!docs.isEmpty()) fo.setDefinition(docs.get(0));
-            fo.setFacetKind(facetKind2Code(f.getFacetKind()));
-            fo.setStringVal(f.getLexicalFacetValue());         
-            if (null != fo) r.addFacet(fo);
-        }
-        // Pattern and Extension facets are different.  We get parallel lists, one of
-        // facet values, the other of facet annotations.
-        flist = xstype.getMultiValueFacets();
-        for (int i = 0; i < flist.getLength(); i++) {
-            var f     = (XSMultiValueFacet)flist.item(i);
-            var fkind = FACET_PATTERN == f.getFacetKind() ? "Pattern" : "Enumeration";
-            var vals  = f.getLexicalFacetValues();
-            var anns  = getAnnotations(f);
-            for (int j = 0; j < vals.getLength(); j++) {
-                var val = vals.item(j);
-                if (isXercesDefaultFacet(xbase, f.getFacetKind(), val)) continue;
-                var fo = new Facet();
-                if (j < anns.size() && null != anns.get(j)) {
-                    var an   = (XSAnnotation)anns.get(j);
-                    var docs = new ArrayList<String>();
-                    getDocumentationStrings(docs, an);
-                    if (!docs.isEmpty()) fo.setDefinition(docs.get(0));
-                }
-                fo.setFacetKind(fkind);
-                fo.setStringVal(val);
-                r.addFacet(fo);
-            }
-        }
-        Collections.sort(r.getFacetList());
-        return r;        
+        Collections.sort(dt.facetList());        
     }
     
     // Convert Xerces facet kind value to CMF facet kind code.
@@ -1158,7 +1094,6 @@ public class ModelFromXSD {
     }
     
     // Convert CMF facet kind code to Xerces facet kind value.
-
     private final static Map<String,Short> fCode2Kind = Map.ofEntries(
         entry("Enumeration", FACET_ENUMERATION),
         entry("FractionDigits", FACET_FRACTIONDIGITS),

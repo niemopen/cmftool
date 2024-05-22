@@ -75,7 +75,6 @@ import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
-import org.mitre.niem.cmf.RestrictionOf;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.mitre.niem.cmf.NamespaceKind;
@@ -235,15 +234,14 @@ public abstract class ModelToXSD {
         if (null != messageNSuri) refGraph = new ReferenceGraph(m.getComponentList());
         
         // Collect all Datatype objects for which we must create a simpleType declaration
-        // Those are unions, lists,types of attributes, and FooDatatypes for FooLiteral properties
+        // Those are unions, lists, types of attributes, and FooDatatypes for FooLiteral properties
         var nstList = new HashSet<Datatype>();
         for (Component c : m.getComponentList()) {
             var p  = c.asProperty();
             var dt = c.asDatatype();
-            if (null != dt && null != dt.getUnionOf()) {
+            if (null != dt && !dt.unionOf().isEmpty()) {
                 nstList.add(dt);
-                for (var udt : dt.getUnionOf().getDatatypeList()) 
-                    nstList.add(udt);
+                for (var udt : dt.unionOf()) nstList.add(udt);
             }
             else if (null != dt && null != dt.getListOf()) {
                 nstList.add(dt);
@@ -846,12 +844,11 @@ public abstract class ModelToXSD {
                 lptqn = lptqn.replaceFirst("Datatype$", "SimpleType");
             }
             // Handle FooLiteral datatype that is empty restriction of XSD type
-            else if (null == lpt.getListOf() && null == lpt.getUnionOf()) {
-                var r = lpt.getRestrictionOf();
-                if (null != r && r.getFacetList().isEmpty()) {
-                    var rbt = r.getDatatype();
+            else if (null == lpt.getListOf() && null == lpt.unionOf()) {
+                var rbt = lpt.getRestrictionBase();
+                if (null != rbt && lpt.facetList().isEmpty()) {
                     if (W3C_XML_SCHEMA_NS_URI.equals(rbt.getNamespaceURI()))
-                        lptqn = proxifiedDatatypeQName(r.getDatatype());
+                        lptqn = proxifiedDatatypeQName(rbt);
                 }
             }
             litProps.add(lp);       // don't need FooLiteral, don't create it later
@@ -1034,14 +1031,13 @@ public abstract class ModelToXSD {
             addEmptyExtensionElement(dom, sce, dt, stqn);
         }
         else {
-            var r     = dt.getRestrictionOf();
-            var rbdt  = r.getDatatype();
+            var rbdt  = dt.getRestrictionBase();
             var rbdqn = proxifiedDatatypeQName(rbdt);
-            var rfl   = r.getFacetList();
+            var rfl   = dt.facetList();
             if (W3C_XML_SCHEMA_NS_URI.equals(rbdt.getNamespaceURI()) && rfl.isEmpty())
                 addEmptyExtensionElement(dom, sce, rbdt, rbdt.getQName());
             else
-                addRestrictionElement(dom, sce, dt, r.getDatatype(), rbdqn);
+                addRestrictionElement(dom, sce, dt, rbdt, rbdqn);
         }
         nsTypedefs.put(cname, cte);
     }
@@ -1080,11 +1076,11 @@ public abstract class ModelToXSD {
             var ap = addAppinfo(dom, ae, null);
             var cb = addCodeListBinding(dom, ap, nsuri, dt.getCodeListBinding());
         }
-        if (null != dt.getUnionOf()) addUnionElement(dom, ste, dt);
+        if (!dt.unionOf().isEmpty())  addUnionElement(dom, ste, dt);
         else if (null != dt.getListOf()) addListElement(dom, ste, dt);
-        else if (null != dt.getRestrictionOf()) {
-            var r = dt.getRestrictionOf();
-            addRestrictionElement(dom, ste, dt, r.getDatatype(), r.getDatatype().getQName());
+        else if (null != dt.getRestrictionBase()) {
+            var rbdt = dt.getRestrictionBase();
+            addRestrictionElement(dom, ste, dt, rbdt, rbdt.getQName());
         }
         ste.setAttribute("name", cname);
         nsTypedefs.put(cname, ste);   
@@ -1095,7 +1091,7 @@ public abstract class ModelToXSD {
         Element une = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:union");
         StringBuilder members = new StringBuilder();
         String sep = "";
-        for (Datatype udt : bdt.getUnionOf().getDatatypeList()) {
+        for (Datatype udt : bdt.unionOf()) {
             String memberQN = maybeSimpleTypeQName(udt);
             String udtns    = udt.getNamespaceURI();
             members.append(sep).append(memberQN);
@@ -1116,11 +1112,10 @@ public abstract class ModelToXSD {
     }
     
     protected void addRestrictionElement (Document dom, Element ste, Datatype bdt, Datatype rbdt, String rbqn) {
-        RestrictionOf r = bdt.getRestrictionOf();
         Element rse = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:restriction");
         rse.setAttribute("base", rbqn);
-        Collections.sort(r.getFacetList());
-        for (Facet f : r.getFacetList()) {
+        Collections.sort(bdt.facetList());
+        for (Facet f : bdt.facetList()) {
             String fk = f.getFacetKind();
             String ename = "xs:" + toLowerCase(fk.charAt(0)) + fk.substring(1);
             Element fce = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, ename);

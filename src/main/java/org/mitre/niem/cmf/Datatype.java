@@ -23,17 +23,21 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Datatype extends Component {   
-    private RestrictionOf restrictionOf = null;
-    private UnionOf unionOf = null;
+    private final List<Datatype> unionOf = new ArrayList<>();
     private Datatype listOf = null;
-    private CodeListBinding clb = null;
     private boolean orderedItems = false;
+    private Datatype restrictionBase = null;
+    private final List<Facet> facetList = new ArrayList<>();
+    private CodeListBinding clb = null;
     
     public Datatype () { super(); type = C_DATATYPE; }    
     
@@ -42,17 +46,18 @@ public class Datatype extends Component {
         type = C_DATATYPE;
     }
     
-    public void setRestrictionOf (RestrictionOf r)  { restrictionOf = r; }
-    public void setUnionOf (UnionOf u)              { unionOf = u; }
     public void setListOf (Datatype d)              { listOf = d; }
-    public void setCodeListBinding (CodeListBinding b) { clb = b; }
     public void setOrderedItems (boolean f)         { orderedItems = f; }
+    public void setRestrictionBase (Datatype d)     { restrictionBase = d; }
+    public void setCodeListBinding (CodeListBinding b) { clb = b; }
     
-    public RestrictionOf getRestrictionOf()         { return restrictionOf; }
-    public UnionOf getUnionOf()                     { return unionOf; }
+    public List<Datatype> unionOf()                 { return unionOf; }
+    public List<Facet> facetList()                  { return facetList; }
     public Datatype getListOf()                     { return listOf; }
-    public CodeListBinding getCodeListBinding()     { return clb; }
     public boolean getOrderedItems()                { return orderedItems; }
+    public Datatype getRestrictionBase()            { return restrictionBase; }
+    public CodeListBinding getCodeListBinding()     { return clb; }
+
    
     @Override
     public void addToModel (Model m) {

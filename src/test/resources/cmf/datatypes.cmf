@@ -4,21 +4,6 @@
   xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <Namespace structures:id="niem-xs">
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
-    <NamespacePrefixText>niem-xs</NamespacePrefixText>
-    <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
-    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
-    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>augment/adapters/niem-xs.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NamespaceLanguageName>en-US</NamespaceLanguageName>
-    <LocalTerm>
-      <TermName>maxInclusive</TermName>
-      <DocumentationText>An inclusive maximum value. To be valid, a value must be less than or equal to the value of xs:maxInclusive.</DocumentationText>
-    </LocalTerm>
-  </Namespace>
   <Namespace structures:id="structures">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
     <NamespacePrefixText>structures</NamespacePrefixText>
@@ -30,9 +15,9 @@
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="test">
-    <NamespaceURI>http://example.com/datatype/</NamespaceURI>
+    <NamespaceURI>http://example.com/datatypes/</NamespaceURI>
     <NamespacePrefixText>test</NamespacePrefixText>
-    <DocumentationText>Datatypes test schema</DocumentationText>
+    <DocumentationText>Datatypes test schema: Test list, union, and restriction types Test ordered properties in list type</DocumentationText>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>datatypes.xsd</DocumentFilePathText>
@@ -45,11 +30,27 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
+  <ListDatatype structures:id="test.List2Type">
+    <Name>List2Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <ListOf structures:ref="xs.integer" xsi:nil="true"/>
+  </ListDatatype>
   <ListDatatype structures:id="test.ListType">
     <Name>ListType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <ListOf structures:ref="xs.integer" xsi:nil="true"/>
+    <OrderedPropertyIndicator>true</OrderedPropertyIndicator>
   </ListDatatype>
+  <UnionDatatype structures:id="test.UnionType">
+    <Name>UnionType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <UnionOf structures:ref="xs.integer" xsi:nil="true"/>
+    <UnionOf structures:ref="xs.float" xsi:nil="true"/>
+  </UnionDatatype>
+  <Datatype structures:id="xs.float">
+    <Name>float</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
   <Datatype structures:id="xs.integer">
     <Name>integer</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>

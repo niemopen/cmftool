@@ -262,11 +262,9 @@ public class ModelToMsgXSD extends ModelToXSD {
             cte.appendChild(rse);
         }
         else {
-            var r     = dt.getRestrictionOf();
-            var rbdt  = r.getDatatype();
+            var rbdt  = dt.getRestrictionBase();
             var rbdqn = proxifiedDatatypeQName(rbdt);
-            var rfl   = r.getFacetList();
-            addRestrictionElement(dom, cte, dt, r.getDatatype(), rbdqn);
+            addRestrictionElement(dom, cte, dt, rbdt, rbdqn);
         }
         nsTypedefs.put(cname, cte);
     }   

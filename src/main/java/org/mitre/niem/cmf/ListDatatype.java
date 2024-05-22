@@ -1,13 +1,13 @@
 /*
  * NOTICE
- * 
+ *
  * This software was produced for the U. S. Government
  * under Basic Contract No. W56KGU-18-D-0004, and is
  * subject to the Rights in Noncommercial Computer Software
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
- * 
- * Copyright 2020-2021 The MITRE Corporation.
+ *
+ * Copyright 2020-2024 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,36 +21,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.xsd;
-
-import org.mitre.niem.cmf.Model;
-import org.mitre.niem.cmf.RestrictionOf;
-import org.xml.sax.Attributes;
+package org.mitre.niem.cmf;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class XRestrictionOf extends XObjectType {
-    private RestrictionOf obj;
+public class ListDatatype extends Datatype {
     
-    @Override
-    public RestrictionOf getObject () { return obj; }
+    public ListDatatype () { }
     
-    XRestrictionOf (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
-        super(m, p, ens, eln, a, line);
-        obj = new RestrictionOf();
+    public ListDatatype (Namespace ns, String lname) {
+        super(ns, lname);
     }
-        
-    @Override
-    public void addAsChild (XObjectType child) {
-        child.addToRestrictionOf(this);
-        super.addAsChild(child);
-    }    
     
-    @Override
-    public void addToDatatype (XDatatype dt) { 
-        dt.getObject().setRestrictionOf(this.getObject());
-    }      
 }

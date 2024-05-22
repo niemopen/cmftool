@@ -232,9 +232,11 @@ public class ModelXMLReader {
                 case "Model":                 o = new XModel(m, p, ens, eln, atts, lineNum); break;
                 case "Namespace":             o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
                 case "ObjectProperty":        o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "RestrictionOf":         o = new XRestrictionOf(m, p, ens, eln, atts, lineNum); break;
+                case "RestrictionBase":
+                case "RestrictionDatatype":   o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "SubPropertyOf":         o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "UnionOf":               o = new XUnionOf(m, p, ens, eln, atts, lineNum); break;
+                case "UnionDatatype":         o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "UnionOf":               o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
 
                 case "Enumeration":
                 case "FractionDigits":

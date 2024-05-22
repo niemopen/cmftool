@@ -120,15 +120,9 @@ public class CanonicalXSD {
                 return ns1.compareTo(ns2);
             }            
         };
-        System.out.println("before sort");
-        for (var e : elements) {
-            var name = e.getAttribute("name");
-            System.out.println("name="+name);
-        }
         Collections.sort(definitions, nameCmp);
         Collections.sort(attributes, nameCmp);
         Collections.sort(elements, nameCmp);
-        System.out.println("after sort");
       
         for (var e : definitions) oroot.appendChild(e);
         for (var e : attributes)  oroot.appendChild(e);

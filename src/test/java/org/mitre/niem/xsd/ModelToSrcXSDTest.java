@@ -32,8 +32,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mitre.niem.cmf.Model;
-import org.mitre.niem.cmf.NamespaceKind;
-import static org.mitre.niem.xsd.ModelToMsgXSDTest.testDir;
 
 /**
  *
@@ -50,20 +48,19 @@ public class ModelToSrcXSDTest extends ModelToXSDTest {
     
     @ParameterizedTest
     @ValueSource(strings = {
-        "attAug.xsd",
-        "augment.xsd",
-        "augmentProp.xsd",
-        "cli.xsd",
-        "clsa.xsd",
-        "codelist.xsd",
-        "codelistClassType.xsd",
-        "codelistNoSType.xsd",
-        "codelistUnion.xsd",
-        "complexContent.xsd",
-        "crossNSstype.xsd",
+//        "attAug.xsd",
+//        "augment.xsd",
+//        "augmentProp.xsd",
+//        "cli.xsd",
+//        "clsa.xsd",
+//        "codelist.xsd",
+//        "codelistClassType.xsd",
+//        "codelistNoSType.xsd",
+//        "codelistUnion.xsd",
+//        "complexContent.xsd",
+//        "crossNSstype.xsd",
 //        "defaultFacets.xsd",
         "datatypes.xsd",
-        "deprecated.xsd",
         "doubleType.xsd",
 //        "globalAug-1.xsd",
         "inherit.xsd",

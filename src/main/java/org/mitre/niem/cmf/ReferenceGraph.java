@@ -90,14 +90,12 @@ public class ReferenceGraph {
     private void addDatatypeRefs (Datatype d) {
         if (null == d) return;
         var dns  = d.getNamespace();
-        var dres = d.getRestrictionOf();
-        var duni = d.getUnionOf();
+        var drb  = d.getRestrictionBase();
+        var duni = d.unionOf();
         var dlst = d.getListOf();
-        if (null != dres) addRef(dns, dres.getDatatype().getNamespace());
+        if (null != drb) addRef(dns, drb.getNamespace());
         if (null != dlst) addRef(dns, d.getListOf().getNamespace());
-        if (null != duni) 
-            for (var udt : duni.getDatatypeList()) 
-                addRef(dns, udt.getNamespace());
+        for (var udt : duni) addRef(dns, udt.getNamespace());
     }
     
     private void addPropertyRefs (Property p) {

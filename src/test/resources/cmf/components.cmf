@@ -30,12 +30,12 @@
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="test">
-    <NamespaceURI>http://example.com/datatypes/</NamespaceURI>
+    <NamespaceURI>http://example.com/components/</NamespaceURI>
     <NamespacePrefixText>test</NamespacePrefixText>
-    <DocumentationText>Datatypes test schema: Test list, union, and restriction types Test ordered properties in list type</DocumentationText>
+    <DocumentationText>Components test schema: Test name, namespace, documentation, deprecated Test ordered properties in list type</DocumentationText>
     <NamespaceKindCode>EXTENSION</NamespaceKindCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>datatypes.xsd</DocumentFilePathText>
+    <DocumentFilePathText>components.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
@@ -45,27 +45,44 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <RestrictionDatatype structures:id="test.Restrict8Type">
-    <Name>Restrict8Type</Name>
+  <DataProperty structures:id="test.AnElement">
+    <Name>AnElement</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <DocumentationText>Exercise code list binding</DocumentationText>
-    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
-    <Enumeration>
-      <StringValue>GB</StringValue>
-      <DocumentationText>UNITED KINGDOM</DocumentationText>
-    </Enumeration>
-    <Enumeration>
-      <StringValue>US</StringValue>
-      <DocumentationText>UNITED STATES</DocumentationText>
-    </Enumeration>
-    <CodeListBinding>
-      <CodeListURI>http://api.nsgreg.nga.mil/geo-political/GENC/2/3-11</CodeListURI>
-      <CodeListColumnName>foo</CodeListColumnName>
-      <CodeListConstrainingIndicator>true</CodeListConstrainingIndicator>
-    </CodeListBinding>
-  </RestrictionDatatype>
-  <Datatype structures:id="xs.token">
-    <Name>token</Name>
+    <DocumentationText>AnElement doc string #1</DocumentationText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="test.AnotherElement">
+    <Name>AnotherElement</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>AnotherElement doc string #1</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="test.Test1Type">
+    <Name>Test1Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Test1Type doc string #1</DocumentationText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <HasProperty>
+      <DataProperty structures:ref="test.AnElement" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </HasProperty>
+  </Class>
+  <Datatype structures:id="test.Test2DataType">
+    <Name>Test2DataType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Test2DataType doc string</DocumentationText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <RestrictionOf>
+      <Datatype structures:ref="xs.string" xsi:nil="true"/>
+      <MaxLength>
+        <NonNegativeValue>20</NonNegativeValue>
+      </MaxLength>
+    </RestrictionOf>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
 </Model>

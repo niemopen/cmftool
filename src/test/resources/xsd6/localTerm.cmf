@@ -4,13 +4,31 @@
   xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <Namespace structures:id="ns">
-    <NamespaceURI>http://example.com/codes/</NamespaceURI>
-    <NamespacePrefixText>ns</NamespacePrefixText>
-    <NamespaceKindCode>EXTENSION</NamespaceKindCode>
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DocumentationText>appinfo test case</DocumentationText>
+    <NamespaceKindCode>CORE</NamespaceKindCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>union.xsd</DocumentFilePathText>
+    <DocumentFilePathText>localTerm.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+    <LocalTerm>
+      <TermName>2D</TermName>
+      <TermLiteralText>Two-dimensional</TermLiteralText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>3D</TermName>
+      <DocumentationText>Three-dimensional</DocumentationText>
+    </LocalTerm>
+    <LocalTerm>
+      <TermName>Test</TermName>
+      <DocumentationText>only for test purposes</DocumentationText>
+      <SourceURIList>http://example.com/1 http://example.com/2</SourceURIList>
+      <SourceCitationText>citation #1</SourceCitationText>
+      <SourceCitationText>citation #2</SourceCitationText>
+    </LocalTerm>
   </Namespace>
   <Namespace structures:id="structures">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
@@ -27,23 +45,4 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <DataProperty structures:id="ns.Numbers">
-    <Name>Numbers</Name>
-    <Namespace structures:ref="ns" xsi:nil="true"/>
-    <Datatype structures:ref="ns.UnionType" xsi:nil="true"/>
-  </DataProperty>
-  <UnionDatatype structures:id="ns.UnionType">
-    <Name>UnionType</Name>
-    <Namespace structures:ref="ns" xsi:nil="true"/>
-    <UnionOf structures:ref="xs.decimal" xsi:nil="true"/>
-    <UnionOf structures:ref="xs.float" xsi:nil="true"/>
-  </UnionDatatype>
-  <Datatype structures:id="xs.decimal">
-    <Name>decimal</Name>
-    <Namespace structures:ref="xs" xsi:nil="true"/>
-  </Datatype>
-  <Datatype structures:id="xs.float">
-    <Name>float</Name>
-    <Namespace structures:ref="xs" xsi:nil="true"/>
-  </Datatype>
 </Model>

@@ -51,8 +51,8 @@ public class XFacet extends XObjectType {
     }
     
     @Override
-    public void addToRestrictionOf (XRestrictionOf x) {
-        x.getObject().addFacet(this.getObject());
+    public void addToDatatype (XDatatype x) {
+        x.getObject().facetList().add(this.getObject());
     }    
    
 }

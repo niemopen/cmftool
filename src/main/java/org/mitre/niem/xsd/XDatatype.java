@@ -26,6 +26,7 @@ package org.mitre.niem.xsd;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ObjectType;
+import static org.mitre.niem.xsd.XStringObject.LOG;
 import org.xml.sax.Attributes;
 
 /**
@@ -54,26 +55,21 @@ public class XDatatype extends XObjectType {
         child.addToDatatype(this);
         super.addAsChild(child);  
     }   
-       
-    // A datatype object added to a parent datatype object must be the result
-    // of a ListOf element
+
     @Override
     public void addToDatatype (XDatatype x) {
-        x.getObject().setListOf(this.getObject());        
+        switch(this.getComponentLname()) {
+        case "ListOf":              x.getObject().setListOf(this.getObject()); break;
+        case "RestrictionBase" :    x.getObject().setRestrictionBase(this.getObject()); break;
+        case "UnionOf":             x.getObject().unionOf().add(this.getObject()); break;
+        default:
+            LOG.error(String.format("can't add '%s' to Datatype", this.getComponentLname()));
+            break;                
+        }      
     }
         
     @Override
     public void addToProperty (XProperty x) {
         x.getObject().setDatatype(this.getObject());
-    }
-    
-    @Override
-    public void addToRestrictionOf (XRestrictionOf x) {
-        x.getObject().setDatatype(this.getObject());
-    }     
-    
-    @Override
-    public void addToUnionOf (XUnionOf x) { 
-        x.getObject().addDatatype(this.getObject());
     }     
 }
