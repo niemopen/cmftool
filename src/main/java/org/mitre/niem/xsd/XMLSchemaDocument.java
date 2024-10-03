@@ -23,6 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,7 @@ import static org.mitre.niem.cmf.NamespaceKind.NIEM_CTAS;
 import static org.mitre.niem.cmf.NamespaceKind.NIEM_STRUCTURES;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_EXTENSION;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_UNKNOWN;
+import static org.mitre.utility.URIfuncs.URIStringToFile;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -73,19 +75,21 @@ import org.xml.sax.helpers.DefaultHandler;
 public class XMLSchemaDocument {
     static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(XMLSchemaDocument.class); 
     
-    private final Stack<String> appinfoURI = new Stack<>();                             // current xmlns for appinfo namespace
+    private final Stack<String> appinfoURI = new Stack<>();                         // current xmlns for appinfo namespace
     private final List<XMLNamespaceDeclaration> nsdecls = new ArrayList<>();
     private final List<String> externalImports = new ArrayList<>();
     private final List<String> docStrings = new ArrayList<>();
     private final List<LocalTerm> localTerms = new ArrayList<>();
     private final List<AppinfoAttribute> appinfoAtts = new ArrayList<>();
+    private final List<ImportRec> imports = new ArrayList<>();                      // namespace URI, schemaDocument, line
     private String targetNS = null;
     private String structNS = null;
     private String confTargs = null;
     private String niemArch = null;
     private String niemVersion = null;
     private String schemaVersion = null;
-    private String filepath = null;
+    private String docFileURI = null;                   // file URI for this document
+    private File docFileDir = null;                     // directory containing document
     private String language = null;
     private int kind = NSK_UNKNOWN;
     
@@ -94,20 +98,24 @@ public class XMLSchemaDocument {
     public List<AppinfoAttribute> appinfoAtts ()            { return appinfoAtts; }     // appinfo attributes in document
     public List<String>documentationStrings()               { return docStrings; }      // schema-level documentation strings
     public List<LocalTerm> localTerms()                     { return localTerms; }      // LocalTerm objects from schema appinfo
+    public List<ImportRec> importRecs()                     { return imports; }         // ns, sloc, line# from all import elements
     public String targetNamespace ()                        { return targetNS; }        // target namespace URI of document
     public String structuresNamespace ()                    { return structNS; }        // imported structures namespace URI
     public String conformanceTargets ()                     { return confTargs; }       // value of @ct:conformanceTargets in <xs:schema>
     public String niemArch ()                               { return niemArch; }        // derived from conformance assertions or target NS
     public String niemVersion ()                            { return niemVersion; }     // derived from conformance assertions or target NS
     public String schemaVersion ()                          { return schemaVersion; }   // from @version in <xs:schema>
-    public String filepath ()                               { return filepath; }        // path used to open document for parsing
+    public String docFileURI ()                             { return docFileURI; }      // file: uri used to open document for parsing
     public String language ()                               { return language; }        // from @xml:lang in <xs:schema>
     public int schemaKind ()                                { return kind; }            // from namespace URI and conformance assertions
     
     public void setSchemaKind (int k) { kind = k; }
     
 
-    public XMLSchemaDocument (String sdfuri, String sdpath) throws SAXException, ParserConfigurationException, IOException {
+    public XMLSchemaDocument (String sdfuri) throws SAXException, ParserConfigurationException, IOException {
+        docFileURI = sdfuri;
+        docFileDir = URIStringToFile(sdfuri).toPath().getParent().toFile();
+//        filepath = sdpath;
         appinfoURI.push("NOTAURI");
         SAXParser saxp = ParserBootstrap.sax2Parser();
         XSDHandler h = new XSDHandler();
@@ -116,7 +124,6 @@ public class XMLSchemaDocument {
             nsd.setTargetNS(targetNS);
             nsd.setTargetKind(kind);
         }
-        filepath = sdpath;
       }
     
     private class XSDHandler extends DefaultHandler {  
@@ -195,8 +202,18 @@ public class XMLSchemaDocument {
                 }    
             }
             // Handle xs:import elements
-            else if ("import".equals(elname)) {
-                String importNS = atts.getValue("namespace");
+            // Remember @schemaLocation as absolute file URI relative to current document
+            // Remember external imports
+            else if ("import".equals(elname) && null != atts.getValue("namespace")) {
+                var importNS = atts.getValue("namespace");
+                var importSL = atts.getValue("schemaLocation");
+                if (null != importSL) {
+                    try { 
+                        var sdfuri = new File(docFileDir, importSL).getCanonicalFile().toURI().toString(); 
+                        imports.add(new ImportRec(importNS, sdfuri, docFileURI, docloc.getLineNumber()));
+                    } 
+                    catch (Exception ex) {} // IGNORE
+                }              
                 if (NIEM_STRUCTURES == NamespaceKind.uri2Builtin(importNS)) structNS = importNS;
                 for (int i = 0; i < atts.getLength(); i++) {
                     if (NIEM_APPINFO == NamespaceKind.uri2Builtin(atts.getURI(i)))
@@ -295,6 +312,14 @@ public class XMLSchemaDocument {
         }
     }
     
+    // Record an import element in this document. Needed for warnings of conflicting
+    // imports. Xerces may ignore these, so it's no help.
+    public record ImportRec (
+        String nsuri,           // URI of imported namespace
+        String imported,        // file URI of imported document
+        String importing,       // file URI of importing document
+        int line)               // line # in importing document
+    { }    
 }
 
 

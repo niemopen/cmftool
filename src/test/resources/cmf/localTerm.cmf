@@ -25,7 +25,8 @@
     <LocalTerm>
       <TermName>Test</TermName>
       <DocumentationText>only for test purposes</DocumentationText>
-      <SourceURIList>http://example.com/1 http://example.com/2</SourceURIList>
+      <SourceURI>http://example.com/1</SourceURI>
+      <SourceURI>http://example.com/2</SourceURI>
       <SourceCitationText>citation #1</SourceCitationText>
       <SourceCitationText>citation #2</SourceCitationText>
     </LocalTerm>

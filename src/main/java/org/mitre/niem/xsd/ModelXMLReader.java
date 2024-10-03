@@ -218,8 +218,8 @@ public class ModelXMLReader {
             XObjectType o = null;
             if (ens.startsWith(CMF_NS_URI_PREFIX)) {    // try to read any version of CMF
                 switch (eln) {
-                case "AugmentationNamespace": o = new XNamespace(m, p, ens, eln, atts, lineNum); break;                
-                case "AugmentRecord":         o = new XAugmentRecord(m, p, ens, eln, atts, lineNum); break;
+                case "AugmentingNamespace":   o = new XNamespace(m, p, ens, eln, atts, lineNum); break;                
+                case "AugmentationRecord":    o = new XAugmentRecord(m, p, ens, eln, atts, lineNum); break;
                 case "Class":                 o = new XClassType(m, p, ens, eln, atts, lineNum); break;
                 case "CodeListBinding":       o = new XCodeListBinding(m, p, ens, eln, atts, lineNum); break;
                 case "DataProperty":          o = new XProperty(m, p, ens, eln, atts, lineNum); break;
@@ -257,6 +257,7 @@ public class ModelXMLReader {
                 case "AttributeIndicator":
                 case "AugmentableIndicator":
                 case "AugmentationIndex":
+                case "AugmentedGlobalComponentID":
                 case "CodeListColumnName":
                 case "CodeListConstrainingIndicator":
                 case "CodeListURI":
@@ -265,7 +266,6 @@ public class ModelXMLReader {
                 case "DeprecatedIndicator":
                 case "DocumentFilePathText":
                 case "ExternalAdapterTypeIndicator":
-                case "GlobalAugmented":
                 case "MaxOccursQuantity": 
                 case "MetadataIndicator":
                 case "MinOccursQuantity": 
@@ -283,7 +283,7 @@ public class ModelXMLReader {
                 case "ReferenceCode":
                 case "RelationshipPropertyIndicator":
                 case "SourceCitationText":
-                case "SourceURIList":
+                case "SourceURI":
                 case "StringValue":    
                 case "TermLiteralText":
                 case "TermName":

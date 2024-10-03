@@ -381,8 +381,8 @@ public abstract class ModelToXSD {
         var root = doc.getDocumentElement();
         var nset = new HashSet<Namespace>();                            // namespaces augmenting this ns                                             
         for (var ar : gAttAugs) {
-            if (null == ar.getGlobalAugmented()) continue;
-            var part = ar.getGlobalAugmented().split(":");              // eg. structures:ObjectType
+            if (null == ar.getAugmentedGlobal()) continue;
+            var part = ar.getAugmentedGlobal().split(":");              // eg. structures:ObjectType
             var pre  = part[0];                                         // structures
             var name = part[1];                                         // ObjectType
             var uri  = m.getNamespaceByPrefix(pre).getNamespaceURI();   // namespace URI for structures
@@ -702,6 +702,7 @@ public abstract class ModelToXSD {
             hp.setMinOccurs(0);
             hp.setMaxUnbounded(true);
             targCT.addHasProperty(hp);        
+            LOG.debug("created {} for {}", augPoint.getQName(), targCT.getQName());
         } 
         // Now use the augmentation info in each Namespace to generate augmentation 
         // types, augmentation elements, and augmentation points.
@@ -715,34 +716,34 @@ public abstract class ModelToXSD {
             // Create map from augmented class QName to list of its augmentations in this namespace
             var class2Aug = new HashMap<String, List<AugmentRecord>>();
             for (var ar : ns.augmentList()) {
-                    String ctqn = null;
-                    switch (ar.getGlobalAug()) {
-                    case AUG_NONE:   
-                        ctqn = ar.getClassType().getQName(); 
+                String ctqn = null;
+                switch (ar.getGlobalAugKind()) {
+                case AUG_NONE:   
+                    ctqn = ar.getClassType().getQName(); 
+                    break;
+                case AUG_SIMPLE: 
+                    gAttAugs.add(ar); 
+                    break;
+                case AUG_OBJECT:
+                case AUG_ASSOC:
+                    if (ar.getProperty().isAttribute()) {
+                        gAttAugs.add(ar);
                         break;
-                    case AUG_SIMPLE: 
-                        gAttAugs.add(ar); 
-                        break;
-                    case AUG_OBJECT:
-                    case AUG_ASSOC:
-                        if (ar.getProperty().isAttribute()) {
-                            gAttAugs.add(ar);
-                            break;
-                        }
-                        hasGEAug = true;
-                        var which = AUG_OBJECT == ar.getGlobalAug() ? "Object" : "Association";
-                        var apt = new Property(strNS, which + "AugmentationPoint");
-                        apt.setIsAbstract(true);
-                        ctqn = strPre + ":" + which + "Type";
-                        m.addComponent(apt);
-                        break;
-                    default:
                     }
-                    if (null == ctqn) continue;
-                    var arlist = class2Aug.get(ctqn);
-                    if (null == arlist) arlist = new ArrayList<>();
-                    class2Aug.put(ctqn, arlist);
-                    arlist.add(ar);
+                    hasGEAug = true;
+                    var which = AUG_OBJECT == ar.getGlobalAugKind() ? "Object" : "Association";
+                    var apt = new Property(strNS, which + "AugmentationPoint");
+                    apt.setIsAbstract(true);
+                    ctqn = strPre + ":" + which + "Type";
+                    m.addComponent(apt);
+                    break;
+                default:
+                }
+                if (null == ctqn) continue;
+                var arlist = class2Aug.get(ctqn);
+                if (null == arlist) arlist = new ArrayList<>();
+                class2Aug.put(ctqn, arlist);
+                arlist.add(ar);
             }
             // Iterate over the augmented classes to create augmentation components
             for (var targQN : class2Aug.keySet()) {                                 // ns:FooType
@@ -771,7 +772,9 @@ public abstract class ModelToXSD {
                             var opqn = augp.getSubPropertyOf().getQName();
                             LOG.error("{} augments {} but is already subPropertyOf {}", augp.getQName(), targQN, opqn);
                         } 
-                        else augp.setSubPropertyOf(augPoint);
+                        else {
+                            augp.setSubPropertyOf(augPoint);
+                        }
                     }
                 }
                 // If no properties left, we're done; don't need an augmentation type or element

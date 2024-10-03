@@ -31,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
@@ -58,6 +59,7 @@ import org.mitre.niem.xsd.XMLSchemaDocument;
 import org.xml.sax.SAXException;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_BUILTIN;
 import static org.mitre.niem.cmf.NamespaceKind.cta2Arch;
+import org.mitre.niem.xsd.XMLSchemaDocument.ImportRec;
 
 /**
  *
@@ -163,12 +165,12 @@ class CmdXSDtoCMF implements JCCommand {
         String[] aa = mainArgs.toArray(new String[0]);
         XMLSchema s = null;
         Model m = null;
-        Map<String,XMLSchemaDocument> sdoc = null;
+        Map<String,XMLSchemaDocument> sdocs = null;
         try {
             ModelFromXSD mfact = new ModelFromXSD();
             s = new XMLSchema(aa);
             m = mfact.createModel(s);
-            sdoc = s.schemaDocuments();
+            sdocs = s.schemaDocuments();
         } catch (IOException ex) {
             System.err.println(String.format("IO error reading schema documents: %s", ex.getMessage()));
             System.exit(1);
@@ -181,16 +183,56 @@ class CmdXSDtoCMF implements JCCommand {
         }
         // Report namespaces processed
         if (!quietFlag) {
+            
+            // Report schema validation errors and other messages
             if (!s.xsModelMsgs().isEmpty()) {
                 System.out.println("Schema assembly messages:");
                 for (var msg : s.xsModelMsgs()) System.out.println("  " + msg);                
             }
+            // Report conflicting imports
+            // First create map of NS uri to list of imports for that NS
+            var imap = new HashMap<String,List<ImportRec>>();
+            for (var sd : sdocs.values()) {
+                for (var irec : sd.importRecs()) {
+                    var nsuri = irec.nsuri();       // imported NS
+                    var ilst = imap.get(nsuri);     // list of imports for NS
+                    if (null == ilst) {
+                        ilst = new ArrayList<>();
+                        imap.put(nsuri, ilst);
+                    }
+                    ilst.add(irec);
+                }
+            }
+            // Then test, for each NS, are all imported documents the same?
+            for (var nsuri : imap.keySet()) {
+                var dup    = false;
+                var ilst   = imap.get(nsuri);
+                var idoc   = ilst.get(0).imported();
+                var resURI = s.resolveURI(nsuri);
+                if (null != resURI) {
+                    resURI = s.pilePath(resURI);
+                    if (!resURI.equals(idoc)) dup = true;
+                }
+                for (var irec : ilst) {
+                    if (!idoc.equals(irec.imported())) dup = true;
+                }
+                if (!dup) continue;
+                System.out.println(String.format("Warning: Conflicting imports for namespace %s:", nsuri));
+                if (null != resURI)
+                    System.out.println(String.format("  imported as %s, by catalog resolution", resURI));
+                for (var irec : ilst) {
+                    var imported  = s.pilePath(irec.imported());
+                    var importing = s.pilePath(irec.importing());                    
+                    System.out.println(String.format("  imported as %s, by %s (line %d)", imported, importing, irec.line()));
+                }
+            }
+            // Categorize schema documents, report by kind
             List<String> model      = new ArrayList<>();
             List<String> conforming = new ArrayList<>();
             List<String> external   = new ArrayList<>();
             List<String> builtins   = new ArrayList<>();
             List<String> unknown    = new ArrayList<>();
-            sdoc.forEach((nsuri, sd) -> { 
+            sdocs.forEach((nsuri, sd) -> { 
                 switch(sd.schemaKind()) {
                     case NSK_EXTENSION:
                     case NSK_DOMAIN:
@@ -209,7 +251,7 @@ class CmdXSDtoCMF implements JCCommand {
             });
             var hdr = "Namespaces with problems:\n";
             for (var ns : model) {
-                var sd   = sdoc.get(ns);
+                var sd   = sdocs.get(ns);
                 var arch = sd.niemArch();
                 if (arch.isBlank()) {
                     System.out.print(String.format("%s  %s [unknown NIEM architecture]\n", hdr, ns));
@@ -235,9 +277,9 @@ class CmdXSDtoCMF implements JCCommand {
             }
             if (!conforming.isEmpty()) {
                 Collections.sort(conforming);
-                System.out.println("Conforming namespaces:");
+                System.out.println("Namespaces claiming conformance:");
                 for (var ns : conforming) {
-                    var sd  = sdoc.get(ns);
+                    var sd  = sdocs.get(ns);
                     var ver = sd.niemVersion();
                     System.out.println(String.format("  %s [NIEM version='%s']", ns, ver));
                 }

@@ -1,4 +1,4 @@
-/*
+ /*
  * NOTICE
  *
  * This software was produced for the U. S. Government
@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -47,6 +48,7 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import javax.xml.transform.Source;
 import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import static org.apache.commons.lang3.StringUtils.getCommonPrefix;
@@ -76,8 +78,10 @@ import org.xml.sax.SAXException;
  * XML catalog pathnames, and namespace URIs, in any order.
  * Schema assembly is guaranteed to use only local resources.
  * <p>
- * The class can provide the schema in the form of a Xerces XSModel object,
- * or a javax.xml.validation.Schema object.
+ * The class can provide the schema in the form of a Xerces XSModel object.
+ * <br>
+ * It can provide the schema asr a javax.xml.validation.Schema object.  
+ * It can validate XML documents using that object.
  *<br>
  * The class can also provide information from the schema documents that is not
  * available through the XSModel API
@@ -171,7 +175,7 @@ public class XMLSchema {
                     iNSindex.add(schemaDocs.size() - 1);  // remember the index of the space
                 }
             } else path = arg;        // not a URI
-            
+            LOG.debug("path is {}", path);
             // If we have a file: URI or a pathname, it's a catalog or schema document
             // Parse the first element to see which.
             if (null != path) {
@@ -335,6 +339,10 @@ public class XMLSchema {
         }
     }
     
+    public String resolveURI (String uri) {
+        return resolver.resolveURI(uri);
+    }
+    
     // Returns an XSModel from an XSD input stream.  XML schema validation
     // messages are returned in the list.  Best of luck with your imports!
     public static XSModel xsmodelFromStream (InputStream is, List<String> msgs) {
@@ -394,11 +402,61 @@ public class XMLSchema {
         return javaxMsgs; 
     }     
     
+    /**
+     * Validates the XML document in the input string.
+     * Returns a list of validation messages.
+     * Returns an empty list if validation is completely successful.
+     * @param doc -- A string containing an XML document
+     * @return The list of validation messages
+     * @throws SAXException 
+     */
+    public List<String> validate (String doc) throws SAXException {
+        var rdr = new StringReader(doc);
+        var src = new StreamSource(rdr);
+        return validate(src);
+    }
+    
+    /**
+     * Validates the XML document in the input File.
+     * Returns a list of validation messages.
+     * Returns an empty list if validation is completely successful.
+     * @param f -- File containing an XML document
+     * @return The list of validation messages
+     * @throws SAXException 
+     */
+    public List<String> validate (File f) throws SAXException {
+        var src = new StreamSource(f);
+        return validate(src);
+    }
+    
+    /**
+     * Validates the XML document in the input StreamSource.
+     * Returns a list of validation messages.
+     * Returns an empty list if validation is completely successful.
+     * @param src -- StreamSource containing an XML document
+     * @return The list of validation messages
+     * @throws SAXException 
+     */
+    public List<String> validate (StreamSource src) throws SAXException {
+        var res   = new ArrayList<String>();
+        var sch   = javaxSchema();
+        var vldr  = sch.newValidator();
+        var hndlr = new SAXErrorHandler();
+        vldr.setErrorHandler(hndlr);
+        try {
+            vldr.validate(src);
+            res.addAll(hndlr.messages());
+        } catch (IOException ex) {
+            res.add(ex.getMessage());
+        }
+        return res;        
+    }
+    
     ///// SchemaDocument stuff //////////////////////////////////////
     
     // Schema pile parsing info is created on demand and cached
-    private Map<String,XMLSchemaDocument> sdocs = null;
-    private String pileRoot;
+    private Map<String,XMLSchemaDocument> sdocs = null;         // namespace URI -> sdoc object
+    private String pileRoot;                                    // common prefix of all document paths
        
     /**
      * Returns a map of namespace URIs to the SchemaDocument object having that
@@ -414,6 +472,7 @@ public class XMLSchema {
         return sdocs; 
     }
     
+    
     /**
      * Returns the file: URI of the root directory of the schema document pile.
      * @return root directory URI
@@ -427,6 +486,18 @@ public class XMLSchema {
         return pileRoot;
     }
     
+    /**
+     * Turns a file URI into a path relative to the pile root directory.
+     * Returns the URI unchanged if it is not in the pile root directory.
+     * @param docFileURI
+     * @return 
+     */
+    public String pilePath (String docFileURI) {
+        if (docFileURI.startsWith(pileRoot))
+            return docFileURI.substring(pileRoot.length());
+        return docFileURI;
+    }
+    
     private void parseSchemaPile () throws SAXException, ParserConfigurationException, IOException, XMLSchemaException {
         if (null != sdocs ) return;     // already done
         if (null == xs) xsmodel();      // generate the XSModel object if necessary
@@ -435,28 +506,10 @@ public class XMLSchema {
         }    
         sdocs = new HashMap<>();
         
-        // Iterate over XSNamespaceItems to collect all the schema document URIs
-        HashSet<String> alldocs = new HashSet<>();
-        XSNamespaceItemList nslist = xs.getNamespaceItems();   
-        for (int i = 0; i < nslist.getLength(); i++) {
-            XSNamespaceItem xnsi = nslist.item(i);
-            StringList docl = xnsi.getDocumentLocations();
-            for (int j = 0; j < docl.size(); j++) {
-                String furi = xercesLocationURI(docl.item(j));
-                alldocs.add(furi);
-            }
-        }
-        // Now we know all the schema documents in the pile.  Add all the catalog
-        // documents and find the greatest common prefix
-        alldocs.addAll(catalogs);
-        pileRoot = getCommonPrefix(alldocs.toArray(new String[0]));
-        int prlen = pileRoot.lastIndexOf("/");
-        if (prlen >= 0) pileRoot = pileRoot.substring(0, prlen + 1);
-        LOG.debug("pileRoot: " + pileRoot);
-        
         // Iterate over XSNamespaceItems to process schema documents 
         // One entry for each namespace URI that was a @targetNamespace in any document
         // One entry if there is a no-namespace document (which is not NIEM conforming)    
+        XSNamespaceItemList nslist = xs.getNamespaceItems();  
         for (int i = 0; i < nslist.getLength(); i++) {
             XSNamespaceItem xnsi = nslist.item(i);
             String nsuri = xnsi.getSchemaNamespace();
@@ -474,9 +527,8 @@ public class XMLSchema {
                 if (docl.size() > 1) LOG.warn("Multiple documents listed for namespace {} in XSModel?", nsuri);
                 for (int j = 0; j < docl.getLength(); j++) {
                     String sdfuri = xercesLocationURI(docl.item(j));
-                    String sdpath = sdfuri.substring(prlen+1);
                     LOG.debug("Processing {} for namespace {}", sdfuri, nsuri);
-                    var sd = new XMLSchemaDocument(sdfuri, sdpath);
+                    var sd = new XMLSchemaDocument(sdfuri);
                     var targetNS = sd.targetNamespace();
                     if (null != targetNS && !nsuri.equals(targetNS))
                         throw new XMLSchemaException(
@@ -485,7 +537,23 @@ public class XMLSchema {
                 }
             }
         }
-        // Now we can mark the external namespaces
+        // Each schema document object has a list of all its imports, so we know 
+        // all the schema documents in the pile.  Add all the catalog documents 
+        // and find the greatest common prefix
+        HashSet<String> alldocs = new HashSet<>();
+        alldocs.addAll(catalogs);
+        for (var sd : sdocs.values()) {
+            alldocs.add(sd.docFileURI());
+            for (var irec : sd.importRecs()) {
+                alldocs.add(irec.imported());
+            }
+        }
+        pileRoot = getCommonPrefix(alldocs.toArray(new String[0]));
+        int prlen = pileRoot.lastIndexOf("/");
+        if (prlen >= 0) pileRoot = pileRoot.substring(0, prlen + 1);
+        LOG.debug("pileRoot: " + pileRoot);
+
+        // Now we have seen all the imports and can mark the external namespaces
         LOG.debug("parseSchemaPile: marking externals");
         LOG.debug(String.format("sdocs.size() = %d", sdocs.size()));
         for (var sd : sdocs.values()) {
@@ -518,4 +586,9 @@ public class XMLSchema {
         public XMLSchemaException (String msg) { super(msg); }
     }
     
+    private record ImportRec (
+        String imported,        // file URI of imported document
+        String importing,       // file URI of importing document
+        int line)               // line # in importing document
+    { }
 }

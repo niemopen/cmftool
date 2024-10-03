@@ -51,9 +51,9 @@ public class XStringObject extends XObjectType {
     public void addToAugmentRecord (XAugmentRecord xar) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
-            case "AugmentationIndex":  xar.getObject().setIndexInType(toInt(val)); break;
-            case "GlobalAugmented":    xar.getObject().setGlobalAugmented(val); break;
-            case "MinOccursQuantity":  xar.getObject().setMinOccurs(toInt(val)); break;
+            case "AugmentationIndex":           xar.getObject().setIndexInType(toInt(val)); break;
+            case "AugmentedGlobalComponentID":  xar.getObject().setAugmentedGlobal(val); break;
+            case "MinOccursQuantity":           xar.getObject().setMinOccurs(toInt(val)); break;
             case "MaxOccursQuantity": 
                 if ("unbounded".equals(val)) xar.getObject().setMaxUnbounded(true);
                 else xar.getObject().setMaxOccurs(toInt(val)); 
@@ -146,7 +146,7 @@ public class XStringObject extends XObjectType {
         switch (this.getComponentLname()) {
             case "DocumentationText":   lt.setDefinition(val); break;
             case "SourceCitationText":  lt.addCitation(val); break;
-            case "SourceURIList":       lt.setSourceURIs(val); break;
+            case "SourceURI":           lt.addSourceURI(val); break;
             case "TermLiteralText":     lt.setLiteral(val); break;
             case "TermName":            lt.setTerm(val); break;
             default:

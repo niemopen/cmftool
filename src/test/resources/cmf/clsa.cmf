@@ -29,47 +29,43 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceKindCode>XSD</NamespaceKindCode>
   </Namespace>
-  <Datatype structures:id="genc.CountryAlpha2CodeType">
+  <RestrictionDatatype structures:id="genc.CountryAlpha2CodeType">
     <Name>CountryAlpha2CodeType</Name>
     <Namespace structures:ref="genc" xsi:nil="true"/>
     <DocumentationText>A data type for country codes.</DocumentationText>
-    <RestrictionOf>
-      <Datatype structures:ref="xs.token" xsi:nil="true"/>
-      <Enumeration>
-        <StringValue>GB</StringValue>
-        <DocumentationText>UNITED KINGDOM</DocumentationText>
-      </Enumeration>
-      <Enumeration>
-        <StringValue>US</StringValue>
-        <DocumentationText>UNITED STATES</DocumentationText>
-      </Enumeration>
-    </RestrictionOf>
+    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
+    <Enumeration>
+      <StringValue>GB</StringValue>
+      <DocumentationText>UNITED KINGDOM</DocumentationText>
+    </Enumeration>
+    <Enumeration>
+      <StringValue>US</StringValue>
+      <DocumentationText>UNITED STATES</DocumentationText>
+    </Enumeration>
     <CodeListBinding>
       <CodeListURI>http://api.nsgreg.nga.mil/geo-political/GENC/2/3-11</CodeListURI>
       <CodeListColumnName>foo</CodeListColumnName>
       <CodeListConstrainingIndicator>true</CodeListConstrainingIndicator>
     </CodeListBinding>
-  </Datatype>
-  <Datatype structures:id="genc.CountryAlpha3CodeType">
+  </RestrictionDatatype>
+  <RestrictionDatatype structures:id="genc.CountryAlpha3CodeType">
     <Name>CountryAlpha3CodeType</Name>
     <Namespace structures:ref="genc" xsi:nil="true"/>
     <DocumentationText>A data type for country codes.</DocumentationText>
-    <RestrictionOf>
-      <Datatype structures:ref="xs.token" xsi:nil="true"/>
-      <Enumeration>
-        <StringValue>GBR</StringValue>
-        <DocumentationText>UNITED KINGDOM</DocumentationText>
-      </Enumeration>
-      <Enumeration>
-        <StringValue>USA</StringValue>
-        <DocumentationText>UNITED STATES</DocumentationText>
-      </Enumeration>
-    </RestrictionOf>
+    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
+    <Enumeration>
+      <StringValue>GBR</StringValue>
+      <DocumentationText>UNITED KINGDOM</DocumentationText>
+    </Enumeration>
+    <Enumeration>
+      <StringValue>USA</StringValue>
+      <DocumentationText>UNITED STATES</DocumentationText>
+    </Enumeration>
     <CodeListBinding>
       <CodeListURI>http://api.nsgreg.nga.mil/geo-political/GENC/3/3-11</CodeListURI>
       <CodeListColumnName>#code</CodeListColumnName>
     </CodeListBinding>
-  </Datatype>
+  </RestrictionDatatype>
   <Datatype structures:id="xs.token">
     <Name>token</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>

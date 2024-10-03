@@ -23,6 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import nl.altindag.log.LogCaptor;
@@ -81,9 +82,17 @@ public class XMLSchemaDocumentTest {
         }
     }
     
+    private String furi (String path) {
+        var f = new File(path);
+        var absf = f.getAbsoluteFile();
+        var furi = absf.toURI();
+        var fs = furi.toString();
+        return fs;
+    }
+    
     @Test
     public void testParse () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/xmlschemadoc/niem-core.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/xmlschemadoc/niem-core.xsd"));
         
         assertEquals(8, sd.namespaceDecls().size());
         assertThat(sd.namespaceDecls())
@@ -126,77 +135,80 @@ public class XMLSchemaDocumentTest {
     
     @Test
     public void testIsCore () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/niem-core.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/niem/niem-core.xsd"));
         assertEquals(NSK_CORE, sd.schemaKind());
         assertEmptyLogs();
     }
     
     @Test
     public void testIsDomain () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/xmlschemadoc/hs.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/xmlschemadoc/hs.xsd"));
         assertEquals(NSK_DOMAIN, sd.schemaKind());
         assertEmptyLogs();
     }
     
     @Test
     public void testIsExtension () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/xmlschemadoc/CrashDriver.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/xmlschemadoc/CrashDriver.xsd"));
         assertEquals(NSK_EXTENSION, sd.schemaKind());
         assertEmptyLogs();
     }    
     
     @Test
     public void testIsStructures () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/utility/structures.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/niem/utility/structures.xsd"));
         assertEquals(NSK_BUILTIN, sd.schemaKind());
         assertEmptyLogs();
     } 
     
     @Test
     public void testIsUtility () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/utility/appinfo.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/niem/utility/appinfo.xsd"));
         assertEquals(NSK_BUILTIN, sd.schemaKind());
         assertEmptyLogs();
     }    
     
     @Test
     public void testIsOtherNIEM () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/externals-niem/adapters/geospatial.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/externals-niem/adapters/geospatial.xsd"));
         assertEquals(NSK_OTHERNIEM, sd.schemaKind());
         assertEmptyLogs();
     }
     
     @Test
     public void testIsXML () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/niem/external/xml.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/niem/external/xml.xsd"));
         assertEquals(NSK_XML, sd.schemaKind());
         assertEmptyLogs();
     }
     
     @Test
     public void testLocalTerm () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/localTerm.xsd", "");        
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/localTerm.xsd"));        
         List<LocalTerm> lsl = sd.localTerms();
         assertEquals(3, lsl.size());
         assertThat(lsl).extracting(LocalTerm::getTerm)
                 .containsOnly("2D", "3D", "Test");
+        
         assertNotNull(lsl.get(0).getLiteral());
         assertNull(lsl.get(0).getDefinition());
-        assertNull(lsl.get(0).getSourceURIs());
+        assertEquals(0, lsl.get(0).sourceURIs().size());
         assertEquals(0, lsl.get(0).citationList().size());
+        
         assertNull(lsl.get(1).getLiteral());
         assertNotNull(lsl.get(1).getDefinition());
-        assertNull(lsl.get(1).getSourceURIs());
+        assertEquals(0, lsl.get(1).sourceURIs().size());
         assertEquals(0, lsl.get(1).citationList().size());
+        
         assertNull(lsl.get(2).getLiteral());
         assertNotNull(lsl.get(2).getDefinition());
-        assertNotNull(lsl.get(2).getSourceURIs());
+        assertEquals(2, lsl.get(2).sourceURIs().size());
         assertEquals(2, lsl.get(2).citationList().size());
     }
 
     @Test
     public void testNoPrefix () throws Exception {
-        XMLSchemaDocument sd = new XMLSchemaDocument("src/test/resources/xsd5/noprefix.xsd", "");
+        XMLSchemaDocument sd = new XMLSchemaDocument(furi("src/test/resources/xsd5/noprefix.xsd"));
         assertEquals("http://example.com/nopr#e-fix/5.0/", sd.targetNamespace());
         assertEmptyLogs();
     }

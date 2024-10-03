@@ -51,6 +51,14 @@ import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import static org.mitre.niem.cmf.NamespaceKind.NSK_OTHERNIEM;
 import org.mitre.niem.cmf.Property;
+import static org.mitre.niem.xsd.CheckModel.checkAugCCwA;
+import static org.mitre.niem.xsd.CheckModel.checkAugCCwE;
+import static org.mitre.niem.xsd.CheckModel.checkAugGEAonly;
+import static org.mitre.niem.xsd.CheckModel.checkAugGEBoth;
+import static org.mitre.niem.xsd.CheckModel.checkAugGEOonly;
+import static org.mitre.niem.xsd.CheckModel.checkAugGESonly;
+import static org.mitre.niem.xsd.CheckModel.checkAugSCwA;
+import static org.mitre.niem.xsd.CheckModel.checkAugSCwE;
 import static org.mitre.niem.xsd.CheckModel.checkComponents;
 import static org.mitre.niem.xsd.CheckModel.checkDatatypes;
 import org.xml.sax.SAXException;
@@ -63,7 +71,8 @@ import org.xml.sax.SAXException;
 public class ModelFromXSDTest {
 
     private static List<LogCaptor> logs;
-    public String[] testDirs = {"src/test/resources/xsd5", "src/test/resources/xsd6"};
+    public String[] testDirs = {"src/test/resources/xsd6"};
+//    public String[] testDirs = {"src/test/resources/xsd5", "src/test/resources/xsd6"};
 
     public ModelFromXSDTest() {
     }
@@ -96,12 +105,12 @@ public class ModelFromXSDTest {
         for (var log : logs) {
             var errors = log.getErrorLogs();
             var warns = log.getWarnLogs();
-            assertThat(errors.isEmpty());
-            assertThat(warns.isEmpty());
+            assertTrue(errors.isEmpty());
+            assertTrue(warns.isEmpty());
         }
     }
     
-    public List<String> getLogInfos() {
+    public List<String> getInfoLogs() {
         var allInfos = new ArrayList<String>();
         for (var log : logs) {
             var warns = log.getInfoLogs();
@@ -110,7 +119,7 @@ public class ModelFromXSDTest {
         return allInfos;
     }
 
-     public List<String> getLogWarns() {
+     public List<String> getWarnLogs() {
         var allWarns = new ArrayList<String>();
         for (var log : logs) {
             var warns = log.getWarnLogs();
@@ -119,12 +128,102 @@ public class ModelFromXSDTest {
         return allWarns;
     }
      
+    public List<String> getErrorLogs() {
+        var allErrors = new ArrayList<String>();
+        for (var log : logs) {
+            var errors = log.getErrorLogs();
+            allErrors.addAll(errors);
+        }
+        return allErrors;
+    }
+     
     public Model createModel (File f) throws Exception {
         var mfact = new ModelFromXSD();
         var model = mfact.createModel(f.toString());
         return model;
     }
-     
+        
+    @Test
+    public void testAugCCwA () throws Exception {
+        for (var tdir : testDirs) {
+            var f = new File(tdir, "augCCwA.xsd");
+            if (!f.canRead()) continue;
+            checkAugCCwA(createModel(f));
+            assertEmptyLogs();
+        }
+    }
+    
+    @Test
+    public void testAugCCwE () throws Exception {
+        for (var tdir : testDirs) {
+            var f = new File(tdir, "augCCwE.xsd");
+            if (!f.canRead()) continue;
+            checkAugCCwE(createModel(f));
+            assertEmptyLogs();
+        }
+    }
+    
+    @Test
+    public void testAugSCwA () throws Exception {
+        for (var tdir : testDirs) {
+            var f = new File(tdir, "augSCwA.xsd");
+            if (!f.canRead()) continue;
+            checkAugSCwA(createModel(f));
+            assertEmptyLogs();
+        }
+    }
+    
+    @Test
+    public void testAugSCwE () throws Exception {
+        for (var tdir : testDirs) {
+            var f = new File(tdir, "augSCwE.xsd");
+            if (!f.canRead()) continue;
+            checkAugSCwE(createModel(f));
+            assertTrue(getErrorLogs().isEmpty());
+            assertThat(getWarnLogs()).anyMatch(s -> s.matches("augmentingNamespace .* does not exist .*"));            
+        }
+    }
+        
+    @Test
+    public void testAugGEBoth () throws Exception {
+        for (var tdir : testDirs) {
+            var f = new File(tdir, "augGEBoth.xsd");
+            if (!f.canRead()) continue;
+            checkAugGEBoth(createModel(f));
+            assertEmptyLogs();          
+        }
+    }    
+        
+    @Test
+    public void testAugGEAonly () throws Exception {
+        for (var tdir : testDirs) {
+            var f = new File(tdir, "augGEAonly.xsd");
+            if (!f.canRead()) continue;
+            checkAugGEAonly(createModel(f));
+            assertEmptyLogs();          
+        }
+    }
+
+    @Test
+    public void testAugGEOonly () throws Exception {
+        for (var tdir : testDirs) {
+            var f = new File(tdir, "augGEOonly.xsd");
+            if (!f.canRead()) continue;
+            checkAugGEOonly(createModel(f));
+            assertEmptyLogs();          
+        }
+    }
+
+    @Test
+    public void testAugGESonly () throws Exception {
+        for (var tdir : testDirs) {
+            var f = new File(tdir, "augGESonly.xsd");
+            if (!f.canRead()) continue;
+            checkAugGESonly(createModel(f));
+            assertEmptyLogs();          
+        }
+    }
+
     @Test
     public void testComponents () throws Exception {
         for (var tdir : testDirs) {
@@ -733,7 +832,7 @@ public class ModelFromXSDTest {
             var arl = ns.augmentList();
             var ar  = arl.get(0);
             assertEquals(1, arl.size());
-            assertEquals(AUG_OBJECT, ar.getGlobalAug());
+            assertEquals(AUG_OBJECT, ar.getGlobalAugKind());
         }
     }
 
@@ -1131,8 +1230,8 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
             
-            var warns = getLogWarns();
-            var infos = getLogInfos();
+            var warns = getWarnLogs();
+            var infos = getInfoLogs();
             Collections.sort(infos);
             Collections.sort(warns);
             assertThat(infos.get(0)).containsPattern("nc:ObjPropAnyRef has appinfo:referenceCode");

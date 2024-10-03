@@ -40,7 +40,14 @@ import org.mitre.niem.cmf.NamespaceKind;
 import org.xml.sax.SAXException;
 
 /**
- *
+ * Resources required in test directory:
+ * 
+ * cat/cat1.xml
+ * cmf/clsa.cmf
+ * xsd5/union.xsd
+ * xsd6/datatypes.xsd
+ * 
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -82,6 +89,7 @@ public class XMLSchemaTest {
     @Test
     public void testGGS () throws XMLSchema.XMLSchemaException, IOException, SAXException, ParserConfigurationException {
         var s = new XMLSchema(ga("cat/cat1.xml", "xsd5/union.xsd", "http://example.com/external-content/"));
+        var pr = s.pileRoot();
         assertEquals(1, s.catalogs().size());
         assertEquals(2, s.initialSchemaDocs().size());
         assertEquals(1, s.initialNS().size());   
@@ -186,25 +194,29 @@ public class XMLSchemaTest {
         assertEquals("file:/C:/Work/NetBeans/CMFTool/src/test/resources/xsd5/", pileRoot);
         
         var sd = s.schemaDocuments().get("http://example.com/external-content/");
+        var sdf = sd.docFileURI();
+        var sdp = s.pilePath(sdf);
         assertEquals(0, sd.schemaKind());
-        assertEquals("externals.xsd", sd.filepath());
+        assertEquals("externals.xsd", s.pilePath(sd.docFileURI()));
         
         sd = s.schemaDocuments().get("http://release.niem.gov/niem/proxy/niem-xs/5.0/");
         assertEquals(4, sd.schemaKind());
-        assertEquals("externals-niem/adapters/niem-xs.xsd", sd.filepath());
+        assertEquals("externals-niem/adapters/niem-xs.xsd", s.pilePath(sd.docFileURI()));
         
         sd = s.schemaDocuments().get("http://www.w3.org/1999/xlink");
         assertEquals(8, sd.schemaKind());   
-        assertEquals("externals-niem/external/ogc/xlink/1.0.0/xlinks.xsd", sd.filepath());
+        assertEquals("externals-niem/external/ogc/xlink/1.0.0/xlinks.xsd", s.pilePath(sd.docFileURI()));
         assertEquals("", sd.niemVersion());
         
         sd = s.schemaDocuments().get("http://www.opengis.net/gml/3.2");
         assertEquals(7, sd.schemaKind());  
-        assertEquals("externals-niem/external/ogc/gml/3.2.1/gml.xsd", sd.filepath());
+        assertEquals("externals-niem/external/ogc/gml/3.2.1/gml.xsd", s.pilePath(sd.docFileURI()));
         assertEquals("", sd.niemVersion());
         assertEmptyLogs();
     }
     
+    // Builds a String[] array from a list of String arguments. Strings that aren't
+    // URIs are assumed to be file names in the test directory.
     private String[] ga (String ... args) {
         String[] rv = new String[args.length];
         for (int i = 0; i < args.length; i++) {
@@ -214,5 +226,27 @@ public class XMLSchemaTest {
         }
         return rv;
     }
+    
+//    @Test
+//    public void wholeModel () throws Exception {
+//        var xsch = new XMLSchema("tmp/60rel/wholeModel.xsd");
+//        var xs   = xsch.xsmodel();
+//        var msg  = xsch.xsModelMsgs();
+//        var ctnl = xs.getComponents(XSTypeDefinition.COMPLEX_TYPE);
+//        for (int i = 0; i < ctnl.getLength(); i++) {
+//            var ct   = (XSComplexTypeDefinition)ctnl.item(i);
+//            var ctns = ct.getNamespace();
+//            var ctn  = ct.getName();
+//            var atts = ct.getAttributeUses();
+//            if (!ctn.endsWith("AugmentationType")) continue;
+//            for (int j = 0; j < atts.getLength(); j++) {
+//                var attu = (XSAttributeUse)atts.get(j);
+//                var attd = attu.getAttrDeclaration();
+//                var ans  = attd.getNamespace();
+//                var an   = attd.getName();
+//                int k = 0;
+//            }
+//        }
+//    }
     
 }

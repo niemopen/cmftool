@@ -14,27 +14,27 @@
     <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
-    <AugmentRecord>
+    <AugmentationRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
       <ObjectProperty structures:ref="j.AddressCommentText" xsi:nil="true"/>
-      <AugmentationIndex>0</AugmentationIndex>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-    </AugmentRecord>
-    <AugmentRecord>
+      <AugmentationIndex>0</AugmentationIndex>
+    </AugmentationRecord>
+    <AugmentationRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
       <DataProperty structures:ref="j.AddressVerifiedDate" xsi:nil="true"/>
-      <AugmentationIndex>1</AugmentationIndex>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
-    </AugmentRecord>
-    <AugmentRecord>
+      <AugmentationIndex>1</AugmentationIndex>
+    </AugmentationRecord>
+    <AugmentationRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
       <DataProperty structures:ref="j.AnotherAddress" xsi:nil="true"/>
-      <AugmentationIndex>-1</AugmentationIndex>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
-    </AugmentRecord>
+      <AugmentationIndex>-1</AugmentationIndex>
+    </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="nc">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
@@ -82,27 +82,27 @@
     <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
-    <AugmentRecord>
+    <AugmentationRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
       <ObjectProperty structures:ref="j.AddressCommentText" xsi:nil="true"/>
-      <AugmentationIndex>1</AugmentationIndex>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-    </AugmentRecord>
-    <AugmentRecord>
+      <AugmentationIndex>1</AugmentationIndex>
+    </AugmentationRecord>
+    <AugmentationRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
       <DataProperty structures:ref="test.BoogalaText" xsi:nil="true"/>
-      <AugmentationIndex>0</AugmentationIndex>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-    </AugmentRecord>
-    <AugmentRecord>
+      <AugmentationIndex>0</AugmentationIndex>
+    </AugmentationRecord>
+    <AugmentationRecord>
       <Class structures:ref="nc.AddressType" xsi:nil="true"/>
       <DataProperty structures:ref="test.boogalaProp" xsi:nil="true"/>
-      <AugmentationIndex>2</AugmentationIndex>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-    </AugmentRecord>
+      <AugmentationIndex>2</AugmentationIndex>
+    </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
@@ -173,32 +173,32 @@
       <ObjectProperty structures:ref="j.AddressCommentText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
-      <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
+      <AugmentingNamespace structures:ref="j" xsi:nil="true"/>
+      <AugmentingNamespace structures:ref="test" xsi:nil="true"/>
     </HasProperty>
     <HasProperty>
       <DataProperty structures:ref="j.AddressVerifiedDate" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
-      <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
+      <AugmentingNamespace structures:ref="j" xsi:nil="true"/>
     </HasProperty>
     <HasProperty>
       <DataProperty structures:ref="j.AnotherAddress" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
-      <AugmentationNamespace structures:ref="j" xsi:nil="true"/>
+      <AugmentingNamespace structures:ref="j" xsi:nil="true"/>
     </HasProperty>
     <HasProperty>
       <DataProperty structures:ref="test.BoogalaText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
+      <AugmentingNamespace structures:ref="test" xsi:nil="true"/>
     </HasProperty>
     <HasProperty>
       <DataProperty structures:ref="test.boogalaProp" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationNamespace structures:ref="test" xsi:nil="true"/>
+      <AugmentingNamespace structures:ref="test" xsi:nil="true"/>
     </HasProperty>
   </Class>
   <Class structures:id="nc.TextType">

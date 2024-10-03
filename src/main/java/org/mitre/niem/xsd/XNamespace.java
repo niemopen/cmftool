@@ -26,6 +26,7 @@ package org.mitre.niem.xsd;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.ObjectType;
+import static org.mitre.niem.xsd.XStringObject.LOG;
 import org.xml.sax.Attributes;
 
 /**
@@ -69,7 +70,10 @@ public class XNamespace extends XObjectType {
     @Override
     public void addToHasProperty (XHasProperty hp) {
         switch(this.getComponentLname()) {
-        case "AugmentationNamespace":     hp.getObject().augmentingNS().add(this.getObject()); break;
+        case "AugmentingNamespace":     hp.getObject().augmentingNS().add(this.getObject()); break;
+        default:
+            LOG.error("can't add {} to HasProperty", this.getComponentLname());
+            break;                     
         }
     }
     

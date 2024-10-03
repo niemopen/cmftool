@@ -14,13 +14,13 @@
     <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
-    <AugmentRecord>
+    <AugmentationRecord>
       <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
-      <AugmentationIndex>0</AugmentationIndex>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <GlobalAugmented>structures:AssociationAugmentationPoint</GlobalAugmented>
-    </AugmentRecord>
+      <AugmentationIndex>0</AugmentationIndex>
+      <AugmentedGlobalComponentID>structures:AssociationAugmentationPoint</AugmentedGlobalComponentID>
+    </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="niem-xs">
     <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
@@ -99,7 +99,7 @@
       <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationNamespace structures:ref="nc" xsi:nil="true"/>
+      <AugmentingNamespace structures:ref="nc" xsi:nil="true"/>
     </HasProperty>
   </Class>
   <Class structures:id="nc.ItemType">
@@ -116,17 +116,15 @@
       <DataProperty structures:ref="nc.Classification" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationNamespace structures:ref="nc" xsi:nil="true"/>
+      <AugmentingNamespace structures:ref="nc" xsi:nil="true"/>
     </HasProperty>
   </Class>
-  <Datatype structures:id="nc.TextType">
+  <RestrictionDatatype structures:id="nc.TextType">
     <Name>TextType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for a character string.</DocumentationText>
-    <RestrictionOf>
-      <Datatype structures:ref="xs.string" xsi:nil="true"/>
-    </RestrictionOf>
-  </Datatype>
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+  </RestrictionDatatype>
   <Datatype structures:id="xs.boolean">
     <Name>boolean</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>

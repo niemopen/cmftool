@@ -69,18 +69,16 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </HasProperty>
   </Class>
-  <Datatype structures:id="test.Test2DataType">
+  <RestrictionDatatype structures:id="test.Test2DataType">
     <Name>Test2DataType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <DocumentationText>Test2DataType doc string</DocumentationText>
     <DeprecatedIndicator>true</DeprecatedIndicator>
-    <RestrictionOf>
-      <Datatype structures:ref="xs.string" xsi:nil="true"/>
-      <MaxLength>
-        <NonNegativeValue>20</NonNegativeValue>
-      </MaxLength>
-    </RestrictionOf>
-  </Datatype>
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+    <MaxLength>
+      <NonNegativeValue>20</NonNegativeValue>
+    </MaxLength>
+  </RestrictionDatatype>
   <Datatype structures:id="xs.string">
     <Name>string</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>

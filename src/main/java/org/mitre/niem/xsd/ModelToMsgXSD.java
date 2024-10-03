@@ -186,7 +186,7 @@ public class ModelToMsgXSD extends ModelToXSD {
         // Now do the global attribute augmentations
         var ctn = ct.getName();                     // FooAssociationType or FooType
         for (var ar : gAttAugs) {
-            var ga = ar.getGlobalAug();
+            var ga = ar.getGlobalAugKind();
             if (AUG_ASSOC == ga  && !ctn.endsWith("AssociationType")) continue;
             if (AUG_OBJECT == ga && ctn.endsWith("AssociatinType")) continue;
             if (AUG_SIMPLE == ga) continue;

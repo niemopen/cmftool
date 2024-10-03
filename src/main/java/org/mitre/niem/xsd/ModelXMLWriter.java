@@ -227,10 +227,11 @@ public class ModelXMLWriter {
         if (null == pr.getClassType()) addComponentRef(dom, e, "DataProperty", pr);
         else addComponentRef(dom, e, "ObjectProperty", pr);
         
-        addSimpleChild(dom, e, "AugmentationIndex", ""+x.indexInType());
         addSimpleChild(dom, e, "MinOccursQuantity", ""+x.minOccurs());  
         addSimpleChild(dom, e, "MaxOccursQuantity", x.maxUnbounded() ? "unbounded" : ""+x.maxOccurs());
-        addSimpleChild(dom, e, "GlobalAugmented", x.getGlobalAugmented());
+        if (0 <= x.indexInType())
+            addSimpleChild(dom, e, "AugmentationIndex", ""+x.indexInType());
+        addSimpleChild(dom, e, "AugmentedGlobalComponentID", x.getAugmentedGlobal());
         p.appendChild(e);        
     }
     
@@ -240,7 +241,7 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "TermName", x.getTerm());
         addSimpleChild(dom, e, "DocumentationText", x.getDefinition());
         addSimpleChild(dom, e, "TermLiteralText", x.getLiteral());
-        addSimpleChild(dom, e, "SourceURIList", x.getSourceURIs());
+        for (var z : x.sourceURIs())   addSimpleChild(dom, e, "SourceURI", z);
         for (var z : x.citationList()) addSimpleChild(dom, e, "SourceCitationText", z);
         p.appendChild(e);
     }

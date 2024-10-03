@@ -35,7 +35,7 @@ import org.javatuples.Pair;
 // From a document like this:
 // 
 // <xs:schema
-//   xmlns:appinfo=""
+//   xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
 //   xmlns:foo="http://example.com/foo/"
 //   targetNamespace="http://example.com/bar/">
 //   <xs:complexType name="MyComplexType" appinfo:deprecated="true">
@@ -48,20 +48,23 @@ import org.javatuples.Pair;
 // 
 // you would see three Appinfo records:
 // 
-// Appinfo("deprecated", 
-//     "true", 
-//     Pair<"http://example.com/bar/","MyComplexType">, 
-//     null)
+// AppinfoAttribute(
+//     attLname = "deprecated", 
+//     attValue = "true", 
+//     componentEQN = Pair<"http://example.com/bar/","MyComplexType">, 
+//     elementEQN   = null)
 //
-// Appinfo("orderedPropertyIndicator", 
-//     "true", 
-//     Pair<"http://example.com/bar/","MyComplexType">,  
-//     Pair<"http://example.com/foo/","PropertyText">)
+// AppinfoAttribute(
+//     attLname = "orderedPropertyIndicator", 
+//     attValue = "true", 
+//     componentEQN = Pair<"http://example.com/bar/","MyComplexType", 
+//     elementEQN   = Pair<"http://example.com/foo/","PropertyText")
 //
 // Appinfo("augmentingNamespace", 
-//     "http://example.com/N6AugEx/1.0/",
-//     Pair<"http://example.com/bar/","MyComplexType">,
-//     Pair<"http://example.com/foo/","someAttribute">) 
+//     attLname = "augmentingNamespace",
+//     attValue = "http://example.com/N6AugEx/1.0/",
+//     componentEQN = Pair<"http://example.com/bar/","MyComplexType">,
+//     elementEQN   = Pair<"http://example.com/foo/","someAttribute">) 
 
 
 public record AppinfoAttribute (

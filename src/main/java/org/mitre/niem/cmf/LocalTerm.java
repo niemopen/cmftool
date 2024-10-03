@@ -35,20 +35,20 @@ public class LocalTerm extends ObjectType implements Comparable<LocalTerm> {
     private String term = null;                                     // local term token
     private String definition = null;                               // definition text
     private String literal = null;                                  // literal expansion of term
-    private String sourceURIs = null;                               // URIs of source documents
+    private final List<String> sourceURIs = new ArrayList<>();      // list of source documents URIs
     private final List<String> citationList =  new ArrayList<>();   // list of source citation text
     
     public String getTerm()                 { return term; }
     public String getDefinition()           { return definition; }
     public String getLiteral()              { return literal; }
-    public String getSourceURIs()           { return sourceURIs; }
+    public List<String> sourceURIs()        { return sourceURIs; }
     public List<String> citationList()      { return citationList; }
     
     public void setTerm(String x)           { term = x; }
     public void setDefinition(String x)     { definition = x; }
     public void setLiteral(String x)        { literal = x; }
-    public void setSourceURIs(String x)     { sourceURIs = x; }
     
+    public void addSourceURI(String x)      { sourceURIs.add(x); }
     public void addCitation(String x)       { citationList.add(x); }
     
     public LocalTerm () { }
@@ -57,7 +57,16 @@ public class LocalTerm extends ObjectType implements Comparable<LocalTerm> {
         term = t;
         definition = d;
         literal = l;
-        sourceURIs = s;
+    }
+    
+    public String getSourceURIs () {
+        return String.join(" ", sourceURIs);
+    }
+    
+    public void setSourceURIs (String s) {
+        sourceURIs.clear();
+        var uris = s.split("\\s+");
+        for (var u : uris) sourceURIs.add(u);
     }
     
     @Override

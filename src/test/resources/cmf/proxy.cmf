@@ -55,14 +55,12 @@
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <Datatype structures:id="nc.PercentType">
+  <RestrictionDatatype structures:id="nc.PercentType">
     <Name>PercentType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for a ratio, proper fraction, or percentage, with 100% represented as the value 100.</DocumentationText>
-    <RestrictionOf>
-      <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
-    </RestrictionOf>
-  </Datatype>
+    <RestrictionBase structures:ref="xs.decimal" xsi:nil="true"/>
+  </RestrictionDatatype>
   <Datatype structures:id="xs.decimal">
     <Name>decimal</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>

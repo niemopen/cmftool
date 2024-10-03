@@ -58,7 +58,8 @@ public class Model extends ObjectType {
     private Map<String,Component> components        = new HashMap<>();      // QName -> Component
     private final Map<String,Namespace> prefix2NS   = new HashMap<>();      // prefix -> Namespace
     private final Map<String,Namespace> uri2NS      = new HashMap<>();      // nsURI -> Namespace
-    private List<Component> orderedComponents       = null;                 // ordered by QName
+    private List<Component> orderedComponents       = null;                 // all Components ordered by QName
+    private List<ClassType> orderedClasses          = null;                 // ClassType objects ordered by QName
     private List<Namespace> orderedNamespaces       = null;                 // ordered by namespace prefix
 
     public Model () { super(); }
@@ -85,6 +86,19 @@ public class Model extends ObjectType {
         return orderedComponents;
     }
     
+    // Returns a list of ClassType objects in the model, ordered by QName.
+    // Generates sorted list when necessary, caches for later.
+    public List<ClassType> getClassTypeList () {
+        if (null == orderedComponents || null == orderedClasses) {
+            orderedClasses = new ArrayList<>();
+            for (var c : getComponentList()) {
+                var ct = c.asClassType();
+                if (null != ct) orderedClasses.add(ct);
+            }
+        }
+        return orderedClasses;
+    }
+    
     // Returns a list of Namespace objects in the Model, ordered by prefix.
     // Generates sorted list when necessary, caches for later.
     public List<Namespace> getNamespaceList () {
@@ -108,7 +122,10 @@ public class Model extends ObjectType {
     // Convenience function to generate QName from namespace and name
     public String getQN (String nsuri, String lname) {
         var ns = uri2NS.get(nsuri);
-        if (null == ns) return null;
+        if (null == ns) {
+            LOG.error("no namespace object for Model.getQN({},{})", nsuri, lname);
+            return null;
+        }
         else return ns.getNamespacePrefix() + ":" + lname;
     }
        
@@ -144,6 +161,10 @@ public class Model extends ObjectType {
 
     public Namespace getNamespaceByPrefix (String prefix) { return prefix2NS.get(prefix); }
     public Namespace getNamespaceByURI (String nsuri)     { return uri2NS.get(nsuri); }
+    public Namespace getNamespaceByPrefixOrURI (String s) {
+        if (s.contains(":")) return getNamespaceByURI(s);
+        else return getNamespaceByPrefix(s);
+    }
            
     public void addComponent (Component c) {
         String qn = c.getQName();

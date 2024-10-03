@@ -12,44 +12,46 @@
   version="1"
   xml:lang="en-US">
   <xs:annotation>
-    <xs:documentation>
-      Datatypes test schema:
-      Test list, union, and restriction types
-      Test ordered properties in list type
-    </xs:documentation>
+    <xs:documentation>Datatypes test schema. Test list, union, and restriction types; ordered properties in list type</xs:documentation>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
-<!--<!-\-  <xs:simpleType name="ListSimpleType">
+  <xs:simpleType name="List1SimpleType">
     <xs:list itemType="xs:integer"/>
   </xs:simpleType>
-  <xs:complexType name="ListType" appinfo:orderedPropertyIndicator="true">
+  <xs:complexType name="List1Type" appinfo:orderedPropertyIndicator="true">
+    <xs:annotation>
+      <xs:documentation>List of a named simple type</xs:documentation>
+    </xs:annotation>
     <xs:simpleContent>
-      <xs:extension base="test:ListSimpleType">
+      <xs:extension base="test:List1SimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
   <xs:simpleType name="List2SimpleType">
-    <xs:list itemType="xs:integer"/>
+    <xs:list itemType="test:UnionSimpleType"/>
   </xs:simpleType>
   <xs:complexType name="List2Type">
+    <xs:annotation>
+      <xs:documentation>List of a union simple type</xs:documentation>
+    </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="test:List2SimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:simpleType name="UnionSimpleType">
-    <xs:union memberTypes="xs:integer xs:float"/>
-  </xs:simpleType>
-  <xs:complexType name="UnionType">
+  <xs:complexType name="List3Type">
+    <xs:annotation>
+      <xs:documentation>List of a restriction simple type</xs:documentation>
+    </xs:annotation>
     <xs:simpleContent>
-      <xs:extension base="test:UnionSimpleType">
+      <xs:extension base="test:Restrict8SimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
-  </xs:complexType>-\->
+  </xs:complexType>
   <xs:complexType name="Restrict1Type">
     <xs:annotation>
       <xs:documentation>Exercise minLength, maxLength, pattern, enumeration facets</xs:documentation>
@@ -58,7 +60,7 @@
       <xs:restriction base="niem-xs:token">
         <xs:minLength value="3"/>
         <xs:maxLength value="4"/>
-        <xs:pattern value="[A-Z]{3}"></xs:pattern>
+        <xs:pattern value="[A-Z]{3}"/>
         <xs:enumeration value="FOO">
           <xs:annotation>
             <xs:documentation>The FOO token</xs:documentation>
@@ -108,7 +110,7 @@
     <xs:simpleContent>
       <xs:restriction base="niem-xs:string">
         <xs:length value="3"/>
-        <xs:whiteSpace value="collapse"></xs:whiteSpace>
+        <xs:whiteSpace value="collapse"/>
       </xs:restriction>
     </xs:simpleContent>
   </xs:complexType>
@@ -123,32 +125,9 @@
       </xs:restriction>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:simpleType name="Restrict7SimpleType">
-    <xs:annotation>
-      <xs:documentation>Exercise complex + simple type</xs:documentation>
-    </xs:annotation>
-    <xs:restriction base="xs:decimal">
-      <xs:fractionDigits value="2"/>
-      <xs:totalDigits value="5"/>
-    </xs:restriction>
-  </xs:simpleType>
   <xs:complexType name="Restrict7Type">
     <xs:annotation>
-      <xs:documentation>Exercise complex type from simple type</xs:documentation>
-    </xs:annotation>
-    <xs:simpleContent>
-      <xs:extension base="test:Restrict7SimpleType">
-        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
-      </xs:extension>
-    </xs:simpleContent>
-  </xs:complexType>-->
-  <xs:complexType name="Restrict8Type">
-    <xs:annotation>
-      <xs:appinfo>
-        <clsa:SimpleCodeListBinding codeListURI="http://api.nsgreg.nga.mil/geo-political/GENC/2/3-11" 
-          columnName="foo" constrainingIndicator="true"/>
-      </xs:appinfo>
-      <xs:documentation>Exercise code list binding</xs:documentation>
+      <xs:documentation>Exercise code list</xs:documentation>
     </xs:annotation>
     <xs:simpleContent>
       <xs:restriction base="niem-xs:token">
@@ -163,6 +142,35 @@
           </xs:annotation>
         </xs:enumeration>
       </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:simpleType name="Restrict8SimpleType">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="US"/>
+      <xs:enumeration value="GB"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="Restrict8Type">
+    <xs:annotation>
+      <xs:documentation>Exercise code list from named simple type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="test:Restrict8SimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:simpleType name="UnionSimpleType">
+    <xs:union memberTypes="xs:integer xs:float test:Restrict8SimpleType"/>
+  </xs:simpleType>
+  <xs:complexType name="UnionType">
+    <xs:annotation>
+      <xs:documentation>Union including restriction simple type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="test:UnionSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
 </xs:schema>

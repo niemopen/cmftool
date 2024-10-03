@@ -23,6 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,12 +38,27 @@ public class XMLCatalogResolverTest {
     }
 
     @Test
-    public void testSomeMethod() {
+    public void testCat1() {
         String[] args = { "src/test/resources/cat/cat1.xml" };
-        var res = new XMLCatalogResolver(args);
+        var res  = new XMLCatalogResolver(args);
+        var msg  = res.catalogMessages();
+        var cats = res.allCatalogs();
+        var maps = res.allResolutions();
         assertNotNull(res.resolveURI("http://example.com/external-content/"));
         assertNull(res.resolveURI("http://example.com/remote-resource/"));
         assertNull(res.resolveURI("http://example.com/other-remote/"));
+        assertNull(res.resolveURI("boogla"));
+        assertEquals(res.resolveURI("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"),
+                "file:/C:/Work/NetBeans/CMFTool/src/test/resources/xsd6/niem/utility/structures.xsd");
+        assertThat(cats).containsExactlyInAnyOrder(
+                "file:/C:/Work/NetBeans/CMFTool/src/test/resources/cat/cat1.xml",
+                "file:/C:/Work/NetBeans/CMFTool/src/test/resources/xsd6/niem/xml-catalog.xml");
+        assertEquals(maps.get("http://example.com/remote-resource/"), "REMOTE MAP");
+        assertEquals(maps.get("http://example.com/other-remote/"), "REMOTE MAP");
+        assertEquals(maps.get("boogla"), "NO MAP");
+        assertEquals(5, maps.size());
+        int i = 0;
+        
     }
     
 }

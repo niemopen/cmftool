@@ -25,19 +25,16 @@ package org.mitre.niem.xsd;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import javax.xml.transform.TransformerException;
-import org.junit.jupiter.api.AfterEach;
+import javax.xml.transform.stream.StreamSource;
+import org.apache.commons.io.FileUtils;
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mitre.niem.cmf.Model;
+import org.junit.jupiter.api.Test;
 import static org.mitre.niem.xsd.FileCompare.compareIgnoringTrailingWhitespace;
 
 /**
- *
+ * Read a model from CMF, write to CMF, see if it's valid and the same CMF.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -46,58 +43,37 @@ public class ModelXMLWriterTest {
     public ModelXMLWriterTest() {
     }
 
-    private static final String testDirPath = "src/test/resources";
-    private File outF;
+    private static final String cmfDirPath = "src/test/resources/cmf";   
     
-    @BeforeEach
-    public void setup () throws Exception {
-        outF = File.createTempFile("testWriteXML", ".cmf");
-    }
-    
-    @AfterEach
-    public void teardown () throws Exception {
-        outF.delete();
-    }
-    
-    @ParameterizedTest
-    @ValueSource(strings = {
-        "augment.cmf",
-        "cli.cmf",
-        "clsa.cmf",
-        "complexContent.cmf",
-        "components.cmf",
-        "datatypes.cmf",
-        "externals.cmf",
-        "isRefAtt.cmf",
-        "localTerm.cmf",
-//        "mismatchIDRef.cmf",
-//        "missingIDRef.cmf",
-        "proxy.cmf",
-        "relProp.cmf",
-        "union.cmf"
-    })
-    public void testWriteXML (String cmfFN) throws TransformerException {
-        FileInputStream cmfIS = null;
-        File cmfDir = new File(testDirPath, "cmf");
-        File inF = new File(cmfDir, cmfFN);
-        try {
-            cmfIS = new FileInputStream(inF);
-        } catch (FileNotFoundException ex) {
-            fail("Where is my input file?");
-        }
-        ModelXMLReader mr = new ModelXMLReader();
-        Model m = mr.readXML(cmfIS);
-        assertNotNull(m);
-        FileOutputStream os = null;
-        ModelXMLWriter mw = new ModelXMLWriter();
-        try {
-            os = new FileOutputStream(outF);
+    @Test
+    public void testWriteCMF () throws Exception {
+        var cmfXSD = new String[]{"src/main/CMF/model.xsd/cmf.xsd"};
+        var cmfxs  = new XMLSchema(cmfXSD);
+        var cmfjx  = cmfxs.javaxSchema();
+        var val    = cmfjx.newValidator();        
+        var of = File.createTempFile("testWriteXML", ".cmf");
+            
+        var cmfDir = new File(cmfDirPath);
+        var files  = FileUtils.listFiles(cmfDir, new String[]{"cmf"}, false);
+        for (var f : files) {
+            var fn = f.getName();
+            if ("mismatchIDRef.cmf".equals(fn)) continue;
+            if ("missingIDRef.cmf".equals(fn)) continue;
+            var is = new FileInputStream(f);
+            var mr = new ModelXMLReader();
+            var m  = mr.readXML(is);
+            System.out.println(fn);
+            var os = new FileOutputStream(of);
+            var mw = new ModelXMLWriter();
             mw.writeXML(m, os);
             os.close();
-            String result = compareIgnoringTrailingWhitespace(inF, outF);
-            assertNull(result);
-        } catch (Exception ex) {
-            fail("Can't create output model file");
+            var comp = compareIgnoringTrailingWhitespace(f, of);
+            assertNull(comp);
+            var vs = new StreamSource(f);
+            val.reset();
+            val.validate(vs);
         }
+        of.delete();       
     }
+
 }

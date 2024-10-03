@@ -69,8 +69,8 @@ public class AugmentRecord extends ObjectType implements Comparable<AugmentRecor
     public boolean maxUnbounded ()              { return maxUnbounded; }
     public boolean orderedProperties ()         { return orderedProperty; }
     
-    public String getGlobalAugmented ()         { return globalAugComp; }
-    public void setGlobalAugmented (String s)   { globalAugComp = s; }
+    public String getAugmentedGlobal ()         { return globalAugComp; }
+    public void setAugmentedGlobal (String s)   { globalAugComp = s; }
     
     // Global augmentation codes 
     public static final int AUG_NONE   = 0;     // not a global augmentation
@@ -79,7 +79,7 @@ public class AugmentRecord extends ObjectType implements Comparable<AugmentRecor
     public static final int AUG_SIMPLE = 3;     // a global augmentation for simple content
     public static final int AUG_NUMCODES = 4;   // this many kinds of augmentations
     
-    public int getGlobalAug () {
+    public int getGlobalAugKind () {
         if (null == globalAugComp) return AUG_NONE;
         var cname = globalAugComp.substring(globalAugComp.indexOf(":")+1);
         if (cname.startsWith("Association")) return AUG_ASSOC;

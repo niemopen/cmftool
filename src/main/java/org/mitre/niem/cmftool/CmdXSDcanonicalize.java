@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.mitre.niem.xsd.CanonicalXSD;
 import org.mitre.niem.xsd.ParserBootstrap;
@@ -51,6 +52,13 @@ import org.xml.sax.SAXException;
 @Parameters(commandDescription = "canonicalize an XML Schema document")
 
 public class CmdXSDcanonicalize implements JCCommand {
+    
+    private boolean inPlace = false;
+    private String backSuf = "";
+
+    @Parameter(names = "-i", description = "canonicalize in place (-ibak = keep original with .bak suffix)")
+    private boolean inPlaceOpt =  false;
+    
     @Parameter(names = "-o", description = "file for converter output")
     private String objFile = "";
      
@@ -97,6 +105,14 @@ public class CmdXSDcanonicalize implements JCCommand {
             cob.usage();
             System.exit(1);
         }
+
+        // Look for -ibak option
+       inPlace = inPlaceOpt;        // handle naked -i option 
+       if (mainArgs.get(0).startsWith("-i")) {
+            var iarg = mainArgs.remove(0);
+            inPlace = true;
+            backSuf = iarg.substring(2);
+        }
         // Argument of "-" signals end of arguments, allows "-foo" filenames
         String na = mainArgs.get(0);
         if (na.startsWith("-")) {
@@ -107,16 +123,10 @@ public class CmdXSDcanonicalize implements JCCommand {
                 cob.usage();
                 System.exit(1);
             }
-        }       
-        // Make sure output file is writable
-        OutputStream ow = System.out;
-        if (!"".equals(objFile)) {
-            try {
-                ow = new FileOutputStream(objFile);
-            } catch (FileNotFoundException ex) {
-                System.err.println(String.format("Can't write to output file %s: %s", objFile, ex.getMessage()));
-                System.exit(1);
-            }
+        }
+        // Should be one argument now, the XML Schema document
+        if (mainArgs.size() != 1) {
+            cob.usage();
         }
         // Make sure the Xerces parser can be initialized
         try {
@@ -125,32 +135,79 @@ public class CmdXSDcanonicalize implements JCCommand {
             System.err.println(ex.getMessage());
             System.exit(1);
         }
-        // Single argument should be the XML Schema document
-        if (mainArgs.size() != 1) {
-            cob.usage();
-        }
-        //
-        File ifile = new File(mainArgs.get(0));
+        // Make sure the input document can be read
+        File inF = new File(mainArgs.get(0));
         FileInputStream is = null;
         try {
-            is = new FileInputStream(ifile);
+            is = new FileInputStream(inF);
         } catch (FileNotFoundException ex) {
             System.err.println(String.format("Error reading model file: %s", ex.getMessage()));
             System.exit(1);
         }
+        // Create filenames for inplace operation
+        var outDir = inF.getAbsoluteFile().getParentFile();
+        var outF   = createSufFile(inF, "tmp");
+        File backF = null;
+        if (!backSuf.isBlank()) backF = createSufFile(inF, backSuf);
+        
+        // Create output stream
+        OutputStream ow = System.out;
+        if (inPlace) {
+            try {
+                ow = new FileOutputStream(outF);;
+            } catch (FileNotFoundException ex) {
+                System.err.println(String.format("Can't write to output file %s: %s", outF.getAbsolutePath(), ex.getMessage()));
+                System.exit(1);
+            }
+        }
+        // Write canonical XSD to output stream
         try {
             CanonicalXSD.canonicalize(is, ow);
-        } catch (ParserConfigurationException | SAXException | IOException | TransformerException ex) {
+            ow.close();
+        } catch (ParserConfigurationException | SAXException | TransformerException ex) {
             System.err.println(String.format("%s error: %s", ex.getClass().getName(), ex.getMessage()));
             System.exit(1);
-            Logger.getLogger(CmdXSDcanonicalize.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        try {
-            ow.close();
         } catch (IOException ex) {
-            System.err.println("Error closing output file: " + ex.getMessage());
+            System.err.println(String.format("IO error: %s", ex.getMessage()));
             System.exit(1);
         }
-        System.exit(0);
-    }    
+        // Not inplace? All done!
+        if (!inPlace) System.exit(0);
+        
+        // Rename input file to backup file, if one is desired
+        if (null != backF) {
+            if (!inF.renameTo(backF)) {
+                System.err.println(String.format("Could not rename input file %s to %s", inF.getAbsolutePath(), backF.getAbsolutePath()));
+                if (!outF.delete()) {
+                    System.err.println("Could not delete temporary output file " + outF.getAbsolutePath());
+                }
+                System.exit(1);
+            }
+        }
+        // Otherwise delete the input file
+        else {
+            if (!inF.delete()) {
+                System.err.println("Could not delete input file " + inF.getAbsolutePath());            
+                System.exit(1);
+            }
+        }
+        // Rename temp file to input file
+        if (!outF.renameTo(inF)) {
+            System.err.println(String.format("Could not rename output file %s to %s", outF.getAbsolutePath(), inF.getAbsolutePath()));    
+            System.exit(1);
+        }
+        System.exit(0);        
+    }   
+    
+    private File createSufFile (File f, String suf) {
+        int tries = 0;
+        var ipath = f.getAbsolutePath();
+        var rpath = ipath + "." + suf;
+        var rfile = new File(rpath);
+        while (rfile.exists()) {
+            rpath = String.format("%s.%s%02d", ipath, suf, tries++);
+            rfile = new File(rpath);
+        }
+        return rfile;
+    }
 }
