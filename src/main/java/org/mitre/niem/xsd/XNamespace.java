@@ -68,11 +68,14 @@ public class XNamespace extends XObjectType {
     }
     
     @Override
-    public void addToHasProperty (XHasProperty hp) {
+    public void addToPropertyAssoc (XPropertyAssociation hp) {
         switch(this.getComponentLname()) {
-        case "AugmentingNamespace":     hp.getObject().augmentingNS().add(this.getObject()); break;
+        case "AugmentingNamespace":     
+            LOG.debug("augNS: {}", this.getObject().getNamespaceURI());
+            hp.getObject().augmentingNS().add(this.getObject()); 
+            break;
         default:
-            LOG.error("can't add {} to HasProperty", this.getComponentLname());
+            LOG.error("can't add {} to PropertyAssociation", this.getComponentLname());
             break;                     
         }
     }

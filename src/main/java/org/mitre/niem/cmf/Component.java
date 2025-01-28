@@ -63,7 +63,7 @@ public abstract class Component extends ObjectType implements Comparable<Compone
     }
     
     void setModel (Model m)                 { model = m; }    
-    public void setDocumentation (String s) { documentation = (null == s ? null : s.strip().replaceAll("\\s+", " ")); }
+    public void setDocumentation (String s) { documentation = s; }
     public void setIsDeprecated(boolean f)  { isDeprecated = f; }
     public void setIsDeprecated (String s)  { isDeprecated = "true".equals(s); }    
     

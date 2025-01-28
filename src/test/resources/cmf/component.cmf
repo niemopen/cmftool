@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Namespace structures:id="niem-xs">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/</NamespaceURI>
+    <NamespacePrefixText>niem-xs</NamespacePrefixText>
+    <DocumentationText>Proxy types that carry dictionary metadata and have XML data type simple contents.</DocumentationText>
+    <NamespaceCategoryCode>BUILTIN</NamespaceCategoryCode>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>niem/adapters/niem-xs.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="structures">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
+    <NamespaceCategoryCode>BUILTIN</NamespaceCategoryCode>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="test">
+    <NamespaceURI>http://example.com/test/</NamespaceURI>
+    <NamespacePrefixText>test</NamespacePrefixText>
+    <DocumentationText>
+      Components test schema. 
+      Test name, namespace, documentation, deprecated.
+      Test bogus appinfo.
+    </DocumentationText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>component.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <DataProperty structures:id="test.anAttribute">
+    <Name>anAttribute</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Attribute doc string</DocumentationText>
+    <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="test.AnElement">
+    <Name>AnElement</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>AnElement doc string #1</DocumentationText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="test.AnotherElement">
+    <Name>AnotherElement</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>AnotherElement doc string #1</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="test.Test1Type">
+    <Name>Test1Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Test1Type doc string #1</DocumentationText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <ReferenceCode>ANY</ReferenceCode>
+    <PropertyAssociation>
+      <DataProperty structures:ref="test.AnElement" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </PropertyAssociation>
+  </Class>
+  <Restriction structures:id="test.Test2DataType">
+    <Name>Test2DataType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Test2DataType doc string</DocumentationText>
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+    <Facet>
+      <FacetCategoryCode>maxLength</FacetCategoryCode>
+      <FacetValue>20</FacetValue>
+    </Facet>
+  </Restriction>
+  <Datatype structures:id="xs.decimal">
+    <Name>decimal</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

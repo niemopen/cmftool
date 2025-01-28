@@ -25,7 +25,7 @@ package org.mitre.niem.xsd;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Namespace;
@@ -91,11 +91,11 @@ public class ModelXMLWriter {
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
         addComponentChildren(dom, e, x);
         addOptionalIndicator(dom, e, "AbstractIndicator", x.isAbstract());
-        addComponentRef(dom, e, "ExtensionOfClass", x.getExtensionOfClass());
+        addComponentRef(dom, e, "SubClassOf", x.subClassOf());
         addOptionalIndicator(dom, e, "AugmentableIndicator", x.isAugmentable());
         addSimpleChild(dom, e, "ReferenceCode", x.getReferenceCode());
-        if (null != x.hasPropertyList()) 
-            for (HasProperty z : x.hasPropertyList()) { addHasProperty(dom, e, z); }
+        if (null != x.propertyList()) 
+            for (PropertyAssociation z : x.propertyList()) { addPropertyAssociation(dom, e, z); }
         p.appendChild(e);
     }
     
@@ -114,24 +114,24 @@ public class ModelXMLWriter {
     }
     
     private void addListDatatype (Document dom, Element p, Datatype x) {
-        Element e = dom.createElementNS(CMF_NS_URI, "ListDatatype");
+        Element e = dom.createElementNS(CMF_NS_URI, "List");
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
         addComponentChildren(dom, e, x);  
-        addComponentRef(dom, e, "ListOf", x.getListOf());
+        addComponentRef(dom, e, "ListItemDatatype", x.getListOf());
         addOptionalIndicator(dom, e, "OrderedPropertyIndicator", x.getOrderedItems());
         p.appendChild(e);
     }
     
     private void addUnionDatatype (Document dom, Element p, Datatype x) {
-        Element e = dom.createElementNS(CMF_NS_URI, "UnionDatatype");
+        Element e = dom.createElementNS(CMF_NS_URI, "Union");
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
         addComponentChildren(dom, e, x);  
-        for (var udt : x.unionOf()) addComponentRef(dom, e, "UnionOf", udt);
+        for (var udt : x.unionOf()) addComponentRef(dom, e, "UnionMemberDatatype", udt);
         p.appendChild(e);        
     }
     
     private void addRestrictionDatatype (Document dom, Element p, Datatype x) {
-        Element e = dom.createElementNS(CMF_NS_URI, "RestrictionDatatype");
+        Element e = dom.createElementNS(CMF_NS_URI, "Restriction");
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
         addComponentChildren(dom, e, x);  
         addComponentRef(dom, e, "RestrictionBase", x.getRestrictionBase());
@@ -152,36 +152,16 @@ public class ModelXMLWriter {
         
     private void addFacet (Document dom, Element p, Facet x) {
         if (null == x) return;
-        Element e = dom.createElementNS(CMF_NS_URI, x.getFacetKind());
-        switch (x.getFacetKind()) {
-            case "Enumeration":
-            case "MaxExclusive":
-            case "MaxInclusive":
-            case "MinExclusive":
-            case "MinInclusive":
-            case "Pattern":
-                addSimpleChild(dom, e, "StringValue", x.getStringVal());
-                break;
-            case "FractionDigits":
-            case "Length":
-            case "MinLength":
-            case "MaxLength":
-                addSimpleChild(dom, e, "NonNegativeValue", x.getStringVal());
-                break;
-            case "TotalDigits":
-                addSimpleChild(dom, e, "PositiveValue", x.getStringVal());
-                break;
-            case "WhiteSpace":
-                addSimpleChild(dom, e, "WhiteSpaceValueCode", x.getStringVal()); 
-                break;
-        }
+        Element e = dom.createElementNS(CMF_NS_URI, "Facet");
+        addSimpleChild(dom, e, "FacetCategoryCode", x.getFacetKind());
+        addSimpleChild(dom, e, "FacetValue", x.getStringVal());
         addSimpleChild(dom, e, "DocumentationText", x.getDefinition());
         p.appendChild(e);
     }
         
-    private void addHasProperty (Document dom, Element p, HasProperty x) {
+    private void addPropertyAssociation (Document dom, Element p, PropertyAssociation x) {
         if (null == x) return;
-        var e  = dom.createElementNS(CMF_NS_URI, "HasProperty");  
+        var e  = dom.createElementNS(CMF_NS_URI, "PropertyAssociation");  
         var pr = x.getProperty();
         
         if (null == pr.getClassType()) addComponentRef(dom, e, "DataProperty", pr);
@@ -205,7 +185,7 @@ public class ModelXMLWriter {
         addSimpleChild(dom, e, "NamespacePrefixText", x.getNamespacePrefix());
         addSimpleChild(dom, e, "DocumentationText", x.getDocumentation());
         int nsk = x.getKind();
-        addSimpleChild(dom, e, "NamespaceKindCode", namespaceKind2Code(nsk));
+        addSimpleChild(dom, e, "NamespaceCategoryCode", namespaceKind2Code(nsk));
         for (var cta : x.confTargList()) addSimpleChild(dom, e, "ConformanceTargetURI", cta);
         addSimpleChild(dom, e, "DocumentFilePathText", x.getFilePath());
         addSimpleChild(dom, e, "NIEMVersionText", x.getNIEMVersion());
@@ -257,23 +237,31 @@ public class ModelXMLWriter {
     private void addProperty (Document dom, Element p, Property x) {
         Element e = null;
         if (null == x) return;
-        if (null == x.getClassType()) e = dom.createElementNS(CMF_NS_URI, "DataProperty");
-        else e = dom.createElementNS(CMF_NS_URI, "ObjectProperty");
+        
+        // If it has a class, it's an object property.
+        // If no class but the reference code is set, it's an object property with a proxy class.
+        var isObjProp = null != x.getClassType() || !"NONE".equals(x.getReferenceCode());
+        
+        if (isObjProp) e = dom.createElementNS(CMF_NS_URI, "ObjectProperty");
+        else e = dom.createElementNS(CMF_NS_URI, "DataProperty");
         
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", componentIDString(x));
         addComponentChildren(dom, e, x);
         addOptionalIndicator(dom, e, "AbstractIndicator", x.isAbstract());
         addComponentRef(dom, e, "SubPropertyOf", x.getSubPropertyOf());
-        addOptionalIndicator(dom, e, "RelationshipPropertyIndicator", x.isRelationship()); 
+        addOptionalIndicator(dom, e, "RelationshipIndicator", x.isRelationship()); 
         
+        if (isObjProp) {
+            
+        }
         if (null == x.getClassType()) {
             addComponentRef(dom, e, "Datatype", x.getDatatype());            
             addOptionalIndicator(dom, e, "AttributeIndicator", x.isAttribute());
             addOptionalIndicator(dom, e, "RefAttributeIndicator", x.isRefAttribute());
         }
         else {
-            addComponentRef(dom, e, "Class", x.getClassType());
             addSimpleChild(dom, e, "ReferenceCode", x.getReferenceCode());
+            addComponentRef(dom, e, "Class", x.getClassType());
         }
         p.appendChild(e);
     }

@@ -4,11 +4,21 @@
   xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <Namespace structures:id="nc">
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
-    <NamespacePrefixText>nc</NamespacePrefixText>
-    <DocumentationText>appinfo test case</DocumentationText>
-    <NamespaceKindCode>CORE</NamespaceKindCode>
+  <Namespace structures:id="structures">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
+    <NamespacePrefixText>structures</NamespacePrefixText>
+    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
+    <NamespaceCategoryCode>BUILTIN</NamespaceCategoryCode>
+    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="test">
+    <NamespaceURI>http://example.com/test/</NamespaceURI>
+    <NamespacePrefixText>test</NamespacePrefixText>
+    <DocumentationText>LocalTerm test case</DocumentationText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>localTerm.xsd</DocumentFilePathText>
     <NIEMVersionText>6</NIEMVersionText>
@@ -31,19 +41,9 @@
       <SourceCitationText>citation #2</SourceCitationText>
     </LocalTerm>
   </Namespace>
-  <Namespace structures:id="structures">
-    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/</NamespaceURI>
-    <NamespacePrefixText>structures</NamespacePrefixText>
-    <DocumentationText>The structures namespace provides base types and other components for definition of NIEM-conformant XML schemas.</DocumentationText>
-    <NamespaceKindCode>BUILTIN</NamespaceKindCode>
-    <DocumentFilePathText>niem/utility/structures.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
-    <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NamespaceLanguageName>en-US</NamespaceLanguageName>
-  </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
-    <NamespaceKindCode>XSD</NamespaceKindCode>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
 </Model>

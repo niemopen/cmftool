@@ -64,7 +64,7 @@ public class XClassType extends XObjectType {
     // of the parent classtype.
     @Override
     public void addToClassType (XClassType c) {
-        c.getObject().setExtensionOfClass(this.getObject());
+        c.getObject().setSubClassOf(this.getObject());
     } 
     
     @Override

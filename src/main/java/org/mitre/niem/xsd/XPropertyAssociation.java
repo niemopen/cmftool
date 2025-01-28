@@ -23,7 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
-import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Model;
 import org.xml.sax.Attributes;
 
@@ -32,25 +32,25 @@ import org.xml.sax.Attributes;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class XHasProperty extends XObjectType {
-    private HasProperty obj = null;
+public class XPropertyAssociation extends XObjectType {
+    private PropertyAssociation obj = null;
     
     @Override
-    public HasProperty getObject () { return obj; }
+    public PropertyAssociation getObject () { return obj; }
     
-    XHasProperty (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
+    XPropertyAssociation (Model m, XObjectType p, String ens, String eln, Attributes a, int line) {
         super(m, p, ens, eln, a, line);
-        obj = new HasProperty();  
+        obj = new PropertyAssociation();  
     }      
     
     @Override
     public void addAsChild (XObjectType child) {
-        child.addToHasProperty(this);
+        child.addToPropertyAssoc(this);
         super.addAsChild(child);
     }
    
     @Override
     public void addToClassType (XClassType x) { 
-        x.getObject().addHasProperty(this.getObject());
+        x.getObject().addProperty(this.getObject());
     }    
 }

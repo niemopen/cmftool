@@ -45,7 +45,7 @@ import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
-import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
@@ -59,9 +59,9 @@ import static org.mitre.niem.xsd.CheckModel.checkAugGEOonly;
 import static org.mitre.niem.xsd.CheckModel.checkAugGESonly;
 import static org.mitre.niem.xsd.CheckModel.checkAugSCwA;
 import static org.mitre.niem.xsd.CheckModel.checkAugSCwE;
-import static org.mitre.niem.xsd.CheckModel.checkComponents;
 import static org.mitre.niem.xsd.CheckModel.checkDatatypes;
 import org.xml.sax.SAXException;
+import static org.mitre.niem.xsd.CheckModel.checkComponent;
 
 /**
  *
@@ -229,7 +229,7 @@ public class ModelFromXSDTest {
         for (var tdir : testDirs) {
             var f = new File(tdir, "components.xsd");
             if (!f.canRead()) continue;
-            checkComponents(createModel(f));
+            checkComponent(createModel(f));
             assertEmptyLogs();
         }
     }
@@ -280,7 +280,7 @@ public class ModelFromXSDTest {
             var myNS = m.getNamespaceByPrefix("my");
             var ncNS = m.getNamespaceByPrefix("nc");
             var edCT = m.getClassType("nc:EducationType");
-            var hp = edCT.getHasProperty("my:privacyText");
+            var hp = edCT.getProperty("my:privacyText");
             assertNotNull(hp);
             assertThat(hp.augmentingNS())
                     .containsExactly(myNS);
@@ -326,11 +326,11 @@ public class ModelFromXSDTest {
             ClassType ct = m.getClassType("nc:AddressType");
             assertNotNull(ct);
             assertTrue(ct.isAugmentable());
-            List<HasProperty> hpl = ct.hasPropertyList();
+            List<PropertyAssociation> hpl = ct.propertyList();
             assertNotNull(hpl);
             assertEquals(6, hpl.size());
 
-            HasProperty hp = hpl.get(0);
+            PropertyAssociation hp = hpl.get(0);
             assertEquals(hp.getProperty(), m.getProperty("nc:AddressFullText"));
             assertEquals(1, hp.minOccurs());
             assertEquals(1, hp.maxOccurs());
@@ -414,9 +414,9 @@ public class ModelFromXSDTest {
             var c1 = m.getProperty("cli:codeListColumnName");
             var c2 = m.getProperty("cli:codeListConstrainingIndicator");
             var c3 = m.getProperty("cli:codeListURI");
-            assertThat(ct.hasPropertyList())
+            assertThat(ct.propertyList())
                     .hasSize(4)
-                    .extracting(HasProperty::getProperty)
+                    .extracting(PropertyAssociation::getProperty)
                     .contains(p1, c1, c2, c3);
             assertEmptyLogs();
         }
@@ -626,10 +626,10 @@ public class ModelFromXSDTest {
             assertEquals(13, m.getComponentList().size());
             ClassType ct = m.getClassType("nc:PersonNameType");
             assertNotNull(ct);
-            List<HasProperty> hpl = ct.hasPropertyList();
+            List<PropertyAssociation> hpl = ct.propertyList();
             assertNotNull(hpl);
             assertEquals(4, hpl.size());
-            HasProperty hp = hpl.get(0);
+            PropertyAssociation hp = hpl.get(0);
             assertEquals(hp.getProperty(), m.getProperty("nc:PersonGivenName"));
             assertEquals(0, hp.minOccurs());
             assertEquals(1, hp.maxOccurs());
@@ -811,8 +811,8 @@ public class ModelFromXSDTest {
             ClassType persNT = m.getClassType("nc:PersonNameTextType");
             ClassType propNT = m.getClassType("nc:ProperNameTextType");
             ClassType textT = m.getClassType("nc:TextType");
-            assertEquals(textT, propNT.getExtensionOfClass());
-            assertEquals(propNT, persNT.getExtensionOfClass());
+            assertEquals(textT, propNT.subClassOf());
+            assertEquals(propNT, persNT.subClassOf());
             assertEmptyLogs();
         }
     }
@@ -945,9 +945,9 @@ public class ModelFromXSDTest {
             assertEquals(5, m.getComponentList().size());
             ClassType ct = m.getClassType("nc:TextType");
             assertNotNull(ct);
-            assertThat(ct.hasPropertyList())
+            assertThat(ct.propertyList())
                     .hasSize(2)
-                    .extracting(HasProperty::getProperty)
+                    .extracting(PropertyAssociation::getProperty)
                     .extracting(Property::getName)
                     .contains("TextLiteral", "partialIndicator");
             Property p = m.getProperty("nc:TextLiteral");
@@ -998,24 +998,24 @@ public class ModelFromXSDTest {
             assertEquals(8, m.getComponentList().size());
             ClassType ct1 = m.getClassType("nc:TextType");
             assertNotNull(ct1);
-            assertThat(ct1.hasPropertyList())
+            assertThat(ct1.propertyList())
                     .hasSize(2)
-                    .extracting(HasProperty::getProperty)
+                    .extracting(PropertyAssociation::getProperty)
                     .extracting(Property::getName)
                     .contains("TextLiteral", "partialIndicator");
 
             ClassType ct2 = m.getClassType("nc:ProperNameTextType");
             assertNotNull(ct2);
-            assertEquals(ct2.getExtensionOfClass(), ct1);
-            assertThat(ct2.hasPropertyList())
+            assertEquals(ct2.subClassOf(), ct1);
+            assertThat(ct2.propertyList())
                     .hasSize(0);
 
             ClassType ct3 = m.getClassType("nc:PersonNameTextType");
             assertNotNull(ct3);
-            assertEquals(ct3.getExtensionOfClass(), ct2);
-            assertThat(ct3.hasPropertyList())
+            assertEquals(ct3.subClassOf(), ct2);
+            assertThat(ct3.propertyList())
                     .hasSize(1)
-                    .extracting(HasProperty::getProperty)
+                    .extracting(PropertyAssociation::getProperty)
                     .extracting(Property::getName)
                     .contains("personNameInitialIndicator");
 
@@ -1052,9 +1052,9 @@ public class ModelFromXSDTest {
 
             ClassType ct = m.getClassType("nc:PersonNameTextType");
             assertNotNull(ct);
-            assertThat(ct.hasPropertyList())
+            assertThat(ct.propertyList())
                     .hasSize(2)
-                    .extracting(HasProperty::getProperty)
+                    .extracting(PropertyAssociation::getProperty)
                     .extracting(Property::getName)
                     .contains("PersonNameTextLiteral", "personNameInitialIndicator");
             assertEmptyLogs();
@@ -1100,9 +1100,9 @@ public class ModelFromXSDTest {
             ClassType ct = m.getClassType("nc:AngularMinuteType");
             Datatype dt = m.getDatatype("nc:AngularMinuteDatatype");
             Property p = m.getProperty("nc:AngularMinuteLiteral");
-            assertThat(ct.hasPropertyList())
+            assertThat(ct.propertyList())
                     .hasSize(2)
-                    .extracting(HasProperty::getProperty)
+                    .extracting(PropertyAssociation::getProperty)
                     .extracting(Property::getName)
                     .contains("AngularMinuteLiteral", "SomeAtt");
             assertNotNull(dt);
@@ -1128,9 +1128,9 @@ public class ModelFromXSDTest {
             ClassType ct = m.getClassType("nc:AttributedAngularMinuteType");
             Datatype dt = m.getDatatype("nc:AngularMinuteType");
             Property p = m.getProperty("nc:AttributedAngularMinuteLiteral");
-            assertThat(ct.hasPropertyList())
+            assertThat(ct.propertyList())
                     .hasSize(2)
-                    .extracting(HasProperty::getProperty)
+                    .extracting(PropertyAssociation::getProperty)
                     .extracting(Property::getName)
                     .contains("AttributedAngularMinuteLiteral", "SomeAtt");
             assertNotNull(dt);
@@ -1261,8 +1261,8 @@ public class ModelFromXSDTest {
             ModelFromXSD mfact = new ModelFromXSD();
             Model m = mfact.createModel(sch);
             var ct = m.getClassType("nc:PersonNameType");
-            assertNotNull(ct.hasPropertyList().get(0).getDefinition());
-            assertNull(ct.hasPropertyList().get(1).getDefinition());
+            assertNotNull(ct.propertyList().get(0).getDefinition());
+            assertNull(ct.propertyList().get(1).getDefinition());
         }
     }
 
@@ -1419,7 +1419,7 @@ public class ModelFromXSDTest {
             Property p = m.getProperty("xml:lang");
             assertNotNull(p);
             ClassType ct = m.getClassType("nc:TextType");
-            assertEquals(ct.hasPropertyList().get(3).getProperty(), p);
+            assertEquals(ct.propertyList().get(3).getProperty(), p);
             assertEmptyLogs();
         }
     }

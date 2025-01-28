@@ -31,7 +31,7 @@ import static org.mitre.niem.NIEMConstants.RDF_NS_URI;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
-import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
@@ -129,13 +129,13 @@ public class ModelToOWL {
             ow.print("\n");
             ow.print(ct.getQName());
             ow.print("\n    a owl:Class");
-            if (null != ct.getExtensionOfClass()) {
-                ow.print(" ;\n    rdfs:subClassOf " + ct.getExtensionOfClass().getQName());
+            if (null != ct.subClassOf()) {
+                ow.print(" ;\n    rdfs:subClassOf " + ct.subClassOf().getQName());
             }
             if (null != ct.getDocumentation()) {
                 ow.print(" ;\n    rdfs:comment \"" + ct.getDocumentation() + "\"");               
             }
-            for (HasProperty hp : ct.hasPropertyList()) {
+            for (PropertyAssociation hp : ct.propertyList()) {
                 if (0 < hp.minOccurs()) {
                     ow.print(" ;\n    owl:subclassOf [");
                     ow.print("\n        a owl:Restriction");

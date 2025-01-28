@@ -34,10 +34,10 @@ import java.util.List;
  */
 public class ClassType extends Component {
     private boolean isAbstract = false;
-    private String refCode = null;
     private boolean isAugmentable = false;
-    private ClassType extensionOfClass  = null;
-    private final List<HasProperty> hasPropertyList = new ArrayList<>();
+    private String refCode = null;
+    private ClassType subClassOf  = null;
+    private final List<PropertyAssociation> propertyList = new ArrayList<>();
     
     public ClassType () { super(); type = C_CLASSTYPE; }
     
@@ -46,41 +46,48 @@ public class ClassType extends Component {
         type = C_CLASSTYPE;
     }
     
-    public void setExtensionOfClass (ClassType e) { extensionOfClass = e; }
+    public void setSubClassOf (ClassType e)       { subClassOf = e; }
     public void setIsAbstract(boolean f)          { isAbstract = f; }
     public void setIsAugmentable (boolean f)      { isAugmentable = f; }
     public void setIsAugmentable (String s)       { isAugmentable = "true".equals(s); }
     public void setReferenceCode (String s)       { refCode = s; }
     
-    public ClassType getExtensionOfClass ()       { return extensionOfClass; }
-    public String getReferenceCode()              { return refCode; }
+    public ClassType subClassOf ()                { return subClassOf; }
     public boolean isAbstract ()                  { return isAbstract; }
     public boolean isAugmentable ()               { return isAugmentable; }
-    public boolean isAdapter ()                   { return getName().endsWith("AdapterType"); }
-    public boolean isReferenceable ()             { return !refCode.isBlank() && !"NONE".equals(refCode); }
+    public boolean isAdapter ()                   { return getName().endsWith("AdapterType"); } 
+    public boolean isReferenceable ()             { return !"NONE".equals(getReferenceCode()); }
+    public boolean isReferenceCodeSet ()          { return null != refCode; }
 
+    // If the reference code is not explicitly set, it is inherited from 
+    // the superclass.  If no superclass, the default code is ANY.
+    public String getReferenceCode () { 
+        if (null != refCode) return refCode;
+        else if (null != subClassOf) return subClassOf.getReferenceCode();
+        else return "ANY";
+    }
             
-    public List<HasProperty> hasPropertyList ()   { return hasPropertyList; }
+    public List<PropertyAssociation> propertyList ()   { return propertyList; }
     
-    public HasProperty getHasProperty (String qname) {
-        for (var hp : hasPropertyList) {
+    public PropertyAssociation getProperty (String qname) {
+        for (var hp : propertyList) {
             if (qname.equals(hp.getProperty().getQName())) return hp;
         }
         return null;
     }
 
-    public void addHasProperty (HasProperty c) {
-        this.hasPropertyList.add(c);
+    public void addProperty (PropertyAssociation c) {
+        this.propertyList.add(c);
     }
     
-    public void removeHasProperty (HasProperty c) {
-        this.hasPropertyList.remove(c);
+    public void removeProperty (PropertyAssociation c) {
+        this.propertyList.remove(c);
     }
     
-    public void replaceHasProperty (HasProperty op, HasProperty np) {
-        int index = this.hasPropertyList.indexOf(op);
+    public void replaceHasProperty (PropertyAssociation op, PropertyAssociation np) {
+        int index = this.propertyList.indexOf(op);
         if (index < 0) return;
-        this.hasPropertyList.set(index, np);
+        this.propertyList.set(index, np);
     }
            
     @Override

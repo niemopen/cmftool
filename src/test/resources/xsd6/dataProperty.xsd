@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/test/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:test="http://example.com/test/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>
+      DataProperty test schema. 
+      Test abstract, relationship, reference code, attribute, refAttribute.
+    </xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:element name="DataProperty" type="niem-xs:string" abstract="true" appinfo:referenceAttributeIndicator="true"/>
+  <xs:element name="DProp2" type="niem-xs:string" nillable="true" appinfo:relationshipPropertyIndicator="false"/>
+  <xs:element name="DProp3" type="niem-xs:string" appinfo:relationshipPropertyIndicator="true" nillable="true"/>
+  <xs:element name="DProp4" type="niem-xs:string" appinfo:referenceAttributeIndicator="true" nillable="true"/>
+  <xs:element name="DProp5" type="niem-xs:string" appinfo:relationshipPropertyIndicator="true" nillable="true"/>
+  <xs:element name="OProp1" type="niem-xs:string" appinfo:referenceCode="ANY"/>
+  <xs:attribute name="AProp2" type="xs:string" appinfo:referenceCode="ANY" appinfo:referenceAttributeIndicator="false"/>
+  <xs:attribute name="AProp3" type="xs:string" appinfo:relationshipPropertyIndicator="true"/>
+  <xs:attribute name="AProp4" type="xs:string" appinfo:referenceAttributeIndicator="true"/>
+  <xs:attribute name="AProp5" type="xs:string" appinfo:referenceAttributeIndicator="true" appinfo:relationshipPropertyIndicator="true"/>
+</xs:schema>

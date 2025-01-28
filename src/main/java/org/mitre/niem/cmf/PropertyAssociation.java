@@ -31,7 +31,7 @@ import java.util.Set;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class HasProperty extends ObjectType {
+public class PropertyAssociation extends ObjectType {
     private Property property = null;
     private int minQ = 1;
     private int maxQ = 1;
@@ -55,6 +55,6 @@ public class HasProperty extends ObjectType {
     public String getDefinition ()                  { return definition; }
     public Set<Namespace> augmentingNS ()           { return augmentingNS; }
     
-    public HasProperty () { super();  }    
+    public PropertyAssociation () { super();  }    
   
 }

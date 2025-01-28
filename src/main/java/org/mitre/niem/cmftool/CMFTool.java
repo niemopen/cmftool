@@ -47,7 +47,7 @@ public class CMFTool {
      
     String xtd = "src/test/resources/xsd6/";
     if (0 == args.length) {
-        args = new String[]{"x2m", "src/test/resources/xsd6/augGEOonly.xsd" };
+        args = new String[]{"x2m", "src/test/resources/xsd6/propAssoc.xsd" };
 //        var td = "src/main/CMF/";
 //        args = new String[]{"m2xm", "-o", td+"tmp", td+"model.cmf"};
 

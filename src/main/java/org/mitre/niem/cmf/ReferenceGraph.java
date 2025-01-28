@@ -79,9 +79,9 @@ public class ReferenceGraph {
     private void addClassRefs (ClassType ct) {
         if (null == ct) return;
         var ctns = ct.getNamespace();
-        var ext  = ct.getExtensionOfClass();
+        var ext  = ct.subClassOf();
         if (null != ext) addRef(ctns, ext.getNamespace());        
-        for (var hp : ct.hasPropertyList()) {
+        for (var hp : ct.propertyList()) {
             if (hp.augmentingNS().isEmpty())
                 addRef(ctns, hp.getProperty().getNamespace());
         }

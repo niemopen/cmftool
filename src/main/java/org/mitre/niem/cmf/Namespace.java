@@ -76,7 +76,7 @@ public class Namespace extends ObjectType implements Comparable<Namespace> {
     }
     
     void setModel (Model m)                   { model = m; }
-    public void setDocumentation (String s)   { documentation = s.strip().replaceAll("\\s+", " "); }
+    public void setDocumentation (String s)   { documentation = s; }
     public void setKind (int k)               { nsKind = k; }
     public void setKind (String c)            { nsKind = namespaceCode2Kind(c); }
     public void setFilePath (String s)        { filepath = s; }

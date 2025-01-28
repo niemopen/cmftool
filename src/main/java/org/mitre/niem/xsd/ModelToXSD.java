@@ -70,7 +70,7 @@ import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
-import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
@@ -215,8 +215,8 @@ public abstract class ModelToXSD {
         for (Component c : m.getComponentList()) {
             var ct = c.asClassType();
             if (null == ct) continue;
-            if (ct.hasPropertyList().size() < 1) continue;
-            var plist = ct.hasPropertyList();
+            if (ct.propertyList().size() < 1) continue;
+            var plist = ct.propertyList();
             var prop  = plist.get(0).getProperty();
             var cscflag = (null != prop.getDatatype() && prop.getName().endsWith("Literal"));
             for (int i = 1; i < plist.size(); i++) {
@@ -697,11 +697,11 @@ public abstract class ModelToXSD {
             augPoint.setDocumentation("An augmentation point for " + targCTName + ".");
             augPoint.setIsAbstract(true);
             m.addComponent(augPoint);
-            var hp = new HasProperty();
+            var hp = new PropertyAssociation();
             hp.setProperty(augPoint);
             hp.setMinOccurs(0);
             hp.setMaxUnbounded(true);
-            targCT.addHasProperty(hp);        
+            targCT.addProperty(hp);        
             LOG.debug("created {} for {}", augPoint.getQName(), targCT.getQName());
         } 
         // Now use the augmentation info in each Namespace to generate augmentation 
@@ -786,7 +786,7 @@ public abstract class ModelToXSD {
                 augCT.setDocumentation("A data type for additional information about " + typePhrase + ".");
                 while (arIndex < arlist.size()) {
                     var ar = arlist.get(arIndex++);
-                    var hp = new HasProperty();
+                    var hp = new PropertyAssociation();
                     var p  = ar.getProperty();
 //                    addToPropMap(substituteMap, augPoint, p);
                     hp.setProperty(p);
@@ -794,7 +794,7 @@ public abstract class ModelToXSD {
                     hp.setMaxOccurs(ar.maxOccurs());
                     hp.setMaxUnbounded(ar.maxUnbounded());
                     hp.setOrderedProperties(ar.orderedProperties());
-                    augCT.addHasProperty(hp);
+                    augCT.addProperty(hp);
                 }
                 m.addComponent(augCT);
 
@@ -838,7 +838,7 @@ public abstract class ModelToXSD {
         
         // Create simple content for a class with a FooLiteral property
         if (litTypes.contains(ct)) {
-            var plist = ct.hasPropertyList();
+            var plist = ct.propertyList();
             var lp    = plist.get(0).getProperty();     // FooLiteral property
             var lpt   = lp.getDatatype();               // datatype for FooLiteral
             var lptqn = proxifiedDatatypeQName(lpt);
@@ -867,7 +867,7 @@ public abstract class ModelToXSD {
             exe.appendChild(age); 
 
             // Set appinfo:referenceCode if needed
-            if (1 == ct.hasPropertyList().size()) {
+            if (1 == ct.propertyList().size()) {
                 var rcode = ct.getReferenceCode();
                 if (null != rcode && !"NONE".equals(rcode))
                     addAppinfoAttribute(dom, cte, "referenceCode", rcode);
@@ -882,14 +882,14 @@ public abstract class ModelToXSD {
             cte.appendChild(cce);   // xs:complexType has xs:complexContent
             
             // Set xs:extension base from the class parent or a structures type
-            var basect  = ct.getExtensionOfClass();
+            var basect  = ct.subClassOf();
             if (null == basect) exe.setAttribute("base", structuresBaseType(ct.getName()));
             else {
                 exe.setAttribute("base", basect.getQName());
                 nsNSdeps.add(basect.getNamespace().getNamespaceURI());
             }       
             // Add element refs for element properties (but not element augmentations)
-            for (HasProperty hp : ct.hasPropertyList()) {
+            for (PropertyAssociation hp : ct.propertyList()) {
                 if (!hp.augmentingNS().isEmpty()) continue;
                 if (hp.getProperty().isAttribute()) continue;
                 if (null == sqe) sqe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");
@@ -917,14 +917,14 @@ public abstract class ModelToXSD {
     }
 
     // Create <xs:element ref="foo"> from a HasProperty object, append it to a sequence or choice
-    protected void addElementRef (Document dom, Element parent, HasProperty hp) {
+    protected void addElementRef (Document dom, Element parent, PropertyAssociation hp) {
         if (hp.getProperty().isAttribute()) return;
         addElementRef(dom, parent, hp, hp.getProperty());
     }
 
     // Create element ref for a QName, with minOccurs = maxOccurs = 1.
     protected void addElementOnceRef (Document dom, Element parent, Property p) {
-        var hp = new HasProperty();
+        var hp = new PropertyAssociation();
         hp.setMaxOccurs(1);
         hp.setMinOccurs(1);
         addElementRef(dom, parent, hp, p);
@@ -932,14 +932,14 @@ public abstract class ModelToXSD {
     
     // Create element ref for a QName, with minOccurs = maxOccurs = 1.
     protected void addElementAnyRef (Document dom, Element parent, Property p) {
-        var hp = new HasProperty();
+        var hp = new PropertyAssociation();
         hp.setMinOccurs(0);
         hp.setMaxUnbounded(true);
         addElementRef(dom, parent, hp, p);
     } 
     
     // Create an element ref for Property p, using min/maxoccurs from hp
-    protected void addElementRef (Document dom, Element parent, HasProperty hp, Property p) {
+    protected void addElementRef (Document dom, Element parent, PropertyAssociation hp, Property p) {
         if (p.isAttribute()) return;
         var hpe = dom.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
         hpe.setAttribute("ref", p.getQName());
@@ -976,7 +976,7 @@ public abstract class ModelToXSD {
         public int compareTo(AttProp o) { return o.ap.getQName().compareTo(this.ap.getQName()); }
     }
     protected void buildAttributeList (List<AttProp> alist, ClassType ct) {
-        for (HasProperty hp : ct.hasPropertyList()) {
+        for (PropertyAssociation hp : ct.propertyList()) {
             var p = hp.getProperty();
             if (!p.isAttribute()) continue;
             AttProp arec = null;

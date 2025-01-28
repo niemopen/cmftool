@@ -77,7 +77,7 @@ import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
-import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
@@ -368,9 +368,18 @@ public class ModelFromXSD {
     // appinfo attribute records in all the schema documents and index them by global
     // component QName (and sometimes then element reference QName).  Sure would be
     // nice if appinfo attributes were available through XSModel, but they aren't.
+    private static Set<String> APPINFO_ATTS = Set.of(
+        "augmentingNamespace", "deprecated", "externalImportIndicator",
+        "orderedPropertyIndicator", "referenceCode",
+        "referenceAttributeIndicator", "relationshipPropertyIndicator");
     private void processAppinfoAttributes () {
         sdoc.forEach((ns,sd) -> {
             for (var arec : sd.appinfoAtts()) {
+                if (!APPINFO_ATTS.contains(arec.attLname())) {
+                    LOG.warn("unknown appinfo attribute {} at {}:{}",
+                            arec.attLname(), arec.sdocName(), arec.sdocLine());
+                    continue;
+                }
                 // Get QName of the schema component with the appinfo.
                 // We have its namespace URI; need the namespace prefix.
                 var cnsuri = arec.componentEQN().getValue0();       // compnent ns uri
@@ -615,7 +624,7 @@ public class ModelFromXSD {
             if (NIEM_STRUCTURES == uri2Builtin(xbns)) continue;
             var bct    = m.getClassType(xbns, xbase.getName());
             if (null != bct) {
-                ct.setExtensionOfClass(bct);
+                ct.setSubClassOf(bct);
                 LOG.debug("class " + ct.getQName() + " extends class " + bct.getQName());                
             }
         }
@@ -625,7 +634,7 @@ public class ModelFromXSD {
     // their simple content.
     private void findClassWithLiteralProperty () throws CMFException {
         for (var ct : classXSobj.keySet()) {
-            var bct    = ct.getExtensionOfClass();
+            var bct    = ct.subClassOf();
             var xctype = classXSobj.get(ct);
             var xbtype = xctype.getBaseType();
             if (null == xctype.getSimpleType()) continue;   // doesn't have simple content
@@ -719,18 +728,19 @@ public class ModelFromXSD {
                 continue;
             }
             LOG.debug("processing property " + p.getQName());
-            var xobj = propertyXSobj.get(p);
-            var rcode = getAppinfoAttributeValue(p.getQName(), null, "referenceCode");
+            var xobj   = propertyXSobj.get(p);
+            var rcode  = getAppinfoAttributeValue(p.getQName(), null, "referenceCode");
+            var isrefA = getAppinfoAttributeValue(p.getQName(), null, "referenceAttributeIndicator");
             p.setIsDeprecated(getAppinfoAttributeValue(p.getQName(), null, "deprecated"));
-            p.setIsRefAttribute(getAppinfoAttributeValue(p.getQName(), null, "referenceAttributeIndicator"));
             p.setIsRelationship(getAppinfoAttributeValue(p.getQName(), null, "relationshipPropertyIndicator"));            
             if (p.isAttribute()) {
                 var xadecl = (XSAttributeDeclaration)xobj;
                 var xatype = xadecl.getTypeDefinition();
                 var dt     = getDatatype(xatype.getNamespace(), xatype.getName());
                 p.setDatatype(dt);
+                p.setIsRefAttribute(isrefA);
                 if (!rcode.isBlank())
-                    LOG.warn("appinfo:referenceCode is not allowed on attribute {}, ignored", p.getQName());
+                    LOG.warn("appinfo:referenceCode is not allowed on declaration of attribute {}, ignored", p.getQName());
             }
             else {
                 var xedecl = (XSElementDeclaration)xobj;
@@ -748,18 +758,20 @@ public class ModelFromXSD {
                     var xesubg = xedecl.getSubstitutionGroupAffiliation();
                     if (null != xesubg) {
                         p.setSubPropertyOf(m.getProperty(xesubg.getNamespace(), xesubg.getName()));
-                    }    
+                    }
+                    if ("true".equals(isrefA))
+                        LOG.warn("appinfo:referenceAttributeIndicator not allowed on element {} declaration; ignored",
+                                p.getQName());
                     p.setIsAbstract(xedecl.getAbstract());
                     
-                    // Putting a reference code on a data property makes it an object property. FIXME
-                    // Object properties have reference Code from appinfo, or inferred from nillable.
-                    var nlbf  = xedecl.getNillable();
-                    if (null != pclass) {
-                        if (!rcode.isBlank() && !"NONE".equals(rcode) && !nlbf)
-                            LOG.info("element {} has appinfo:referenceCode=\"{}\"; setting @nillable=\"true\"", 
-                                    p.getQName(), rcode);
-                        if (rcode.isBlank()) rcode = nlbf ? "ANY" : "NONE";
-                        p.setReferenceCode(rcode);
+                    // Setting the reference code on an element declaration makes 
+                    // it an object property, and makes it nillable. TODO
+                    if (!rcode.isBlank()) {
+                        LOG.info("appinfo:referenceCode on element {}:not implemented yet", p.getQName());
+//                        p.setReferenceCode(rcode);
+//                        if (!xedecl.getNillable())
+//                            LOG.info("referenceCode {} on element {} overrides @nillable=\"false\"",
+//                                    rcode, p.getQName());
                     }
                 }
             }
@@ -806,11 +818,11 @@ public class ModelFromXSD {
                 np.setDatatype(basedt);
                 np.addToModel(m);
                 LOG.debug("created literal property " + np.getQName());
-                var hasp = new HasProperty();
+                var hasp = new PropertyAssociation();
                 hasp.setProperty(np);
                 hasp.setMinOccurs(1);
                 hasp.setMaxOccurs(1);
-                ct.addHasProperty(hasp);
+                ct.addProperty(hasp);
             }
             // Complex content, set extensionOf and create element property list
             if (null != xbase) {
@@ -826,7 +838,7 @@ public class ModelFromXSD {
                     var p = m.getProperty(xed.getNamespace(), xed.getName());
                     if (null != p) {
                         referencedProps.add(p);
-                        var hp = new HasProperty();
+                        var hp = new PropertyAssociation();
                         hp.setProperty(p);
                         hp.setMinOccurs(xp.getMinOccurs());
                         if (xp.getMaxOccursUnbounded()) hp.setMaxUnbounded(true);
@@ -838,7 +850,7 @@ public class ModelFromXSD {
                         var pqn = p.getQName();                        
                         var opi = getAppinfoAttributeValue(ctqn, pqn, "orderedPropertyIndicator");
                         hp.setOrderedProperties("true".equals(opi));
-                        ct.addHasProperty(hp);
+                        ct.addProperty(hp);
                     }
                 }
             }
@@ -850,7 +862,7 @@ public class ModelFromXSD {
             for (var xatt : xattuses) {
                 var xattdecl = xatt.getAttrDeclaration();
                 Property p = m.getProperty(xattdecl.getNamespace(), xattdecl.getName());
-                HasProperty hp = new HasProperty();
+                PropertyAssociation hp = new PropertyAssociation();
                 hp.setProperty(p);
                 hp.setMaxOccurs(1);
                 if (xatt.getRequired()) hp.setMinOccurs(1);
@@ -858,7 +870,7 @@ public class ModelFromXSD {
                 
                 var attDocs = getDocumentation(xattdecl);
                 if (!attDocs.isEmpty()) hp.setDefinition(attDocs.get(0));
-                ct.addHasProperty(hp);
+                ct.addProperty(hp);
                 
                 // Handle appinfo:augmentingNamespace FIXME
 //                var augNSuri = getAppinfoAttribute(ct.getQName(), p.getQName(), "augmentingNamespace");
@@ -1098,7 +1110,7 @@ public class ModelFromXSD {
         flist = xstype.getMultiValueFacets();
         for (int i = 0; i < flist.getLength(); i++) {
             var f     = (XSMultiValueFacet)flist.item(i);
-            var fkind = FACET_PATTERN == f.getFacetKind() ? "Pattern" : "Enumeration";
+            var fkind = FACET_PATTERN == f.getFacetKind() ? "pattern" : "enumeration";
             var vals  = f.getLexicalFacetValues();
             var anns  = getAnnotations(f);
             for (int j = 0; j < vals.getLength(); j++) {
@@ -1122,18 +1134,18 @@ public class ModelFromXSD {
     // Convert Xerces facet kind value to CMF facet kind code.
     private String facetKind2Code (short kind) {
         switch (kind) {
-            case FACET_ENUMERATION:     return "Enumeration";
-            case FACET_FRACTIONDIGITS:  return "FractionDigits";
-            case FACET_LENGTH:          return "Length";
-            case FACET_MAXEXCLUSIVE:    return "MaxExclusive";
-            case FACET_MAXINCLUSIVE:    return "MaxInclusive";
-            case FACET_MAXLENGTH:       return "MaxLength";
-            case FACET_MINEXCLUSIVE:    return "MinExclusive";
-            case FACET_MININCLUSIVE:    return "MinInclusive";
-            case FACET_MINLENGTH:       return "MinLength";
-            case FACET_PATTERN:         return "Pattern";
-            case FACET_TOTALDIGITS:     return "TotalDigits";
-            case FACET_WHITESPACE:      return "WhiteSpace";
+            case FACET_ENUMERATION:     return "enumeration";
+            case FACET_FRACTIONDIGITS:  return "fractionDigits";
+            case FACET_LENGTH:          return "length";
+            case FACET_MAXEXCLUSIVE:    return "maxExclusive";
+            case FACET_MAXINCLUSIVE:    return "maxInclusive";
+            case FACET_MAXLENGTH:       return "maxLength";
+            case FACET_MINEXCLUSIVE:    return "minExclusive";
+            case FACET_MININCLUSIVE:    return "minInclusive";
+            case FACET_MINLENGTH:       return "minLength";
+            case FACET_PATTERN:         return "pattern";
+            case FACET_TOTALDIGITS:     return "totalDigits";
+            case FACET_WHITESPACE:      return "whiteSpace";
             default: 
                 LOG.error("Unknown facet kind {}", kind);
                 return "";
@@ -1313,7 +1325,7 @@ public class ModelFromXSD {
             if (null == ct) continue;                       // a global augmentation, handle elsewhere
             for (var prop : propMap.keySet()) {             // QName of ref with appinfo
                 var alist = propMap.get(prop);              // list of appinfo records for this ref QName
-                var hp    = ct.getHasProperty(prop);        // HasProperty object for this ref QName
+                var hp    = ct.getProperty(prop);        // HasProperty object for this ref QName
                 if (null == hp) {
                     LOG.warn("{} has ref appinfo but is not in {} class (shouldn't happen!)", prop, cqn);
                     continue;
@@ -1431,7 +1443,7 @@ public class ModelFromXSD {
         if (null != ptype && ptype.getName().endsWith("AugmentationType")) {
             LOG.debug("Augmenting {} with augmentation type {}", augmented.getQName(), ptype.getQName());
             int index = 0;
-            for (HasProperty hp : ptype.hasPropertyList()) {
+            for (PropertyAssociation hp : ptype.propertyList()) {
                 addAugmentPropertyToClass(augmented, augp.getNamespace(), hp);
                 if (hp.getProperty().isAttribute()) // handle attribute in augmentation type, blech
                     addAugmentRecord(augp.getNamespace(), augp, augmented, hp, -1, augCode);
@@ -1444,7 +1456,7 @@ public class ModelFromXSD {
         // Otherwise add simple augmentation p to the augmented type
         else {
             LOG.debug("Augmenting {} with augmentation property {}", augmented.getQName(), augp.getQName());
-            HasProperty ahp = new HasProperty();
+            PropertyAssociation ahp = new PropertyAssociation();
             ahp.setProperty(augp);
             ahp.setMinOccurs(0);
             ahp.setMaxUnbounded(true); 
@@ -1458,25 +1470,25 @@ public class ModelFromXSD {
     // aug = augmented class
     // ans = namespace of the augmentation property
     // ahp = augmentation property, with min/max occurs
-    private void addAugmentPropertyToClass (ClassType augCT, Namespace ans, HasProperty ahp) {
+    private void addAugmentPropertyToClass (ClassType augCT, Namespace ans, PropertyAssociation ahp) {
         var augQN = augCT.getQName();   // QName of the class to be augmented
         var augp  = ahp.getProperty();  // Property to augment the class
         var apQN  = augp.getQName();    // QName of the property to augment the class
         
         // See if augmentation property is already a class member
-        HasProperty augHP = null;
-        for (HasProperty hp : augCT.hasPropertyList()) {
+        PropertyAssociation augHP = null;
+        for (PropertyAssociation hp : augCT.propertyList()) {
             if (hp.getProperty() == ahp.getProperty()) { augHP = hp; break; }
         }
         // Not there?  Create new HasProperty and add to class
         if (null == augHP) {
             LOG.debug("Augmenting {} with new augmentation {}", augQN, apQN);
-            augHP = new HasProperty();
+            augHP = new PropertyAssociation();
             augHP.setProperty(ahp.getProperty());
             augHP.setMaxUnbounded(ahp.maxUnbounded());
             augHP.setMaxOccurs(ahp.maxOccurs());    // maxOccurs from aug type (assume aug element not repeated)
             augHP.setMinOccurs(0);                  // augmentation properties always optional
-            augCT.addHasProperty(augHP);
+            augCT.addProperty(augHP);
         }
         // Already there as an ordinary property?  No augmentation needed
         else if (null == augHP.augmentingNS() || augHP.augmentingNS().isEmpty()) {
@@ -1489,7 +1501,7 @@ public class ModelFromXSD {
             else if (!augHP.maxUnbounded()) augHP.setMaxOccurs(max(augHP.maxOccurs(), ahp.maxOccurs()));
         }
         LOG.debug("Class {} hasPropertyList:", augQN);
-        for (var xhp : augCT.hasPropertyList()) LOG.debug("  " + xhp.getProperty().getQName());
+        for (var xhp : augCT.propertyList()) LOG.debug("  " + xhp.getProperty().getQName());
         augHP.augmentingNS().add(ans);
     }
     
@@ -1500,7 +1512,7 @@ public class ModelFromXSD {
     // hp:   HasProperty of augmentation property in ct.
     // Property hp.getProperty() is a useful augmentation for Class ct,
     // according to the owner of Namespace augn.
-    private void addAugmentRecord (Namespace augn, Property augp, ClassType ct, HasProperty hp, int index, int augCode) {
+    private void addAugmentRecord (Namespace augn, Property augp, ClassType ct, PropertyAssociation hp, int index, int augCode) {
         var auglst  = augn.augmentList();               // write AugRec into augmentation NS
         var ctqn    = ct.getQName();                    // QName of augmented class
         String apqn = null;

@@ -61,7 +61,7 @@ public class XProperty extends XObjectType {
     }
 
     @Override
-    public void addToHasProperty(XHasProperty x) {
+    public void addToPropertyAssoc(XPropertyAssociation x) {
         x.getObject().setProperty(this.getObject());
     }    
     

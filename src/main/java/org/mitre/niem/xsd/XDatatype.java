@@ -59,9 +59,9 @@ public class XDatatype extends XObjectType {
     @Override
     public void addToDatatype (XDatatype x) {
         switch(this.getComponentLname()) {
-        case "ListOf":              x.getObject().setListOf(this.getObject()); break;
+        case "ListItemDatatype":    x.getObject().setListOf(this.getObject()); break;
         case "RestrictionBase" :    x.getObject().setRestrictionBase(this.getObject()); break;
-        case "UnionOf":             x.getObject().unionOf().add(this.getObject()); break;
+        case "UnionMemberDatatype": x.getObject().unionOf().add(this.getObject()); break;
         default:
             LOG.error(String.format("can't add '%s' to Datatype", this.getComponentLname()));
             break;                

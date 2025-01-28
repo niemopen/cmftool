@@ -53,7 +53,7 @@ import org.xml.sax.SAXParseException;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelXMLReader { 
-   
+     
     List<String> msgList = new ArrayList<>();       // messages from last CMF parsing
     
     public ModelXMLReader () { }
@@ -141,7 +141,7 @@ public class ModelXMLReader {
         public void endElement(String eNamespace, String eLocalName, String eQName) {
             XObjectType child    = objStack.pop();
             XObjectType parent   = objStack.peek();          
-            child.setStringVal(chars.toString().trim());
+            child.setStringVal(chars.toString());
             chars = new StringBuilder();
                         
             // Remember elements with @id, or non-empty objects with @uri
@@ -168,6 +168,7 @@ public class ModelXMLReader {
             for (var ro : refPHolders) {
                 String ref         = ro.getRefKey();        // IDREF or URI attribute string value
                 XObjectType parent = ro.getParent();        // parent element with the reference child element
+                var pobj = parent.getObject();
                 XObjectType idObj  = idMap.get(ref);        // element with ID = ref string
                 if (null == idObj) {
                     msgList.add(String.format("no matching ID for IDREF/URI %s at line %s", ref, ro.getLineNumber()));
@@ -224,34 +225,20 @@ public class ModelXMLReader {
                 case "CodeListBinding":       o = new XCodeListBinding(m, p, ens, eln, atts, lineNum); break;
                 case "DataProperty":          o = new XProperty(m, p, ens, eln, atts, lineNum); break;
                 case "Datatype":              o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "ExtensionOfClass":      o = new XClassType(m, p, ens, eln, atts, lineNum); break;
-                case "HasProperty":           o = new XHasProperty(m, p, ens, eln, atts, lineNum); break;
-                case "ListDatatype":          o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "ListOf":                o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "Facet":                 o = new XFacet(m, p, ens, eln, atts, lineNum); break;
+                case "List":                  o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "ListItemDatatype":      o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
                 case "LocalTerm":             o = new XLocalTerm(m, p, ens, eln, atts, lineNum); break;
                 case "Model":                 o = new XModel(m, p, ens, eln, atts, lineNum); break;
                 case "Namespace":             o = new XNamespace(m, p, ens, eln, atts, lineNum); break;
                 case "ObjectProperty":        o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "RestrictionBase":
-                case "RestrictionDatatype":   o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "PropertyAssociation":   o = new XPropertyAssociation(m, p, ens, eln, atts, lineNum); break;                
+                case "Restriction":
+                case "RestrictionBase":       o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "SubClassOf":            o = new XClassType(m, p, ens, eln, atts, lineNum); break;                
                 case "SubPropertyOf":         o = new XProperty(m, p, ens, eln, atts, lineNum); break;
-                case "UnionDatatype":         o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-                case "UnionOf":               o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
-
-                case "Enumeration":
-                case "FractionDigits":
-                case "Length":       
-                case "MaxExclusive": 
-                case "MaxInclusive": 
-                case "MaxLength":    
-                case "MinExclusive": 
-                case "MinInclusive": 
-                case "MinLength":    
-                case "Pattern":      
-                case "TotalDigits":  
-                case "WhiteSpace":
-                    o = new XFacet(m, p, ens, eln, atts, lineNum);
-                    break;
+                case "Union":                 o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
+                case "UnionMemberDatatype":   o = new XDatatype(m, p, ens, eln, atts, lineNum); break;
 
                 case "AbstractIndicator":
                 case "AttributeIndicator":
@@ -266,11 +253,13 @@ public class ModelXMLReader {
                 case "DeprecatedIndicator":
                 case "DocumentFilePathText":
                 case "ExternalAdapterTypeIndicator":
+                case "FacetCategoryCode":
+                case "FacetValue":
                 case "MaxOccursQuantity": 
                 case "MetadataIndicator":
                 case "MinOccursQuantity": 
                 case "Name":          
-                case "NamespaceKindCode":
+                case "NamespaceCategoryCode":
                 case "NamespaceLanguageName":
                 case "NamespacePrefixText":                    
                 case "NamespaceURI": 
@@ -281,7 +270,7 @@ public class ModelXMLReader {
                 case "PositiveValue":
                 case "RefAttributeIndicator":
                 case "ReferenceCode":
-                case "RelationshipPropertyIndicator":
+                case "RelationshipIndicator":
                 case "SourceCitationText":
                 case "SourceURI":
                 case "StringValue":    

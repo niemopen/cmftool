@@ -1,19 +1,14 @@
 CT = ../../../../build/install/cmftool/bin/cmftool
 NIEM6 = \
-  augment.cmf \
-  cli.cmf \
-  clsa.cmf \
-  complexContent.cmf \
-  components.cmf \
-  datatypes.cmf \
-  externals.cmf \
-  globalAug-1.cmf \
-  globalAug-2.cmf \
-  isRefAtt.cmf \
-  localTerm.cmf \
-  proxy.cmf \
-  relProp.cmf \
-  union.cmf \
+  class.cmf\
+  codeListBinding.cmf\
+  component.cmf\
+  dataProperty.cmf\
+  datatypes.cmf\
+  localTerm.cmf\
+  namespace.cmf\
+  objectProperty.cmf\
+  propAssoc.cmf
 
 all : $(NIEM5) $(NIEM6)
 
@@ -24,4 +19,4 @@ $(NIEM6): %.cmf: ../xsd6/%.xsd
 	$(CT) x2m $< > $@
 
 clean :
-	rm $(NIEM5) $(NIEM6)
+	rm -f $(NIEM5) $(NIEM6)

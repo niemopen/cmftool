@@ -112,10 +112,8 @@ public class XStringObject extends XObjectType {
         String val = getStringVal();
         switch (this.getComponentLname()) {
         case "DocumentationText":  xf.getObject().setDefinition(val); break;
-        case "NonNegativeValue":
-        case "PositiveValue":
-        case "StringValue":
-        case "WhiteSpaceValueCode": xf.getObject().setStringVal(val); break;
+        case "FacetCategoryCode":  xf.getObject().setFacetKind(val); break;
+        case "FacetValue":         xf.getObject().setStringVal(val); break;
         default:
                 LOG.error(String.format("can't add '%s' to Facet", this.getComponentLname()));
                 break;
@@ -123,7 +121,7 @@ public class XStringObject extends XObjectType {
     } 
     
     @Override
-    public void addToHasProperty (XHasProperty xhp) {
+    public void addToPropertyAssoc (XPropertyAssociation xhp) {
         String val = getStringVal();
         switch (this.getComponentLname()) {
         case "DocumentationText":    xhp.getObject().setDefinition(val); break;
@@ -162,7 +160,7 @@ public class XStringObject extends XObjectType {
         case "ConformanceTargetURI":     xns.getObject().confTargList().add(val); break;
         case "DocumentFilePathText":     xns.getObject().setFilePath(val); break;
         case "DocumentationText":        xns.getObject().setDocumentation(val) ; break;
-        case "NamespaceKindCode":        xns.getObject().setKind(val); break;
+        case "NamespaceCategoryCode":    xns.getObject().setKind(val); break;
         case "NamespaceLanguageName":    xns.getObject().setLanguage(val); break;
         case "NamespacePrefixText":      try { xns.getObject().setNamespacePrefix(val); } catch (CMFException ex) { } break;
         case "NamespaceURI":             try { xns.getObject().setNamespaceURI(val); }    catch (CMFException ex) { } break;
@@ -183,7 +181,7 @@ public class XStringObject extends XObjectType {
         case "DeprecatedIndicator":           xop.getObject().setIsDeprecated(val); break;  
         case "RefAttributeIndicator":         xop.getObject().setIsRefAttribute(val); break;
         case "ReferenceCode":                 xop.getObject().setReferenceCode(val); break;
-        case "RelationshipPropertyIndicator": xop.getObject().setIsRelationship(val); break;
+        case "RelationshipIndicator":         xop.getObject().setIsRelationship(val); break;
         case "Name":                          xop.getObject().setName(val); break;
         default:
                 LOG.error(String.format("can't add '%s' to Property", this.getComponentLname()));

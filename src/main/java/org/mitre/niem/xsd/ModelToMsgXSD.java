@@ -32,7 +32,7 @@ import static org.mitre.niem.cmf.AugmentRecord.AUG_OBJECT;
 import static org.mitre.niem.cmf.AugmentRecord.AUG_SIMPLE;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
-import org.mitre.niem.cmf.HasProperty;
+import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.NamespaceKind;
@@ -85,7 +85,7 @@ public class ModelToMsgXSD extends ModelToXSD {
         var ctname = ct.getQName();
         do {
             ctList.add(0, ctNext);
-            ctNext = ctNext.getExtensionOfClass();
+            ctNext = ctNext.subClassOf();
         } while (null != ctNext);
         
         // Look at the deepest type; does it have a FooLiteral property?
@@ -95,7 +95,7 @@ public class ModelToMsgXSD extends ModelToXSD {
         ClassType ct0   = ctList.get(0);
         var ct0name = ct0.getQName();
         if (litTypes.contains(ct0)) {
-            var hp = ct0.hasPropertyList().get(0);
+            var hp = ct0.propertyList().get(0);
             var p  = hp.getProperty();                  // FooLiteral property
             var lpt   = p.getDatatype();                // datatype for FooLiteral
             var lptqn = lpt.getQName();                 // datatype QName (not proxified)
@@ -123,7 +123,7 @@ public class ModelToMsgXSD extends ModelToXSD {
                 if (null != sAp) addOptionalSubstitutingElements(dom, sqe, sAp);
             }
             for (var nextCT : ctList) {
-                for (var hp : nextCT.hasPropertyList()) {
+                for (var hp : nextCT.propertyList()) {
                     if (!hp.augmentingNS().isEmpty()) continue; // will be child of FooAugmentation
                     var p    = hp.getProperty();
                     var pqn  = p.getQName();
@@ -179,7 +179,7 @@ public class ModelToMsgXSD extends ModelToXSD {
     // A depth-first recursion through class inheritance to add all the
     // attribute properties to the complex type.
     protected void handleAttributeProperties (List<AttProp> alist, ClassType ct) {
-        var parent = ct.getExtensionOfClass();
+        var parent = ct.subClassOf();
         if (null != parent) handleAttributeProperties(alist, parent);
         buildAttributeList(alist, ct);
         
@@ -198,14 +198,14 @@ public class ModelToMsgXSD extends ModelToXSD {
     }
     
     protected void addOptionalSubstitutingElements (Document dom, Element sqe, Property p) {
-        var hp = new HasProperty();
+        var hp = new PropertyAssociation();
         hp.setProperty(p);
         hp.setMaxUnbounded(true);
         hp.setMinOccurs(0);
         addSubstitutingElements(dom, sqe, hp);
     }
     
-    protected void addSubstitutingElements (Document dom, Element sqe, HasProperty hp) {
+    protected void addSubstitutingElements (Document dom, Element sqe, PropertyAssociation hp) {
         var prop = hp.getProperty();
         var subs = substituteMap.get(prop);
         if (prop.isAbstract() && null == subs) return;      // omit abstract element with no subs

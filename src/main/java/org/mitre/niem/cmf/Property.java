@@ -64,7 +64,15 @@ public class Property extends Component {
     public boolean isAttribute()                  { return isAttribute; }
     public boolean isRefAttribute()               { return isRefAttribute; }
     public boolean isRelationship()               { return isRelationship; }
-    public String getReferenceCode ()             { return refCode; } 
+    public boolean isReferenceCodeSet()           { return null != refCode; }
+    
+    // If the reference code is not explicitly set on an object Property, it is
+    // inherited from the class.  The default code for data properties is always NONE.
+    public String getReferenceCode () { 
+        if (null != refCode) return refCode;
+        else if (null != classType) return classType.getReferenceCode();
+        else return "NONE";
+    } 
     
     public String getInheritedReferenceCode() {
         if (null != refCode) return refCode;
