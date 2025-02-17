@@ -1,0 +1,53 @@
+plugins {
+    id 'java'
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+compileJava {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
+project.version = '1.0-alpha.3-SNAPSHOT'
+
+dependencies {
+    implementation 'xerces:xercesImpl:2.12.2'
+    implementation 'xml-apis:xml-apis:1.4.01'
+    implementation 'xml-resolver:xml-resolver:1.2'  // Xerces XML Schema API not compatable with JRE 11 javax.xml.catalog    
+    implementation 'commons-io:commons-io:2.11.0'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.17.1'
+    implementation 'org.javatuples:javatuples:1.2'
+
+    testImplementation libs.junit.jupiter
+    testImplementation 'org.assertj:assertj-core:3.26.0'
+    testImplementation 'io.github.hakky54:logcaptor:2.9.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Version': String.format('%s (%tF)', project.version, java.time.LocalDateTime.now()),
+                   'Implementation-Title': 'CMFTool'
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

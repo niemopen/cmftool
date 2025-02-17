@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="part1">
+    <NamespaceURI>http://example.com/part1/</NamespaceURI>
+    <NamespacePrefixText>part1</NamespacePrefixText>
+    <DocumentationText>Outside component reference test schema.</DocumentationText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>class.xsd</DocumentFilePathText>
+    <NIEMVersionText>6</NIEMVersionText>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Class structures:id="part1.TestType">
+    <Name>Test1Type</Name>
+    <Namespace structures:ref="part1" xsi:nil="true"/>
+    <ReferenceCode>ANY</ReferenceCode>
+    <ChildPropertyAssociation>
+      <DataProperty structures:uri="http://example.com/part2/AnElement" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+</Model>

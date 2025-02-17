@@ -1,2 +1,0 @@
-need rule: no Augmentation element as class property
-what about ns:FooAugmentation for x:FooType and y:FooType?

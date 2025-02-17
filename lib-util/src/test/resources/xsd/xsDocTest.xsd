@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/test/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>XMLSchemaDocument test; namespace declarations at depth > 0</xs:documentation>
+  </xs:annotation>
+  <xs:element xmlns:ct="https://example.com/bogus-ct/" xmlns:foo="http://example.com/foo/" name="Dummy" type="xs:string"/>
+</xs:schema>

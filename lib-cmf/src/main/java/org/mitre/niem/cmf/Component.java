@@ -1,0 +1,102 @@
+/*
+ * NOTICE
+ *
+ * This software was produced for the U. S. Government
+ * under Basic Contract No. W56KGU-18-D-0004, and is
+ * subject to the Rights in Noncommercial Computer Software
+ * and Noncommercial Computer Software Documentation
+ * Clause 252.227-7014 (FEB 2012)
+ *
+ * Copyright 2020-2025 The MITRE Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.mitre.niem.cmf;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.mitre.niem.xml.LanguageString;
+
+/**
+ * An abstract class for a Component object in a CMF model.
+ * 
+ * @author Scott Renner
+ * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
+ */
+public abstract class Component extends CMFObject {  
+    
+    public Component () { super(); } 
+    public Component (String outsideURI) { super(); this.outsideURI = outsideURI; }
+    public Component (Namespace ns, String name) { super(); this.namespace = ns; this.name = name; }
+    
+    private Model model = null;                 // component belongs to this model
+    private String outsideURI = "";             // absolute URI of component in another CMF model
+    private Namespace namespace = null;         // cmf:Namespace
+    private String name = "";                   // cmf:Name
+    private boolean isDeprecated = false;       // cmf:DeprecatedIndicator
+    private final List<LanguageString> docL = new ArrayList<>();  // cmf:DocumentationText
+    
+    public Namespace namespace ()               { return namespace; }
+    public String namespaceURI ()               { return namespace.uri(); }
+    public String name ()                       { return name; }
+    public String outsideURI ()                 { return outsideURI; }
+    public boolean isDeprecated ()              { return isDeprecated; }
+    
+    public List<LanguageString> docL ()         { return docL; }
+    
+    public void setNamespace (Namespace ns)     { namespace = ns; change(); }
+    public void setName (String n)              { name = n; change(); }
+    public void setOutsideURI (String u)        { outsideURI = u; }
+    public void setIsDeprecated (boolean f)     { isDeprecated = f; }
+    
+    public void addDocumentation (String doc, String lang) {
+        docL.add(new LanguageString(doc, lang));
+    }
+    
+    /**
+     * Returns the qualified name of this component; e.g. "nc:TextType".
+     */
+    public String qname () {
+        if (null == namespace || null == name) return "";
+        return namespace.prefix() + ":" + name;
+    }
+    
+    /**
+     * Returns the absolute URI of this component; e.g.
+     * https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/TextType.
+     * For components defined in this model, the URI is composed of namespace URI
+     * plus a slash if needed, plus local name.  For outside components defined 
+     * elsewhere, the URI was provided when this placeholder object was created.
+     */
+    @Override
+    public String uri () {
+        if (null == namespace && !outsideURI.isEmpty()) return outsideURI;
+        if (null == namespace || name.isEmpty()) return "";
+        var nsuri = namespace.uri();
+        if (nsuri.endsWith("/")) return nsuri + name;
+        return nsuri + "/" + name;
+    }
+    
+    // Notify the model object that the name or namespace of one of 
+    // its components has changed.
+    private void change () {
+        if (null != model) model.componentUpdate();
+    }
+    
+    
+    @Override
+    public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {
+        return child.addToComponent(eln, loc, this);
+    }
+        
+}

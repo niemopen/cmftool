@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/test/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:test="http://example.com/test/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="http://example.com/#ONE http://example.com/#TWO"
+  version="1"
+  xml:lang="en-US">   
+  <xs:annotation>
+    <xs:documentation>CTAS test schema</xs:documentation>
+  </xs:annotation>
+</xs:schema>
