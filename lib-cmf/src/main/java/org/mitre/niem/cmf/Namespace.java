@@ -33,7 +33,7 @@ import org.mitre.niem.xml.LanguageString;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class Namespace extends CMFObject {
+public class Namespace extends CMFObject implements Comparable<Namespace> {
 
     public Namespace () { }
     public Namespace (String prefix, String uri) { super(); this.prefix = prefix; this.uri = uri; }
@@ -154,6 +154,11 @@ public class Namespace extends CMFObject {
     @Override
     public boolean addToUnion (String eln, String loc, Union u) {
         return addToDatatype(eln, loc, u);
+    }
+
+    @Override
+    public int compareTo(Namespace o) {
+        return this.prefix.compareToIgnoreCase(o.prefix);
     }
 
 }

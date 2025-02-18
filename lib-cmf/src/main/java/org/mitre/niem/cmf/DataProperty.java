@@ -23,6 +23,10 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.Set;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 /**
  * A class for a DataProperty object in a CMF model.
  * 
@@ -36,7 +40,11 @@ public class DataProperty extends Property {
     public DataProperty (Namespace ns, String name) { super(ns,name); }
 
     @Override
-    public int getType () { return CMF_DATAPROP; }
+    public int getType ()           { return CMF_DATAPROP; }
+    @Override
+    public boolean isProperty ()    { return true; }
+    @Override
+    public String cmfElement ()     { return "DataProperty"; }
     
     private boolean isAtt = false;              // cmf:AttributeIndicator
     private boolean isRefAtt = false;           // cmf:RefAttributeIndicator
@@ -70,4 +78,10 @@ public class DataProperty extends Property {
         return true;
     }
     
+    @Override
+    public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { 
+        super.addComponentCMFChildren(w, doc, c, nsS);
+        w.addDataPropertyChildren(doc, c, this, nsS);
+    }
+           
 }

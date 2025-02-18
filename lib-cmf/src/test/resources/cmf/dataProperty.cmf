@@ -12,17 +12,14 @@
       DataProperty test schema. 
       Test abstract, relationship, reference code, attribute, refAttribute.
     </DocumentationText>
-    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>dataProperty.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
-    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
   <DataProperty structures:id="test.AProp2">
     <Name>AProp2</Name>

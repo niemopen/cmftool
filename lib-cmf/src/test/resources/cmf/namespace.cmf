@@ -10,11 +10,9 @@
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>Namespace test schema</DocumentationText>
     <DocumentationText>Test CTAs, filepath, version, language, import doc</DocumentationText>
-    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <ConformanceTargetURI>http://example.com/Whatever</ConformanceTargetURI>
     <DocumentFilePathText>namespace.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1-alpha.1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <ImportDocumentationText>imported blah blah</ImportDocumentationText>

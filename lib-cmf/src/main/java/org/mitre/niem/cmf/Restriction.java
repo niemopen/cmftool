@@ -25,6 +25,9 @@ package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * A class for a Restriction object in a CMF model.
@@ -39,7 +42,11 @@ public class Restriction extends Datatype {
     public Restriction (Namespace ns, String name) { super(ns,name); }       
     
     @Override
-    public int getType () { return CMF_RESTRICTION; }
+    public int getType ()           { return CMF_RESTRICTION; }
+    @Override
+    public boolean isDatatype ()    { return true; }
+    @Override
+    public String cmfElement ()     { return "Restriction"; }
     
     private Datatype base = null;                           // cmf:Datatype
     private final List<Facet> facetL = new ArrayList<>();   // cmf:Facet
@@ -61,6 +68,12 @@ public class Restriction extends Datatype {
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {
         if (super.addChild(eln, loc, child)) return true;
         return child.addToRestriction(eln, loc, this);
+    }
+    
+    @Override
+    public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { 
+        super.addComponentCMFChildren(w, doc, c, nsS);
+        w.addRestrictionChildren(doc, c, this, nsS);
     }
     
 }

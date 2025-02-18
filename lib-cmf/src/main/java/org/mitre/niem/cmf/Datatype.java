@@ -25,7 +25,10 @@ package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * A class for a Datatype object in a CMF model.
@@ -42,6 +45,8 @@ public class Datatype extends Component {
 
     @Override
     public int getType ()               { return CMF_DATATYPE; }
+    @Override
+    public String cmfElement ()         { return "Datatype"; }
     @Override
     public boolean isDatatype ()        { return true; }
     
@@ -88,6 +93,12 @@ public class Datatype extends Component {
     public boolean addToUnion (String eln, String loc, Union u) {
         u.addMember(this);
         return true;
+    }
+    
+    @Override
+    public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { 
+        super.addComponentCMFChildren(w, doc, c, nsS);
+        // Nothing to add for Datatype
     }
 
 }

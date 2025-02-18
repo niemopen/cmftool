@@ -9,14 +9,12 @@
     <NamespaceURI>http://example.com/part1/</NamespaceURI>
     <NamespacePrefixText>part1</NamespacePrefixText>
     <DocumentationText>Outside component reference test schema.</DocumentationText>
-    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>class.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
-  <Class structures:id="part1.TestType">
+  <Class structures:id="part1.Test1Type">
     <Name>Test1Type</Name>
     <Namespace structures:ref="part1" xsi:nil="true"/>
     <ReferenceCode>ANY</ReferenceCode>

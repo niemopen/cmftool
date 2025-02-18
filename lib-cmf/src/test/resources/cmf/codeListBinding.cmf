@@ -11,28 +11,23 @@
     <DocumentationText>
       Code list binding test schema
     </DocumentationText>
-    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>codeListBinding.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
-    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
   <Restriction structures:id="test.TCodeList2Type">
     <Name>TCodeList2Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
     <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>GB</FacetValue>
     </Facet>
     <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>US</FacetValue>
     </Facet>
     <CodeListBinding>
@@ -46,11 +41,9 @@
     <Namespace structures:ref="test" xsi:nil="true"/>
     <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
     <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>GB</FacetValue>
     </Facet>
     <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>US</FacetValue>
     </Facet>
     <CodeListBinding>

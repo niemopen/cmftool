@@ -34,7 +34,6 @@ import javax.xml.parsers.SAXParser;
 import org.apache.logging.log4j.LogManager;
 import static org.mitre.niem.cmf.CMFObject.CMF_CLASS;
 import static org.mitre.niem.cmf.CMFObject.CMF_DATAPROP;
-import static org.mitre.niem.cmf.CMFObject.CMF_DATATYPE;
 import static org.mitre.niem.cmf.CMFObject.CMF_LIST;
 import static org.mitre.niem.cmf.CMFObject.CMF_NAMESPACE;
 import static org.mitre.niem.cmf.CMFObject.CMF_OBJECTPROP;
@@ -44,7 +43,6 @@ import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xsd.NIEMConstants.CMF_NS_URI;
 import static org.mitre.niem.xsd.NIEMConstants.CMF_STRUCTURES_NS_URI;
-import org.mitre.niem.xsd.NamespaceMap;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -136,8 +134,10 @@ public class ModelXMLReader {
             var uri    = strAS.peek().uri();
             if (null == id && null != uri && uri.startsWith("#")) id = uri.substring(1); 
             if ("Namespace".equals(eln)) {
-                if (null != id) id2obj.put(id, child);
-                if (null != uri && !uri.startsWith("#") && !uri.equals(child.uri())) 
+                var ns = (Namespace)child;
+                if (ns.uri().isBlank()) child = null;       // it's a namespace ref element
+                else if (null != id) id2obj.put(id, child);
+                else if (null != uri && !uri.startsWith("#") && !uri.equals(child.uri())) 
                     fail("wrong @uri for Namespace object");
             }
             if (null != child) {

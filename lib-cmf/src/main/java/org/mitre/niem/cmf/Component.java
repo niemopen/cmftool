@@ -25,7 +25,10 @@ package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.mitre.niem.xml.LanguageString;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * An abstract class for a Component object in a CMF model.
@@ -33,7 +36,7 @@ import org.mitre.niem.xml.LanguageString;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public abstract class Component extends CMFObject {  
+public abstract class Component extends CMFObject implements Comparable<Component> {  
     
     public Component () { super(); } 
     public Component (String outsideURI) { super(); this.outsideURI = outsideURI; }
@@ -51,6 +54,7 @@ public abstract class Component extends CMFObject {
     public String name ()                       { return name; }
     public String outsideURI ()                 { return outsideURI; }
     public boolean isDeprecated ()              { return isDeprecated; }
+    public boolean isOutsideRef ()              { return !outsideURI.isEmpty() && null == namespace; }
     
     public List<LanguageString> docL ()         { return docL; }
     
@@ -69,6 +73,14 @@ public abstract class Component extends CMFObject {
     public String qname () {
         if (null == namespace || null == name) return "";
         return namespace.prefix() + ":" + name;
+    }
+    
+    /**
+     * Returns the @structures:id value for this compnent; eg. "nc.TextType"
+     */
+    public String idRef () {
+        if (null ==  namespace ||  null == name) return "";
+        return namespace.prefix() + "." + name;
     }
     
     /**
@@ -97,6 +109,17 @@ public abstract class Component extends CMFObject {
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {
         return child.addToComponent(eln, loc, this);
+    }
+    
+    
+    // Dispatch to Component's proper ModelXMLWriter method
+    public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { }
+
+    @Override
+    public int compareTo(Component o) {
+        int rv = this.namespace().compareTo(o.namespace());
+        if (rv != 0) return rv;
+        return this.name().compareToIgnoreCase(o.name());
     }
         
 }

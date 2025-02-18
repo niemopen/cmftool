@@ -33,7 +33,7 @@ import org.mitre.niem.xml.LanguageString;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class LocalTerm extends CMFObject {
+public class LocalTerm extends CMFObject implements Comparable<LocalTerm> {
     
     public LocalTerm () { }
     
@@ -70,6 +70,11 @@ public class LocalTerm extends CMFObject {
     public boolean addToNamespace (String eln, String loc, Namespace ns) {
         ns.addLocalTerm(this);
         return true;
+    }
+
+    @Override
+    public int compareTo(LocalTerm o) {
+        return this.term().compareToIgnoreCase(o.term());
     }
         
 }

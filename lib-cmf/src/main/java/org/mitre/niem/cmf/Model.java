@@ -23,9 +23,14 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.mitre.niem.xsd.NamespaceMap;
 
 /**
@@ -43,6 +48,7 @@ public class Model extends CMFObject {
     public int getType () { return CMF_MODEL; }
     
     private final NamespaceMap nsmap;
+    private final Set<Namespace> nsS                    = new HashSet<>();  // set of Namespace objects
     private final Map<String,Namespace> uri2ns          = new HashMap<>();  // uri -> Namespace
     private final Map<String,Component> compMap         = new HashMap<>();  // uri -> Component
     private final Map<String,ClassType> classMap        = new HashMap<>();  // uri -> ClassType
@@ -79,6 +85,7 @@ public class Model extends CMFObject {
         if (preOrURI.contains(":")) return uri2namespace(preOrURI);
         return prefix2namespace(preOrURI);
     }
+    public Set<Namespace> nsSet ()                      { return nsS; }
     
     public String qn2uri (String qname) {
         if (null == qname || qname.isEmpty()) return "";
@@ -113,6 +120,7 @@ public class Model extends CMFObject {
                 n.prefix(), n.uri(), cnsuri));
         }
         nsmap.assignPrefix(n.prefix(), n.uri());
+        nsS.add(n);
         uri2ns.put(n.uri(), n);
         ordNS = null;
     }
@@ -146,6 +154,22 @@ public class Model extends CMFObject {
   
     public void componentUpdate () {
         ordComp = null;
+    }
+    
+    public List<Namespace> namespaceList () {
+        if (null != ordNS) return ordNS;
+        ordNS = new ArrayList<>(nsS);
+        Collections.sort(ordNS);
+        return ordNS;
+    }
+    
+    public List<Component> componentList () {
+        if (null != ordComp) return ordComp;
+        ordComp = new ArrayList<>();
+        for (var c : compMap.values())
+            if (!c.isOutsideRef()) ordComp.add(c);
+        Collections.sort(ordComp);
+        return ordComp;
     }
 
 

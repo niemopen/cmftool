@@ -23,6 +23,10 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.Set;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 /**
  * An abstract class for a Property object in a CMF model.
  * 
@@ -75,4 +79,12 @@ public class Property extends Component {
         pa.setProperty(this);
         return true;
     }
+    
+    @Override
+    public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { 
+        super.addComponentCMFChildren(w, doc, c, nsS);
+        w.addPropertyChildren(doc, c, this, nsS);
+    }
+           
+    
 }

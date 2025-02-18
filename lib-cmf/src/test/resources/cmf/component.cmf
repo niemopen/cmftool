@@ -13,17 +13,14 @@
       Test name, namespace, documentation, deprecated.
       Test bogus appinfo.
     </DocumentationText>
-    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>component.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
-    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
   <DataProperty structures:id="test.anAttribute">
     <Name>anAttribute</Name>
@@ -64,7 +61,6 @@
     <DocumentationText>Test2DataType doc string</DocumentationText>
     <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
     <Facet>
-      <FacetCategoryCode>maxLength</FacetCategoryCode>
       <FacetValue>20</FacetValue>
     </Facet>
   </Restriction>

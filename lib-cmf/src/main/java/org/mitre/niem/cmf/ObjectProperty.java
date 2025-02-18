@@ -23,6 +23,10 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.Set;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 /**
  * A class for an ObjectProperty object in a CMF model.
  * 
@@ -37,10 +41,16 @@ public class ObjectProperty extends Property {
 
     @Override
     public int getType () { return CMF_OBJECTPROP; }
+    @Override
+    public String cmfElement () { return "ObjectProperty"; }
     
+    private ClassType classType = null;         // cmf:Class
     private String refCode = "";                // cmf:ReferenceCode
     
+    public ClassType classType ()               { return classType; }
     public String referenceCode ()              { return refCode; }
+    
+    public void setClassType (ClassType c)      { classType = c; }
     public void setReferenceCode (String s)     { refCode = s; }
     
     @Override
@@ -60,5 +70,11 @@ public class ObjectProperty extends Property {
         m.addObjectProperty(this);
         return true;
     }
-        
+    
+    @Override
+    public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { 
+        super.addComponentCMFChildren(w, doc, c, nsS);
+        w.addObjectPropertyChildren(doc, c, this, nsS);
+    }
+               
 }

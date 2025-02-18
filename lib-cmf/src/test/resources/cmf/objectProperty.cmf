@@ -12,17 +12,14 @@
       ObjectProperty test schema. 
       Test abstract, relationship, reference code.
     </DocumentationText>
-    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>objectProperty.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
-    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
   <DataProperty structures:id="test.DataProperty">
     <Name>DataProperty</Name>
@@ -41,19 +38,19 @@
     <Name>OProp2</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <RelationshipIndicator>true</RelationshipIndicator>
-    <ReferenceCode>ANY</ReferenceCode>
+    <ReferenceCode>REF</ReferenceCode>
     <Class structures:ref="test.TestType" xsi:nil="true"/>
   </ObjectProperty>
   <ObjectProperty structures:id="test.OProp3">
     <Name>OProp3</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <ReferenceCode>ANY</ReferenceCode>
+    <ReferenceCode>URI</ReferenceCode>
     <Class structures:ref="test.TestType" xsi:nil="true"/>
   </ObjectProperty>
   <ObjectProperty structures:id="test.OProp4">
     <Name>OProp4</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <ReferenceCode>ANY</ReferenceCode>
+    <ReferenceCode>NONE</ReferenceCode>
     <Class structures:ref="test.TestType" xsi:nil="true"/>
   </ObjectProperty>
   <Class structures:id="test.TestType">

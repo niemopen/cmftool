@@ -23,6 +23,10 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.Set;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 /**
  * A class for a List object in a CMF model.
  * 
@@ -35,7 +39,12 @@ public class ListType extends Datatype {
     public ListType (String outsideURI) { super(outsideURI); }
     public ListType (Namespace ns, String name) { super(ns,name); }   
 
-    public int getType () { return CMF_LIST; }  
+    @Override
+    public int getType ()           { return CMF_LIST; }  
+    @Override
+    public boolean isDatatype ()    { return true; }
+    @Override
+    public String cmfElement ()     { return "List"; }
     
     private Datatype itemType = null;
     private boolean isOrdered = false;
@@ -52,6 +61,12 @@ public class ListType extends Datatype {
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {
         if (super.addChild(eln, loc, child)) return true;
         return child.addToListType(eln, loc, this);
+    }
+    
+    @Override
+    public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { 
+        super.addComponentCMFChildren(w, doc, c, nsS);
+        w.addListTypeChildren(doc, c, this, nsS);
     }
     
 }

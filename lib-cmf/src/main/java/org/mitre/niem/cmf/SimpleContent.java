@@ -43,6 +43,7 @@ public class SimpleContent extends CMFObject {
 
     public String name ()       { return name.trim(); }
     public String content ()    { return content.trim(); }
+    public String raw ()        { return content; }
     public String lang ()       { return lang.trim(); }
     
     @Override
@@ -87,7 +88,7 @@ public class SimpleContent extends CMFObject {
     public boolean addToComponent (String eln, String loc, Component c) {
         switch (eln) {
         case "DeprecatedIndicator": c.setIsDeprecated("true".equals(this.content())); break;
-        case "DocumentationText":   c.addDocumentation(this.content(), this.lang()); break;
+        case "DocumentationText":   c.addDocumentation(this.raw(), this.lang()); break;
         case "Name":                c.setName(this.content()); break;
         default: return false;
         }
@@ -111,7 +112,7 @@ public class SimpleContent extends CMFObject {
     
     public boolean addToFacet (String eln, String loc, Facet f) {
         switch (eln) {
-        case "DocumentationText":   f.addDocumentation(this.content(), this.lang()); break;
+        case "DocumentationText":   f.addDocumentation(this.raw(), this.lang()); break;
         case "FacetCategoryCode":   f.setCategory(this.content()); break; 
         case "FacetValue":          f.setValue(this.content()); break;
         default: error("Facet", loc, eln);
@@ -131,7 +132,7 @@ public class SimpleContent extends CMFObject {
     @Override
     public boolean addToLocalTerm (String eln, String loc, LocalTerm lt) {
         switch (eln) {
-        case "DocumentationText":   lt.addDocumentation(this.content(), this.lang()); break;
+        case "DocumentationText":   lt.addDocumentation(this.raw(), this.lang()); break;
         case "SourceCitationText":  lt.addCitation(this.content(), this.lang()); break; 
         case "SourceURI":           lt.addSource(this.content()); break;
         case "TermLiteralText":     lt.setLiteral(this.content()); break;
@@ -145,7 +146,7 @@ public class SimpleContent extends CMFObject {
     public boolean addToNamespace (String eln, String loc, Namespace n) throws CMFException {
         switch (eln) {
         case "ConformanceTargetURI":    n.addConformanceTarget(this.content()); break;
-        case "DocumentationText":       n.addDocumentation(this.content(), this.lang()); break;
+        case "DocumentationText":       n.addDocumentation(this.raw(), this.lang()); break;
         case "DocumentFilePathText":    n.setDocumentFilePath(this.content()); break;
         case "ImportDocumentationText": n.addImportDocumentation(this.content(), this.lang()); break;
         case "NamespaceLanguageName":   n.setLanguage(this.content()); break;
@@ -179,7 +180,7 @@ public class SimpleContent extends CMFObject {
     @Override
     public boolean addToPropertyAssociation (String eln, String loc, PropertyAssociation pa) {
         switch (eln) {
-        case "DocumentationText":           pa.addDocumentation(this.content(), this.lang()); break;
+        case "DocumentationText":           pa.addDocumentation(this.raw(), this.lang()); break;
         case "MaxOccursQuantity":           pa.setMaxOccurs(this.content()); break;
         case "MinOccursQuantity":           pa.setMinOccurs(this.content()); break;
         case "OrderedPropertyIndicator":    pa.setIsOrdered("true".equals(this.content())); break;

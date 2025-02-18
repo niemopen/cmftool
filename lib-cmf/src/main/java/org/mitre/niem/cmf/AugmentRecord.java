@@ -32,7 +32,7 @@ import java.util.Set;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class AugmentRecord extends CMFObject {
+public class AugmentRecord extends CMFObject implements Comparable<AugmentRecord> {
     
     public AugmentRecord () { }
     
@@ -72,5 +72,11 @@ public class AugmentRecord extends CMFObject {
         ns.addAugmentRecord(this);
         return true;
     }
-    
+
+    @Override
+    public int compareTo(AugmentRecord o) {
+        int rv = 0;
+        if (null != this.classType && null != o.classType) rv = this.classType.compareTo(o.classType);
+        if (0 == rv) rv = this.property.qname().compareTo(o.property.qname());
+        return rv;}
 }

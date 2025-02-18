@@ -45,8 +45,11 @@ public class CMFObject {
     // Override these functions in subclasses
     public String uri ()            { return ""; }
     public int getType ()           { return -1; }
+    public boolean isClassType ()   { return false; }
     public boolean isDatatype ()    { return false; }
+    public boolean isNamespace ()   { return false; }
     public boolean isProperty ()    { return false; }
+    public String cmfElement ()     { return "CMFObject"; }
 
     public void setContent (String text) { }
     

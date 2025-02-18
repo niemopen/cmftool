@@ -47,6 +47,10 @@ public class ModelAssertions {
         var jns = m.prefix2namespace("j");
         var ncns = m.prefix2namespace("nc");
         var testns = m.prefix2namespace("test");
+        
+        assertThat(m.namespaceList())
+            .extracting(Namespace::prefix)
+            .containsExactly("j", "nc", "test", "xs");
 
         assertThat(jns.augL())
             .extracting(AugmentRecord::classType)
@@ -468,10 +472,15 @@ public class ModelAssertions {
         assertFalse(m.qn2objectProperty("test:OProp3").isRelationship());
         assertFalse(m.qn2objectProperty("test:OProp4").isRelationship());
 
-//        assertEquals("ALL", m.qn2objectProperty("test:OProp1").getReferenceCode());
-//        assertEquals("REF", m.qn2objectProperty("test:OProp2").getReferenceCode());
-//        assertEquals("URI", m.qn2objectProperty("test:OProp3").getReferenceCode());
-//        assertEquals("NONE", m.qn2objectProperty("test:OProp4").getReferenceCode());
+        assertEquals(m.qn2objectProperty("test:OProp1").classType(), m.qn2classType("test:TestType"));
+        assertEquals (m.qn2objectProperty("test:OProp2").classType(), m.qn2classType("test:TestType"));
+        assertEquals(m.qn2objectProperty("test:OProp3").classType(), m.qn2classType("test:TestType"));
+        assertEquals(m.qn2objectProperty("test:OProp4").classType(), m.qn2classType("test:TestType"));
+        
+        assertEquals("ANY", m.qn2objectProperty("test:OProp1").referenceCode());
+        assertEquals("REF", m.qn2objectProperty("test:OProp2").referenceCode());
+        assertEquals("URI", m.qn2objectProperty("test:OProp3").referenceCode());
+        assertEquals("NONE", m.qn2objectProperty("test:OProp4").referenceCode());
     }
 
 }

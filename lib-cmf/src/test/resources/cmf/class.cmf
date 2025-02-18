@@ -9,17 +9,14 @@
     <NamespaceURI>http://example.com/test/</NamespaceURI>
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>Class test schema. Test abstract, augmentable, reference code.</DocumentationText>
-    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>class.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
-    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
   <DataProperty structures:id="test.AnElement">
     <Name>AnElement</Name>

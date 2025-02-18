@@ -25,6 +25,9 @@ package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * A class for a Class object in a CMF model.
@@ -39,7 +42,11 @@ public class ClassType extends Component {
     public ClassType (Namespace ns, String name) { super(ns, name); }
     
     @Override
-    public int getType () { return CMF_CLASS; }
+    public int getType ()           { return CMF_CLASS; }
+    @Override
+    public boolean isClassType ()   { return true; }
+    @Override
+    public String cmfElement ()     { return "Class"; }
     
     private boolean isAbstract = false;         // cmf:AbstractIndicator
     private boolean hasAnyAttribute = false;    // cmf:AnyAttributeIndicator
@@ -89,4 +96,15 @@ public class ClassType extends Component {
         return true;
     }
     
+    @Override
+    public boolean addToObjectProperty (String eln, String loc, ObjectProperty op) {
+        op.setClassType(this);
+        return true;        
+    }
+    
+    @Override
+    public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { 
+        super.addComponentCMFChildren(w, doc, c, nsS);
+        w.addClassTypeChildren(doc, c, this, nsS);
+    }
 }

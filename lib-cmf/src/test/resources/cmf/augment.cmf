@@ -13,10 +13,8 @@
       Namespace j augments nc:EducationType with element j:EducationTotalYearsText
       Namespace j augments test:T2Type with attribute test:AProp4
     </DocumentationText>
-    <NamespaceCategoryCode>DOMAIN</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>niem/domains/justice.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>subset-1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
@@ -40,10 +38,8 @@
       AugmentRecord test
       Namespace nc augments test:T2type with attributes test:AProp3 and test:AProp4
     </DocumentationText>
-    <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>niem/niem-core.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
@@ -66,10 +62,8 @@
        AugmentRecord test
        Namespace test global augments all elements with test:privAtt
     </DocumentationText>
-    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>propAssoc.xsd</DocumentFilePathText>
-    <NIEMVersionText>6</NIEMVersionText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
@@ -77,14 +71,13 @@
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <GlobalClassCode>ASSOCIATION</GlobalClassCode>
-      <GlobalClassCode>OBJECT</GlobalClassCode>
       <GlobalClassCode>LITERAL</GlobalClassCode>
+      <GlobalClassCode>OBJECT</GlobalClassCode>
     </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
-    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
   <ObjectProperty structures:id="j.EducationTotalYearsText">
     <Name>EducationTotalYearsText</Name>
@@ -185,16 +178,16 @@
     <Datatype structures:ref="xs.integer" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </DataProperty>
+  <DataProperty structures:id="test.OProp2">
+    <Name>OProp2</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
   <DataProperty structures:id="test.privAtt">
     <Name>privAtt</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <Datatype structures:ref="xs.integer" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
-  </DataProperty>
-  <DataProperty structures:id="test.OProp2">
-    <Name>OProp2</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
   <Class structures:id="nc.DateType">
     <Name>DateType</Name>

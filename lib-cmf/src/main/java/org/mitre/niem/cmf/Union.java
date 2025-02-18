@@ -25,6 +25,9 @@ package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * A class for a Union object in a CMF model.
@@ -40,6 +43,10 @@ public class Union extends Datatype {
 
     @Override
     public int getType () { return CMF_UNION; }
+    @Override
+    public boolean isDatatype ()    { return true; }
+    @Override
+    public String cmfElement ()     { return "Union"; }
     
     private final List<Datatype> memberL = new ArrayList<>();       // cmf:UnionMemberDatatype
     
@@ -55,4 +62,10 @@ public class Union extends Datatype {
 
     }
     
+    @Override
+    public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { 
+        super.addComponentCMFChildren(w, doc, c, nsS);
+        w.addUnionChildren(doc, c, this, nsS);
+    }
+       
 }

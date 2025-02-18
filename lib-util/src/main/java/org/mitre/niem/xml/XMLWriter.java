@@ -68,7 +68,7 @@ public class XMLWriter {
      * @param dom - Document to write
      * @param os - Stream for output
      */
-    XMLWriter(Document dom, OutputStream os) {
+    public XMLWriter(Document dom, OutputStream os) {
         this.dom = dom;
         this.os = os;
     }
