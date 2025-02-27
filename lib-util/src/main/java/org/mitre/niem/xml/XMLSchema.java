@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.xml.XMLConstants;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
@@ -135,6 +136,7 @@ public class XMLSchema {
      * can also be created on demand.
      *
      * @param args List of schema documents, catalogs, namespace URIs
+     * @throws XMLSchema.XMLSchemaException
      */
     public XMLSchema (String... args) throws XMLSchemaException {
         List<Integer> iNSindex = new ArrayList<>();
@@ -173,7 +175,6 @@ public class XMLSchema {
                     var f  = new File(path);
                     var cf = f.getCanonicalFile();
                     furi = cf.toURI().toString();
-                    cf = f.getCanonicalFile();
                 } catch (IOException ex) {
                     throw new XMLSchemaException(String.format("can't canonicalize %s: %s", path, ex.getMessage()));
                 }
@@ -223,6 +224,17 @@ public class XMLSchema {
             int index = iNSindex.get(i);
             schemaDocs.set(index, sfu.toString());
         }
+        // We have the catalog resolver and all of the initial schema documents.
+        // Now parse all documents in the pile and create XMLSchemaDocument objects.
+        try {
+            parseSchemaPile();
+        } catch (SAXException ex) {
+            throw new XMLSchemaException("parsing error: " + ex.getMessage());
+        } catch (ParserConfigurationException ex) {
+            throw new XMLSchemaException("internal error: " + ex.getMessage());
+        } catch (IOException ex) {
+            throw new XMLSchemaException(ex.getMessage());
+        }
     }  
 
     ///// XSModel stuff ////////////////////////////////////////////////////
@@ -248,7 +260,6 @@ public class XMLSchema {
         }
         xsmsgs = new ArrayList<>();
         var handler = new XSModelHandler(xsmsgs);
-//        XMLSchema.XSModelHandler handler = new XMLSchema.XSModelHandler();
         DOMConfiguration config = loader.getConfig();
         config.setParameter("validate", true);
         config.setParameter("error-handler", handler);
@@ -427,49 +438,60 @@ public class XMLSchema {
         return res;        
     }
 
-    ///// XMLSchemaDocument stuff /////
+    ///// XMLSchemaDocument stuff ///////////////////////////////////////////////
     
-    // Schema pile parsing info is created on demand and cached
+    // Schema pile parsing info is created by the object constructor.
+    
     private Map<String,XMLSchemaDocument> sdocs = null;         // namespace URI -> sdoc object
     private String pileRoot;                                    // common prefix of all document paths
-       
+    
     /**
-     * Returns a map of namespace URIs to the SchemaDocument object having that
-     * target namespace URI.  
-     * @return map(nsuri) -> SchemaDocument
-     * @throws SAXException
-     * @throws ParserConfigurationException
-     * @throws IOException
-     * @throws XMLSchemaException 
+     * Returns the set of target namespace URIs from all documents in the pile.
+     * @return set of namespace URIs
      */
-    public Map<String,XMLSchemaDocument> schemaDocuments () throws SAXException, ParserConfigurationException, IOException, XMLSchemaException { 
-        parseSchemaPile(); 
-        return sdocs; 
+    public Set<String> schemaNamespaceURIs () {
+        return sdocs.keySet();
+    }
+    
+    /**
+     * Returns the XMLSchemaDocument object for the schema document with the
+     * specified target namespace.  Returns null if no such document in the pile.
+     * @param nsuri - target namespace URI
+     * @return XMLSchemaDocument object (or null)
+     */
+    public XMLSchemaDocument schemaDocument (String nsuri) {
+        return sdocs.get(nsuri);
     }
     
      /**
      * Returns the file: URI of the root directory of the schema document pile.
      * @return root directory URI string
-     * @throws SAXException
-     * @throws ParserConfigurationException
-     * @throws IOException
-     * @throws XMLSchemaException 
      */
-    public String pileRoot () throws SAXException, ParserConfigurationException, IOException, XMLSchemaException {
-        parseSchemaPile();
+    public String pileRoot () {
         return pileRoot;
     }
     
     /**
-     * Turns a file URI into a file path string relative to the pile root directory.
-     * Returns the URI unchanged if it is not in the pile root directory.
+     * Turns a file URI into a file path relative to the pile root directory.
+     * Returns an empty string if the URI is not in the pile root directory.
      * @param docFileURI
-     * @return 
+     * @return relative file path
      */
-    public String pilePath (String docFileURI) {
+    public String filePath (String docFileURI) {
         if (docFileURI.startsWith(pileRoot))
             return docFileURI.substring(pileRoot.length());
-        return docFileURI;
+        return "";
+    }
+    
+    /**
+     * Returns the file path for a schema document, relative to the schema document
+     * pile root directory.
+     * @param sd - XMLSchemaDocument object
+     * @return - relative file path
+     */
+    public String pilePath (XMLSchemaDocument sd) {
+        var sdUs = sd.docURI().toString();
+        return filePath(sdUs);
     }
 
     private void parseSchemaPile () throws SAXException, ParserConfigurationException, IOException, XMLSchemaException {
@@ -502,7 +524,7 @@ public class XMLSchema {
                 for (int j = 0; j < docl.getLength(); j++) {
                     var sdUstr = xercesLocationURI(docl.item(j));
                     var sdF    = URIStringToFile(sdUstr);
-                    var sd     = newSchemaDocument(sdF);
+                    var sd     = newSchemaDocument(sdF);    // NOT new XMLSchemaDocument; see below
                     var targNS = sd.targetNamespace();
                     if (null != targNS && !nsuri.equals(targNS))
                         throw new XMLSchemaException(
@@ -541,14 +563,9 @@ public class XMLSchema {
         return furi;
     }
     
-    // Override in derived class to generate a derived XMLSchemaDocument class.
-    protected XMLSchemaDocument newSchemaDocument (File sdF) throws SAXException, IOException {
-        try {
-            return new XMLSchemaDocument(sdF);
-        } catch (ParserConfigurationException ex) {
-            LOG.error(ex.getMessage());     // should catch these on program startup!
-            return null;                    // NullPointerException time!
-        }
+    // Override in a derived XMLSchema class to create a derived XMLSchemaDocument object.
+    protected XMLSchemaDocument newSchemaDocument (File sdF) throws SAXException, IOException, ParserConfigurationException {
+        return new XMLSchemaDocument(sdF);
     }
     
     public class XMLSchemaException extends Exception {

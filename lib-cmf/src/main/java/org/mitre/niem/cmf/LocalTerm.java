@@ -25,7 +25,6 @@ package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.mitre.niem.xml.LanguageString;
 
 /**
  * A class for a LocalTerm object in a CMF model.
@@ -39,25 +38,21 @@ public class LocalTerm extends CMFObject implements Comparable<LocalTerm> {
     
     private String term = "";                                           // cmf:TermName
     private String literal = "";                                        // cmf:TermLiteralText
-    private final List<LanguageString> docL = new ArrayList<>();        // cmf:DocumentationText
+    private String doc = null;                                          // cmf:DocumentationText
     private final List<String> sourceL = new ArrayList<>();             // cmf:SourceURI
-    private final List<LanguageString> citationL = new ArrayList<>();   // cmf:SourceCitationText
+    private final List<String> citationL = new ArrayList<>();           // cmf:SourceCitationText
 
     public String term ()                           { return term; }
     public String literal ()                        { return literal; }
-    public List<LanguageString> docL ()             { return docL; }
+    public String documentation ()                  { return doc; }
     public List<String> sourceL ()                  { return sourceL; }
-    public List<LanguageString> citationL ()        { return citationL; }
+    public List<String> citationL ()                { return citationL; }
     
-    public void setTerm (String s)                  { term = s; }
-    public void setLiteral (String s)               { literal = s; }
-    public void addDocumentation (String s, String l) {
-        docL.add(new LanguageString(s, l));
-    }
-    public void addSource (String s)                { sourceL.add(s); }
-    public void addCitation (String s, String l) {
-        citationL.add(new LanguageString(s, l));
-    }
+    public void setTerm (String s)                      { term = s; }
+    public void setLiteral (String s)                   { literal = s; }
+    public void setDocumentation (String s)             { doc = s; }
+    public void addSource (String s)                    { sourceL.add(s); }
+    public void addCitation(String s)                   { citationL.add(s); }
     
     
     @Override

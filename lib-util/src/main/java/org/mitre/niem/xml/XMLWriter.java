@@ -33,6 +33,8 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.transform.OutputKeys;
@@ -44,6 +46,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.logging.log4j.LogManager;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 /**
  * A class to generate an output stream of readable XML from a Document.  
@@ -181,5 +184,22 @@ public class XMLWriter {
             kvm.put(m.group(1), m.group(2));
         }
         return kvm;
-    }      
+    }   
+    
+    /**
+     * Transforms a DOM node to its text representation.
+     * @param n - Node object
+     * @return text representation
+     */
+    public static String nodeToText (Node n) {
+        var os = new StringWriter();
+        try {
+            var tr = TransformerFactory.newInstance().newTransformer();
+            tr.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            tr.setOutputProperty(OutputKeys.INDENT, "no");
+            tr.transform(new DOMSource(n), new StreamResult(os));
+            return os.toString();
+        } catch (Exception ex) { } // IGNORE
+        return "";
+    }
 }

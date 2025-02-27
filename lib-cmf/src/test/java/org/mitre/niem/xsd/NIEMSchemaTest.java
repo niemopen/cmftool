@@ -26,16 +26,16 @@ package org.mitre.niem.xsd;
 import java.util.ArrayList;
 import java.util.List;
 import nl.altindag.log.LogCaptor;
+import org.assertj.core.api.Assertions;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeAll;
+import org.mitre.niem.xml.LanguageString;
 import org.mitre.niem.xml.XMLSchemaDocument;
-import static org.mitre.niem.xsd.NamespaceKind.NSK_EXTENSION;
-import static org.mitre.niem.xsd.NamespaceKind.NSK_EXTERNAL;
-import static org.mitre.niem.xsd.NamespaceKind.NSK_UNKNOWN;
+import static org.mitre.niem.xsd.NamespaceKind.*;
 
 /**
  *
@@ -52,13 +52,33 @@ public class NIEMSchemaTest {
     public void testGetNamespaceKind () throws Exception {
         var args = new String[]{resDN + "xsd/imports.xsd"};
         var sch = new NIEMSchema(args);
-        assertEquals(NSK_EXTENSION, sch.getNamespaceKind("http://example.com/test/"));
-        assertEquals(NSK_EXTERNAL,  sch.getNamespaceKind("http://www.opengis.net/gml/3.2"));
+        assertEquals(NSK_EXTENSION, sch.namespaceKind("http://example.com/test/"));
+        assertEquals(NSK_DOMAIN, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/"));
+        assertEquals(NSK_CORE, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"));
+        assertEquals(NSK_OTHERNIEM, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/codes/aamva_d20/6.0/"));
+        assertEquals(NSK_APPINFO, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"));
+        assertEquals(NSK_CLI, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/"));
+        assertEquals(NSK_PROXY, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
+        assertEquals(NSK_STRUCTURES, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"));
+        assertEquals(NSK_XSD, sch.namespaceKind("http://www.w3.org/2001/XMLSchema"));
+        assertEquals(NSK_XML, sch.namespaceKind("http://www.w3.org/XML/1998/namespace"));
+        assertEquals(NSK_EXTERNAL, sch.namespaceKind("http://www.opengis.net/gml/3.2"));
+        assertEquals(NSK_NOTNIEM, sch.namespaceKind("http://www.w3.org/1999/xlink"));
         assertEmptyLogs();
-        assertEquals(NSK_UNKNOWN,   sch.getNamespaceKind("http://boogala"));
+        assertEquals(NSK_UNKNOWN,   sch.namespaceKind("http://boogala"));
         assertThat(logs).anySatisfy(
-            log -> { assertThat(log.getErrorLogs()).anyMatch(s -> s.contains("unknown namespace URI")); }
+            log -> { assertThat(log.getErrorLogs()).anyMatch(s -> s.contains("no schema document for namespace URI")); }
         );    
+    }
+    
+    @Test
+    public void testImportDocumentation () throws Exception {
+        var args = new String[]{resDN + "xsd/imports.xsd"};
+        var sch = new NIEMSchema(args);
+        assertNull(sch.importDocumentation("http://example.com/test/"));
+        assertThat(sch.importDocumentation("http://www.opengis.net/gml/3.2"))
+            .extracting(LanguageString::text, LanguageString::lang)
+            .containsExactly(Assertions.tuple("Geography Markup Language.", "en-US"));
     }
 
     @Test

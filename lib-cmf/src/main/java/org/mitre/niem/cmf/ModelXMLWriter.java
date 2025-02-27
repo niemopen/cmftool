@@ -58,22 +58,22 @@ public class ModelXMLWriter {
      * @param os - OutputStream
      */
     public boolean writeXML (Model m, OutputStream os) {
-        return writeXML(m, m.nsSet(), os);
+        return writeXML(m, m.namespaceSet(), os);
     }
     
     /**
      * Writes components from a specified set of namespaces as CMF-XML to a stream.
      * Returns false on failure, with diagnostic messages written to Log4J2.
      * @param m - Model object
-     * @param nsS - set of namespace URIs or prefix strings
+     * @param nsparam - set of namespace URIs or prefix strings
      * @param os  - output stream
      */
     public boolean writeXML (Model m, List<String> nsparam, OutputStream os) {
         var nsS = new HashSet<Namespace>();
         for (var s : nsparam) {
             Namespace ns = null;
-            if (s.contains(":")) ns = m.uri2namespace(s);
-            else ns = m.prefix2namespace(s);
+            if (s.contains(":")) ns = m.nsUToNamespaceObj(s);
+            else ns = m.prefixToNamespaceObj(s);
             if (null ==  ns) {
                 LOG.error("{}: no such namespace in model", s);
                 return false;
@@ -257,10 +257,10 @@ public class ModelXMLWriter {
         if (null == x) return;
         var c = doc.createElementNS(CMF_NS_URI, "LocalTerm");
         appendSimpleChild(doc, c, "TermName", x.term());
-        for (var dls : x.docL()) appendDocumentation(doc, c, dls);
+        appendSimpleChild(doc, c, "DocumentationText", x.documentation());
         appendSimpleChild(doc, c, "TermLiteralText", x.literal());
         for (var suri : x.sourceL())  appendSimpleChild(doc, c, "SourceURI", suri);
-        for (var cit : x.citationL()) appendLanguageString(doc, c, "SourceCitationText", cit);
+        for (var cit : x.citationL()) appendSimpleChild(doc, c, "SourceCitationText", cit);
         p.appendChild(c);
     }
 

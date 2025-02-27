@@ -24,13 +24,15 @@
 package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.mitre.niem.xsd.NamespaceMap;
 
 /**
@@ -40,9 +42,15 @@ import org.mitre.niem.xsd.NamespaceMap;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Model extends CMFObject {    
+    static final Logger LOG = LogManager.getLogger(Model.class);    
     
-    public Model () { super(); nsmap = new NamespaceMap(); }
-//    public Model (NamespaceMap nsmap) { super(); this.nsmap = nsmap; }
+    public Model () { 
+        super(); 
+        nsmap = new NamespaceMap();
+        var xsNS = new Namespace("xs", W3C_XML_SCHEMA_NS_URI);
+        try { addNamespace(xsNS); } catch (CMFException ex) { } // CAN'T HAPPEN
+    }
+
     
     @Override
     public int getType () { return CMF_MODEL; }
@@ -59,48 +67,50 @@ public class Model extends CMFObject {
     private List<Component> ordComp      = null;
     private List<Namespace> ordNS        = null;
     
-    public Component qn2component (String qn)           { return compMap.get(qn2uri(qn)); }
-    public ClassType qn2classType (String qn)           { return classMap.get(qn2uri(qn)); }
-    public DataProperty qn2dataProperty (String qn)     { return dpropMap.get(qn2uri(qn)); }
-    public Datatype qn2datatype (String qn)             { return dtypeMap.get(qn2uri(qn)); }
-    public ObjectProperty qn2objectProperty (String qn) { return opropMap.get(qn2uri(qn)); }
-    public Property qn2property (String qn)             { return propMap.get(qn2uri(qn)); } 
+    public List<Datatype> datatypeL ()                  { return new ArrayList<Datatype>(dtypeMap.values()); }
     
-    public Component uri2component (String uri)         { return compMap.get(uri); }
-    public ClassType uri2classType (String uri)         { return classMap.get(uri); }
-    public DataProperty uri2dataProperty (String uri)   { return dpropMap.get(uri); }
-    public Datatype uri2datatype (String uri)           { return dtypeMap.get(uri); }
-    public ObjectProperty uri2objectProperty (String uri){ return opropMap.get(uri); }
-    public Property uri2property (String uri)           { return propMap.get(uri); }
+    public Component qnToComponent (String qn)          { return compMap.get(qnToURI(qn)); }
+    public ClassType qnToClassType (String qn)          { return classMap.get(qnToURI(qn)); }
+    public DataProperty qnToDataProperty (String qn)    { return dpropMap.get(qnToURI(qn)); }
+    public Datatype qnToDatatype (String qn)            { return dtypeMap.get(qnToURI(qn)); }
+    public ObjectProperty qnToObjectProperty (String qn){ return opropMap.get(qnToURI(qn)); }
+    public Property qnToProperty (String qn)            { return propMap.get(qnToURI(qn)); } 
     
-    public String uri2prefix (String p)                 { return nsmap.getURI(p); }
-    public String prefix2uri (String u)                 { return nsmap.getPrefix(u); }
-    public Namespace uri2namespace (String u)           { return uri2ns.get(u); }
-    public Namespace prefix2namespace (String p) {
+    public Component uriToComponent (String uri)        { return compMap.get(uri); }
+    public ClassType uriToClassType (String uri)        { return classMap.get(uri); }
+    public DataProperty uriToDataProperty (String uri)  { return dpropMap.get(uri); }
+    public Datatype uriToDatatype (String uri)          { return dtypeMap.get(uri); }
+    public ObjectProperty uriToObjectProperty (String uri){ return opropMap.get(uri); }
+    public Property uriToProperty (String uri)          { return propMap.get(uri); }
+    
+    public String nsUToNSprefix (String p)              { return nsmap.getURI(p); }
+    public String prefixToNSuri (String u)              { return nsmap.getPrefix(u); }
+    public Namespace nsUToNamespaceObj (String u)       { return uri2ns.get(u); }
+    public Namespace prefixToNamespaceObj (String p) {
         var uri = nsmap.getURI(p);
         if (null == uri) return null;
         return uri2ns.get(uri);
     }
-    public Namespace namespace (String preOrURI) {
-        if (preOrURI.contains(":")) return uri2namespace(preOrURI);
-        return prefix2namespace(preOrURI);
+    public Namespace namespaceObj (String preOrURI) {
+        if (preOrURI.contains(":")) return nsUToNamespaceObj(preOrURI);
+        return prefixToNamespaceObj(preOrURI);
     }
-    public Set<Namespace> nsSet ()                      { return nsS; }
+    public Set<Namespace> namespaceSet ()               { return nsS; }
     
-    public String qn2uri (String qname) {
+    public String qnToURI (String qname) {
         if (null == qname || qname.isEmpty()) return "";
         var ci = qname.indexOf(':');
         if (ci < 1) return "";
         var p = qname.substring(0, ci);
         var ln = qname.substring(ci+1);
-        var ns = prefix2namespace(p);
+        var ns = prefixToNamespaceObj(p);
         if (null == ns || ln.isBlank()) return "";
         var uri = ns.uri();
         if (uri.endsWith("/")) return uri + ln;
         return uri + "/" + ln;       
     }
     
-    public String uri2qn (String uri) {
+    public String uriToQN (String uri) {
         if (null == uri || uri.isEmpty()) return "";
         int si = uri.lastIndexOf('/');
         if (si < 2) return "";
@@ -110,7 +120,52 @@ public class Model extends CMFObject {
         if (pre.isEmpty()) return "";
         return pre + ":" + ln;
     }
-
+   
+    /**
+     * Returns the name portion of a component URI; e.g. "TextType" for
+     * https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/TextType.
+     * @param componentURI - NIEM component URI
+     * @return component name
+     */
+    public String compUToName (String componentURI) {
+        int indx = componentURI.lastIndexOf("/");
+        if (indx < 0 || indx + 1 >= componentURI.length()) return "";
+        return componentURI.substring(indx+1);
+    }
+    
+    /**
+     * Returns the namespace URI portion of a component URI; e.g. 
+     * https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/ for
+     * https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/TextType.
+     * 
+     * The URI for a NIEM namespace SHOULD end in a "/" character.  But it might
+     * not.  The Model object can handle this... unless you have two namespaces
+     * with URIs that vary only in the final "/" character... in which case, you
+     * are beyond my help. :-)
+     * @param componentURI - NIEM component URI
+     * @return component namespace URI
+     */
+    public String compUToNamespaceU (String componentURI) {
+        int indx = componentURI.lastIndexOf("/");
+        if (indx < 0 || indx + 1 >= componentURI.length()) return "";
+        var compNSuri = componentURI.substring(0, indx+1);
+        if (uri2ns.containsKey(compNSuri)) return compNSuri;
+        compNSuri = compNSuri.substring(0, compNSuri.length()-1);
+        if (uri2ns.containsKey(compNSuri)) return compNSuri;
+        LOG.error("no namespace object matching component URI {}", componentURI);
+        return "";
+    }
+    
+    /**
+     * Returns the namespace object for a component URI.
+     * @param componentURI - NIEM component URI
+     * @return namespace object
+     */
+    public Namespace compUToNamespaceObj (String componentURI) {
+        var nsuri = compUToNamespaceU(componentURI);
+        return namespaceObj(nsuri);
+    }
+   
     public void addNamespace (Namespace n) throws CMFException {
         if (uri2ns.containsKey(n.uri())) return;
         var cnsuri = nsmap.getPrefix(n.prefix());
@@ -123,6 +178,7 @@ public class Model extends CMFObject {
         nsS.add(n);
         uri2ns.put(n.uri(), n);
         ordNS = null;
+        n.setModel(this);
     }
     
     
@@ -130,19 +186,22 @@ public class Model extends CMFObject {
         compMap.put(c.uri(), c); 
         classMap.put(c.uri(), c);
         ordComp = null;
+        c.setModel(this);
     }
     
     public void addDataProperty (DataProperty c) {
         compMap.put(c.uri(), c); 
         propMap.put(c.uri(), c);
         dpropMap.put(c.uri(), c);
-        ordComp = null;        
+        ordComp = null;       
+        c.setModel(this);
     }
     
     public void addDatatype (Datatype c) {
         compMap.put(c.uri(), c); 
         dtypeMap.put(c.uri(), c);
         ordComp = null;
+        c.setModel(this);
     }
     
     public void addObjectProperty (ObjectProperty c) {
@@ -150,6 +209,7 @@ public class Model extends CMFObject {
         propMap.put(c.uri(), c);
         opropMap.put(c.uri(), c);
         ordComp = null;        
+        c.setModel(this);
     }
   
     public void componentUpdate () {

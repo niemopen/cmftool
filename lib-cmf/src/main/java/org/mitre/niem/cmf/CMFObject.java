@@ -23,8 +23,6 @@
  */
 package org.mitre.niem.cmf;
 
-import org.xml.sax.SAXException;
-
 /**
  * An abstract class for an object in a CMF model.
  * 
@@ -75,8 +73,5 @@ public class CMFObject {
     public boolean addToObjectProperty (String eln, String loc, ObjectProperty op) { return false; }    
     public boolean addToRestriction (String eln, String loc, Restriction r) { return false; }
     public boolean addToUnion (String eln, String loc, Union u) { return false; }
-    
-    public class CMFException extends SAXException {
-        public CMFException (String msg) { super(msg); }
-    }
+
 }

@@ -14,6 +14,10 @@
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+  </Namespace>
   <Class structures:id="part1.Test1Type">
     <Name>Test1Type</Name>
     <Namespace structures:ref="part1" xsi:nil="true"/>

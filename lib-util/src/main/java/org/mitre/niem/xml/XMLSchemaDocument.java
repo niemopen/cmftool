@@ -40,6 +40,7 @@ import org.apache.logging.log4j.LogManager;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 import org.w3c.dom.NodeList;
 import org.xml.sax.Attributes;
@@ -50,11 +51,16 @@ import org.xml.sax.helpers.DefaultHandler;
 /**
  * A class for providing information from a schema document that is not
  * available through the Xerces XML Schema (XSModel) API. Originally written
- * to extract attributes from component declarations; eg.
+ * to extract attributes from component definitions and declarations; eg.
  *   xs:element ref="foo:bar" appinfo:deprecated="true"
  * 
- * We parse the XSD document and execute XPath to get those attributes and
+ * We create a DOM for the XSD document and execute XPath to get those attributes and
  * a few other things:
+ * 
+ * We SAX parse the document to build the list of namespace declarations.  Can't 
+ * easily get those from DOM.  Need them to resolve namespace prefix collisions and
+ * build the unique namespace prefix mapping for a model, in which a prefix has 
+ * at most one namespace URI).
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -95,6 +101,19 @@ public class XMLSchemaDocument {
      */
     public File docFile ()  { return docF; }
     
+    
+    /**
+     * Returns the language attribute (xml:lang) of the schema document.
+     * Returns empty string if language not declared.
+     * @return version
+     */
+    public String language () {
+        String res = "";
+        var xpe = "/*/@*[namespace-uri()='" + XML_NS_URI + "' and local-name()='lang']";
+        res = evalForString(xpe);
+        return res;              
+    }    
+
     /**
      * Returns the target namespace of the schema document.
      * Returns empty string if no @targetNamespace attribute.
@@ -104,11 +123,7 @@ public class XMLSchemaDocument {
         if (null != targetNS) return targetNS;
         targetNS = "";
         var xpe = "/*/@targetNamespace";
-        try {
-            targetNS = evalForString(xpe);
-        } catch (XPathExpressionException ex) {
-            LOG.error("bad XPath expression {}: {}", xpe, ex.getMessage());
-        }
+        targetNS = evalForString(xpe);
         return targetNS;        
     }
     
@@ -120,13 +135,18 @@ public class XMLSchemaDocument {
     public String version () {
         String res = "";
         var xpe = "/*/@version";
-        try {
-            res = evalForString(xpe);
-        } catch (XPathExpressionException ex) {
-            LOG.error("bad XPath expression {}: {}", xpe, ex.getMessage());
-        }
+        res = evalForString(xpe);
         return res;              
     }    
+    
+    /**
+     * Returns a list of LanguageString objects for the schema-level documentation
+     * in this schema document.
+     * @return 
+     */
+    public List<LanguageString> documentation () {
+        return getDocumentation(dom().getDocumentElement());
+    }
     
     /**
      * Returns the parsed document object model for the schema document.
@@ -137,31 +157,53 @@ public class XMLSchemaDocument {
     }
     
     /**
-     * Evaluate XPath expression against schema document for a string.
+     * Evaluate XPath expression against schema document to return a string.
+     * Returns empty string for invalid XPath.
      * @param exp - XPath expression
      * @return string result
-     * @throws XPathExpressionException 
      */
-    public String evalForString (String exp) throws XPathExpressionException {
+    public String evalForString (String exp) {
         var xpf = XPathFactory.newInstance();
         var xp  = xpf.newXPath();
-        var xpr = xp.compile(exp);
-        var res = (String)xpr.evaluate(doc, XPathConstants.STRING);
-        return res;        
+        try {
+            var xpr = xp.compile(exp);
+            var res = (String)xpr.evaluate(doc, XPathConstants.STRING);
+            return res;        
+        } catch (XPathExpressionException ex) { 
+            LOG.error("bad XPath expression {}: {}", exp, ex.getMessage());
+        }
+        return "";
     }
     
     /**
-     * Evaluate XPath expression against schema document for a list of Nodes
-     * @param exp - XPath expression
-     * @return NodeList
-     * @throws XPathExpressionException 
+     * Evaluate XPath expression against schema document to return first maching node.
+     * Returns null for invalid XPath.
+     * @param exp
+     * @return Node object or null
      */
-    public NodeList evalForNodes (String exp) throws XPathExpressionException {
+    public Node evalForOneNode (String exp) {
+        var nset = evalForNodes(exp);
+        if (null !=  nset && nset.getLength() > 0) return nset.item(0);
+        return null;
+    }
+    
+    /**
+     * Evaluate XPath expression against schema document to return a list of Nodes.
+     * Returns null for invalid XPath.
+     * @param exp - XPath expression
+     * @return NodeList object or null
+     */
+    public NodeList evalForNodes (String exp) {
         var xpf = XPathFactory.newInstance();
         var xp  = xpf.newXPath();
-        var xpr = xp.compile(exp);
-        var res = (NodeList)xpr.evaluate(doc, XPathConstants.NODESET);
-        return res;
+        try {
+            var xpr = xp.compile(exp);
+            var res = (NodeList)xpr.evaluate(doc, XPathConstants.NODESET);
+            return res;
+        } catch (XPathExpressionException ex) {
+             LOG.error("bad XPath expression {}: {}", exp, ex.getMessage());
+        }
+        return null;
     }
     
     private static final String importXpath = 
@@ -171,34 +213,44 @@ public class XMLSchemaDocument {
      * Returns a list of top-level xs:import elements in the schema document.
      */
     public NodeList importElements () {
-        try {
-            return evalForNodes(importXpath);
-        } catch (XPathExpressionException ex) {
-            LOG.error("bad xpath {} for import elements: {}", importXpath, ex.getMessage());
-            return null;
-        }
+        return evalForNodes(importXpath);
     }
     
     /**
      * Given a schema document Element, return a list of LanguageString objects
      * created from the xs:annotation/xs:documentation children, each containing
      * the xs:documentation text plus the in-scope @xml:lang.
-     * @return 
+     * @param xsElement - XSD component element
+     * @return list of documentation strings
      */
-    public static List<LanguageString> getDocumentation (Element e) {
+    public static List<LanguageString> getDocumentation (Element xsElement) {
         var res   = new ArrayList<LanguageString>();
-        var alist = e.getElementsByTagNameNS(W3C_XML_SCHEMA_NS_URI, "annotation");
-        for (var i = 0; i < alist.getLength(); i++) {
-            var ae    = (Element)alist.item(i);
-            var dlist = ae.getElementsByTagNameNS(W3C_XML_SCHEMA_NS_URI, "documentation");
+        var nodeL = xsElement.getChildNodes();
+        for (var i = 0; i < nodeL.getLength(); i++) {
+            var node = nodeL.item(i);
+            if (ELEMENT_NODE != node.getNodeType()) continue;
+            var e = (Element)node;
+            if (W3C_XML_SCHEMA_NS_URI != e.getNamespaceURI()) continue;
+            if (!"annotation".equals(e.getLocalName())) continue;
+            var dlist = e.getElementsByTagNameNS(W3C_XML_SCHEMA_NS_URI, "documentation");
             for (int j = 0; j < dlist.getLength(); j++) {
                 var de = (Element)dlist.item(j);
                 var text = de.getTextContent();
                 var lang = getXMLLang(de);
                 res.add(new LanguageString(text, lang));
             }
-        }
+        }   
         return res;
+    }
+    
+    /**
+     * Returns the text content of a schema document Element, plus the in-scope
+     * xml:lang attribute.
+     * @param e
+     * @return 
+     */
+    public static LanguageString getLanguageString (Element e) {
+        return new LanguageString(e.getTextContent(), getXMLLang(e));
     }
     
     /**
@@ -212,6 +264,7 @@ public class XMLSchemaDocument {
             e = (Element)e.getParentNode();
             lang = e.getAttributeNS(XML_NS_URI, "lang");
         }
+        if (lang.isEmpty()) return "en-US";
         return lang;
     }
     
@@ -240,7 +293,7 @@ public class XMLSchemaDocument {
     }
     
     // Parse the schema document to construct list of all namespace declarations.
-    // Can't get these from the DOM.
+    // Can't get these from the DOM, must use SAX.
     private void initNSdecls () {
         nsdecls = new ArrayList<>();
         try {

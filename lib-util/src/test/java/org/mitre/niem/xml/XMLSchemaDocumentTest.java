@@ -47,6 +47,13 @@ public class XMLSchemaDocumentTest {
     }
     
     @Test
+    public void testLanguage () throws Exception {
+        var xsd = new XMLSchemaDocument(xsDocF);
+        var tns = xsd.language();
+        assertEquals("en-US", tns);
+    }
+        
+    @Test
     public void testTargetNamespace () throws Exception {
         var xsd = new XMLSchemaDocument(xsDocF);
         var tns = xsd.targetNamespace();

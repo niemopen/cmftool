@@ -158,25 +158,25 @@ public class ModelXMLReaderTest extends ModelAssertions {
         var rdr = new ModelXMLReader();
 
         var mod1 = rdr.readFiles(cf1);
-        var dp = mod1.uri2property("http://example.com/part2/AnElement");
+        var dp = mod1.uriToProperty("http://example.com/part2/AnElement");
         assertEquals("", dp.name());
         assertNull(dp.namespace());
         assertEquals("http://example.com/part2/AnElement", dp.uri());
         assertEmptyLogs();
         
         var mod2 = rdr.readFiles(cf2);
-        dp = mod2.uri2property("http://example.com/part2/AnElement");
+        dp = mod2.uriToProperty("http://example.com/part2/AnElement");
         assertEquals("AnElement", dp.name());
         assertNotNull(dp.namespace());
         assertEquals("http://example.com/part2/AnElement", dp.uri());
         assertEmptyLogs();
         
         var mod3 = rdr.addFile(mod1, cf2);
-        dp = mod2.uri2property("http://example.com/part2/AnElement");
+        dp = mod2.uriToProperty("http://example.com/part2/AnElement");
         assertTrue(dp.outsideURI().isEmpty());
         
         var mod4 = rdr.readFiles(cf1, cf2);
-        dp = mod2.uri2property("http://example.com/part2/AnElement");
+        dp = mod2.uriToProperty("http://example.com/part2/AnElement");
         assertTrue(dp.outsideURI().isEmpty());        
     }
     

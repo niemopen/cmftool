@@ -93,12 +93,11 @@ public class XMLSchemaTest {
         assertTrue(sch.xsModelMsgs().isEmpty());
         assertNotNull(sch.javaxSchema());
         assertTrue(sch.javaXMsgs().isEmpty());
-        assertThat(sch.schemaDocuments())
+        assertThat(sch.schemaNamespaceURIs())
                 .hasSize(10);
-        
-        sch.schemaDocuments().forEach((uri, sdoc) -> {
-            assertEquals(uri, sdoc.targetNamespace());
-        });
+        for (var nsuri : sch.schemaNamespaceURIs()) {
+            assertEquals(nsuri, sch.schemaDocument(nsuri).targetNamespace());
+        }
     }
     
     @Test
@@ -107,7 +106,7 @@ public class XMLSchemaTest {
             resDN + "xsd/withCatalog.xsd",
             resDN + "xsd/niem/xml-catalog.xml"};
         var sch = new XMLSchema(args);
-        assertThat(sch.schemaDocuments()).hasSize(10);
+        assertThat(sch.schemaNamespaceURIs()).hasSize(10);
     }
     
     @Test

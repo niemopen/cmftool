@@ -62,7 +62,7 @@ public class Restriction extends Datatype {
     public void setBase (Datatype b)                    { base = b; }
     public void setCodeListBinding (CodeListBinding c)  { clb = c; }
     public void addFacet (Facet f)                      { facetL.add(f); }
-    
+
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

@@ -29,10 +29,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +38,6 @@ import org.mitre.niem.xml.LanguageString;
 import org.mitre.niem.xml.XMLNamespaceDeclaration;
 import org.mitre.niem.xml.XMLSchema;
 import org.mitre.niem.xml.XMLSchemaDocument;
-import org.mitre.niem.xsd.NIEMSchemaDocument.ImportRec;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_EXTENSION;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_EXTERNAL;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_NOTNIEM;
@@ -57,29 +54,28 @@ public class NIEMSchema extends XMLSchema {
     
     private final Map<String,NIEMSchemaDocument> nsdocs = new HashMap<>();
     private final NamespaceMap nsmap = new NamespaceMap();
-    private final List<ImportRec> allSchemaImports = new ArrayList<>();
-    private final Set<String> extNamespace = new HashSet<>();
-    private final Map<String,Integer> nsKind = new HashMap<>();
+    private final List<String> nsURIList = new ArrayList<>();  
+    private final Map<String,Integer> nsKind = new HashMap<>();             // cached namespace kinds
+    private final Map<String,List<LanguageString>> extImportDoc = new HashMap<>();
     
     protected NIEMSchema () { }     // no public default constructor
     
     public NIEMSchema (String... args) throws XMLSchemaException {
         super(args);
-        initSchemaDocuments();
-        initImports();
-        initNamespaceMap();
+        initSchemaDocuments();      // create NIEMSchemaDocument objects
+        initExternalImports();      // find all external imports
+        initNamespaceMap();         // resolve any namespace prefix collisions
     }
     
-    public NIEMSchemaDocument getSchemaDoc (String ns) {
+    /**
+     * Returns the NIEMSchemaDocument object for the schema document with the
+     * specified target namespace.  Returns null if no such document in the pile.
+     * @param ns
+     * @return 
+     */
+    @Override
+    public NIEMSchemaDocument schemaDocument (String ns) {
         return nsdocs.get(ns);
-    }
-    
-    public List<LanguageString> getImportDoc (String importing, String imported) {
-        for (var irec : allSchemaImports) {
-            if (importing.equals(irec.importing()) && imported.equals(irec.imported()))
-                return irec.docL();
-        }
-        return new ArrayList<>();
     }
     
     /**
@@ -87,25 +83,33 @@ public class NIEMSchema extends XMLSchema {
      * Utility namespaces and NIEM model namespaces are identified from URI alone.
      * External namespaces are identified by one or more xs:import in the pile.
      * Extension namespaces have a conformance target assertion that maps to a NIEM version.
-     * @param ns - namespace URI
+     * 
+     * @param nsuri - namespace URI
      * @return 
      */
-    public int getNamespaceKind (String ns) {
-        if (nsKind.containsKey(ns)) return nsKind.get(ns);
-        if (null == nsdocs.get(ns)) {
-            LOG.error("unknown namespace URI {}", ns);
-            return NSK_UNKNOWN;
-        }
-        var kind = NamespaceKind.namespaceToKind(ns);
-        if (NSK_UNKNOWN == kind)
-            for (var cta : nsdocs.get(ns).ctAssertions()) 
-                if (!NamespaceKind.ctaToVersion(cta).isEmpty()) kind = NSK_EXTENSION;
+    public int namespaceKind (String nsuri) {
+        if (nsKind.containsKey(nsuri)) return nsKind.get(nsuri);
+        var kind = NamespaceKind.namespaceToKind(nsuri);
         if (NSK_UNKNOWN == kind) {
-            if (extNamespace.contains(ns)) kind = NSK_EXTERNAL;
-            else kind = NSK_NOTNIEM;
+            if (extImportDoc.containsKey(nsuri)) kind = NSK_EXTERNAL;
+            else if (null == nsdocs.get(nsuri)) LOG.error("no schema document for namespace URI {}", nsuri);
+            else {
+              for (var cta : nsdocs.get(nsuri).ctAssertions()) 
+                if (!NamespaceKind.ctaToVersion(cta).isEmpty()) kind = NSK_EXTENSION;
+              if (NSK_UNKNOWN == kind) kind = NSK_NOTNIEM;
+            }
         }
-        nsKind.put(ns, kind);
+        nsKind.put(nsuri, kind);
         return kind;
+    }
+    
+    /**
+     * Returns true if and only if the URI identifes a NIEM model namespace.
+     * @param nsuri - namespace URI
+     * @return true for a model namespace
+     */
+    public boolean isModelNamespace (String nsuri) {
+        return NamespaceKind.isModelKind(namespaceKind(nsuri));
     }
     
     /**
@@ -118,29 +122,44 @@ public class NIEMSchema extends XMLSchema {
     public NamespaceMap namespaceMap () {
         return nsmap;
     }
+    
+    /**
+     * Returns a list of all documentation strings from all xs:import elements
+     * that import an external namespace (ie. have @appinfo:externalImportIndicator="true").
+     * Returns null if the specified namespace is not an external namespace.
+     * @param nsuri - namespace uri of external namespace
+     * @return list of documentation LanguageString objects.
+     */
+    public List<LanguageString> importDocumentation (String nsuri) {
+        return extImportDoc.get(nsuri);
+    }
 
     
     // The XMLSchema class has the code to parse the schema documents in thie pile.
-    // The objects created will be NIEMSchemaDocuments, because we have overridden 
-    // the newSchemaDocument routine.  Cast them properly and remember them here.
+    // The objects created will be NIEMSchemaDocuments, because this class overrides
+    // the newSchemaDocument method.  Cast them properly and remember them here.
     private void initSchemaDocuments () throws XMLSchemaException {
-        try {
-            schemaDocuments().forEach((ns,sdoc) -> {
-                nsdocs.put(ns, (NIEMSchemaDocument)sdoc);
-            });
-        } catch (SAXException | ParserConfigurationException | IOException ex) {
-            throw new XMLSchemaException(ex.getMessage());
+        for (var nsuri : schemaNamespaceURIs()) {
+            var sd = super.schemaDocument(nsuri);
+            nsdocs.put(nsuri, (NIEMSchemaDocument)sd);
         }
     }
    
     // Look through all the imports in the pile and remember the external 
     // namespaces and their documentation.
-    private void initImports () {
+    private void initExternalImports () {
         for (var sd : nsdocs.values()) {
             var impL = sd.allImports();
             for (var irec : impL) {
-                if (irec.isExternal()) extNamespace.add(irec.imported());
-                allSchemaImports.add(irec);
+                if (irec.isExternal()) {
+                    var impDocL = irec.docL();
+                    var docL = extImportDoc.get(irec.imported());
+                    if (null == docL) {
+                        docL = new ArrayList<>();
+                        extImportDoc.put(irec.imported(), docL);                        
+                    }
+                    docL.addAll(impDocL);
+                }
             }
         }
     }
@@ -154,7 +173,7 @@ public class NIEMSchema extends XMLSchema {
     private void initNamespaceMap () {
         var decL = new ArrayList<NDrec>();
         nsdocs.forEach((ns,sd) -> {
-            var kind = getNamespaceKind(ns);
+            var kind = namespaceKind(ns);
             for (var dec : sd.nsdecls()) {
                 decL.add(new NDrec(kind, dec));
             }
@@ -169,13 +188,8 @@ public class NIEMSchema extends XMLSchema {
 
     // Override in derived class to generate a derived XMLSchemaDocument class.
     @Override
-    protected XMLSchemaDocument newSchemaDocument (File sdF) throws SAXException, IOException {
-        try {
-            return new NIEMSchemaDocument(sdF);
-        } catch (ParserConfigurationException ex) {
-            LOG.error(ex.getMessage());     // should catch these on program startup!
-            return null;                    // NullPointerException time!
-        }
+    protected XMLSchemaDocument newSchemaDocument (File sdF) throws SAXException, IOException, ParserConfigurationException {
+        return new NIEMSchemaDocument(sdF);
     }    
     
     // For sorting namespace declarations into priority order.

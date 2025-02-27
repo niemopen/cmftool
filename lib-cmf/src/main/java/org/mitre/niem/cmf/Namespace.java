@@ -36,7 +36,9 @@ import org.mitre.niem.xml.LanguageString;
 public class Namespace extends CMFObject implements Comparable<Namespace> {
 
     public Namespace () { }
-    public Namespace (String prefix, String uri) { super(); this.prefix = prefix; this.uri = uri; }
+    public Namespace (String prefix, String uri) { 
+        super(); this.prefix = prefix; this.uri = uri; 
+    }
     
     @Override
     public int getType () { return CMF_NAMESPACE; }
@@ -83,6 +85,10 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
         ctargL.clear();
         for (var ct : ctarg.trim().split("\\s+")) ctargL.add(ct);
     }
+    public void setConformanceTargets (List<String> ctL) {
+        ctargL.clear();
+        ctargL.addAll(ctL);
+    }
     public void addLocalTerm (LocalTerm lt)     { locTermL.add(lt); }
     public void addAugmentRecord (AugmentRecord a) { augL.add(a); }
     
@@ -92,11 +98,11 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
         if (null == m) return;
         if (null == prefix || null == uri) 
             throw new CMFException("can't add uninitialzed Namespace to a Model");
-        var mpre = m.uri2prefix(uri);
+        var mpre = m.nsUToNSprefix(uri);
         if (null != mpre && !mpre.equals(prefix)) {
             throw new CMFException(String.format(
                 "can't add namespace %s:%s to model (%s already assigned to %s)",
-                prefix, uri, prefix, m.prefix2uri(prefix)));
+                prefix, uri, prefix, m.prefixToNSuri(prefix)));
         }
         model = m;
     }    
@@ -104,19 +110,21 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     public void setPrefix (String p) throws CMFException {
         prefix = p;
         if (null == model || null == uri) return;
-        if (!uri.equals(model.prefix2uri(p)))
+        var muri = model.prefixToNSuri(p);
+        if (null != muri && !uri.equals(muri))
             throw new CMFException(String.format(
                 "can't change prefix of URI %s to %s (already assigned to %s)",
-                uri, p, model.prefix2uri(p)));
+                uri, p, model.prefixToNSuri(p)));
     }
     
     public void setURI (String u) throws CMFException {
         uri = u;
         if (null == model ||  null == prefix) return;
-        if (!prefix.equals(model.uri2prefix(u)))
+        var mpr = model.nsUToNSprefix(u);
+        if (null != mpr && !prefix.equals(mpr))
             throw new CMFException(String.format(
                 "can't change URI of prefix %s to %s (already assigned to %s)",
-                prefix, u, model.uri2prefix(u)));    
+                prefix, u, model.nsUToNSprefix(u)));    
     }
     
     @Override

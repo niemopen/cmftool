@@ -58,6 +58,4 @@ public class XMLNamespaceDeclaration implements Comparable<XMLNamespaceDeclarati
         else return this.line - o.line;
     }
 
-
-
 }

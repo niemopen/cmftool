@@ -33,6 +33,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeAll;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.xml.XMLSchemaDocument;
 import static org.mitre.niem.xsd.NIEMConstants.CTAS30;
 import static org.mitre.niem.xsd.NIEMConstants.CTAS60;
@@ -42,28 +43,10 @@ import static org.mitre.niem.xsd.NIEMConstants.CTAS60;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class NIEMSchemaDocumentTest {
-    public static List<LogCaptor> logs;      
+public class NIEMSchemaDocumentTest {    
     private final static File resDF    = new File("src/test/resources/");
     
     public NIEMSchemaDocumentTest() {
-    }
-    
-    @BeforeAll
-    public static void setupLogCaptor () {
-        logs = new ArrayList<>();
-        logs.add(LogCaptor.forClass(NIEMSchemaDocument.class));
-        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
-    }
-    
-    @AfterEach
-    public void clearLogs () {
-        for (var log : logs) log.clearLogs();;
-    }
-    
-    @AfterAll
-    public static void tearDown () {
-        for (var log : logs) log.close();
     }
     
     @Test
@@ -125,6 +108,24 @@ public class NIEMSchemaDocumentTest {
     }
     
     @Test
+    public void testLocalTerms () throws Exception {
+        var sd = new NIEMSchemaDocument(new File(resDF, "xsd6/localTerm.xsd"));
+        var ltL = sd.localTerms();
+        assertThat(ltL).extracting(LocalTerm::term).containsExactly("2D", "3D", "Test");
+        assertThat(ltL).extracting(LocalTerm::literal).containsExactly("Two-dimensional", "", "");
+        assertThat(ltL).extracting(LocalTerm::documentation)
+            .containsExactly("", "Three-dimensional", "only for test purposes");
+        assertTrue(ltL.get(0).sourceL().isEmpty());
+        assertTrue(ltL.get(1).sourceL().isEmpty());   
+        assertTrue(ltL.get(0).citationL().isEmpty());
+        assertTrue(ltL.get(1).citationL().isEmpty()); 
+        assertThat(ltL.get(2).sourceL())
+            .containsExactly("http://example.com/1", "http://example.com/2");
+        assertThat(ltL.get(2).citationL())
+            .containsExactly("citation #1", "citation #2");
+    }
+    
+    @Test
     public void testAllImports () throws Exception {
         var sd   = new NIEMSchemaDocument(new File(resDF, "xsd/imports.xsd"));
         var impL = sd.allImports();
@@ -169,6 +170,21 @@ public class NIEMSchemaDocumentTest {
     }
     
     
+    public static List<LogCaptor> logs;      
+    @BeforeAll
+    public static void setupLogCaptor () {
+        logs = new ArrayList<>();
+        logs.add(LogCaptor.forClass(NIEMSchemaDocument.class));
+        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
+    }
+    @AfterEach
+    public void clearLogs () {
+        for (var log : logs) log.clearLogs();;
+    }
+    @AfterAll
+    public static void tearDown () {
+        for (var log : logs) log.close();
+    }    
     public void assertEmptyLogs () {
         for (var log : logs) {
             var errors = log.getErrorLogs();
@@ -176,6 +192,6 @@ public class NIEMSchemaDocumentTest {
             assertThat(errors.isEmpty());
             assertThat(warns.isEmpty());
         }
-    }    
+    }
 
 }

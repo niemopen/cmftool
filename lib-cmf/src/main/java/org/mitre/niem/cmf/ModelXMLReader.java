@@ -188,7 +188,7 @@ public class ModelXMLReader {
                 if (null == id && null != ref) id = ref;
                 if (null == id && null != uri && uri.startsWith("#")) id = uri.substring(1);
                 if (null != id) obj = id2obj.get(id);
-                if (null == obj && null != uri && !uri.startsWith("#")) obj = model.uri2namespace(uri);
+                if (null == obj && null != uri && !uri.startsWith("#")) obj = model.nsUToNamespaceObj(uri);
                 if (null == obj) fail("No object for this Namespace reference");
                 if (CMF_NAMESPACE != obj.getType()) fail ("reference %s is not a Namespace object", id);
                 break;
@@ -260,8 +260,8 @@ public class ModelXMLReader {
             case "Namespace":
                 if (null == id && null != uri && uri.startsWith("#")) id = uri.substring(1);
                 if (null != id) obj = id2obj.get(id);
-                if (null == obj && null != ref) obj = model.prefix2namespace(ref);
-                if (null == obj && null != uri && !uri.startsWith("#")) obj = model.prefix2namespace(uri);
+                if (null == obj && null != ref) obj = model.prefixToNamespaceObj(ref);
+                if (null == obj && null != uri && !uri.startsWith("#")) obj = model.prefixToNamespaceObj(uri);
                 if (null == obj) fail("No namespace object for this reference");
                 if (CMF_NAMESPACE != obj.getType()) fail("reference %s is not a Namespace", id);
                 break;

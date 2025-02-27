@@ -48,12 +48,66 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
+  <xs:simpleType name="TestSimpleType" appinfo:deprecated="true">
+    <xs:annotation>
+      <xs:documentation>A simple type with no corresponding CSC type</xs:documentation>
+    </xs:annotation>
+    <xs:list itemType="test:Restrict8SimpleType"/>
+  </xs:simpleType>
   <xs:complexType name="List3Type">
     <xs:annotation>
-      <xs:documentation>List of a restriction simple type</xs:documentation>
+      <xs:documentation>List of a simple type with no corresponding CSC type</xs:documentation>
     </xs:annotation>
     <xs:simpleContent>
-      <xs:extension base="test:Restrict8SimpleType">
+      <xs:extension base="test:TestSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Literal1Type">
+    <xs:annotation>
+      <xs:documentation>Named CSC type extended with attributes</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="test:Restrict8Type">
+        <xs:attribute ref="test:AttProperty"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="Literal2SimpleType">
+    <xs:annotation>
+      <xs:documentation>Simple type for Literal2Type</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:float"/>
+  </xs:simpleType>
+  <xs:complexType name="Literal2Type">
+    <xs:annotation>
+      <xs:documentation>Named simple type extended with attributes</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="test:Literal2SimpleType">
+        <xs:attribute ref="test:AttProperty"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="Literal3Type">
+    <xs:annotation>
+      <xs:documentation>Proxy type extended with attributes</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="niem-xs:token">
+        <xs:attribute ref="test:AttProperty"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Literal4Type">
+    <xs:annotation>
+      <xs:documentation>XSD type extended with attributes and SimpleObjectAttributeGroup</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:integer">
+        <xs:attribute ref="test:AttProperty"/>
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
@@ -93,8 +147,8 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:restriction base="niem-xs:integer">
-        <xs:minExclusive value="10"/>
-        <xs:maxExclusive value="20"/>
+        <xs:minExclusive value="30"/>
+        <xs:maxExclusive value="40"/>
       </xs:restriction>
     </xs:simpleContent>
   </xs:complexType>
@@ -145,6 +199,7 @@
         <xs:enumeration value="US">
           <xs:annotation>
             <xs:documentation>UNITED STATES</xs:documentation>
+            <xs:documentation xml:lang="fr">LES ETAS-UNIS</xs:documentation>
           </xs:annotation>
         </xs:enumeration>
       </xs:restriction>
@@ -168,7 +223,7 @@
   </xs:complexType>
   <xs:complexType name="Restrict9Type">
     <xs:annotation>
-      <xs:documentation>Exercise empty restriction</xs:documentation>
+      <xs:documentation>Exercise extension of XSD type</xs:documentation>
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="xs:integer">
@@ -178,7 +233,7 @@
   </xs:complexType>
   <xs:complexType name="Restrict10Type">
     <xs:annotation>
-      <xs:documentation>Exercise empty restriction</xs:documentation>
+      <xs:documentation>Exercise empty restriction of proxy</xs:documentation>
     </xs:annotation>
     <xs:simpleContent>
       <xs:restriction base="niem-xs:integer"/>
@@ -197,4 +252,5 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
+  <xs:attribute name="AttProperty" type="xs:token"/>
 </xs:schema>

@@ -41,17 +41,13 @@
     <DocumentationText>List of a restriction simple type</DocumentationText>
     <RestrictionBase structures:ref="test.Restrict8Type" xsi:nil="true"/>
     <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>US</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>GB</FacetValue>
     </Facet>
-  </Restriction>
-  <Restriction structures:id="test.Restrict10Type">
-    <Name>Restrict10Type</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <DocumentationText>Exercise empty restriction</DocumentationText>
-    <RestrictionBase structures:ref="xs.integer" xsi:nil="true"/>
   </Restriction>
   <Restriction structures:id="test.Restrict1Type">
     <Name>Restrict1Type</Name>
@@ -59,19 +55,24 @@
     <DocumentationText>Exercise minLength, maxLength, pattern, enumeration facets</DocumentationText>
     <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
     <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>FOO</FacetValue>
       <DocumentationText>The FOO token</DocumentationText>
     </Facet>
     <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>BAR</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>maxLength</FacetCategoryCode>
       <FacetValue>4</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>minLength</FacetCategoryCode>
       <FacetValue>3</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>pattern</FacetCategoryCode>
       <FacetValue>[A-Z]{3}</FacetValue>
     </Facet>
   </Restriction>
@@ -81,9 +82,11 @@
     <DocumentationText>Exercise minInclusive, maxInclusive facets</DocumentationText>
     <RestrictionBase structures:ref="xs.integer" xsi:nil="true"/>
     <Facet>
+      <FacetCategoryCode>maxInclusive</FacetCategoryCode>
       <FacetValue>20</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>minInclusive</FacetCategoryCode>
       <FacetValue>10</FacetValue>
     </Facet>
   </Restriction>
@@ -93,9 +96,11 @@
     <DocumentationText>Exercise minExclusive, maxExclusive facets</DocumentationText>
     <RestrictionBase structures:ref="xs.integer" xsi:nil="true"/>
     <Facet>
+      <FacetCategoryCode>maxExclusive</FacetCategoryCode>
       <FacetValue>20</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>minExclusive</FacetCategoryCode>
       <FacetValue>10</FacetValue>
     </Facet>
   </Restriction>
@@ -105,9 +110,11 @@
     <DocumentationText>Exercise minLength, maxLength facets</DocumentationText>
     <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
     <Facet>
+      <FacetCategoryCode>maxLength</FacetCategoryCode>
       <FacetValue>4</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>minLength</FacetCategoryCode>
       <FacetValue>3</FacetValue>
     </Facet>
   </Restriction>
@@ -117,9 +124,11 @@
     <DocumentationText>Exercise length, whiteSpace facets</DocumentationText>
     <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
     <Facet>
+      <FacetCategoryCode>length</FacetCategoryCode>
       <FacetValue>3</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>whiteSpace</FacetCategoryCode>
       <FacetValue>collapse</FacetValue>
     </Facet>
   </Restriction>
@@ -129,9 +138,11 @@
     <DocumentationText>Exercise fractionDigits, totalDigits facets</DocumentationText>
     <RestrictionBase structures:ref="xs.decimal" xsi:nil="true"/>
     <Facet>
+      <FacetCategoryCode>fractionDigits</FacetCategoryCode>
       <FacetValue>2</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>totalDigits</FacetCategoryCode>
       <FacetValue>5</FacetValue>
     </Facet>
   </Restriction>
@@ -141,10 +152,12 @@
     <DocumentationText>Exercise code list</DocumentationText>
     <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
     <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>GB</FacetValue>
       <DocumentationText>UNITED KINGDOM</DocumentationText>
     </Facet>
     <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>US</FacetValue>
       <DocumentationText>UNITED STATES</DocumentationText>
     </Facet>
@@ -154,14 +167,22 @@
     <Namespace structures:ref="test" xsi:nil="true"/>
     <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
     <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>US</FacetValue>
     </Facet>
     <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>GB</FacetValue>
     </Facet>
   </Restriction>
   <Restriction structures:id="test.Restrict9Type">
     <Name>Restrict9Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Exercise empty restriction</DocumentationText>
+    <RestrictionBase structures:ref="xs.integer" xsi:nil="true"/>
+  </Restriction>
+  <Restriction structures:id="test.Restrict10Type">
+    <Name>Restrict10Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <DocumentationText>Exercise empty restriction</DocumentationText>
     <RestrictionBase structures:ref="xs.integer" xsi:nil="true"/>

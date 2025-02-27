@@ -132,8 +132,8 @@ public class SimpleContent extends CMFObject {
     @Override
     public boolean addToLocalTerm (String eln, String loc, LocalTerm lt) {
         switch (eln) {
-        case "DocumentationText":   lt.addDocumentation(this.raw(), this.lang()); break;
-        case "SourceCitationText":  lt.addCitation(this.content(), this.lang()); break; 
+        case "DocumentationText":   lt.setDocumentation(this.content()); break;
+        case "SourceCitationText":  lt.addCitation(this.content()); break; 
         case "SourceURI":           lt.addSource(this.content()); break;
         case "TermLiteralText":     lt.setLiteral(this.content()); break;
         case "TermName":            lt.setTerm(this.content()); break;

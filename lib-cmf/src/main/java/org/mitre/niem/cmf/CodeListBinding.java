@@ -32,6 +32,11 @@ package org.mitre.niem.cmf;
 public class CodeListBinding extends CMFObject {
     
     public CodeListBinding () { }
+    public CodeListBinding (String u, String col, boolean consFlag) {
+        codeListURI = u;
+        column = col;
+        isConstraining = consFlag;
+    }
     
     private String codeListURI = "";                    // cmf:CodeListURI
     private String column = "";                         // cmf:CodeListColumnName

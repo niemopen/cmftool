@@ -26,12 +26,14 @@ package org.mitre.niem.cmf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
+import org.mitre.niem.utility.NaturalOrderComparator;
 import org.mitre.niem.xml.LanguageString;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * An abstract class for a Component object in a CMF model.
+ * An abstract class for a Component object in a CMF model.  
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -58,6 +60,7 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     
     public List<LanguageString> docL ()         { return docL; }
     
+    public void setModel (Model m)              { model = m; }
     public void setNamespace (Namespace ns)     { namespace = ns; change(); }
     public void setName (String n)              { name = n; change(); }
     public void setOutsideURI (String u)        { outsideURI = u; }
@@ -65,6 +68,10 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     
     public void addDocumentation (String doc, String lang) {
         docL.add(new LanguageString(doc, lang));
+    }
+    public void setDocumentation (List<LanguageString> dL) {
+        docL.clear();
+        docL.addAll(dL);
     }
     
     /**
@@ -89,6 +96,7 @@ public abstract class Component extends CMFObject implements Comparable<Componen
      * For components defined in this model, the URI is composed of namespace URI
      * plus a slash if needed, plus local name.  For outside components defined 
      * elsewhere, the URI was provided when this placeholder object was created.
+     * @return component URI
      */
     @Override
     public String uri () {
@@ -99,6 +107,18 @@ public abstract class Component extends CMFObject implements Comparable<Componen
         return nsuri + "/" + name;
     }
     
+    /**
+     * Returns the name portion of a component URI; for example, returns "FooType"
+     * for http://someNS/FooType.
+     * @param uri - component URI
+     * @return - component name
+     */
+    public static String uriNamePart (String uri) {
+        int indx = uri.lastIndexOf("/");
+        if (indx < 0 || indx >= uri.length()) return "";
+        return uri.substring(indx+1);
+    }
+  
     // Notify the model object that the name or namespace of one of 
     // its components has changed.
     private void change () {
@@ -111,7 +131,6 @@ public abstract class Component extends CMFObject implements Comparable<Componen
         return child.addToComponent(eln, loc, this);
     }
     
-    
     // Dispatch to Component's proper ModelXMLWriter method
     public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { }
 
@@ -119,7 +138,9 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     public int compareTo(Component o) {
         int rv = this.namespace().compareTo(o.namespace());
         if (rv != 0) return rv;
-        return this.name().compareToIgnoreCase(o.name());
+        var thisName = StringUtils.lowerCase(name);
+        var oName    = StringUtils.lowerCase(o.name());
+        return NaturalOrderComparator.comp(thisName, oName);
     }
         
 }

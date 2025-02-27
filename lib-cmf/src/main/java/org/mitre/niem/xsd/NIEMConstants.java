@@ -23,8 +23,6 @@
  */
 package org.mitre.niem.xsd;
 
-import java.util.Map;
-
 /**
  *
  * @author Scott Renner

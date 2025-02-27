@@ -52,6 +52,10 @@ public class Facet extends CMFObject {
     public void addDocumentation (String doc, String lang) {
         docL.add(new LanguageString(doc, lang));
     }
+    public void setDocumentation (List<LanguageString> dL) {
+        docL.clear();
+        docL.addAll(dL);
+    }
 
     
     @Override

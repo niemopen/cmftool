@@ -17,4 +17,8 @@
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <ImportDocumentationText>imported blah blah</ImportDocumentationText>
   </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+  </Namespace>
 </Model>

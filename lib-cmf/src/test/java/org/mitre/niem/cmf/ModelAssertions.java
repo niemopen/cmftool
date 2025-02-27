@@ -44,9 +44,9 @@ import org.mitre.niem.xml.LanguageString;
 public class ModelAssertions {
     
     public static void checkAugmentRecord (Model m) {
-        var jns = m.prefix2namespace("j");
-        var ncns = m.prefix2namespace("nc");
-        var testns = m.prefix2namespace("test");
+        var jns = m.prefixToNamespaceObj("j");
+        var ncns = m.prefixToNamespaceObj("nc");
+        var testns = m.prefixToNamespaceObj("test");
         
         assertThat(m.namespaceList())
             .extracting(Namespace::prefix)
@@ -55,28 +55,28 @@ public class ModelAssertions {
         assertThat(jns.augL())
             .extracting(AugmentRecord::classType)
             .containsExactly(
-                m.qn2classType("nc:EducationType"),
-                m.qn2classType("test:T2Type"));
+                m.qnToClassType("nc:EducationType"),
+                m.qnToClassType("test:T2Type"));
         assertThat(ncns.augL())
             .extracting(AugmentRecord::classType)
             .containsExactly(
-                m.qn2classType("test:T2Type"),
-                m.qn2classType("test:T2Type"));
+                m.qnToClassType("test:T2Type"),
+                m.qnToClassType("test:T2Type"));
         assertNull(testns.augL().get(0).classType());
         
         assertThat(jns.augL())
             .extracting(AugmentRecord::property)
             .containsExactly(
-                m.qn2property("j:EducationTotalYearsText"),
-                m.qn2property("test:aProp4"));
+                m.qnToProperty("j:EducationTotalYearsText"),
+                m.qnToProperty("test:aProp4"));
         assertThat(ncns.augL())
             .extracting(AugmentRecord::property)
             .containsExactly(
-                m.qn2property("test:aProp3"),
-                m.qn2property("test:aProp4"));
+                m.qnToProperty("test:aProp3"),
+                m.qnToProperty("test:aProp4"));
         assertThat(testns.augL())
             .extracting(AugmentRecord::property)
-            .containsExactly(m.qn2property("test:privAtt"));
+            .containsExactly(m.qnToProperty("test:privAtt"));
         
         assertThat(jns.augL())
             .extracting(AugmentRecord::minOccurs, AugmentRecord::maxOccurs, AugmentRecord::index)
@@ -101,7 +101,7 @@ public class ModelAssertions {
     }
 
     public static void checkChildPropertyAssociation (Model m) {
-        var propList = m.qn2classType("test:T2Type").propL();
+        var propList = m.qnToClassType("test:T2Type").propL();
         for (var pa: propList) {
             switch (pa.property().name()) {
             case "OProp2": 
@@ -152,18 +152,18 @@ public class ModelAssertions {
         
     // Test abstract, reference code, subclass
     public static void checkClass (Model m) {
-        assertNotNull(m.namespace("http://example.com/test/"));
-        assertNotNull(m.namespace("http://www.w3.org/2001/XMLSchema"));
-        assertNotNull(m.namespace("test"));
-        assertNotNull(m.namespace("xs"));
-        assertNull(m.namespace("http://boogala"));
-        assertNull(m.namespace("boog"));
+        assertNotNull(m.namespaceObj("http://example.com/test/"));
+        assertNotNull(m.namespaceObj("http://www.w3.org/2001/XMLSchema"));
+        assertNotNull(m.namespaceObj("test"));
+        assertNotNull(m.namespaceObj("xs"));
+        assertNull(m.namespaceObj("http://boogala"));
+        assertNull(m.namespaceObj("boog"));
             
-        var ct = m.qn2classType("test:Test1Type");
-        var ct2 = m.qn2classType("test:Test2Type");
-        var ct3 = m.qn2classType("test:Test3Type");
-        var ct4 = m.qn2classType("test:Test4Type");
-        var ct5 = m.qn2classType("test:Test5Type");
+        var ct = m.qnToClassType("test:Test1Type");
+        var ct2 = m.qnToClassType("test:Test2Type");
+        var ct3 = m.qnToClassType("test:Test3Type");
+        var ct4 = m.qnToClassType("test:Test4Type");
+        var ct5 = m.qnToClassType("test:Test5Type");
         assertTrue(ct.isAbstract());
         assertFalse(ct2.isAbstract());
         assertFalse(ct3.isAbstract());
@@ -184,12 +184,12 @@ public class ModelAssertions {
     // Test the model built from xsd?/codeListBinding.xsd or read from cmf/codeListBinding.cmf
     // Test codeListURI, column name, isConstraining
     public static void checkCodeListBinding (Model m) {
-        var clb = m.qn2datatype("test:TCodeList2Type").codeListBinding();
+        var clb = m.qnToDatatype("test:TCodeList2Type").codeListBinding();
         assertEquals("http://code.list.uri", clb.codeListURI());
         assertEquals("#code", clb.column());
         assertTrue(clb.isConstraining());
         
-        clb = m.qn2datatype("test:TCodeList3Type").codeListBinding();
+        clb = m.qnToDatatype("test:TCodeList3Type").codeListBinding();
         assertEquals("http://list.uri", clb.codeListURI());
         assertEquals("key", clb.column());
         assertFalse(clb.isConstraining());        
@@ -199,11 +199,11 @@ public class ModelAssertions {
     // Test name, namespace, documentation, and deprecated properties of each component
     // Test class, property, datatype components
     public static void checkComponent (Model m) {
-        var ct = m.qn2classType("test:Test1Type");
-        var dt = m.qn2datatype("test:Test2DataType");
-        var p1 = m.qn2property("test:AnElement");
-        var p2 = m.qn2property("test:AnotherElement");
-        var p3 = m.qn2property("test:anAttribute");
+        var ct = m.qnToClassType("test:Test1Type");
+        var dt = m.qnToDatatype("test:Test2DataType");
+        var p1 = m.qnToProperty("test:AnElement");
+        var p2 = m.qnToProperty("test:AnotherElement");
+        var p3 = m.qnToProperty("test:anAttribute");
         
         assertEquals("Test1Type", ct.name());
         assertEquals("http://example.com/components/", ct.namespaceURI());
@@ -247,38 +247,38 @@ public class ModelAssertions {
     // Test the model build from xsd?/datatypes.xsd or read from cmf/datatypes.cmf
     // Test abstract, relationship, attribute, refAttribute.    
     public static void checkDataProperty (Model m) {
-        assertTrue(m.qn2property("test:DataProperty").isAbstract());
-        assertFalse(m.qn2property("test:DProp2").isAbstract());
+        assertTrue(m.qnToProperty("test:DataProperty").isAbstract());
+        assertFalse(m.qnToProperty("test:DProp2").isAbstract());
         
-        assertFalse(m.qn2property("test:DataProperty").isRelationship());
-        assertFalse(m.qn2property("test:DProp2").isRelationship());
-        assertTrue (m.qn2property("test:DProp3").isRelationship());
-        assertFalse(m.qn2property("test:DProp4").isRelationship());
-        assertTrue (m.qn2property("test:DProp5").isRelationship());
-        assertFalse(m.qn2property("test:AProp2").isRelationship());
-        assertTrue (m.qn2property("test:AProp3").isRelationship());
-        assertFalse(m.qn2property("test:AProp4").isRelationship());
-        assertTrue (m.qn2property("test:AProp5").isRelationship());
+        assertFalse(m.qnToProperty("test:DataProperty").isRelationship());
+        assertFalse(m.qnToProperty("test:DProp2").isRelationship());
+        assertTrue (m.qnToProperty("test:DProp3").isRelationship());
+        assertFalse(m.qnToProperty("test:DProp4").isRelationship());
+        assertTrue (m.qnToProperty("test:DProp5").isRelationship());
+        assertFalse(m.qnToProperty("test:AProp2").isRelationship());
+        assertTrue (m.qnToProperty("test:AProp3").isRelationship());
+        assertFalse(m.qnToProperty("test:AProp4").isRelationship());
+        assertTrue (m.qnToProperty("test:AProp5").isRelationship());
 
-        assertFalse(m.qn2dataProperty("test:DataProperty").isAttribute());
-        assertFalse(m.qn2dataProperty("test:DProp2").isAttribute());
-        assertFalse(m.qn2dataProperty("test:DProp3").isAttribute());
-        assertFalse(m.qn2dataProperty("test:DProp4").isAttribute());
-        assertFalse(m.qn2dataProperty("test:DProp5").isAttribute());
-        assertTrue (m.qn2dataProperty("test:AProp2").isAttribute());
-        assertTrue (m.qn2dataProperty("test:AProp3").isAttribute());
-        assertTrue (m.qn2dataProperty("test:AProp4").isAttribute());
-        assertTrue (m.qn2dataProperty("test:AProp5").isAttribute());        
+        assertFalse(m.qnToDataProperty("test:DataProperty").isAttribute());
+        assertFalse(m.qnToDataProperty("test:DProp2").isAttribute());
+        assertFalse(m.qnToDataProperty("test:DProp3").isAttribute());
+        assertFalse(m.qnToDataProperty("test:DProp4").isAttribute());
+        assertFalse(m.qnToDataProperty("test:DProp5").isAttribute());
+        assertTrue (m.qnToDataProperty("test:AProp2").isAttribute());
+        assertTrue (m.qnToDataProperty("test:AProp3").isAttribute());
+        assertTrue (m.qnToDataProperty("test:AProp4").isAttribute());
+        assertTrue (m.qnToDataProperty("test:AProp5").isAttribute());        
         
-        assertFalse(m.qn2dataProperty("test:DataProperty").isRefAttribute());
-        assertFalse(m.qn2dataProperty("test:DProp2").isRefAttribute());
-        assertFalse(m.qn2dataProperty("test:DProp3").isRefAttribute());
-        assertFalse(m.qn2dataProperty("test:DProp4").isRefAttribute());
-        assertFalse(m.qn2dataProperty("test:DProp5").isRefAttribute());
-        assertFalse(m.qn2dataProperty("test:AProp2").isRefAttribute());
-        assertFalse(m.qn2dataProperty("test:AProp3").isRefAttribute());
-        assertTrue (m.qn2dataProperty("test:AProp4").isRefAttribute());
-        assertTrue (m.qn2dataProperty("test:AProp5").isRefAttribute());           
+        assertFalse(m.qnToDataProperty("test:DataProperty").isRefAttribute());
+        assertFalse(m.qnToDataProperty("test:DProp2").isRefAttribute());
+        assertFalse(m.qnToDataProperty("test:DProp3").isRefAttribute());
+        assertFalse(m.qnToDataProperty("test:DProp4").isRefAttribute());
+        assertFalse(m.qnToDataProperty("test:DProp5").isRefAttribute());
+        assertFalse(m.qnToDataProperty("test:AProp2").isRefAttribute());
+        assertFalse(m.qnToDataProperty("test:AProp3").isRefAttribute());
+        assertTrue (m.qnToDataProperty("test:AProp4").isRefAttribute());
+        assertTrue (m.qnToDataProperty("test:AProp5").isRefAttribute());           
     }
 
     // Test the model build from xsd?/datatypes.xsd or read from cmf/datatypes.cmf
@@ -287,11 +287,11 @@ public class ModelAssertions {
     //      Test restriction type and all facets
     //      Test empty restriction type
     public static void checkDatatype (Model m) {
-       var dtFlt = m.qn2datatype("xs:float");
-       var dtInt = m.qn2datatype("xs:integer");
-       var dtLs1 = m.qn2datatype("test:List1Type"); 
-       var dtLs2 = m.qn2datatype("test:List2Type");
-       var dtUn  = m.qn2datatype("test:UnionType");
+       var dtFlt = m.qnToDatatype("xs:float");
+       var dtInt = m.qnToDatatype("xs:integer");
+       var dtLs1 = m.qnToDatatype("test:List1Type"); 
+       var dtLs2 = m.qnToDatatype("test:List2Type");
+       var dtUn  = m.qnToDatatype("test:UnionType");
        
        assertEquals(dtInt, dtLs1.itemType()); 
        assertTrue(dtLs1.isOrdered());
@@ -304,7 +304,7 @@ public class ModelAssertions {
                        "xs:float",
                        "test:Restrict8Type");
        
-       var rdt = m.qn2datatype("test:Restrict1Type");
+       var rdt = m.qnToDatatype("test:Restrict1Type");
        assertEquals("xs:token", rdt.base().qname());
        assertEquals(5, rdt.facetL().size());
        for (var f : rdt.facetL()) {
@@ -322,7 +322,7 @@ public class ModelAssertions {
                default -> fail("bogus facet");
            }
        }
-       rdt = m.qn2datatype("test:Restrict2Type");
+       rdt = m.qnToDatatype("test:Restrict2Type");
        assertEquals("xs:integer", rdt.base().qname());
        for (var f : rdt.facetL()) {
            switch (f.category()) {
@@ -331,7 +331,7 @@ public class ModelAssertions {
                default -> fail("bogus facet");
            }
        }
-       rdt = m.qn2datatype("test:Restrict3Type");
+       rdt = m.qnToDatatype("test:Restrict3Type");
        assertEquals("xs:integer", rdt.base().qname());
        for (var f : rdt.facetL()) {
            switch (f.category()) {
@@ -340,7 +340,7 @@ public class ModelAssertions {
                default -> fail("bogus facet");
            }
        }
-       rdt = m.qn2datatype("test:Restrict4Type");
+       rdt = m.qnToDatatype("test:Restrict4Type");
        assertEquals("xs:string", rdt.base().qname());
        for (var f : rdt.facetL()) {
            switch (f.category()) {
@@ -349,7 +349,7 @@ public class ModelAssertions {
                default -> fail("bogus facet");
            }
        }       
-       rdt = m.qn2datatype("test:Restrict5Type");
+       rdt = m.qnToDatatype("test:Restrict5Type");
        assertEquals("xs:string", rdt.base().qname());
        for (var f : rdt.facetL()) {
            switch (f.category()) {
@@ -358,7 +358,7 @@ public class ModelAssertions {
                default -> fail("bogus facet");
            }
        }       
-       rdt = m.qn2datatype("test:Restrict6Type");
+       rdt = m.qnToDatatype("test:Restrict6Type");
        assertEquals("xs:decimal", rdt.base().qname());
        for (var f : rdt.facetL()) {
            switch (f.category()) {
@@ -367,7 +367,7 @@ public class ModelAssertions {
                default -> fail("bogus facet");
            }
        }  
-       rdt = m.qn2datatype("test:Restrict7Type");
+       rdt = m.qnToDatatype("test:Restrict7Type");
        assertEquals("xs:token", rdt.base().qname());
        for (var f : rdt.facetL()) {
            switch (f.category()) {
@@ -381,7 +381,7 @@ public class ModelAssertions {
                default -> fail("bogus facet");
            }
        }  
-       rdt = m.qn2datatype("test:Restrict8Type");
+       rdt = m.qnToDatatype("test:Restrict8Type");
        assertEquals("xs:token", rdt.base().qname());
        for (var f : rdt.facetL()) {
            switch (f.category()) {
@@ -395,7 +395,7 @@ public class ModelAssertions {
                default -> fail("bogus facet");
            }
        }  
-       rdt = m.qn2datatype("test:Restrict9Type");
+       rdt = m.qnToDatatype("test:Restrict9Type");
        assertEquals("xs:integer", rdt.base().qname());
        assertEquals(0, rdt.facetL().size());
     }
@@ -403,7 +403,7 @@ public class ModelAssertions {
     // Test the model built from xsd?/localTerm.xsd or read from cmf/localTerm.cmf
     // Test term, literal, sourceURI, citation, documentation
     public static void checkLocalTerm (Model m) {
-        Namespace ns = m.prefix2namespace("test");
+        Namespace ns = m.prefixToNamespaceObj("test");
         List<LocalTerm> lts = ns.locTermL();
         assertEquals(3, lts.size());
         assertThat(lts).extracting(LocalTerm::term)
@@ -413,24 +413,21 @@ public class ModelAssertions {
             switch(lt.term()) {
             case "2D": 
                 assertEquals("Two-dimensional", lt.literal());
-                assertTrue(lt.docL().isEmpty());
+                assertNull(lt.documentation());
                 assertEquals(0, lt.sourceL().size());
                 assertEquals(0, lt.citationL().size());
                 break;
             case "3D":
                 assertTrue(lt.literal().isEmpty());
-                assertEquals("Three-dimensional", lt.docL().get(0).text());
+                assertEquals("Three-dimensional", lt.documentation());
                 assertEquals(0, lt.sourceL().size());
                 assertEquals(0, lt.citationL().size());
                 break;
              case "Test":
                 assertTrue(lt.literal().isEmpty());
-                assertEquals("only for test purposes", lt.docL().get(0).text());
+                assertEquals("only for test purposes", lt.documentation());
                 assertThat(lt.sourceL()).containsOnly("http://example.com/1","http://example.com/2");
-                assertThat(lt.citationL())
-                    .extracting(LanguageString::text, LanguageString::lang)
-                    .containsExactly(Assertions.tuple("citation #1", "en-US"),
-                        Assertions.tuple("citation #2", "en-US"));
+                assertThat(lt.citationL()).containsExactly("citation #1", "citation #2");
                 break;
             }
         }     
@@ -439,7 +436,7 @@ public class ModelAssertions {
     // Test the model built from xsd?/namespace.xsd or read from cmf/namespace.cmf 
     // Test CTAs, filepath, version, language
     public static void checkNamespace (Model m) {
-        Namespace ns = m.prefix2namespace("test");
+        Namespace ns = m.prefixToNamespaceObj("test");
         assertEquals("test", ns.prefix());
         assertEquals("http://example.com/namespace/", ns.uri());
         assertEquals("namespace.xsd", ns.documentFilePath());
@@ -462,25 +459,25 @@ public class ModelAssertions {
     // Test the model built from xsd?/objectProperty.xsd or read from cmf/objectProperty.cmf 
     // Test abstract, relationship, reference code.
     public static void checkObjectProperty (Model m) {
-        assertTrue (m.qn2objectProperty("test:OProp1").isAbstract());
-        assertFalse(m.qn2objectProperty("test:OProp2").isAbstract());
-        assertFalse(m.qn2objectProperty("test:OProp3").isAbstract());
-        assertFalse(m.qn2objectProperty("test:OProp4").isAbstract());
+        assertTrue (m.qnToObjectProperty("test:OProp1").isAbstract());
+        assertFalse(m.qnToObjectProperty("test:OProp2").isAbstract());
+        assertFalse(m.qnToObjectProperty("test:OProp3").isAbstract());
+        assertFalse(m.qnToObjectProperty("test:OProp4").isAbstract());
         
-        assertFalse(m.qn2objectProperty("test:OProp1").isRelationship());
-        assertTrue (m.qn2objectProperty("test:OProp2").isRelationship());
-        assertFalse(m.qn2objectProperty("test:OProp3").isRelationship());
-        assertFalse(m.qn2objectProperty("test:OProp4").isRelationship());
+        assertFalse(m.qnToObjectProperty("test:OProp1").isRelationship());
+        assertTrue (m.qnToObjectProperty("test:OProp2").isRelationship());
+        assertFalse(m.qnToObjectProperty("test:OProp3").isRelationship());
+        assertFalse(m.qnToObjectProperty("test:OProp4").isRelationship());
 
-        assertEquals(m.qn2objectProperty("test:OProp1").classType(), m.qn2classType("test:TestType"));
-        assertEquals (m.qn2objectProperty("test:OProp2").classType(), m.qn2classType("test:TestType"));
-        assertEquals(m.qn2objectProperty("test:OProp3").classType(), m.qn2classType("test:TestType"));
-        assertEquals(m.qn2objectProperty("test:OProp4").classType(), m.qn2classType("test:TestType"));
+        assertEquals(m.qnToObjectProperty("test:OProp1").classType(), m.qnToClassType("test:TestType"));
+        assertEquals (m.qnToObjectProperty("test:OProp2").classType(), m.qnToClassType("test:TestType"));
+        assertEquals(m.qnToObjectProperty("test:OProp3").classType(), m.qnToClassType("test:TestType"));
+        assertEquals(m.qnToObjectProperty("test:OProp4").classType(), m.qnToClassType("test:TestType"));
         
-        assertEquals("ANY", m.qn2objectProperty("test:OProp1").referenceCode());
-        assertEquals("REF", m.qn2objectProperty("test:OProp2").referenceCode());
-        assertEquals("URI", m.qn2objectProperty("test:OProp3").referenceCode());
-        assertEquals("NONE", m.qn2objectProperty("test:OProp4").referenceCode());
+        assertEquals("ANY", m.qnToObjectProperty("test:OProp1").referenceCode());
+        assertEquals("REF", m.qnToObjectProperty("test:OProp2").referenceCode());
+        assertEquals("URI", m.qnToObjectProperty("test:OProp3").referenceCode());
+        assertEquals("NONE", m.qnToObjectProperty("test:OProp4").referenceCode());
     }
 
 }

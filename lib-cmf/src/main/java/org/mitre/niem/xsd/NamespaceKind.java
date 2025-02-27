@@ -44,7 +44,7 @@ public class NamespaceKind {
     
     /**
      * Returns a NIEM version ("NIEM6.0", etc.) from a conformance target assertion.
-     * Returns empty string if CTA doesn't define version.
+     * Returns empty string if CTA doesn't define a unique NIEM version.
      * @param cta - conformance target URI string
      * @return NIEM version
      */
@@ -52,14 +52,14 @@ public class NamespaceKind {
         for (int i = 0; i < ctaPrefix.length; i += 2) {
             if (cta.startsWith(ctaPrefix[i+1])) return ctaPrefix[i];
         }
-        LOG.warn("can't get version from conformance target assertion {}", cta);
+        LOG.warn("can't get NIEM version from conformance target assertion {}", cta);
         return "";
     }
     
     /**
      * Returns a conformance target assertion URI string for the specified NIEM version and
      * conformance target ("#ReferenceSchemaDocument", etc.).  Returns empty string
-     * for an unknown version.
+     * for an unknown NIEM version.
      * @param version - NIEME version
      * @param kind - conformance target
      * @return URI string for CTA
@@ -73,27 +73,32 @@ public class NamespaceKind {
     }
     
     // The kinds of namespaces in CMF.  Order is signficant, because it controls
-    // priority when normalizing namespace prefix assignment: extension, niem-model, builtin,
-    // XSD, XML, external, unknown.
+    // priority when resolving namespace prefix collisions: 
+    // 1. Prefix assignments in extension schema documents come first.
+    //    We assume the model designer knows what he wants.
+    // 2. Prefix assignments in the NIEM model schema documents come next.
+    //    Everyone is expecting these.
+    // 3. Prefix assignments in external schema documents come last.
+    //    Who cares what those guys want?
+    //
     //
     // Namespace kinds EXTENSION and EXTERNAL cannot be determined without parsing all the
     // schema documents, because they depend on a conformance assertion or an xs:import
-    // with appinfo.  The others can be determined from the namespaced URI alone.
-    // So a namespace kind UNKNOWN may change after all the documents are parsed.
+    // with @appinfo.  The others can be determined from the namespaced URI alone.
     public final static int NSK_EXTENSION  = 0;     // has conformance assertion, not in NIEM model
     public final static int NSK_DOMAIN     = 1;     // domain schema
     public final static int NSK_CORE       = 2;     // niem core schema
     public final static int NSK_OTHERNIEM  = 3;     // auxillary, codes; has model NS prefix
-    public final static int NSK_APPINFO    = 4;
-    public final static int NSK_CLSA       = 5;
-    public final static int NSK_CLI        = 6;
-    public final static int NSK_NIEM_XS    = 7;
-    public final static int NSK_STRUCTURES = 8;
+    public final static int NSK_APPINFO    = 4;     // appinfo
+    public final static int NSK_CLSA       = 5;     // code lists schema appinfo
+    public final static int NSK_CLI        = 6;     // code lists instance 
+    public final static int NSK_PROXY      = 7;     // proxy
+    public final static int NSK_STRUCTURES = 8;     // structures
     public final static int NSK_XSD        = 9;     // namespace for XSD datatypes
     public final static int NSK_XML        = 10;    // namespace for xml: attributes
-    public final static int NSK_EXTERNAL   = 11;    // imported with appinfo:externalImportIndicator
-    public final static int NSK_UNKNOWN    = 12;    // haven't checked for conformance assertion or external appinfo yet
-    public final static int NSK_NOTNIEM    = 13;    // none of the above; no conformance assertion or external appinfo
+    public final static int NSK_EXTERNAL   = 11;    // was imported with appinfo:externalImportIndicator
+    public final static int NSK_NOTNIEM    = 12;    // none of the above; no conformance assertion or external appinfo
+    public final static int NSK_UNKNOWN    = 13;    // can't figure it out; probably an error
     public final static int NSK_NUMKINDS   = 14;    // this many kinds of namespaces   
     
     private static final String[] kindCodes = {
@@ -104,13 +109,13 @@ public class NamespaceKind {
             "APPINFO",
             "CLSA",
             "CLI", 
-            "NIEM-XS",
+            "PROXY",
             "STRUCTURES",
             "XSD",
             "XML",
             "EXTERNAL",
+            "NOTNIEM",
             "UNKNOWN",
-            "NOTNIEM"
     };
     
     /**
@@ -139,36 +144,52 @@ public class NamespaceKind {
         return NSK_UNKNOWN;
     }
     
+    /**
+     * Returns true for a namespace kind that is part of a NIEM model.
+     * @param kind - namespace kind 
+     * @return true for model namespace kind
+     */
+    public static boolean isModelKind (int kind) {
+        switch (kind) {
+            case NSK_EXTENSION:
+            case NSK_DOMAIN:
+            case NSK_CORE:
+            case NSK_OTHERNIEM:
+            case NSK_CLI: return true;
+        }
+        return false;
+    }
+    
     private static Set<String> versions = Set.of("NIEM6.0", "NIEM5.0", "NIEM4.0", "NIEM3.0");
-    private static Set<String> builtins = Set.of("APPINFO", "CLSA", "CLI", "NIEM-XS", "STRUCTURES");
-    public static Set<String> versions() { return versions; }
+    private static Set<String> builtins = Set.of("APPINFO", "CLSA", "CLI", "PROXY", "STRUCTURES");
+    public static Set<String> knownVersions() { return versions; }
     public static Set<String> builtins() { return builtins; }
 
     private static final String[] builtinTab = { 
       "NIEM6.0", "APPINFO",    "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
       "NIEM6.0", "CLSA",       "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/appinfo/",
       "NIEM6.0", "CLI",        "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/",
-      "NIEM6.0", "NIEM-XS" ,   "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
+      "NIEM6.0", "PROXY" ,     "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
       "NIEM6.0", "STRUCTURES", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
 
       "NIEM5.0", "APPINFO",    "http://release.niem.gov/niem/appinfo/5.0/",   
       "NIEM5.0", "CLSA",       "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
       "NIEM5.0", "CLI",        "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
-      "NIEM5.0", "NIEM-XS",    "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
+      "NIEM5.0", "PROXY",      "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
       "NIEM5.0", "STRUCTURES", "http://release.niem.gov/niem/structures/5.0/",
 
       "NIEM4.0", "APPINFO",     "http://release.niem.gov/niem/appinfo/4.0/",   
       "NIEM4.0", "CLSA",        "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
       "NIEM4.0", "CLI",         "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
-      "NIEM4.0", "NIEM-XS" ,    "http://release.niem.gov/niem/proxy/xsd/4.0/",
+      "NIEM4.0", "PROXY" ,      "http://release.niem.gov/niem/proxy/xsd/4.0/",
       "NIEM4.0", "STRUCTURES",  "http://release.niem.gov/niem/structures/4.0/",    
       
       "NIEM3.0", "APPINFO",    "http://release.niem.gov/niem/appinfo/3.0/",   
-      "NIEM3.0", "NIEM-XS",    "http://release.niem.gov/niem/proxy/xsd/3.0/",
+      "NIEM3.0", "PROXY",      "http://release.niem.gov/niem/proxy/xsd/3.0/",
       "NIEM3.0", "STRUCTURES", "http://release.niem.gov/niem/structures/3.0/" 
     };
     
-    private static final String[] modelTab = {
+    private static final String[] modelPrefixTab = {
         "CORE",      "https://docs.oasis-open.org/niemopen/ns/model/niem-core/",
         "CORE",      "http://release.niem.gov/niem/niem-core/",
         "DOMAIN",    "https://docs.oasis-open.org/niemopen/ns/model/domains/",
@@ -216,8 +237,8 @@ public class NamespaceKind {
         for (int i = 0; i < builtinTab.length; i += 3) {
             if (builtinTab[i+2].equals(ns)) return builtinTab[i+1];
         }
-        for (int i = 0; i < modelTab.length; i += 2) {
-            if (ns.startsWith(modelTab[i+1])) return modelTab[i];
+        for (int i = 0; i < modelPrefixTab.length; i += 2) {
+            if (ns.startsWith(modelPrefixTab[i+1])) return modelPrefixTab[i];
         }
         return "";
     }

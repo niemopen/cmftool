@@ -30,16 +30,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
 import org.apache.logging.log4j.LogManager;
+import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.xml.LanguageString;
 import org.mitre.niem.xml.XMLSchemaDocument;
+import static org.mitre.niem.xml.XMLWriter.nodeToText;
 import static org.mitre.niem.xsd.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
 import static org.mitre.niem.xsd.NIEMConstants.CTAS30;
 import static org.mitre.niem.xsd.NIEMConstants.CTAS60;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_STRUCTURES;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -53,10 +54,11 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
     private String ctasNSuri = null;
     private List<String> ctaList = null;
     private String niemVersion = null;
+    private List<LocalTerm> locTermL = null;
     private List<ImportRec> imports = null;
     private final Map<String,String> builtinNS = new HashMap<>();
 
-    public NIEMSchemaDocument(File sdF) throws ParserConfigurationException, SAXException, IOException {
+    public NIEMSchemaDocument(File sdF) throws SAXException, IOException, ParserConfigurationException {
         super(sdF);
     }
     
@@ -81,7 +83,7 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
     /**
      * Returns a list of the conformance target assertions in the schema document.
      * Returns an empty list if no CTAs.
-     * @return List<String> of CTAs
+     * @return list of CTAs
      */
     public List<String> ctAssertions () {
         if (null != ctaList) return ctaList;
@@ -89,14 +91,8 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
         var ctasUstr = ctasNS();
         var xpath = String.format("/*[@*[namespace-uri()='%s' and local-name()='%s']][1]",
                 ctasUstr, CONFORMANCE_ATTRIBUTE_NAME);
-        NodeList nodes = null;
-        try {
-            nodes = evalForNodes(xpath);
-        } catch (XPathExpressionException ex) {
-            LOG.error("invalid xpath: {}", xpath);
-            return ctaList;
-        }
-        if (nodes.getLength() > 0) {
+        var nodes = evalForNodes(xpath);
+        if (null !=  nodes && nodes.getLength() > 0) {
             var el   = (Element)nodes.item(0);
             var cstr = el.getAttributeNS(ctasUstr, CONFORMANCE_ATTRIBUTE_NAME);
             var spl  = cstr.split("\\s+");
@@ -179,6 +175,62 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
         if (!resFound) LOG.warn("namespace {} has no namespace declaration for {}", docURI().toString(), res);
         return res;
     }
+    
+    /**
+     * Returns a list of the local term objects defined in this schema document.
+     * @return 
+     */
+    public List<LocalTerm> localTerms () {
+        if (null != locTermL) return locTermL;
+        locTermL = new ArrayList<>();
+        var appinfo = builtinNS("APPINFO");
+        var ltermXP = "//*[namespace-uri()='" + appinfo + "' and local-name()='LocalTerm']";
+        var ltermNL = evalForNodes(ltermXP);
+        for (int i = 0; i < ltermNL.getLength(); i++) {
+            var e = (Element)ltermNL.item(i);
+            var lt = genLocalTerm(e);
+            locTermL.add(lt);
+        }
+        return locTermL;
+    }
+    
+    private LocalTerm genLocalTerm (Element e) {
+        var res = new LocalTerm();
+        var appinfo = builtinNS("APPINFO");
+        res.setTerm(e.getAttribute("term"));
+        res.setLiteral(e.getAttribute("literal"));
+        res.setDocumentation(e.getAttribute("definition"));
+        var suris = e.getAttribute("sourceURIs");
+        if (!suris.isBlank())
+            for (var su : suris.split("\\s+")) res.addSource(su);
+        var stxtNL = e.getElementsByTagNameNS(appinfo, "SourceText");
+        for (int i = 0; i < stxtNL.getLength(); i++) {
+            var stxtE = (Element)stxtNL.item(i);
+            res.addCitation(stxtE.getTextContent());
+        }
+        return res;
+    }
+    
+    /**
+     * Returns a list of appinfo:Augmentation elements in the schema document.
+     * @return 
+     */
+    public List<Element> attributeAugmentations () {
+        var res = new ArrayList<Element>();
+        var appinfo = builtinNS("APPINFO");
+        var augXP = "//*[namespace-uri()='" + appinfo + "' and local-name()='Augmentation']";
+        var augNL = evalForNodes(augXP);
+        for (int i = 0; i < augNL.getLength(); i++) {
+            var e = (Element)augNL.item(i);
+            var estr = nodeToText(e);
+            var classU = e.getAttribute("class");
+            var codes  = e.getAttribute("globalClassCode");
+            if (classU.isBlank() && codes.isBlank())
+                LOG.error("{}: missing @class or @globalClassCode in {}", docFile().getName(), estr);
+            else res.add(e);
+        }
+        return res;
+    }    
     
     /**
      * Returns a list of records for all top-level import elements in the
