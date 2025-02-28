@@ -164,7 +164,6 @@ public class XMLSchema {
                 }
             } 
             else path = arg;        // not a URI
-            LOG.debug("path is {}", path);
             
             // If we have a string with a file: URI or a pathname, it's a catalog 
             // or a schema document. Parse the first element to see which.
@@ -362,7 +361,6 @@ public class XMLSchema {
     public Schema javaxSchema () throws SAXException { 
         if (null != javaxSchema) return javaxSchema;
         
-        LOG.debug("javaxSchema");
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);             
         SAXErrorHandler  h = new SAXErrorHandler();   
         factory.setErrorHandler(h);
@@ -547,7 +545,6 @@ public class XMLSchema {
         pileRoot = getCommonPrefix(alldocs.toArray(new String[0]));
         int prlen = pileRoot.lastIndexOf("/");
         if (prlen >= 0) pileRoot = pileRoot.substring(0, prlen + 1);
-        LOG.debug("pileRoot: " + pileRoot);
     }
         
     // Xerces reports schema document location as file URIs that sometimes

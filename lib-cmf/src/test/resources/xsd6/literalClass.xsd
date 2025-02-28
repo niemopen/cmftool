@@ -21,7 +21,7 @@
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
   <xs:complexType name="TestCodeType">
     <xs:annotation>
-      <xs:documentation>Exercise code list</xs:documentation>
+      <xs:documentation>Exercise literal class</xs:documentation>
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="test:TestCodeSimpleType">

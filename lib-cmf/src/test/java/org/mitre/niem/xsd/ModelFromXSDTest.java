@@ -80,7 +80,31 @@ public class ModelFromXSDTest {
         assertEquals("key", clb.column());
         assertFalse(clb.isConstraining());
     }
+    
+    @Test
+    public void testDataProperties () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/dataProperty.xsd");
+        var model = mb.createModel(sch);
 
+        var ap2 = model.qnToDataProperty("test:aProp2");
+        var ap3 = model.qnToDataProperty("test:aProp3");
+        var ap4 = model.qnToDataProperty("test:aProp4");
+        var ap5 = model.qnToDataProperty("test:aProp5");    
+        assertTrue(ap2.isAttribute());
+        assertTrue(ap3.isAttribute());
+        assertTrue(ap4.isAttribute());
+        assertTrue(ap5.isAttribute());
+        assertFalse(ap2.isRefAttribute());
+        assertFalse(ap3.isRefAttribute());   
+        assertTrue(ap4.isRefAttribute());
+        assertTrue(ap5.isRefAttribute());
+        assertFalse(ap2.isRelationship());
+        assertTrue(ap3.isRelationship());
+        assertFalse(ap4.isRelationship());
+        assertTrue(ap5.isRelationship());
+    }
+    
     @Test
     public void testDatatypes () throws Exception {
         var mb  = new ModelFromXSD();
@@ -101,13 +125,16 @@ public class ModelFromXSDTest {
         item = dt.itemType();
         assertEquals("test:Restrict8Type", item.qname());
         
-        assertNull(model.qnToDatatype("test:LiteralType"));
+        assertNull(model.qnToDatatype("test:Literal1Type"));
         
+        assertNotNull(model.qnToClassType("test:Literal2Type"));        
         assertNull(model.qnToDatatype("test:Literal2Type"));
         dt = model.qnToDatatype("test:Literal2SimpleType");
         var base = dt.base();
         assertEquals("xs:float", base.qname());
 
+        assertNotNull(model.qnToClassType("test:Literal3Type"));
+        assertNotNull(model.qnToClassType("test:Literal4Type"));
         assertNull(model.qnToDatatype("test:Literal3Type"));
         assertNull(model.qnToDatatype("test:Literal4Type"));
         
@@ -229,6 +256,15 @@ public class ModelFromXSDTest {
             .extracting(Datatype::qname)
             .containsExactlyInAnyOrder("xs:integer", "xs:float", "test:Restrict8Type");
     }
+    
+    @Test
+    public void testLiteralClass () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/literalClass.xsd");
+        var model = mb.createModel(sch);
+        var lp = model.qnToDataProperty("test:TestCodeLiteral");
+        assertEquals("test:TestCodeSimpleType", lp.datatype().qname());
+    }
 
     @Test
     public void testNamespaces () throws Exception {
@@ -253,6 +289,43 @@ public class ModelFromXSDTest {
             .extracting(LanguageString::text, LanguageString::lang)
             .containsExactly(Assertions.tuple("Geography Markup Language.", "en-US"));        
         int x = 0;
+    }
+
+    @Test
+    public void testObjectProperties () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/objectProperty.xsd");
+        var model = mb.createModel(sch);     
+        var op1 = model.qnToObjectProperty("test:OProp1");
+        var op2 = model.qnToObjectProperty("test:OProp2");
+        var op3 = model.qnToObjectProperty("test:OProp3");
+        var op4 = model.qnToObjectProperty("test:OProp4");
+        var op5 = model.qnToObjectProperty("test:OProp5");
+        assertEquals("test:TestType", op1.classType().qname());
+        assertEquals("test:TestType", op2.classType().qname());
+        assertEquals("test:TestType", op3.classType().qname());
+        assertEquals("test:TestType", op4.classType().qname());
+        assertEquals("test:TestType", op5.classType().qname());
+        assertTrue(op1.isAbstract());
+        assertFalse(op2.isAbstract());
+        assertFalse(op3.isAbstract());
+        assertFalse(op4.isAbstract());
+        assertFalse(op5.isAbstract());    
+        assertEquals("ANY", op1.referenceCode());
+        assertEquals("REF", op2.referenceCode());
+        assertEquals("URI", op3.referenceCode());
+        assertEquals("NONE", op4.referenceCode());
+        assertEquals("", op5.referenceCode());
+        assertFalse(op1.isRelationship());
+        assertTrue(op2.isRelationship());
+        assertFalse(op3.isRelationship());
+        assertFalse(op4.isRelationship());
+        assertFalse(op5.isRelationship());
+        assertNull(op1.subProperty());
+        assertNull(op2.subProperty());
+        assertNull(op3.subProperty());
+        assertNull(op4.subProperty());
+        assertEquals("test:OProp1", op5.subProperty().qname());
     }
     
 }

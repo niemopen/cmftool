@@ -32,4 +32,5 @@
   <xs:element name="OProp2" type="test:TestType" abstract="false" appinfo:relationshipPropertyIndicator="true" appinfo:referenceCode="REF"/>
   <xs:element name="OProp3" type="test:TestType" appinfo:relationshipPropertyIndicator="false"  appinfo:referenceCode="URI"/>
   <xs:element name="OProp4" type="test:TestType" appinfo:referenceCode="NONE"/>
+  <xs:element name="OProp5" type="test:TestType" substitutionGroup="test:OProp1"/>
 </xs:schema>

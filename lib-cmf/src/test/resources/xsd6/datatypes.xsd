@@ -252,5 +252,9 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:attribute name="AttProperty" type="xs:token"/>
+  <xs:attribute name="AttProperty" type="xs:token" appinfo:deprecated="true">
+    <xs:annotation>
+      <xs:documentation>An attribute property.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
 </xs:schema>

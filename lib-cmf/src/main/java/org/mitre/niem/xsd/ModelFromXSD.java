@@ -38,6 +38,8 @@ import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import static org.apache.xerces.xs.XSComplexTypeDefinition.CONTENTTYPE_SIMPLE;
+import static org.apache.xerces.xs.XSConstants.ATTRIBUTE_DECLARATION;
+import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
 import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSFacet;
 import org.apache.xerces.xs.XSModel;
@@ -56,14 +58,18 @@ import org.mitre.niem.cmf.CMFException;
 import static org.mitre.niem.cmf.CMFObject.CMF_LIST;
 import static org.mitre.niem.cmf.CMFObject.CMF_RESTRICTION;
 import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
+import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
 import static org.mitre.niem.cmf.Component.uriNamePart;
+import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
+import org.mitre.niem.cmf.ObjectProperty;
+import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
 import org.mitre.niem.xml.ParserBootstrap;
@@ -116,6 +122,10 @@ public class ModelFromXSD {
         identifySimpleTypes();              // now we can tell which SimpleType names we need
         initializeDatatypes();              // now we can create Datatype objects
         populateDatatypes();                // and with all Datatypes in hand, we can fill them out
+        initializeClassTypes();             // create ClassType objects for CCC types and literalClass types
+        createPropertiesFromAttributes();
+        createPropertiesFromElements();
+        createLiteralProperties();
         // createDataProperties();            // we have the Datatypes, can create the DataProperties
         // createClassTypes();                // create ClassType objects, but leave property associations for later
         // createObjectProperties();          // we have the ClassTypes, can create the ObjectProperties
@@ -264,13 +274,6 @@ public class ModelFromXSD {
             modelURI2xobj.put(dtypeU, xstype);      // populate model object from the simple type definition
         }
     }
-    
-    private XSTypeDefinition getSchemaTypeDefinition (String xobjU) {
-        var xobjnsU  = m.compUToNamespaceU(xobjU);
-        var xobjname = uriNamePart(xobjU);
-        var xobj = xs.getTypeDefinition(xobjname, xobjnsU);
-        return xobj;
-    }
  
     // We have a list of all the Datatypes in the model, and we know which ones
     // need to be named FooType and which named FooSimpleType. 
@@ -332,33 +335,17 @@ public class ModelFromXSD {
     private void populateComponent (Component c, XSObject xobj, Element schE) {
         var docL  = Xerces.getDocumentation(xobj);  // extract documentation from the XS decl or defn
         var appi  = getAppinfoAttributes(schE);        // extract appinfo from the schema document element
-        var dep   = appi.get("deprecated");
+        var dep   = appi.getOrDefault("deprecated", "");
         c.setDocumentation(docL);
         if (null != dep) c.setIsDeprecated("true".equals(dep));
     }
-    
-    // Returns the Datatype object corresponding to the XSSimpleTypeDefinition from
-    // a xs:list or xs:union type.  
-    private Datatype getDatatypeFromXStype (XSSimpleTypeDefinition xstype) {
-        var typeU = xObjToURI(xstype);          // http://someNS/FooSimpleType
-        var tnsU  = xstype.getNamespace();      // http://someNS/
-        var dt    = m.uriToDatatype(typeU);
-        if (null == dt) {
-            if (W3C_XML_SCHEMA_NS_URI.equals(tnsU)) dt = createXSDPrimitive(xstype);
-            else {
-                typeU = typeU.replaceAll("SimpleType$", "Type");
-                dt = m.uriToDatatype(typeU);
-            }
-        }
-        return dt;
-    }
-    
+
     // Populate a ListType object with appinfo from its CSC type definition and
     // the list item type from its simple type definition.
     private void populateListType (ListType lt, XSSimpleTypeDefinition xstype, Element schE) throws CMFException {
         var ltname = lt.name();
         var appi  = getAppinfoAttributes(schE);
-        var oFlag = appi.get( "orderedPropertyIndicator");
+        var oFlag = appi.getOrDefault("orderedPropertyIndicator", "");
         var xitem = xstype.getItemType();       // list item simple type def from XS ST def
         var itemU = xObjToURI(xitem);           // URI for list item 
         var idt   = getDatatypeFromXStype(xitem);
@@ -369,6 +356,9 @@ public class ModelFromXSD {
         if (null != oFlag) lt.setIsOrdered("true".equals(oFlag));
     }
     
+    // Populate a Restriction object with appinfo from its CSC type definition,
+    // including CLSA appinfo. Populate the base type and facet list from its 
+    // simple type definition
     private void populateRestriction (Restriction r, XSSimpleTypeDefinition xstype, Element schE) throws CMFException {
         // Handle code list schema appinfo
         var rnsU  = r.namespaceURI();
@@ -456,6 +446,138 @@ public class ModelFromXSD {
         }
     }
     
+    // Create a ClassType object for each model CCC type definition, and also for
+    // the literal classes identified earlier.
+    private void initializeClassTypes () {
+        var xMap = xs.getComponents(COMPLEX_TYPE);
+        for (int i = 0; i < xMap.size(); i++) {
+            var xctype = (XSComplexTypeDefinition)xMap.item(i);
+            var ctypeU = xObjToURI(xctype);         // CSC type URI; eg. http://someNS/FooType
+            var ctnsU  = xctype.getNamespace();     // CSC type namespace URI; eg. http://someNS/
+            var ctname = xctype.getName();          // CSC type name; eg. FooType
+            var nskind = sch.namespaceKind(ctnsU);
+            if (CONTENTTYPE_SIMPLE == xctype.getContentType()) continue;
+            if (!isModelKind(nskind)) continue;     // not doing proxy or external types
+            var ctns   = m.namespaceObj(ctnsU);
+            var ct = new ClassType(ctns, ctname);
+            m.addClassType(ct);
+            modelURI2xobj.put(ctypeU, xctype);
+        }
+        for (var ctypeU : literalClassUs) {
+            var ctns   = m.compUToNamespaceObj(ctypeU);
+            var ctname = m.compUToName(ctypeU);
+            var ct     = new ClassType(ctns, ctname);
+            m.addClassType(ct);
+            // added to modelURI2xobj in identifyCSCtypes
+        }
+    }
+    
+    // We have all the Datatype objects and can create DataProperty objects
+    // from attribute declarations.
+    private void createPropertiesFromAttributes () {
+        var xMap = xs.getComponents(ATTRIBUTE_DECLARATION);
+        for (int i = 0; i < xMap.getLength(); i++) {
+            var xadec  = (XSAttributeDeclaration)xMap.item(i); 
+            var xstype = xadec.getTypeDefinition();
+            var schE   = getSchemaDocElement(xadec);
+            var appi   = getAppinfoAttributes(schE);
+            var propU  = xObjToURI(xadec);
+            var pnsU   = xadec.getNamespace();
+            var pns    = m.namespaceObj(pnsU);
+            var pname  = xadec.getName();
+            var dp     = new DataProperty(pns, pname);
+            populateComponent(dp, xadec, schE);
+            dp.setIsAttribute(true);
+            dp.setIsRefAttribute("true".equals(appi.getOrDefault("referenceAttributeIndicator", "")));
+            dp.setIsRelationship("true".equals(appi.getOrDefault("relationshipPropertyIndicator", "")));
+            var typeU = xObjToURI(xstype);
+            var dt    = m.uriToDatatype(typeU);
+            if (null == dt) dt = createXSDPrimitive(xstype);
+            dp.setDatatype(dt);
+            m.addDataProperty(dp);
+        }
+    }
+    
+    // The model has (unpopulated) ClassType objects and (complete) Datatype objects,
+    // so now we can create ObjectProperty and DataProperty objects from element
+    // declarations
+    private void createPropertiesFromElements () {
+        var xMap = xs.getComponents(ELEMENT_DECLARATION);
+        for (int i = 0; i < xMap.getLength(); i++) {
+            var xedec  = (XSElementDeclaration)xMap.item(i);
+            var xtype  = xedec.getTypeDefinition();
+            var xsub   = xedec.getSubstitutionGroupAffiliation();
+            var schE   = getSchemaDocElement(xedec);
+            var appi   = getAppinfoAttributes(schE);
+            if (COMPLEX_TYPE != xtype.getTypeCategory()) continue;  // NIEM elements must have complex type
+            Property p;
+            var xctype = (XSComplexTypeDefinition)xtype;
+            var propU  = xObjToURI(xedec);
+            var pnsU   = xedec.getNamespace();
+            var pname  = xedec.getName();
+            var pns    = m.namespaceObj(pnsU);
+            if (CONTENTTYPE_SIMPLE == xctype.getContentType()) {
+                var dp     = new DataProperty(pns, pname);
+                var stypeU = xObjToURI(xctype.getSimpleType());
+                var dt     = m.uriToDatatype(stypeU);
+                dp.setDatatype(dt);
+                m.addDataProperty(dp);
+                p = dp;
+            }
+            else {
+                var op = new ObjectProperty(pns, pname);
+                var ctypeU = xObjToURI(xctype);
+                var ct = m.uriToClassType(ctypeU);
+                op.setClassType(ct);
+                op.setReferenceCode(appi.getOrDefault("referenceCode", ""));
+                m.addObjectProperty(op);
+                p = op;
+            }
+            if (null != xsub) {
+                var subU = xObjToURI(xsub);
+                var subP = m.uriToProperty(subU);
+                p.setSubproperty(subP);
+            }
+            populateComponent(p, xedec, schE);
+            p.setIsAbstract(xedec.getAbstract());
+            p.setIsRelationship("true".equals(appi.getOrDefault("relationshipPropertyIndicator", "")));
+        }
+    }
+    
+    private void createLiteralProperties () {
+        for (var lcU : literalClassUs) {
+            var xctype = (XSComplexTypeDefinition)modelURI2xobj.get(lcU); 
+            var xstype = xctype.getSimpleType();
+            var schE   = getSchemaDocElement(xctype);
+            var lpdtU  = xObjToURI(xstype);             // literal property datatype URI
+            var lpdt   = m.uriToDatatype(lpdtU);        // datatype object
+            var lcname = m.compUToName(lcU);            // FooType
+            var lpname = lcname.replaceAll("Type$", "Literal");     // FooLiteral
+            var lpns   = m.compUToNamespaceObj(lcU);                // namespace object for http://someNS/
+            var lp     = new DataProperty(lpns, lpname);
+            populateComponent(lp, xctype, schE);        // use CSC doc and appinfo
+            lp.setDatatype(lpdt);
+            m.addDataProperty(lp);
+        }
+    }
+    
+    // Returns the Datatype object corresponding to the XSSimpleTypeDefinition from
+    // a xs:list or xs:union type.  
+    private Datatype getDatatypeFromXStype (XSSimpleTypeDefinition xstype) {
+        var typeU = xObjToURI(xstype);          // http://someNS/FooSimpleType
+        var tnsU  = xstype.getNamespace();      // http://someNS/
+        var dt    = m.uriToDatatype(typeU);
+        if (null == dt) {
+            if (W3C_XML_SCHEMA_NS_URI.equals(tnsU)) dt = createXSDPrimitive(xstype);
+            else {
+                typeU = typeU.replaceAll("SimpleType$", "Type");
+                dt = m.uriToDatatype(typeU);
+            }
+        }
+        return dt;
+    }
+        
+    // We only create Datatype objects for XSD primitives when they are used.
     private Datatype createXSDPrimitive (XSSimpleTypeDefinition xstype) {
         var compU = xObjToURI(xstype);
         var dt    = m.uriToDatatype(compU);
@@ -467,7 +589,6 @@ public class ModelFromXSD {
         m.addDatatype(dt);
         return dt;
     }
-    
     
     // Returns the set of URIS for the model attributes in a complex type definition.
     // Does not include structures attributes. 
@@ -501,6 +622,7 @@ public class ModelFromXSD {
 
     // Returns the component URI corresponding to an XSObject
     private String xObjToURI (XSObject xo) {
+        if (null == xo) return "";
         if (xo.getNamespace().endsWith("/")) return xo.getNamespace() + xo.getName();
         return xo.getNamespace() + "/" + xo.getName();
     }
@@ -594,4 +716,5 @@ public class ModelFromXSD {
         if (null == xobj) xobj = xs.getTypeDefinition(name, nsuri.substring(0, nsuri.length()-1));
         return xobj;
     }
+    
 }
