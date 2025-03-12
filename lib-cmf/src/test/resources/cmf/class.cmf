@@ -9,7 +9,7 @@
     <NamespaceURI>http://example.com/test/</NamespaceURI>
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>Class test schema. Test abstract, augmentable, reference code.</DocumentationText>
-    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>class.xsd</DocumentFilePathText>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
@@ -23,26 +23,31 @@
     <Namespace structures:ref="test" xsi:nil="true"/>
     <DocumentationText>AnElement doc string #1</DocumentationText>
     <DeprecatedIndicator>true</DeprecatedIndicator>
-    <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
   <DataProperty structures:id="test.AnotherElement">
     <Name>AnotherElement</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <DocumentationText>AnotherElement doc string #1</DocumentationText>
-    <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
   <Class structures:id="test.Test1Type">
     <Name>Test1Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <DocumentationText>Test1Type doc string #1</DocumentationText>
-    <DocumentationText xml:lang="fr">Test1Type doc string #2</DocumentationText>
+    <DocumentationText>Test1Type doc string #2</DocumentationText>
     <AbstractIndicator>true</AbstractIndicator>
-    <ReferenceCode>ANY</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="test.AnElement" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <DocumentationText>AnElement property of Test1Type</DocumentationText>
+      <OrderedPropertyIndicator>true</OrderedPropertyIndicator>
+    </ChildPropertyAssociation>
+    <AnyProperty>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-    </ChildPropertyAssociation>
+      <NamespaceConstraintText>http://someNS/ http://otherNS/</NamespaceConstraintText>
+      <ProcessingCode>lax</ProcessingCode>
+    </AnyProperty>
   </Class>
   <Class structures:id="test.Test2Type">
     <Name>Test2Type</Name>
@@ -51,21 +56,22 @@
     <ReferenceCode>ANY</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="test.AnElement" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
+      <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
+    <AnyProperty>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AttributeIndicator>true</AttributeIndicator>
+      <ProcessingCode>strict</ProcessingCode>
+    </AnyProperty>
   </Class>
   <Class structures:id="test.Test3Type">
     <Name>Test3Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <DocumentationText>Test3Type doc string</DocumentationText>
+    <DocumentationText>Test3Type extends Test1Type</DocumentationText>
     <SubClassOf structures:ref="test.Test1Type" xsi:nil="true"/>
     <ReferenceCode>URI</ReferenceCode>
-    <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.AnElement" xsi:nil="true"/>
-      <MinOccursQuantity>1</MinOccursQuantity>
-      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
-    </ChildPropertyAssociation>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="test.AnotherElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
@@ -94,8 +100,4 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Datatype structures:id="xs.string">
-    <Name>string</Name>
-    <Namespace structures:ref="xs" xsi:nil="true"/>
-  </Datatype>
 </Model>

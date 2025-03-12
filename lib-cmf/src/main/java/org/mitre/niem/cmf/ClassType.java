@@ -49,27 +49,26 @@ public class ClassType extends Component {
     public String cmfElement ()     { return "Class"; }
     
     private boolean isAbstract = false;         // cmf:AbstractIndicator
-    private boolean hasAnyAttribute = false;    // cmf:AnyAttributeIndicator
-    private boolean hasAnyElement = false;      // cmf:AnyElementIndicator
     private String refCode = "";                // cmf:ReferenceCode
     private ClassType subclass = null;          // cmf:SubClassOf
-    private final List<PropertyAssociation> propL = new ArrayList<>();    // cmf:ChildPropertyAssociation
+    private final List<PropertyAssociation> propL = new ArrayList<>();  // cmf:ChildPropertyAssociation
+    private final List<AnyProperty> anyL = new ArrayList<>();           // cmf:AnyProperty
     
     public boolean isAbstract ()                { return isAbstract; }
-    public boolean hasAnyAttribute ()           { return hasAnyAttribute; }
-    public boolean hasAnyElement ()             { return hasAnyElement; }
     public String referenceCode ()              { return refCode; }
     public ClassType subClass ()                { return subclass; }
     public List<PropertyAssociation> propL ()   { return propL; }
+    public List<AnyProperty> anyL ()            { return anyL; }
     
     public void setIsAbstract (boolean f)       { isAbstract = f; }
-    public void setHasAnyAttribute (boolean f)  { hasAnyAttribute = f; }
-    public void setHasAnyElement (boolean f)    { hasAnyElement = f; }
     public void setReferenceCode (String s)     { refCode = s; }
     public void setSubclass (ClassType c)       { subclass = c; }
     
     public void addPropertyAssociation (PropertyAssociation pa) {
         propL.add(pa);
+    }
+    public void addAnyProperty (AnyProperty ap) {
+        anyL.add(ap);
     }
     
     @Override

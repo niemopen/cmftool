@@ -40,6 +40,8 @@ import org.mitre.niem.xml.ParserBootstrap;
 import org.mitre.niem.xml.XMLWriter;
 import static org.mitre.niem.xsd.NIEMConstants.CMF_NS_URI;
 import static org.mitre.niem.xsd.NIEMConstants.CMF_STRUCTURES_NS_URI;
+import org.mitre.niem.xsd.NamespaceKind;
+import static org.mitre.niem.xsd.NamespaceKind.NSK_XML;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -120,7 +122,8 @@ public class ModelXMLWriter {
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", x.prefix());
         appendSimpleChild(doc, e, "NamespaceURI", x.uri());
         appendSimpleChild(doc, e, "NamespacePrefixText", x.prefix());
-        for (var dls : x.docL()) appendDocumentation(doc, e, dls);
+        if (NSK_XML != NamespaceKind.namespaceToKind(x.uri()))
+            for (var dls : x.docL()) appendDocumentation(doc, e, dls);
         for (var cta : x.ctargL()) appendSimpleChild(doc, e, "ConformanceTargetURI", cta);
         appendSimpleChild(doc, e, "DocumentFilePathText", x.documentFilePath());
         appendSimpleChild(doc, e, "NamespaceVersionText", x.version());
@@ -149,11 +152,10 @@ public class ModelXMLWriter {
     void addClassTypeChildren (Document doc, Element c, ClassType x, Set<Namespace>nsS) {
         if (null == x) return;
         appendOptionalIndicator(doc, c, "AbstractIndicator", x.isAbstract());
-        appendOptionalIndicator(doc, c, "AnyAttributeIndicator", x.hasAnyAttribute());
-        appendOptionalIndicator(doc, c, "AnyElementIndicator", x.hasAnyElement());
         appendComponentReference(doc, c, "SubClassOf", x.subClass(), nsS);
         appendSimpleChild(doc, c, "ReferenceCode", x.referenceCode());
-        for (var cpa : x.propL()) appendPropertyAssociation(doc, c, cpa, nsS);    
+        for (var cpa : x.propL()) appendPropertyAssociation(doc, c, cpa, nsS);
+        for (var ap : x.anyL()) appendAnyProperty(doc, c, ap, nsS);
     }
     
     void addDataPropertyChildren (Document doc, Element c, DataProperty x, Set<Namespace>nsS) {
@@ -190,6 +192,17 @@ public class ModelXMLWriter {
     void addUnionChildren (Document doc, Element c, Union x, Set<Namespace>nsS) {
         if (null == x) return;
         for (var mt : x.memberL()) appendComponentReference(doc, c, "UnionMemberDatatype", mt, nsS);
+    }
+    
+    private void appendAnyProperty (Document doc, Element p, AnyProperty x, Set<Namespace>nsS) {
+        if (null == x) return;
+        var c = doc.createElementNS(CMF_NS_URI, "AnyProperty");
+        appendSimpleChild(doc, c, "MinOccursQuantity", x.minOccurs());
+        appendSimpleChild(doc, c, "MaxOccursQuantity", x.maxOccurs());
+        appendOptionalIndicator(doc, c, "AttributeIndicator", x.isAttribute());
+        appendSimpleChild(doc, c, "NamespaceConstraintText", x.nsConstraint());
+        appendSimpleChild(doc, c, "ProcessingCode", x.processCode());
+        p.appendChild(c);
     }
     
     private void appendAugmentRecord (Document doc, Element p, AugmentRecord x, Set<Namespace>nsS) {

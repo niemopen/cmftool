@@ -67,7 +67,9 @@ public class Model extends CMFObject {
     private List<Component> ordComp      = null;
     private List<Namespace> ordNS        = null;
     
+    public List<ClassType> classTypeL ()                { return new ArrayList<ClassType>(classMap.values()); }
     public List<Datatype> datatypeL ()                  { return new ArrayList<Datatype>(dtypeMap.values()); }
+    public List<Property> propertyL ()                  { return new ArrayList<Property>(propMap.values()); }
     
     public Component qnToComponent (String qn)          { return compMap.get(qnToURI(qn)); }
     public ClassType qnToClassType (String qn)          { return classMap.get(qnToURI(qn)); }
@@ -167,6 +169,7 @@ public class Model extends CMFObject {
     }
    
     public void addNamespace (Namespace n) throws CMFException {
+        if (null == n) return;
         if (uri2ns.containsKey(n.uri())) return;
         var cnsuri = nsmap.getPrefix(n.prefix());
         if (null != cnsuri && !n.uri().equals(cnsuri)) {
@@ -183,6 +186,7 @@ public class Model extends CMFObject {
     
     
     public void addClassType (ClassType c) {
+        if (null == c) return;
         compMap.put(c.uri(), c); 
         classMap.put(c.uri(), c);
         ordComp = null;
@@ -190,6 +194,7 @@ public class Model extends CMFObject {
     }
     
     public void addDataProperty (DataProperty c) {
+        if (null == c) return;
         compMap.put(c.uri(), c); 
         propMap.put(c.uri(), c);
         dpropMap.put(c.uri(), c);
@@ -198,6 +203,7 @@ public class Model extends CMFObject {
     }
     
     public void addDatatype (Datatype c) {
+        if (null == c) return;
         compMap.put(c.uri(), c); 
         dtypeMap.put(c.uri(), c);
         ordComp = null;
@@ -205,11 +211,27 @@ public class Model extends CMFObject {
     }
     
     public void addObjectProperty (ObjectProperty c) {
+        if (null == c) return;
         compMap.put(c.uri(), c); 
         propMap.put(c.uri(), c);
         opropMap.put(c.uri(), c);
         ordComp = null;        
         c.setModel(this);
+    }
+    
+    public void removeClassType (ClassType ct) {
+        if (null == ct) return;
+        compMap.remove(ct.uri());
+        classMap.remove(ct.uri());
+        ordComp = null;
+    }
+    
+    public void removeObjectProperty (ObjectProperty c) {
+        if (null == c) return;
+        compMap.remove(c.uri());
+        propMap.remove(c.uri());
+        opropMap.remove(c.uri());
+        ordComp = null;
     }
   
     public void componentUpdate () {
@@ -226,8 +248,10 @@ public class Model extends CMFObject {
     public List<Component> componentList () {
         if (null != ordComp) return ordComp;
         ordComp = new ArrayList<>();
-        for (var c : compMap.values())
-            if (!c.isOutsideRef()) ordComp.add(c);
+        for (var c : compMap.values()) {
+           var cname = c.name();
+           if (!c.isOutsideRef()) ordComp.add(c);
+        }
         Collections.sort(ordComp);
         return ordComp;
     }

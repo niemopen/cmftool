@@ -38,7 +38,8 @@ public class CMFObject {
     public static final int CMF_NAMESPACE = 6;
     public static final int CMF_OBJECTPROP = 7;
     public static final int CMF_RESTRICTION = 8;
-    public static final int CMF_UNION = 9;    
+    public static final int CMF_UNION = 9;   
+    public static final int CMF_ANYPROP = 10;
     
     // Override these functions in subclasses
     public String uri ()            { return ""; }
@@ -57,6 +58,7 @@ public class CMFObject {
 
     // Every object returns true if it knows how to handle adding a child of this type.
     // An object at the inheritance bottom raises an error if it doesn't know how.
+    public boolean addToAnyProperty (String eln, String loc, AnyProperty p) { return false; }
     public boolean addToAugmentRecord (String eln, String loc, AugmentRecord r) { return false; }
     public boolean addToCodeListBinding (String eln, String loc, CodeListBinding b) { return false; }
     public boolean addToComponent (String eln, String loc, Component c) { return false; }

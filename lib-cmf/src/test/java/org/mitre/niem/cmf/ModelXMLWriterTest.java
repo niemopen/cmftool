@@ -76,18 +76,6 @@ public class ModelXMLWriterTest {
 
     }
 
-    @Test
-    public void testAugmentRecord () throws FileNotFoundException, IOException {
-        var rdr   = new ModelXMLReader();
-        var wr    = new ModelXMLWriter();
-        var model = rdr.readFiles(new File(resDN, "objectProperty.cmf"));
-        var os    = new FileOutputStream(new File(resDN, "out.cmf"));
-        wr.writeXML(model, os);
-        os.close();;
-        assertEmptyLogs();
-    }
-
-
     
     public static List<LogCaptor> logs;      
     @BeforeAll

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.mitre.niem.cmf.LocalTerm;
@@ -39,7 +40,6 @@ import static org.mitre.niem.xsd.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
 import static org.mitre.niem.xsd.NIEMConstants.CTAS30;
 import static org.mitre.niem.xsd.NIEMConstants.CTAS60;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_STRUCTURES;
-import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
@@ -91,7 +91,7 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
         var ctasUstr = ctasNS();
         var xpath = String.format("/*[@*[namespace-uri()='%s' and local-name()='%s']][1]",
                 ctasUstr, CONFORMANCE_ATTRIBUTE_NAME);
-        var nodes = evalForNodes(xpath);
+        var nodes = evalForNodes(dom().getDocumentElement(), xpath);
         if (null !=  nodes && nodes.getLength() > 0) {
             var el   = (Element)nodes.item(0);
             var cstr = el.getAttributeNS(ctasUstr, CONFORMANCE_ATTRIBUTE_NAME);
@@ -158,13 +158,11 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
         res = NamespaceKind.builtinNamespace(vers, kindCode);
         builtinNS.put(kindCode, res);
         
-        var resFound = false;           // saw namespace decl for this builtin namespace URI?
         var nsUstr = "";                // last namespace decl for this builtin seen
         var nsdL = nsdecls();           // list of all namespace declarations
         for (var nsd : nsdL) {
             var nk = NamespaceKind.namespaceToKindCode(nsd.ns());
             if (nk.equals(kindCode)) {
-                if (res.equals(nsd.ns())) resFound = true;
                 if (!nsUstr.isEmpty() && !nsUstr.equals(nsd.ns())) {
                     LOG.warn("namespace {} has conflicting {} namespace declarations ({} and {})", 
                         docURI().toString(), kindCode, nsUstr, nsd.ns());
@@ -172,8 +170,50 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
                 nsUstr = nsd.ns();
             }
         }
-        if (!resFound) LOG.warn("namespace {} has no namespace declaration for {}", docURI().toString(), res);
         return res;
+    }
+    
+    /**
+     * Returns the URI for the component with the specified QName.  The namespace
+     * portion of the URI is determined by the prefix assignment in scope at the
+     * specified Element object -- which may or may not be the namespace assigned
+     * to that prefix in the model.
+     * @param e - Element object
+     * @param qn - component QName; eg. "foo:bar"
+     * @return component URI
+     */
+    public String qnToURI (Element e, String qn) {
+        var indx = qn.indexOf(":");
+        if (indx < 1 || indx >= qn.length()-1) return "";
+        var pre = qn.substring(0, indx);
+        var ln  = qn.substring(indx+1);
+        var nsU = e.lookupNamespaceURI(pre);
+        if ("xml".equals(pre)) nsU = XML_NS_URI;
+        if (null == nsU) return "";
+        if (nsU.endsWith("/")) return nsU + ln;
+        return nsU + "/" + ln;
+    }
+    
+    /**
+     * Returns the prefix portion of a QName
+     * @param qn
+     * @return 
+     */
+    public static String qnToPrefix (String qn) {
+        var indx = qn.indexOf(":");
+        if (indx < 1 || indx >= qn.length()-1) return "";
+        return qn.substring(0, indx);        
+    }
+    
+    /**
+     * Returns the local name portion of a QName
+     * @param qn
+     * @return 
+     */
+    public static String qnToName (String qn) {
+        var indx = qn.indexOf(":");
+        if (indx < 1 || indx >= qn.length()-1) return "";        
+        return qn.substring(indx+1);
     }
     
     /**
@@ -185,7 +225,7 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
         locTermL = new ArrayList<>();
         var appinfo = builtinNS("APPINFO");
         var ltermXP = "//*[namespace-uri()='" + appinfo + "' and local-name()='LocalTerm']";
-        var ltermNL = evalForNodes(ltermXP);
+        var ltermNL = evalForNodes(dom().getDocumentElement(), ltermXP);
         for (int i = 0; i < ltermNL.getLength(); i++) {
             var e = (Element)ltermNL.item(i);
             var lt = genLocalTerm(e);
@@ -219,7 +259,7 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
         var res = new ArrayList<Element>();
         var appinfo = builtinNS("APPINFO");
         var augXP = "//*[namespace-uri()='" + appinfo + "' and local-name()='Augmentation']";
-        var augNL = evalForNodes(augXP);
+        var augNL = evalForNodes(dom().getDocumentElement(), augXP);
         for (int i = 0; i < augNL.getLength(); i++) {
             var e = (Element)augNL.item(i);
             var estr = nodeToText(e);

@@ -76,7 +76,7 @@ public class XMLSchemaDocumentTest {
     @Test
     public void testEval() throws Exception {
         var xsd = new XMLSchemaDocument(xsDocF);
-        var nds = xsd.evalForNodes("/*/@targetNamespace");
+        var nds = xsd.evalForNodes(xsd.dom().getDocumentElement(), "/*/@targetNamespace");
         assertEquals(1, nds.getLength());
     }
     

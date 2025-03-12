@@ -43,6 +43,30 @@ import org.mitre.niem.xml.LanguageString;
  */
 public class ModelAssertions {
     
+    public static void checkAnyProperties (Model model) {
+        var ct1 = model.qnToClassType("test:Test1Type");
+        var ct2 = model.qnToClassType("test:Test2Type");
+        var ct3 = model.qnToClassType("test:Test3Type");
+        var ct4 = model.qnToClassType("test:Test4Type");
+        var ct5 = model.qnToClassType("test:Test5Type");
+        
+        var ap = ct1.anyL().get(0);
+        assertThat(ct1.anyL()).hasSize(1);
+        assertEquals("lax", ap.processCode());
+        assertEquals("http://someNS/ http://otherNS/", ap.nsConstraint());
+        assertFalse(ap.isAttribute());
+
+        ap = ct2.anyL().get(0);
+        assertThat(ct2.anyL()).hasSize(1);
+        assertEquals("strict", ap.processCode());
+        assertEquals("", ap.nsConstraint());
+        assertTrue(ap.isAttribute());
+
+        assertThat(ct3.anyL()).hasSize(0);   
+        assertThat(ct4.anyL()).hasSize(0);   
+        assertThat(ct5.anyL()).hasSize(0);   
+    }
+    
     public static void checkAugmentRecord (Model m) {
         var jns = m.prefixToNamespaceObj("j");
         var ncns = m.prefixToNamespaceObj("nc");
@@ -117,14 +141,14 @@ public class ModelAssertions {
                 assertTrue(pa.isOrdered());
                 break;
             case "OProp4": 
-                assertEquals(0, pa.minOccurs());
+                assertEquals("0", pa.minOccurs());
                 assertEquals("1", pa.maxOccurs());
                 assertTrue(pa.docL().isEmpty());
                 assertFalse(pa.isOrdered());
                 break;
             case "OProp5": 
-                assertEquals(0, pa.minOccurs());
-                assertEquals(20, pa.maxOccurs());
+                assertEquals("0", pa.minOccurs());
+                assertEquals("20", pa.maxOccurs());
                 assertEquals("reason for OProp5", pa.docL().get(0).text());
                 assertFalse(pa.isOrdered());
                 break;
@@ -135,13 +159,13 @@ public class ModelAssertions {
                 assertFalse(pa.isOrdered());
                 break;
             case "AProp3": 
-                assertEquals(0, pa.minOccurs());
+                assertEquals("0", pa.minOccurs());
                 assertEquals("1", pa.maxOccurs());
                 assertTrue(pa.docL().isEmpty());
                 assertFalse(pa.isOrdered());
                 break;
             case "AProp4": 
-                assertEquals(0, pa.minOccurs());
+                assertEquals("0", pa.minOccurs());
                 assertEquals("1", pa.maxOccurs());
                 assertTrue(pa.docL().isEmpty());
                 assertFalse(pa.isOrdered());
@@ -169,7 +193,7 @@ public class ModelAssertions {
         assertFalse(ct3.isAbstract());
         assertFalse(ct4.isAbstract());
         assertFalse(ct5.isAbstract());
-        assertEquals("ANY", ct.referenceCode());
+        assertEquals("", ct.referenceCode());
         assertEquals("ANY", ct2.referenceCode());
         assertEquals("URI", ct3.referenceCode());
         assertEquals("REF", ct4.referenceCode());

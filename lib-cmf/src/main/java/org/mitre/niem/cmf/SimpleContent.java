@@ -48,6 +48,19 @@ public class SimpleContent extends CMFObject {
     
     @Override
     public void setContent (String v) { content = v; }
+    
+    @Override
+    public boolean addToAnyProperty (String eln, String loc, AnyProperty ap) {
+        switch (eln) {
+        case "AttributeIndicator":      ap.setIsAttribute("true".equals(this.content())); break;
+        case "MaxOccursQuantity":       ap.setMaxOccurs(this.content()); break; 
+        case "MinOccursQuantity":       ap.setMinOccurs(this.content()); break;
+        case "NamespaceConstraintText": ap.setNsConstraint(this.content()); break;
+        case "ProcessingCode":          ap.setProcessCode(this.content()); break;
+        default: error("AnyProperty", loc, eln);
+        }
+        return true;
+    }
 
     @Override
     public boolean addToAugmentRecord (String eln, String loc, AugmentRecord ar) {
@@ -65,8 +78,6 @@ public class SimpleContent extends CMFObject {
     public boolean addToClassType (String eln, String loc, ClassType c) {
         switch (eln) {
         case "AbstractIndicator":     c.setIsAbstract("true".equals(this.content())); break;
-        case "AnyAttributeIndicator": c.setHasAnyAttribute("true".equals(this.content())); break;
-        case "AnyElementIndicator":   c.setHasAnyElement("true".equals(this.content())); break;
         case "ReferenceCode":         c.setReferenceCode(this.content()); break; 
         default: error("ClassType", loc, eln);
         }
@@ -184,7 +195,7 @@ public class SimpleContent extends CMFObject {
         case "MaxOccursQuantity":           pa.setMaxOccurs(this.content()); break;
         case "MinOccursQuantity":           pa.setMinOccurs(this.content()); break;
         case "OrderedPropertyIndicator":    pa.setIsOrdered("true".equals(this.content())); break;
-        default: error("PropertyAssociation", loc, eln);
+        default: return false;
         }
         return true;
     }

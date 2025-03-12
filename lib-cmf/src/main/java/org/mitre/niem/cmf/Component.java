@@ -118,6 +118,11 @@ public abstract class Component extends CMFObject implements Comparable<Componen
         if (indx < 0 || indx >= uri.length()) return "";
         return uri.substring(indx+1);
     }
+    
+    public static String makeURI (String nsuri, String name) {
+        if (nsuri.endsWith("/")) return nsuri + name;
+        else return nsuri + "/" + name;
+    }
   
     // Notify the model object that the name or namespace of one of 
     // its components has changed.

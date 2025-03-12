@@ -23,12 +23,16 @@
  */
 package org.mitre.niem.xsd;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import org.assertj.core.api.Assertions;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
+import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.ModelXMLWriter;
 import org.mitre.niem.xml.LanguageString;
 
 /**
@@ -50,6 +54,7 @@ public class ModelFromXSDTest {
 
         assertNull(model.qnToDatatype("test:TCodeList2Type"));
         assertNotNull(model.qnToDatatype("test:TCodeList3Type"));
+        assertNotNull(model.qnToDataProperty("test:TCodeList2Literal"));
     }
     
     @Test
@@ -60,6 +65,82 @@ public class ModelFromXSDTest {
 
         assertNull(model.qnToDatatype("test:TCodeList2Type"));
         assertNull(model.qnToDatatype("test:TCodeList3Type"));
+        assertNotNull(model.qnToClassType("test:TCodeList2Type"));
+        assertNotNull(model.qnToClassType("test:TCodeList2Type"));
+        assertNotNull(model.qnToDataProperty("test:TCodeList2Literal"));
+        assertNotNull(model.qnToDataProperty("test:TCodeList2Literal"));
+    }
+    
+    @Test
+    public void testElementAugmentation () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/augment.xsd");
+        var model = mb.createModel(sch);   
+        debugModelWriter(model);
+    }
+    
+    @Test
+    public void testClassType () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/class.xsd");
+        var model = mb.createModel(sch);   
+        
+        var ct1 = model.qnToClassType("test:Test1Type");
+        var ct2 = model.qnToClassType("test:Test2Type");
+        var ct3 = model.qnToClassType("test:Test3Type");
+        var ct4 = model.qnToClassType("test:Test4Type");
+        var ct5 = model.qnToClassType("test:Test5Type");
+        
+        var cp = ct1.propL().get(0);
+        assertTrue(ct1.isAbstract());
+        assertNull(ct1.subClass());
+        assertEquals("", ct1.referenceCode());
+        assertThat(ct1.propL()).hasSize(1);
+        assertEquals("test:AnElement", cp.property().qname());
+        assertEquals("0", cp.minOccurs());
+        assertEquals("1", cp.maxOccurs());
+        assertTrue(cp.isOrdered());
+        assertThat(cp.docL())
+            .extracting(LanguageString::text)
+            .containsExactly("AnElement property of Test1Type");
+        var ap = ct1.anyL().get(0);
+        assertThat(ct1.anyL()).hasSize(1);
+        assertEquals("lax", ap.processCode());
+        assertEquals("http://someNS/ http://otherNS/", ap.nsConstraint());
+        assertFalse(ap.isAttribute());
+        
+        cp = ct2.propL().get(0);
+        assertFalse(ct2.isAbstract());
+        assertNull(ct2.subClass());
+        assertEquals("ANY", ct2.referenceCode());
+        assertThat(ct2.propL()).hasSize(1);
+        assertEquals("test:AnElement", cp.property().qname());
+        assertEquals("1", cp.minOccurs());
+        assertEquals("1", cp.maxOccurs());
+        assertFalse(cp.isOrdered());
+        assertThat(cp.docL()).hasSize(0);
+        ap = ct2.anyL().get(0);
+        assertThat(ct2.anyL()).hasSize(1);
+        assertEquals("strict", ap.processCode());
+        assertEquals("", ap.nsConstraint());
+        assertTrue(ap.isAttribute());
+        
+        cp = ct3.propL().get(0);
+        assertFalse(ct3.isAbstract());
+        assertEquals("test:Test1Type", ct3.subClass().qname());
+        assertEquals("URI", ct3.referenceCode());
+        assertThat(ct3.propL()).hasSize(1);
+        assertEquals("test:AnotherElement", cp.property().qname());
+        assertEquals("1", cp.minOccurs());
+        assertEquals("1", cp.maxOccurs());
+        assertFalse(cp.isOrdered());
+        assertThat(cp.docL()).hasSize(0);
+        assertThat(ct3.anyL()).hasSize(0);   
+        
+        assertEquals("REF", ct4.referenceCode());
+        assertEquals("NONE", ct5.referenceCode());
+        
+        debugModelWriter(model);
     }
         
     @Test
@@ -263,7 +344,17 @@ public class ModelFromXSDTest {
         var sch = new NIEMSchema(resDN + "xsd6/literalClass.xsd");
         var model = mb.createModel(sch);
         var lp = model.qnToDataProperty("test:TestCodeLiteral");
-        assertEquals("test:TestCodeSimpleType", lp.datatype().qname());
+
+        assertNotNull(model.prefixToNamespaceObj("xml"));
+        assertNotNull(model.qnToClassType("test:PersonNameTextType"));
+        assertNotNull(model.qnToClassType("test:ProperNameTextType"));
+        assertNotNull(model.qnToClassType("test:TextType"));   
+        assertNotNull(model.qnToDataProperty("test:TextLiteral"));
+        assertNotNull(model.qnToClassType("test:FooTopType"));  
+        assertNull(model.qnToClassType("test:FooMiddleType"));  
+        assertNull(model.qnToClassType("test:FooBottomType"));
+        assertNotNull(model.qnToDataProperty("test:FooTopLiteral"));
+    
     }
 
     @Test
@@ -275,14 +366,12 @@ public class ModelFromXSDTest {
         var test = model.prefixToNamespaceObj("test");
         var nc   = model.prefixToNamespaceObj("nc");
         var j    = model.prefixToNamespaceObj("j");
-        var cli  = model.prefixToNamespaceObj("cli");
         var xml  = model.prefixToNamespaceObj("xml");
         var gml  = model.prefixToNamespaceObj("gml");
         
         assertEquals("http://example.com/test/", test.uri());
         assertEquals("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/", nc.uri());
         assertEquals("https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/", j.uri());
-        assertEquals("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/", cli.uri());
         assertEquals("http://www.w3.org/XML/1998/namespace", xml.uri());
         assertEquals("http://www.opengis.net/gml/3.2", gml.uri());
         assertThat(gml.impDocL())
@@ -326,6 +415,14 @@ public class ModelFromXSDTest {
         assertNull(op3.subProperty());
         assertNull(op4.subProperty());
         assertEquals("test:OProp1", op5.subProperty().qname());
+    }
+    
+    private void debugModelWriter (Model m) throws Exception {
+        var outF = new File(resDN + "out.cmf");
+        var outS = new FileOutputStream(outF);
+        var mw   = new ModelXMLWriter();
+        mw.writeXML(m, outS);
+        outS.close();      
     }
     
 }

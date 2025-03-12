@@ -72,7 +72,7 @@ public class XMLSchemaDocument {
     private final URI docU;                         // file URI object for this schema document
     private final File docF;                        // schema document file
     private final File docFD;                       // parent directory of schema document
-    private final Document doc;                     // parsed schema document
+    private final Document dom;                     // parsed schema document
     private String targetNS = null;                 // target namespace URI
     private List<XMLNamespaceDeclaration> nsdecls = null;
 
@@ -85,7 +85,7 @@ public class XMLSchemaDocument {
         docU  = sdF.toURI();
         docF  = sdF;
         docFD = docF.getParentFile();
-        doc   = db.parse(docF);
+        dom   = db.parse(docF);
         initNSdecls();
     }
     
@@ -101,6 +101,11 @@ public class XMLSchemaDocument {
      */
     public File docFile ()  { return docF; }
     
+    /**
+     * Returns the document object model for the schema document
+     * @return DOM
+     */
+    public Document dom ()  { return dom; }
     
     /**
      * Returns the language attribute (xml:lang) of the schema document.
@@ -110,7 +115,7 @@ public class XMLSchemaDocument {
     public String language () {
         String res = "";
         var xpe = "/*/@*[namespace-uri()='" + XML_NS_URI + "' and local-name()='lang']";
-        res = evalForString(xpe);
+        res = evalForString(dom.getDocumentElement(), xpe);
         return res;              
     }    
 
@@ -123,7 +128,7 @@ public class XMLSchemaDocument {
         if (null != targetNS) return targetNS;
         targetNS = "";
         var xpe = "/*/@targetNamespace";
-        targetNS = evalForString(xpe);
+        targetNS = evalForString(dom.getDocumentElement(), xpe);
         return targetNS;        
     }
     
@@ -135,7 +140,7 @@ public class XMLSchemaDocument {
     public String version () {
         String res = "";
         var xpe = "/*/@version";
-        res = evalForString(xpe);
+        res = evalForString(dom.getDocumentElement(), xpe);
         return res;              
     }    
     
@@ -145,34 +150,26 @@ public class XMLSchemaDocument {
      * @return 
      */
     public List<LanguageString> documentation () {
-        return getDocumentation(dom().getDocumentElement());
+        return getDocumentation(dom.getDocumentElement());
     }
     
     /**
-     * Returns the parsed document object model for the schema document.
-     * @return Document object
-     */
-    public Document dom () {
-        return doc;
-    }
-    
-    /**
-     * Evaluate XPath expression against schema document to return a string.
+     * Evaluate XPath expression against a schema document element to return a string.
      * Returns empty string for invalid XPath.
      * @param exp - XPath expression
      * @return string result
      */
-    public String evalForString (String exp) {
+    public String evalForString (Element e, String exp) {
         var xpf = XPathFactory.newInstance();
         var xp  = xpf.newXPath();
         try {
             var xpr = xp.compile(exp);
-            var res = (String)xpr.evaluate(doc, XPathConstants.STRING);
+            var res = (String)xpr.evaluate(e, XPathConstants.STRING);
             return res;        
         } catch (XPathExpressionException ex) { 
             LOG.error("bad XPath expression {}: {}", exp, ex.getMessage());
         }
-        return "";
+        return "";        
     }
     
     /**
@@ -181,24 +178,25 @@ public class XMLSchemaDocument {
      * @param exp
      * @return Node object or null
      */
-    public Node evalForOneNode (String exp) {
-        var nset = evalForNodes(exp);
+    public Node evalForOneNode (Element e, String exp) {
+        var nset = evalForNodes(e, exp);
         if (null !=  nset && nset.getLength() > 0) return nset.item(0);
         return null;
     }
     
     /**
-     * Evaluate XPath expression against schema document to return a list of Nodes.
+     * Evaluate XPath expression against a schema document element to return a 
+     * list of Nodes.
      * Returns null for invalid XPath.
      * @param exp - XPath expression
      * @return NodeList object or null
      */
-    public NodeList evalForNodes (String exp) {
+    public NodeList evalForNodes (Element e, String exp) {
         var xpf = XPathFactory.newInstance();
         var xp  = xpf.newXPath();
         try {
             var xpr = xp.compile(exp);
-            var res = (NodeList)xpr.evaluate(doc, XPathConstants.NODESET);
+            var res = (NodeList)xpr.evaluate(e, XPathConstants.NODESET);
             return res;
         } catch (XPathExpressionException ex) {
              LOG.error("bad XPath expression {}: {}", exp, ex.getMessage());
@@ -213,7 +211,7 @@ public class XMLSchemaDocument {
      * Returns a list of top-level xs:import elements in the schema document.
      */
     public NodeList importElements () {
-        return evalForNodes(importXpath);
+        return evalForNodes(dom.getDocumentElement(), importXpath);
     }
     
     /**

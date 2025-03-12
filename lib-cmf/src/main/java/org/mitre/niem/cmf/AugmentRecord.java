@@ -32,28 +32,26 @@ import java.util.Set;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class AugmentRecord extends CMFObject implements Comparable<AugmentRecord> {
+public class AugmentRecord extends PropertyAssociation implements Comparable<AugmentRecord> {
     
     public AugmentRecord () { }
+    public AugmentRecord (PropertyAssociation cpa) {
+        this.setProperty(cpa.property());
+        this.setMaxOccurs(cpa.maxOccurs());
+        this.setMinOccurs(cpa.minOccurs());
+        this.setIsOrdered(cpa.isOrdered());
+        this.setDocumentation(cpa.docL());
+    }
     
     private ClassType classType = null;                 // cmf:Class
-    private Property property = null;                   // cmf:Property
-    private String minOccurs = "1";                     // cmf:MinOccursQuantity
-    private String maxOccurs = "1";                     // cmf:MaxOccursQuantity
     private String index = "";                          // cmf:AugmentationIndex
     private Set<String> codeS = new HashSet<>();        // cmf:GlobalClassCode
     
     public ClassType classType ()                   { return classType; }
-    public Property property ()                     { return property; }
-    public String minOccurs ()                      { return minOccurs; }
-    public String maxOccurs ()                      { return maxOccurs; }
     public String index ()                          { return index; }
     public Set<String> codeS ()                     { return codeS; }
     
     public void setClassType (ClassType ct)         { classType = ct; }
-    public void setProperty (Property p)            { property = p; }
-    public void setMinOccurs (String s)             { minOccurs = s; }
-    public void setMaxOccurs (String s)             { maxOccurs = s; }
     public void setIndex (String s)                 { index = s; }
     public void addCode (String s)                  { codeS.add(s); }
     public void removeCode (String s)               { codeS.remove(s); }
@@ -77,6 +75,6 @@ public class AugmentRecord extends CMFObject implements Comparable<AugmentRecord
     public int compareTo(AugmentRecord o) {
         int rv = 0;
         if (null != this.classType && null != o.classType) rv = this.classType.compareTo(o.classType);
-        if (0 == rv) rv = this.property.qname().compareTo(o.property.qname());
+        if (0 == rv) rv = this.property().qname().compareTo(o.property().qname());
         return rv;}
 }

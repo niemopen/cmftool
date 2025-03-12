@@ -42,8 +42,6 @@ public class DataProperty extends Property {
     @Override
     public int getType ()           { return CMF_DATAPROP; }
     @Override
-    public boolean isProperty ()    { return true; }
-    @Override
     public String cmfElement ()     { return "DataProperty"; }
     
     private boolean isAtt = false;              // cmf:AttributeIndicator

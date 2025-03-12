@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.net.URI;
 
 /**
- * Convenience functions for working with URIs
+ * Convenience functions for working with file URIs
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */

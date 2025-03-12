@@ -23,7 +23,13 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="test:AnElement"/>
+          <xs:element ref="test:AnElement" minOccurs="0" appinfo:orderedPropertyIndicator="true">
+            <xs:annotation>
+              <xs:documentation>AnElement property of Test1Type</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element ref="test:Test1AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:any processContents="lax" namespace="http://someNS/ http://otherNS/"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -38,17 +44,19 @@
           <xs:element ref="test:AnElement"/>
           <xs:element ref="test:Test2AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
+        <xs:anyAttribute processContents="strict"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
   <xs:complexType name="Test3Type" appinfo:referenceCode="URI">
     <xs:annotation>
-      <xs:documentation>Test3Type doc string</xs:documentation>
+      <xs:documentation>Test3Type extends Test1Type</xs:documentation>
     </xs:annotation>
     <xs:complexContent>
       <xs:extension base="test:Test1Type">
         <xs:sequence>
           <xs:element ref="test:AnotherElement"/>
+          <xs:element ref="test:Test3AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -58,6 +66,7 @@
       <xs:extension base="test:Test1Type">
         <xs:sequence>
           <xs:element ref="test:AnotherElement"/>
+          <xs:element ref="test:Test4AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -67,6 +76,7 @@
       <xs:extension base="test:Test1Type">
         <xs:sequence>
           <xs:element ref="test:AnotherElement"/>
+          <xs:element ref="test:Test5AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -81,6 +91,9 @@
       <xs:documentation>AnotherElement doc string #1</xs:documentation>
     </xs:annotation>
   </xs:element>
-  <xs:element name="Test2AugmentationPoint" abstract="true">
-  </xs:element>
+  <xs:element name="Test1AugmentationPoint" abstract="true"/>
+  <xs:element name="Test2AugmentationPoint" abstract="true"/>
+  <xs:element name="Test3AugmentationPoint" abstract="true"/>
+  <xs:element name="Test4AugmentationPoint" abstract="true"/>
+  <xs:element name="Test5AugmentationPoint" abstract="true"/>
 </xs:schema>

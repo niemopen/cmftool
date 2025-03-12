@@ -48,6 +48,16 @@ public class ModelXMLReaderTest extends ModelAssertions {
     public ModelXMLReaderTest() {
     }
     
+    // ClassType object test
+    // Test AnyProperty list
+    @Test
+    public void testAnyProperties () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "class.cmf"));
+        checkAnyProperties(model);
+        assertEmptyLogs();        
+    }
+    
     // AugmentRecord test
     @Test
     public void testAugmentRecord () {
@@ -62,8 +72,8 @@ public class ModelXMLReaderTest extends ModelAssertions {
     @Test
     public void testChildPropAssoc () {
         var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File(resDN, "class.cmf"));
-        checkClass(model);
+        var model = rdr.readFiles(new File(resDN, "childPropAssoc.cmf"));
+        checkChildPropertyAssociation (model);
         assertEmptyLogs();
     }
            

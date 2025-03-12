@@ -317,7 +317,8 @@ public class ModelXMLReader {
                 break;  // Done with Component elements
             }
             // Not a namespace or component; create right kind of object for element
-            if (null == obj) switch (eln) {           
+            if (null == obj) switch (eln) {
+                case "AnyProperty":              obj = new AnyProperty(); break;
                 case "AugmentationRecord":       obj = new AugmentRecord(); break;
                 case "ChildPropertyAssociation": obj = new PropertyAssociation(); break; 
                 case "CodeListBinding":          obj = new CodeListBinding(); break;
@@ -356,20 +357,19 @@ public class ModelXMLReader {
                 case "MaxOccursQuantity": 
                 case "MetadataIndicator":
                 case "MinOccursQuantity": 
-                case "Name":          
+                case "Name":        
+                case "NamespaceConstraintText":
                 case "NamespaceLanguageName":
                 case "NamespacePrefixText":                    
                 case "NamespaceURI": 
                 case "NamespaceVersionText":                          
-                case "NonNegativeValue": 
                 case "OrderedPropertyIndicator":
-                case "PositiveValue":
+                case "ProcessingCode":
                 case "RefAttributeIndicator":
                 case "ReferenceCode":
                 case "RelationshipIndicator":
                 case "SourceCitationText":
-                case "SourceURI":
-                case "StringValue":    
+                case "SourceURI":   
                 case "TermLiteralText":
                 case "TermName":
                 case "WhiteSpaceValueCode":
