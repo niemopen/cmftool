@@ -23,10 +23,10 @@
  */
 package org.mitre.niem.cmf;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -37,7 +37,7 @@ import org.w3c.dom.Element;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Datatype extends Component {
-    static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(Datatype.class);   
+    static final Logger LOG = LogManager.getLogger(Datatype.class);   
     
     public Datatype () { super(); }
     public Datatype (String outsideURI) { super(outsideURI); }
@@ -51,12 +51,14 @@ public class Datatype extends Component {
     public boolean isDatatype ()        { return true; }
     
     // Override these in derived class (ListType, Restriction, Union)
-    public Datatype itemType ()         { LOG.error("{} is not a ListType", qname()); return new Datatype(); }
-    public boolean isOrdered ()         { LOG.error("{} is not a ListType", qname()); return false; }
-    public List<Datatype> memberL ()    { LOG.error("{} is not a Union", qname()); return new ArrayList<>(); }
-    public Datatype base ()             { LOG.error("{} is not a Restriction", qname()); return new Datatype(); }
-    public List<Facet> facetL()         { LOG.error("{} is not a Restriction", qname()); return new ArrayList<>(); }
-    public CodeListBinding codeListBinding () { LOG.error("{} is not a Restriction", qname()); return new CodeListBinding(); }
+    public Datatype itemType ()                 { return null; }
+    @Override
+    public boolean isOrdered ()                 { return false; }
+    public List<Datatype> memberL ()            { return null; }
+    public Datatype base ()                     { return null; }
+    public List<Facet> facetL()                 { return null; }
+    @Override
+    public CodeListBinding codeListBinding ()   { return null; }
     
     
     @Override
@@ -72,6 +74,7 @@ public class Datatype extends Component {
         return true;
     }
     
+    @Override
     public boolean addToListType (String eln, String loc, ListType lt) {
         lt.setItemType(this);
         return true;

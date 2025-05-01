@@ -1,0 +1,52 @@
+plugins {
+    id 'application'
+    id 'distribution'
+}
+
+repositories {
+    mavenCentral()
+}
+
+compileJava {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
+project.version = '1.0-beta.1'
+
+dependencies {
+    implementation project(':lib-util')
+    implementation 'net.sf.saxon:Saxon-HE:12.5'
+    implementation 'org.jcommander:jcommander:2.0'
+    implementation 'commons-io:commons-io:2.18.0'
+    implementation 'org.apache.commons:commons-lang3:3.17.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.24.3'
+    implementation 'org.apache.logging.log4j:log4j-api:2.24.3'
+}
+
+application {
+    applicationName = 'scheval'
+    mainClass = 'org.mitre.niem.scheval.SCHEval'
+}
+
+distributions {
+    main {
+        distributionBaseName = 'scheval'
+    }
+}
+
+
+
+jar {
+    manifest {
+        attributes 'Implementation-Version': String.format('%s (%tF)', project.version, java.time.LocalDateTime.now()),
+                   'Implementation-Title': 'SCHEval'
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

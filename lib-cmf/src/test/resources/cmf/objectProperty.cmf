@@ -12,14 +12,17 @@
       ObjectProperty test schema. 
       Test abstract, relationship, reference code.
     </DocumentationText>
-    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>objectProperty.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
+    <NIEMVersionName>NIEM6.0</NIEMVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
   <DataProperty structures:id="test.DataProperty">
     <Name>DataProperty</Name>
@@ -53,11 +56,16 @@
     <ReferenceCode>NONE</ReferenceCode>
     <Class structures:ref="test.TestType" xsi:nil="true"/>
   </ObjectProperty>
+  <ObjectProperty structures:id="test.OProp5">
+    <Name>OProp5</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <SubPropertyOf structures:ref="test.OProp1" xsi:nil="true"/>
+    <Class structures:ref="test.TestType" xsi:nil="true"/>
+  </ObjectProperty>
   <Class structures:id="test.TestType">
     <Name>TestType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <DeprecatedIndicator>true</DeprecatedIndicator>
-    <ReferenceCode>ANY</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="test.DataProperty" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>

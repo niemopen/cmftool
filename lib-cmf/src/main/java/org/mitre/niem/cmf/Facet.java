@@ -33,7 +33,7 @@ import org.mitre.niem.xml.LanguageString;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class Facet extends CMFObject {
+public class Facet extends CMFObject implements Comparable<Facet> {
     
     public Facet () { }
     
@@ -68,6 +68,15 @@ public class Facet extends CMFObject {
     public boolean addToRestriction (String eln, String loc, Restriction r) {
         r.addFacet(this);
         return true;
+    }
+
+    @Override
+    public int compareTo (Facet o) {
+        int rv = this.category.compareTo(o.category);
+        if (0 == rv && "enumeration".equals(category)) {
+            rv = this.value.compareTo(o.value);
+        }
+        return rv;
     }
 
 }

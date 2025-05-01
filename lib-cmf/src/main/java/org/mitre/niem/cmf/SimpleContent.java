@@ -121,12 +121,23 @@ public class SimpleContent extends CMFObject {
         return false;
     }
     
+    @Override
     public boolean addToFacet (String eln, String loc, Facet f) {
         switch (eln) {
         case "DocumentationText":   f.addDocumentation(this.raw(), this.lang()); break;
         case "FacetCategoryCode":   f.setCategory(this.content()); break; 
         case "FacetValue":          f.setValue(this.content()); break;
         default: error("Facet", loc, eln);
+        }
+        return true;
+    }
+    
+    @Override
+    public boolean addToImportDoc (String eln, String loc, ImportDoc d) {
+        switch (eln) {
+        case "DocumentationText":   d.addDocumentation(this.raw(), this.lang()); break;
+        case "NamespaceURI":        d.setURI(this.content()); break;
+        default: error("ImportDoc", loc, eln);
         }
         return true;
     }
@@ -144,7 +155,7 @@ public class SimpleContent extends CMFObject {
     public boolean addToLocalTerm (String eln, String loc, LocalTerm lt) {
         switch (eln) {
         case "DocumentationText":   lt.setDocumentation(this.content()); break;
-        case "SourceCitationText":  lt.addCitation(this.content()); break; 
+        case "SourceCitationText":  lt.addCitation(this.raw(), this.lang()); break; 
         case "SourceURI":           lt.addSource(this.content()); break;
         case "TermLiteralText":     lt.setLiteral(this.content()); break;
         case "TermName":            lt.setTerm(this.content()); break;
@@ -159,11 +170,12 @@ public class SimpleContent extends CMFObject {
         case "ConformanceTargetURI":    n.addConformanceTarget(this.content()); break;
         case "DocumentationText":       n.addDocumentation(this.raw(), this.lang()); break;
         case "DocumentFilePathText":    n.setDocumentFilePath(this.content()); break;
-        case "ImportDocumentationText": n.addImportDocumentation(this.content(), this.lang()); break;
+        case "NamespaceCategoryCode":   n.setKindCode(this.content()); break;
         case "NamespaceLanguageName":   n.setLanguage(this.content()); break;
         case "NamespacePrefixText":     n.setPrefix(this.content()); break;
         case "NamespaceVersionText":    n.setVersion(this.content()); break;
         case "NamespaceURI":            n.setURI(this.content()); break;
+        case "NIEMVersionName":         n.setNIEMVersion(this.content()); break;
         default: error("Namespace", loc, eln);
         }
         return true;

@@ -6,7 +6,7 @@
 
   <!-- $Id: catalog.xsd,v 1.15 2005/10/07 13:27:08 ndw Exp $ -->
 
-  <xs:import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="./namespace.xsd"/>
+  <!--<xs:import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="./xml.xsd"/>-->
 
   <xs:simpleType name="pubIdChars">
     <!-- A string of the characters defined as pubIdChar in production 13

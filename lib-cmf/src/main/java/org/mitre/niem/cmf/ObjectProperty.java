@@ -40,14 +40,20 @@ public class ObjectProperty extends Property {
     public ObjectProperty (Namespace ns, String name) { super(ns,name); }
 
     @Override
-    public int getType () { return CMF_OBJECTPROP; }
+    public int getType ()                       { return CMF_OBJECTPROP; }
     @Override
-    public String cmfElement () { return "ObjectProperty"; }
+    public String cmfElement ()                 { return "ObjectProperty"; }
+    @Override
+    public boolean isObjectProperty ()          { return true; }
     
     private ClassType classType = null;         // cmf:Class
     private String refCode = "";                // cmf:ReferenceCode
     
+    @Override
+    public Component type()                     { return classType; }
+    @Override
     public ClassType classType ()               { return classType; }
+    @Override
     public String referenceCode ()              { return refCode; }
     
     public void setClassType (ClassType c)      { classType = c; }

@@ -20,10 +20,22 @@
   <xs:import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="niem/external/xml.xsd"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
-  <xs:complexType name="FooTopType">
+  <xs:complexType name="FooBottomType">
     <xs:simpleContent>
-      <xs:extension base="test:FooMiddleType">
-        <xs:attribute ref="test:personNameInitialIndicator" use="optional"/>
+      <xs:extension base="niem-xs:string"/>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:simpleType name="FooCodeSimpleType">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="GB"/>
+      <xs:enumeration value="US"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="FooCodeType">
+    <xs:simpleContent>
+      <xs:extension base="test:FooCodeSimpleType">
+        <xs:attribute ref="test:personNameInitialIndicator"/>
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
@@ -32,9 +44,11 @@
       <xs:extension base="test:FooBottomType"/>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:complexType name="FooBottomType">
+  <xs:complexType name="FooTopType">
     <xs:simpleContent>
-      <xs:extension base="niem-xs:string"/>
+      <xs:extension base="test:FooMiddleType">
+        <xs:attribute ref="test:personNameInitialIndicator" use="optional"/>
+      </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
   <xs:complexType name="PersonNameTextType">

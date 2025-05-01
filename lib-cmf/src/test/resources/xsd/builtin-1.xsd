@@ -12,7 +12,10 @@
   version="1"
   xml:lang="en-US">   
   <xs:annotation>
-    <xs:documentation>builtIn test schema. Test generation of builtin schema namespaces.</xs:documentation>
+    <xs:documentation>
+      Test generation of builtin schema namespaces.
+      Conflicting appinfo namespace declarations.
+    </xs:documentation>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="../xsd6/niem/adapters/niem-xs.xsd"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="../xsd6/niem/utility/structures.xsd"/>

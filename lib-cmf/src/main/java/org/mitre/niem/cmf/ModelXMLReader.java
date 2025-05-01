@@ -26,12 +26,14 @@ package org.mitre.niem.cmf;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.cmf.CMFObject.CMF_CLASS;
 import static org.mitre.niem.cmf.CMFObject.CMF_DATAPROP;
 import static org.mitre.niem.cmf.CMFObject.CMF_LIST;
@@ -56,7 +58,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelXMLReader {
-    static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(ModelXMLReader.class);   
+    static final Logger LOG = LogManager.getLogger(ModelXMLReader.class);   
 
     public ModelXMLReader () { }
     
@@ -69,31 +71,35 @@ public class ModelXMLReader {
      * @param cmfFL - list of File objects
      * @return Model object, or null upon fatal error.
      */
-    public Model readFiles(File... cmfFL) {
+    public Model readFiles(List<File> cmfFL) {
         model    = new Model();
         execute(cmfFL);
         if (ok) return model;
         return null;        
     }
     
+    public Model readFiles (File cmfF) {
+        return readFiles(List.of(cmfF));
+    }
+    
     public Model addFile (Model m, File cmfF) {
         model = m;
-        execute(cmfF);
+        execute(List.of(cmfF));
         if (ok) return model;
         return null;
     }
 
-    private void execute (File... cmfFL) {
+    private void execute (List<File> cmfFL) {
         // Three phases to creating a Model object from one or more CMF files.
         //   1. Create all the Namespace objects
         //   2. Create all the Component objects
         //   3. Fully populate all objects
         ok = true;
         idmaps   = new HashMap<>();
-        for (int i = 0; i < cmfFL.length; i++) idmaps.put(cmfFL[i], new HashMap<>());
-        for (int i = 0; ok && i < cmfFL.length; i++) createNamespaces(cmfFL[i]);
-        for (int i = 0; ok && i < cmfFL.length; i++) createComponents(cmfFL[i]);
-        for (int i = 0; ok && i < cmfFL.length; i++) instantiateObjects(cmfFL[i]);
+        for (var f : cmfFL) idmaps.put(f, new HashMap<>());
+        for (var f : cmfFL) createNamespaces(f);
+        for (var f : cmfFL) createComponents(f);
+        for (var f : cmfFL) instantiateObjects(f);
     }
 
     // First phase: parse all CMF files to create Namespace objects from elements.
@@ -106,6 +112,12 @@ public class ModelXMLReader {
     private void createNamespaces (File cmfF) {
         var hndlr = new NamespaceHandler(idmaps.get(cmfF));
         saxParse(cmfF, hndlr);
+    }
+
+    private static class ImportDocumentation extends CMFObject {
+
+        public ImportDocumentation() {
+        }
     }
     private class NamespaceHandler extends CMFHandler {
 
@@ -323,6 +335,7 @@ public class ModelXMLReader {
                 case "ChildPropertyAssociation": obj = new PropertyAssociation(); break; 
                 case "CodeListBinding":          obj = new CodeListBinding(); break;
                 case "Facet":                    obj = new Facet(); break;
+                case "ImportDocumentation":      obj = new ImportDoc(); break;
                 case "List":                     obj = new Datatype(); break;
                 case "LocalTerm":                obj = new LocalTerm(); break;
                 case "Model":                    obj = new Model(); break;
@@ -353,16 +366,17 @@ public class ModelXMLReader {
                 case "FacetCategoryCode":
                 case "FacetValue":
                 case "GlobalClassCode":
-                case "ImportDocumentationText":
                 case "MaxOccursQuantity": 
                 case "MetadataIndicator":
                 case "MinOccursQuantity": 
                 case "Name":        
                 case "NamespaceConstraintText":
+                case "NamespaceCategoryCode":
                 case "NamespaceLanguageName":
                 case "NamespacePrefixText":                    
                 case "NamespaceURI": 
-                case "NamespaceVersionText":                          
+                case "NamespaceVersionText":   
+                case "NIEMVersionName":
                 case "OrderedPropertyIndicator":
                 case "ProcessingCode":
                 case "RefAttributeIndicator":
@@ -374,10 +388,6 @@ public class ModelXMLReader {
                 case "TermName":
                 case "WhiteSpaceValueCode":
                     obj = new SimpleContent(eln, lang);
-                    break;
-                case "NIEMVersionText":             // REMOVE -- FIXME
-                case "NamespaceCategoryCode":
-                    obj = null;
                     break;
                 default:
                     fail("%s is not a CMF element", eln);
@@ -405,7 +415,7 @@ public class ModelXMLReader {
             SAXParser saxp = ParserBootstrap.sax2Parser();
             saxp.parse(cmfF, h);
         } catch (ParserConfigurationException ex) {
-            LOG.error("internal error: {}", ex.getMessage()); ok = false;
+            LOG.error("Internal parser error: {}", ex.getMessage()); ok = false;
         } catch (IOException ex) {
             LOG.error("{}: i/o error: {}", cmfF.getName(), ex.getMessage()); ok = false;
         } catch (SAXException ex) {

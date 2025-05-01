@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
   targetNamespace="http://example.com/test/"
-  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
   xmlns:clsa="https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/appinfo/"
   xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
   xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
@@ -26,21 +25,21 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:restriction base="niem-xs:token">
-        <xs:enumeration value="GB"></xs:enumeration>
-        <xs:enumeration value="US"></xs:enumeration>
+        <xs:enumeration value="GB"/>
+        <xs:enumeration value="US"/>
       </xs:restriction>
     </xs:simpleContent>
   </xs:complexType>
   <xs:complexType name="TCodeList3Type">
     <xs:annotation>
       <xs:appinfo>
-        <clsa:SimpleCodeListBinding codeListURI="http://list.uri" columnName="key" />
+        <clsa:SimpleCodeListBinding codeListURI="http://list.uri" columnName="key"/>
       </xs:appinfo>
     </xs:annotation>
     <xs:simpleContent>
       <xs:restriction base="niem-xs:token">
-        <xs:enumeration value="GB"></xs:enumeration>
-        <xs:enumeration value="US"></xs:enumeration>
+        <xs:enumeration value="GB"/>
+        <xs:enumeration value="US"/>
       </xs:restriction>
     </xs:simpleContent>
   </xs:complexType>

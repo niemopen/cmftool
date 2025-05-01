@@ -14,6 +14,8 @@
   version="1"
   xml:lang="en-US">   
   <xs:annotation>
-    <xs:documentation>NIEM version test schema. Has conflicting CTAs.</xs:documentation>
+    <xs:documentation>NIEM version test schema. Has conflicting structures imports.</xs:documentation>
   </xs:annotation>
+  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/structures-5.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/structures-6.xsd"/>
 </xs:schema>

@@ -28,6 +28,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.TransformerFactory;
 import org.apache.xerces.xs.XSImplementation;
 import org.apache.xerces.xs.XSLoader;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
@@ -50,11 +51,13 @@ public class ParserBootstrap {
     public static final int BOOTSTRAP_XERCES_XS = 1;
     public static final int BOOTSTRAP_SAX2 = 2;
     public static final int BOOTSTRAP_DOCUMENTBUILDER = 4;
-    public static final int BOOTSTRAP_ALL = 7;
+    public static final int BOOTSTRAP_TRANSFORMERFACTORY = 8;
+    public static final int BOOTSTRAP_ALL = 15;
     
     private XSImplementation xsimpl = null;          // Xerces XSImplementation, for creating XSLoader object
     private SAXParserFactory sax2Fact = null;
     private DocumentBuilder db = null;
+    private TransformerFactory tfact = null;
     
     private ParserBootstrap () { }
     
@@ -76,9 +79,11 @@ public class ParserBootstrap {
      * @throws ParserConfigurationException 
      */
     public static void init (int which) throws ParserConfigurationException {
- 
-        if (0 != (which | BOOTSTRAP_XERCES_XS) && null == Holder.instance.xsimpl) {
-            System.setProperty(DOMImplementationRegistry.PROPERTY, "org.apache.xerces.dom.DOMXSImplementationSourceImpl");
+        System.setProperty("javax.xml.parsers.SAXParserFactory", "org.apache.xerces.jaxp.SAXParserFactoryImpl");
+        System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "org.apache.xerces.jaxp.DocumentBuilderFactoryImpl");            
+        System.setProperty("javax.xml.transform.TransformerFactory", "org.apache.xalan.processor.TransformerFactoryImpl");
+        
+        if (0 != (which & BOOTSTRAP_XERCES_XS) && null == Holder.instance.xsimpl) {
             DOMImplementationRegistry direg;
             try {
                 direg = DOMImplementationRegistry.newInstance();
@@ -87,25 +92,27 @@ public class ParserBootstrap {
                 throw new ParserConfigurationException("Can't initializte Xerces XML Schema parser implementation: " + ex.getMessage());
             }
         }
-        if (0 != (which | BOOTSTRAP_SAX2) && null == Holder.instance.sax2Fact) {
+        if (0 != (which & BOOTSTRAP_SAX2) && null == Holder.instance.sax2Fact) {
             try {
                 Holder.instance.sax2Fact = SAXParserFactory.newInstance();
                 Holder.instance.sax2Fact.setNamespaceAware(true);
                 Holder.instance.sax2Fact.setValidating(false);
                 SAXParser saxp = Holder.instance.sax2Fact.newSAXParser();
             } catch (ParserConfigurationException | SAXException ex) {
-                throw new ParserConfigurationException("Can't initialize suitable SAX2 parser: " + ex.getMessage());
+                throw new ParserConfigurationException("Can't initialize SAX2 parser: " + ex.getMessage());
             }
         }       
-        if (0 != (which | BOOTSTRAP_DOCUMENTBUILDER)) {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setNamespaceAware(true);
+        if (0 != (which & BOOTSTRAP_DOCUMENTBUILDER) && null == Holder.instance.db) {
+            var dbf = docBuilderFactory();
             try {
                 Holder.instance.db = dbf.newDocumentBuilder();
             }
             catch (ParserConfigurationException ex) {
                 throw new ParserConfigurationException("Can't initialize DocumentBuilder: " + ex.getMessage());
             }
+        }
+        if (0 != (which & BOOTSTRAP_TRANSFORMERFACTORY) || null == Holder.instance.tfact) {           
+            Holder.instance.tfact = TransformerFactory.newInstance();
         }
     }
     
@@ -141,6 +148,28 @@ public class ParserBootstrap {
         init(BOOTSTRAP_DOCUMENTBUILDER);
         Holder.instance.db.reset();
         return Holder.instance.db;
+    }
+    
+    public static TransformerFactory transFactory () {
+        try {
+            init(BOOTSTRAP_TRANSFORMERFACTORY);
+        } catch (ParserConfigurationException ex) { } // CAN'T HAPPEN
+        return Holder.instance.tfact;
+    }
+    
+    /**
+     * Returns a DocumentBuilderFactory configured to produce a DocumentBuilder that
+     * ignores entities and DTDs. Call this if you need to set the XSD schema for a parser.
+     * @return DocumentBuilderFactory
+     * @throws ParserConfigurationException 
+     */
+    public static DocumentBuilderFactory docBuilderFactory () throws ParserConfigurationException {
+        var dbf = DocumentBuilderFactory.newInstance();
+        dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        dbf.setNamespaceAware(true);   
+        return dbf;
     }
 
 }

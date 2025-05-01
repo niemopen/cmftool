@@ -25,6 +25,7 @@ package org.mitre.niem.cmf;
 
 import java.util.HashSet;
 import java.util.Set;
+import org.mitre.niem.utility.NaturalOrderComparator;
 
 /**
  * A class for an AugmentationRecord object in a CMF model.
@@ -75,6 +76,6 @@ public class AugmentRecord extends PropertyAssociation implements Comparable<Aug
     public int compareTo(AugmentRecord o) {
         int rv = 0;
         if (null != this.classType && null != o.classType) rv = this.classType.compareTo(o.classType);
-        if (0 == rv) rv = this.property().qname().compareTo(o.property().qname());
+        if (0 == rv) rv = NaturalOrderComparator.comp(this.index(), o.index());
         return rv;}
 }

@@ -24,17 +24,11 @@
 package org.mitre.niem.xml;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.util.Map;
+import java.io.Writer;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.transform.OutputKeys;
@@ -45,6 +39,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -59,48 +54,29 @@ import org.w3c.dom.Node;
  */
 public class XMLWriter {
     
-    static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(XMLWriter.class);    
-    
-    protected final Document dom;
-    protected final OutputStream os;
-    protected BufferedWriter ow = null;
-    private boolean rootLine = true;
+    static final Logger LOG = LogManager.getLogger(XMLWriter.class);    
+
+    public XMLWriter () { }
     
     /**
-     * Constructor
-     * @param dom - Document to write
-     * @param os - Stream for output
-     */
-    public XMLWriter(Document dom, OutputStream os) {
-        this.dom = dom;
-        this.os = os;
-    }
-    
-    /**
-     * Write the Document to the output stream.
+     * Write the Document to the output writer.
      * @throws IOException 
      */
-    public void writeXML () throws IOException {
-          
-        // Make sure the output encoding will be UTF-8
-        try {
-            var osw = new OutputStreamWriter(os, "UTF-8");
-            ow = new BufferedWriter(osw);
-        } catch (UnsupportedEncodingException ex) {     // SHOULDN'T HAPPEN
-            LOG.error("can't write UTF-8 to output stream: " + ex.getMessage());
-            return;
-        }
+    public void writeXML (Document dom, Writer w) throws IOException {
+
         // Generate XML text from the document
-        StringWriter ostr = new StringWriter();
-        Transformer tr = null;
+        var ostr      = new StringWriter();
+        var transFact = ParserBootstrap.transFactory();
+        Transformer trans = null;
         try {
-            tr = TransformerFactory.newInstance().newTransformer();
-            tr.setOutputProperty(OutputKeys.INDENT, "yes");
-            tr.setOutputProperty(OutputKeys.METHOD, "xml");
-            tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            tr.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-            tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            tr.transform(new DOMSource(dom), new StreamResult(ostr));      
+            dom.getDocumentElement().normalize();
+            trans = transFact.newTransformer();
+            trans.setOutputProperty(OutputKeys.INDENT, "yes");
+            trans.setOutputProperty(OutputKeys.METHOD, "xml");
+            trans.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            trans.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            trans.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            trans.transform(new DOMSource(dom), new StreamResult(ostr));      
         } catch (TransformerConfigurationException ex) {
             LOG.error("can't configure Transformer: " + ex.getMessage());
             return;
@@ -108,8 +84,8 @@ public class XMLWriter {
             LOG.error("DOM transformation error: " + ex.getMessage());
             return;
         }
-        // Write our own XML declaration, without @standalone
-        ow.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        //Write our own XML declaration, without @standalone
+        w.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         
         // If the input document begins with a comment, then there may be
         // no newline between the --> and the start of the first element.
@@ -122,57 +98,59 @@ public class XMLWriter {
             if (m.find()) {
                 var s = ln.substring(0, m.end()-2);
                 ln = ln.substring(m.end()-2);
-                ow.write(s);
-                ow.write("\n");
+                w.write(s);
+                w.write("\n");
                 break;
             }
             m = tagPat.matcher(ln);
             if (m.lookingAt()) break;
-            ow.write(ln);
-            ow.write("\n");
+            w.write(ln);
+            w.write("\n");
             ln = br.readLine();
         }
-        // Now we should have the line with the document element        
-        do {
-            if (!ln.isBlank()) handleLine(ln);
-            ln = br.readLine();
-        } while (null != ln);
-        ow.flush();
+        // Now we should have the line with the document element
+        handleFirstLine(ln, w);
+        
+        while (null != (ln = br.readLine())) {
+            if (ln.isBlank()) continue;
+            handleOtherLines(ln, w);
+        }
     }
     
     private static Pattern commentTagPat = Pattern.compile("-->\\s*<\\w");
     private static Pattern tagPat = Pattern.compile("^\\s*<\\w\\S+\\s*");
     
-    // Second line in the transformer output is the root element.
+    // First line after the XML declaration and comments is the root element.
     // Rewrite to have namespace declarations and attributes on separate lines.
     // You can't handle arbitrary XML with regexes, but it works here.
-    protected void handleLine (String ln) throws IOException {
-        if (!rootLine) { 
-            ow.write(ln);
-            ow.write("\n");
-        }
-        else {
-            var m = tagPat.matcher(ln);
-            if (m.lookingAt()) {
-                var tag = m.group(0);
-                var rest = ln.substring(tag.length());
-                var amap = keyValMap(rest);
-                ow.write(tag);
-                for (Map.Entry<String,String>me : amap.entrySet()) {
-                    var key = me.getKey();
-                    if ("xmlns".equals(key) || key.startsWith("xmlns:"))
-                        ow.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
-                }                
-                for (Map.Entry<String,String>me : amap.entrySet()) {
-                    var key = me.getKey();
-                    if (!"xmlns".equals(key) && !key.startsWith("xmlns:"))
-                        ow.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
+    protected void handleFirstLine (String ln, Writer w) throws IOException {
+        var m = tagPat.matcher(ln);
+        if (m.lookingAt()) {
+            var tag = m.group(0);
+            var rest = ln.substring(tag.length());
+            var amap = keyValMap(rest);
+            w.write(tag);
+            
+            // First write all the namespace declarations
+            for (var me : amap.entrySet()) {
+                var key = me.getKey();
+                if ("xmlns".equals(key) || key.startsWith("xmlns:")) {
+                    w.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
                 }
-                ow.write(">\n");
-                int i = 0;
-                rootLine = false;
             }
+            // Then write all the attributes
+            for (var me : amap.entrySet()) {
+                var key = me.getKey();
+                if (!"xmlns".equals(key) && !key.startsWith("xmlns:")) {
+                    w.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
+                }
+            }
+            w.write(">\n");
         }
+    }
+    
+    protected void handleOtherLines (String ln, Writer w) throws IOException {
+        w.write(ln + "\n");
     }
     
     // Breaks a string of key="value" pairs into a sorted map

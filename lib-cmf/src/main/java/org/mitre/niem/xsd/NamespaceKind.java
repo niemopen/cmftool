@@ -23,10 +23,16 @@
  */
 package org.mitre.niem.xsd;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import static org.mitre.niem.xsd.NIEMConstants.CTAS30;
+import static org.mitre.niem.xsd.NIEMConstants.CTAS60;
 
 /**
  *
@@ -34,13 +40,48 @@ import org.apache.logging.log4j.LogManager;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class NamespaceKind {
-    static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(NIEMSchemaDocument.class);
+    static final Logger LOG = LogManager.getLogger(NamespaceKind.class);
+    
+    private static final String[] ctaNSU = {
+      "NIEM6.0", CTAS60,
+      "NIEM5.0", CTAS30,
+      "NIEM4.0", CTAS30,
+      "NIEM3.0", CTAS30
+    };
     
     private static final String[] ctaPrefix = {
       "NIEM6.0", "https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/",
       "NIEM5.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/",
       "NIEM4.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/4.0/",
-      "NIEM3.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/3.0/" };
+      "NIEM3.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/3.0/" 
+    };
+    
+    private static final String[] ctaSuffix = {
+        "#ReferenceSchemaDocument", "#ExtensionSchemaDocument", "#SubsetSchemaDocument" 
+    };
+    
+    public static String versionToCtNsURI (String version) {
+        for (int i = 0; i < ctaNSU.length; i += 2) {
+            if (ctaNSU[i].equals(version)) return ctaNSU[i+1];
+        }
+        return "";
+    }
+    
+    /**
+     * Returns true for a URI that is a conformance target identifier for a schema
+     * document defining a NIEM model namespace.
+     * @param u
+     * @return 
+     */
+    public static boolean isModelCTA (String u) {
+        for (int i = 0; i < ctaPrefix.length; i++) {
+            if (!u.startsWith(ctaPrefix[i])) continue;
+            for (int j = 0; j < ctaSuffix.length; j++) {
+                if (u.equals(ctaPrefix[i]+ctaSuffix[j])) return true;
+            }
+        }
+        return false;
+    }
     
     /**
      * Returns a NIEM version ("NIEM6.0", etc.) from a conformance target assertion.
@@ -92,7 +133,7 @@ public class NamespaceKind {
     public final static int NSK_APPINFO    = 4;     // appinfo
     public final static int NSK_CLSA       = 5;     // code lists schema appinfo
     public final static int NSK_CLI        = 6;     // code lists instance 
-    public final static int NSK_PROXY      = 7;     // proxy
+    public final static int NSK_NIEM_XS    = 7;     // proxy
     public final static int NSK_STRUCTURES = 8;     // structures
     public final static int NSK_XSD        = 9;     // namespace for XSD datatypes
     public final static int NSK_XML        = 10;    // namespace for xml: attributes
@@ -109,7 +150,7 @@ public class NamespaceKind {
             "APPINFO",
             "CLSA",
             "CLI", 
-            "PROXY",
+            "NIEM-XS",
             "STRUCTURES",
             "XSD",
             "XML",
@@ -160,51 +201,76 @@ public class NamespaceKind {
         return false;
     }
     
+    // The known versions and builtin codes.  Builtin codes are the same as the
+    // preferred namespace prefix when made lowercase.
     private static Set<String> versions = Set.of("NIEM6.0", "NIEM5.0", "NIEM4.0", "NIEM3.0");
-    private static Set<String> builtins = Set.of("APPINFO", "CLSA", "CLI", "PROXY", "STRUCTURES");
+    private static Set<String> builtins = Set.of("APPINFO", "CLSA", "CLI", "NIEM-XS", "STRUCTURES", "XML");
     public static Set<String> knownVersions() { return versions; }
     public static Set<String> builtins() { return builtins; }
+    
+    // A model with namespaces from different versions needs different directories
+    // for the builtin schema documents.  Each builtin document has a usual path
+    // within the version directory.
+    private static final Map<String,String> versDir = Map.of(
+        "NIEM6.0", "niem6/",
+        "NIEM5.0", "niem5/",
+        "NIEM4.0", "niem4/",
+        "NIEM3.0", "niem3/");
+    private static final Map<String,String> builtinPath = Map.of(
+        "APPINFO",    "utility/appinfo.xsd",
+        "CLSA",       "utility/code-lists-schema-appinfo.xsd",
+        "CLI",        "utility/code-lists-instance.xsd",
+        "NIEM-XS",    "adapters/niem-xs.xsd",
+        "STRUCTURES", "utility/structures.xsd",
+        "XML",        "external/xml.xsd"
+    );
+    public static Map<String,String> versionDirName ()  { return versDir; }
+    public static Map<String,String> builtinPath ()     { return builtinPath; }
 
     private static final String[] builtinTab = { 
       "NIEM6.0", "APPINFO",    "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",   
       "NIEM6.0", "CLSA",       "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/appinfo/",
       "NIEM6.0", "CLI",        "https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/",
-      "NIEM6.0", "PROXY" ,     "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
+      "NIEM6.0", "NIEM-XS",    "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
       "NIEM6.0", "STRUCTURES", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
 
       "NIEM5.0", "APPINFO",    "http://release.niem.gov/niem/appinfo/5.0/",   
       "NIEM5.0", "CLSA",       "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
       "NIEM5.0", "CLI",        "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
-      "NIEM5.0", "PROXY",      "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
+      "NIEM5.0", "NIEM-XS",    "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
       "NIEM5.0", "STRUCTURES", "http://release.niem.gov/niem/structures/5.0/",
 
       "NIEM4.0", "APPINFO",     "http://release.niem.gov/niem/appinfo/4.0/",   
       "NIEM4.0", "CLSA",        "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
       "NIEM4.0", "CLI",         "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
-      "NIEM4.0", "PROXY" ,      "http://release.niem.gov/niem/proxy/xsd/4.0/",
+      "NIEM4.0", "NIEM-XS",     "http://release.niem.gov/niem/proxy/xsd/4.0/",
       "NIEM4.0", "STRUCTURES",  "http://release.niem.gov/niem/structures/4.0/",    
       
       "NIEM3.0", "APPINFO",    "http://release.niem.gov/niem/appinfo/3.0/",   
-      "NIEM3.0", "PROXY",      "http://release.niem.gov/niem/proxy/xsd/3.0/",
+      "NIEM3.0", "NIEM-XS",    "http://release.niem.gov/niem/proxy/xsd/3.0/",
       "NIEM3.0", "STRUCTURES", "http://release.niem.gov/niem/structures/3.0/" 
     };
     
+    private static final List<Pattern> otherNIEMPat = List.of(
+        Pattern.compile("https://docs.oasis-open.org/niemopen/ns/model/(?!external/)"),
+        Pattern.compile("http://release.niem.gov/niem/(?!external/)")
+    );
+
     private static final String[] modelPrefixTab = {
         "CORE",      "https://docs.oasis-open.org/niemopen/ns/model/niem-core/",
         "CORE",      "http://release.niem.gov/niem/niem-core/",
         "DOMAIN",    "https://docs.oasis-open.org/niemopen/ns/model/domains/",
-        "DOMAIN",    "http://release.niem.gov/niem/domains/",
-        "OTHERNIEM", "https://docs.oasis-open.org/niemopen/ns/model/",
-        "OTHERNIEM", "http://release.niem.gov/niem/" 
+        "DOMAIN",    "http://release.niem.gov/niem/domains/"
     };
     
     /**
      * Returns the namespace URI for the specified NIEM version and builtin kind.
      * Returns empty string if no such builtin namespace.
      */ 
-    public static String builtinNamespace (String version, String kindCode) {
+    public static String builtinNSU (String version, String kindCode) {
         if (!version.isEmpty() && !versions.contains(version)) LOG.error("unknown NIEM version {}", version);
         if (!builtins.contains(kindCode)) LOG.error("unknown builtin kind code {}", kindCode);
+        if ("XML".equals(kindCode)) return XML_NS_URI;
         for (int i = 0; i < builtinTab.length; i += 3) {
             if (builtinTab[i].equals(version) && builtinTab[i+1].equals(kindCode))
                 return builtinTab[i+2];
@@ -239,6 +305,10 @@ public class NamespaceKind {
         }
         for (int i = 0; i < modelPrefixTab.length; i += 2) {
             if (ns.startsWith(modelPrefixTab[i+1])) return modelPrefixTab[i];
+        }
+        for (var pat : otherNIEMPat) {
+            var m = pat.matcher(ns);
+            if (m.lookingAt()) return "OTHERNIEM";
         }
         return "";
     }

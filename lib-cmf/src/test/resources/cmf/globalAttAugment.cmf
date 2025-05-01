@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="test">
+    <NamespaceURI>http://example.com/test/</NamespaceURI>
+    <NamespacePrefixText>test</NamespacePrefixText>
+    <DocumentationText>
+      Attribute augmentation appinfo test
+    </DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>globalAttAugment.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+    <AugmentationRecord>
+      <DataProperty structures:ref="test.aProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentationRecord>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <DataProperty structures:id="test.aProp">
+    <Name>aProp</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="test.TCodeList2Literal">
+    <Name>TCodeList2Literal</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Datatype structures:ref="test.TCodeList2SimpleType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="test.TCodeList3Literal">
+    <Name>TCodeList3Literal</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Datatype structures:ref="test.TCodeList3SimpleType" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="test.TCodeList2Type">
+    <Name>TCodeList2Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.TCodeList2Literal" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="test.TCodeList3Type">
+    <Name>TCodeList3Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.TCodeList3Literal" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Restriction structures:id="test.TCodeList2SimpleType">
+    <Name>TCodeList2SimpleType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
+    <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>GB</FacetValue>
+    </Facet>
+    <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>US</FacetValue>
+    </Facet>
+    <CodeListBinding>
+      <CodeListURI>http://code.list.uri</CodeListURI>
+      <CodeListConstrainingIndicator>true</CodeListConstrainingIndicator>
+    </CodeListBinding>
+  </Restriction>
+  <Restriction structures:id="test.TCodeList3SimpleType">
+    <Name>TCodeList3SimpleType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
+    <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>GB</FacetValue>
+    </Facet>
+    <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>US</FacetValue>
+    </Facet>
+    <CodeListBinding>
+      <CodeListURI>http://list.uri</CodeListURI>
+      <CodeListColumnName>key</CodeListColumnName>
+    </CodeListBinding>
+  </Restriction>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

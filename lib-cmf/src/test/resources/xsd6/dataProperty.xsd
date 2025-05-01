@@ -18,14 +18,20 @@
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
-  <xs:element name="DataProperty" type="niem-xs:string" abstract="true" appinfo:referenceAttributeIndicator="true"/>
-  <xs:element name="DProp2" type="niem-xs:string" nillable="true" appinfo:relationshipPropertyIndicator="false"/>
-  <xs:element name="DProp3" type="niem-xs:string" appinfo:relationshipPropertyIndicator="true" nillable="true"/>
-  <xs:element name="DProp4" type="niem-xs:string" appinfo:referenceAttributeIndicator="true" nillable="true"/>
-  <xs:element name="DProp5" type="niem-xs:string" appinfo:relationshipPropertyIndicator="true" nillable="true"/>
-  <xs:element name="OProp1" type="niem-xs:string" appinfo:referenceCode="ANY"/>
+  <xs:complexType name="DataType">
+    <xs:simpleContent>
+      <xs:restriction base="niem-xs:token">
+        <xs:maxLength value="2"/>
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
   <xs:attribute name="aProp2" type="xs:string" appinfo:referenceAttributeIndicator="false"/>
   <xs:attribute name="aProp3" type="xs:string" appinfo:relationshipPropertyIndicator="true"/>
   <xs:attribute name="aProp4" type="xs:string" appinfo:referenceAttributeIndicator="true"/>
   <xs:attribute name="aProp5" type="xs:string" appinfo:referenceAttributeIndicator="true" appinfo:relationshipPropertyIndicator="true"/>
+  <xs:element name="DataProperty" type="test:DataType" abstract="true" appinfo:referenceAttributeIndicator="true"/>
+  <xs:element name="DProp2" type="niem-xs:string" nillable="true" appinfo:relationshipPropertyIndicator="false"/>
+  <xs:element name="DProp3" type="niem-xs:string" appinfo:relationshipPropertyIndicator="true" nillable="true"/>
+  <xs:element name="DProp4" type="niem-xs:string" appinfo:referenceAttributeIndicator="true" nillable="true"/>
+  <xs:element name="DProp5" type="niem-xs:string" appinfo:relationshipPropertyIndicator="true" nillable="true"/>
 </xs:schema>

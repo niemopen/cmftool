@@ -16,7 +16,12 @@
     <xs:documentation>XMLSchema test.</xs:documentation>
     <xs:documentation xml:lang="fr">Tu n'est pas ma valise.</xs:documentation>
   </xs:annotation>
-  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/" schemaLocation="niem/niem-core.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/" schemaLocation="niem/niem-core-skel.xsd"
+              appinfo:externalImportIndicator="false"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-gml/6.0/" schemaLocation="niem/adapters/niem-gml.xsd"/>
-  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd">
+    <xs:annotation>
+      <xs:documentation>Import documentation.</xs:documentation>
+    </xs:annotation>
+  </xs:import>
 </xs:schema>

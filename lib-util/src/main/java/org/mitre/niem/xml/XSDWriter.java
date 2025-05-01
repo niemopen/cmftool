@@ -24,11 +24,9 @@
 package org.mitre.niem.xml;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.Writer;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.w3c.dom.Document;
 
 /**
  * A class to generate an output stream of lovely XSD from a Document object.
@@ -48,76 +46,96 @@ public class XSDWriter extends XMLWriter {
                 { "xs:import", "namespace", "schemaLocation" },
                 { "xs:complexType", "name", "type" },
                 { "xs:attribute", "name", "ref", "type", "use" },
-                { "xs:choice", "minOccurs", "maxOccurs" }
+                { "xs:choice", "minOccurs", "maxOccurs" },
+                { "appinfo:LocalTerm", "term" }     // different prefix? too bad.
         };
     
-    public XSDWriter (Document d, OutputStream s) {
-        super(d, s);
-    }
+    public XSDWriter () { }
     
     @Override
-    protected void handleLine (String line) throws IOException  {    
-        if (line.isBlank()) return;
-        Matcher lineM = linePat.matcher(line);
-        if (!lineM.matches()) ow.write(line);
-        else {
-            String indent = lineM.group(1);
-            String tag = lineM.group(2);
-            String res = lineM.group(3);
-            String end;
-            res = res.stripTrailing();
-            if (res.endsWith("/>")) end = "/>";
-                else end = ">";
-                res = res.substring(0, res.length() - end.length());
-                for (int i = 0; i < reorder.length; i++) {
-                    if (tag.equals(reorder[i][0])) {
-                        ow.write(indent);
-                        ow.write("<" + tag);
-                        Map<String,String>tmap = keyValMap(res);
-                        for (int j = 1; j < reorder[i].length; j++) {
-                            String key = reorder[i][j];
-                            if (null != tmap.get(key)) {
-                                ow.write(String.format(" %s=\"%s\"", key, tmap.get(key)));
-                                tmap.remove(key);
-                            }
-                        }
-                        for (String key : tmap.keySet()) 
-                            ow.write(String.format(" %s=\"%s\"", key, tmap.get(key)));                     
-                        ow.write(end);
-                        line = null;
-                        i = reorder.length;
+    protected void handleOtherLines (String line, Writer w) throws IOException  {    
+        var lineM = linePat.matcher(line);
+        if (!lineM.matches()) { 
+            w.write(line + "\n");
+            return;
+        }
+        var indent = lineM.group(1);
+        var tag    = lineM.group(2);
+        var res    = lineM.group(3);
+        var end    = ">";
+        res = res.stripTrailing();
+        if (res.endsWith("/>")) end = "/>";
+        res = res.substring(0, res.length() - end.length());
+        
+        for (int i = 0; i < reorder.length; i++) {
+            if (tag.equals(reorder[i][0])) {
+                w.write(indent);
+                w.write("<" + tag);
+                var tmap = keyValMap(res);
+                for (int j = 1; j < reorder[i].length; j++) {
+                    var key = reorder[i][j];
+                    if (null != tmap.get(key)) {
+                        w.write(String.format(" %s=\"%s\"", key, tmap.get(key)));
+                        tmap.remove(key);
                     }
                 }
-                // Rewrite the xs:schema element to make it pretty.
-                // targetNamespace comes first
-                // then namespace declarations, in prefix order, except xs and xsi are last
-                // then everything else, in alphabetical order
-                if (null != line && "xs:schema".equals(tag)) {
-                    ow.write("<xs:schema");
-                    Map<String,String>tmap = keyValMap(res);
-                    var tns = tmap.get("targetNamespace");
-                    if (null != tns) {
-                        ow.write(String.format("\n  targetNamespace=\"%s\"", tns));
-                        tmap.remove("targetNamespace");
-                    }
-                    var xsURI  = tmap.remove("xmlns:xs");
-                    var xsiURI = tmap.remove("xmlns:xsi");
-                    for (Map.Entry<String,String>me : tmap.entrySet()) {
-                        if (me.getKey().startsWith("xmlns:")) 
-                            ow.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
-                    }
-                    if (null != xsURI)  ow.write("\n  xmlns:xs=\"" + xsURI + "\"");
-                    if (null != xsiURI) ow.write("\n  xmlns:xsi=\"" + xsiURI + "\"");
-                    for (Map.Entry<String,String>me : tmap.entrySet()) {
-                        if (!me.getKey().startsWith("xmlns:")) 
-                            ow.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
-                    }     
-                    ow.write(end);
-                    line = null;
-                }
-                if (null != line) ow.write(line);
+                for (var key : tmap.keySet()) 
+                    w.write(String.format(" %s=\"%s\"", key, tmap.get(key)));
+                
+                w.write(end + "\n");
+                line = null;            // this line was reordered
+                i = reorder.length;
             }
-            ow.write("\n");
-        }        
-   
+        }
+        // Write unchanged line if not reordered
+        if (null != line) w.write(line + "\n");
+    }
+
+    // Rewrite the xs:schema element to make it pretty.
+    // targetNamespace comes first
+    // then namespace declarations, in prefix order, except xs and xsi are last
+    // then everything else, in alphabetical order    
+    @Override
+    protected void handleFirstLine (String line, Writer w) throws IOException {
+        var lineM = linePat.matcher(line);
+        if (!lineM.matches()) { 
+            w.write(line + "\n");
+            return;
+        }
+        var indent = lineM.group(1);
+        var tag    = lineM.group(2);
+        var res    = lineM.group(3);
+        var end    = ">";
+        res = res.stripTrailing();
+        if (res.endsWith("/>")) end = "/>";
+        res = res.substring(0, res.length() - end.length());
+        
+        w.write("<xs:schema");
+        var tmap = keyValMap(res);
+        var tns = tmap.get("targetNamespace");
+        if (null != tns) {
+            w.write(String.format("\n  targetNamespace=\"%s\"", tns));
+            tmap.remove("targetNamespace");
+        }
+        var xsURI = tmap.remove("xmlns:xs");
+        var xsiURI = tmap.remove("xmlns:xsi");
+        for (var me : tmap.entrySet()) {
+            if (me.getKey().startsWith("xmlns:")) {
+                w.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
+            }
+        }
+        if (null != xsURI) {
+            w.write("\n  xmlns:xs=\"" + xsURI + "\"");
+        }
+        if (null != xsiURI) {
+            w.write("\n  xmlns:xsi=\"" + xsiURI + "\"");
+        }
+        for (Map.Entry<String, String> me : tmap.entrySet()) {
+            if (!me.getKey().startsWith("xmlns:")) {
+                w.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
+            }
+        }
+        w.write(end + "\n");
+     }
+
 }

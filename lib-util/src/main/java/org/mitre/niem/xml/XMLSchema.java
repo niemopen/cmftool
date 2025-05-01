@@ -55,9 +55,8 @@ import org.apache.xerces.xs.XSLoader;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSNamespaceItem;
 import org.apache.xerces.xs.XSNamespaceItemList;
-import static org.mitre.niem.xml.XMLCatalogResolver.NO_MAP;
-import static org.mitre.niem.xml.XMLCatalogResolver.REMOTE_MAP;
 import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
+import static org.mitre.niem.xml.XMLResolver.*;
 import org.w3c.dom.DOMConfiguration;
 import org.w3c.dom.DOMError;
 import org.w3c.dom.DOMErrorHandler;
@@ -73,7 +72,6 @@ import org.xml.sax.SAXException;
 public class XMLSchema {
     static final String XML_CATALOG_NS_URI = "urn:oasis:names:tc:entity:xmlns:xml:catalog";    
     static final Logger LOG = LogManager.getLogger(XMLSchema.class);
-    private Object URIDecoder;
 
    /**
      * Returns the list of catalog file paths found in the constructor's arguments
@@ -101,7 +99,7 @@ public class XMLSchema {
      * Returns the catalog resolver constructed from the XML catalog files
      * @return resolver
      */
-    public XMLCatalogResolver resolver ()    { return resolver; }
+    public XMLResolver resolver ()          { return resolver; }
      
     // Creating an XMLSchema object (via genSchema) establishes the list of
     // initial catalog files, initial schema documents, and initial namespace URIs.
@@ -111,7 +109,8 @@ public class XMLSchema {
     private final ArrayList<String> catalogs   = new ArrayList<>();     // canonical file URIs for XML catalogs
     private final ArrayList<String> schemaDocs = new ArrayList<>();     // canonical file URIs for schema documents
     private final ArrayList<String> initialNS  = new ArrayList<>();     // list of initial namespace URIs
-    private XMLCatalogResolver resolver = null;
+    private List<String> resmsgL               = null;
+    private XMLResolver resolver               = null;
     
     protected XMLSchema () { }  // no public default constructor
     
@@ -136,17 +135,16 @@ public class XMLSchema {
      * can also be created on demand.
      *
      * @param args List of schema documents, catalogs, namespace URIs
-     * @throws XMLSchema.XMLSchemaException
+     * @throws XMLSchemaException
      */
     public XMLSchema (String... args) throws XMLSchemaException {
         List<Integer> iNSindex = new ArrayList<>();
         
         // Go through the arguments, figure out what they are, validate them
-        for (int i = 0; i < args.length; i++) {
+        for (var arg : args) {
             // Handle an argument in URI syntax.  
             // Anything other than a file: URI is a namespace URI.
             // A file: URI must not have a hostname component (local files only)
-            String arg = args[i];
             String path = null;
             URI u = null;
             try { u = new URI(arg); } catch (URISyntaxException ex) { } // IGNORE
@@ -154,7 +152,7 @@ public class XMLSchema {
                 // File URIs must not have a hostname. Turn it into a path string.
                 if ("file".equals(u.getScheme())) {
                     if (null == u.getHost()) path = u.getPath();
-                    else throw new XMLSchemaException(String.format("hostname not allowed in file URI %s", u.toString()));
+                    else throw new XMLSchemaException(String.format("A hostname is not allowed in file URI %s", u.toString()));
                 } 
                 // Any other URI is an initial namespace URI
                 else {
@@ -164,52 +162,50 @@ public class XMLSchema {
                 }
             } 
             else path = arg;        // not a URI
-            
             // If we have a string with a file: URI or a pathname, it's a catalog 
             // or a schema document. Parse the first element to see which.
             if (null != path) {
-                String furi  = null;        // file URI string constructed from filename path
-                String dkind = null;        // namespace of document element in file
+                String furi   = null;        // file URI string constructed from filename path
+                String docnsU = null;        // namespace of document element in file
                 try {
                     var f  = new File(path);
                     var cf = f.getCanonicalFile();
                     furi = cf.toURI().toString();
                 } catch (IOException ex) {
-                    throw new XMLSchemaException(String.format("can't canonicalize %s: %s", path, ex.getMessage()));
+                    throw new XMLSchemaException(String.format("Can't canonicalize path %s: %s", path, ex.getMessage()));
                 }
                 try {
-                    dkind = XMLDocument.getXMLDocumentElementNamespace(path);
+                    docnsU = XMLDocument.getXMLDocumentElementNamespace(path);
                 } catch (IOException ex) {
-                    throw new XMLSchemaException(String.format("error with %s: %s", path, ex.getMessage()));
+                    throw new XMLSchemaException(String.format("I/O error with %s: %s", path, ex.getMessage()));
                 }
-                if (XML_CATALOG_NS_URI.equals(dkind)) catalogs.add(furi);
-                else if (W3C_XML_SCHEMA_NS_URI.equals(dkind)) schemaDocs.add(furi);
+                if (XML_CATALOG_NS_URI.equals(docnsU)) catalogs.add(furi);
+                else if (W3C_XML_SCHEMA_NS_URI.equals(docnsU)) schemaDocs.add(furi);
                 else throw new XMLSchemaException(String.format("%s is not a schema document or XML catalog", path));
             }
         }
         // Create the resolver object.  OK if there are no catalog files
-        String[] cats = catalogs.toArray(new String[0]);
-        resolver = new XMLCatalogResolver(cats);
+        resolver = new XMLResolver(catalogs);
+        resmsgL  = resolver.allMessages();
 
         // Convert each initial namespace URI to a schema document file URI
         // Check for a vast number of possible errors...
         for (int i = 0; i < initialNS.size(); i++) {
             String ns = initialNS.get(i);
-            String sf = null;
-            try {
-                sf = resolver.resolveURI(ns);
-            } catch (IOException ex) {
-                throw new XMLSchemaException(String.format("catalog i/o error: %s", ex.getMessage()));
-            }
+            String sf = resolver.resolveURI(ns);
+
             if (REMOTE_MAP.equals(sf))
-                throw new XMLSchemaException(String.format("%s resolves to %s -- not a local URI", ns, sf)); 
+                throw new XMLSchemaException(String.format("%s resolves to %s, which is not a local URI", ns, sf)); 
             if (NO_MAP.equals(sf)) 
-                throw new XMLSchemaException(String.format("can't resolve %s", ns));
+                throw new XMLSchemaException(String.format("Can't resolve %s", ns));
+            
+            // Catalog resolution worked, now check syntax of the result
             URI sfu = null;
             try { sfu = new URI(sf); } 
             catch (URISyntaxException ex) { 
-                throw new XMLSchemaException(String.format("%s resolves to %s -- not in URI syntax", ns, sf));
+                throw new XMLSchemaException(String.format("%s resolves to %s, which is not valid URI syntax", ns, sf));
             }
+            // It's a valid local file URI, now see if file is XSD
             try {
                 var dkind = XMLDocument.getXMLDocumentElementNamespace(sfu.getPath());
                 var sftns = XMLDocument.getXSDTargetNamespace(sfu.getPath());
@@ -218,8 +214,9 @@ public class XMLSchema {
                 if (!sftns.equals(ns)) 
                     throw new XMLSchemaException(String.format("%s resolves to %s -- wrong target namespace %s", ns, sf, sftns));                    
             } catch (IOException ex) {
-                throw new XMLSchemaException(String.format("i/o error on %s: %s", sfu.getPath(), ex.getMessage()));
+                throw new XMLSchemaException(String.format("I/O error on %s: %s", sfu.getPath(), ex.getMessage()));
             }
+            // It's a schema document, so fill the hole we left in the list of file URIs.
             int index = iNSindex.get(i);
             schemaDocs.set(index, sfu.toString());
         }
@@ -228,9 +225,9 @@ public class XMLSchema {
         try {
             parseSchemaPile();
         } catch (SAXException ex) {
-            throw new XMLSchemaException("parsing error: " + ex.getMessage());
+            throw new XMLSchemaException("Parsing error: " + ex.getMessage());
         } catch (ParserConfigurationException ex) {
-            throw new XMLSchemaException("internal error: " + ex.getMessage());
+            throw new XMLSchemaException("Internal parser error: " + ex.getMessage());
         } catch (IOException ex) {
             throw new XMLSchemaException(ex.getMessage());
         }
@@ -254,7 +251,7 @@ public class XMLSchema {
         try {
             loader = ParserBootstrap.xsLoader(); // don't reuse these, they keep state
         } catch (ParserConfigurationException ex) {
-            LOG.error("can't create XSLoader: " + ex.getMessage());
+            LOG.error("Can't create Xerces XSLoader: {}", ex.getMessage());
             return null;
         }
         xsmsgs = new ArrayList<>();
@@ -277,9 +274,9 @@ public class XMLSchema {
      * @return list of messages; empty list if none
      */
     public List<String> xsModelMsgs () { if (null == xs) xsmodel(); return xsmsgs; }      
-    
+
     private static class XSModelHandler implements DOMErrorHandler {
-        private List<String> msgs;
+        private final List<String> msgs;
         XSModelHandler (List<String>m) { super(); msgs = m;}
         @Override
         public boolean handleError (DOMError e) {
@@ -317,12 +314,7 @@ public class XMLSchema {
      * @return resolved resource URI string
      */
     public String resolveURI (String uri) {
-        String res = null;
-        try {
-            res = resolver.resolveURI(uri);
-        } catch (IOException ex) {
-            return null;
-        }
+        String res = resolver.resolveURI(uri);
         if ("NO MAP".equals(res)) return null;
         if ("REMOTE RESOURCE".equals(res)) return null;
         return res;
@@ -335,7 +327,7 @@ public class XMLSchema {
         try {
             loader = ParserBootstrap.xsLoader(); // don't reuse these, they keep state
         } catch (ParserConfigurationException ex) {
-            LOG.error("can't create XSLoader: " + ex.getMessage());
+            LOG.error("Can't create Xerces XSLoader: " + ex.getMessage());
             return null;
         }
         var handler = new XSModelHandler(msgs);
@@ -357,6 +349,7 @@ public class XMLSchema {
      * using the schema documents and catalog documents provided as arguments to 
      * the constructor,  Messages from creating the object are retained and available.
      * @return Schema object, or null on error.
+     * @throws org.xml.sax.SAXException
      */    
     public Schema javaxSchema () throws SAXException { 
         if (null != javaxSchema) return javaxSchema;
@@ -380,6 +373,7 @@ public class XMLSchema {
      * Returns a list of messages generated while creating the XSModel object
      * from the schema document pile.
      * @return list of messages; empty list if none
+     * @throws org.xml.sax.SAXException
      */
     public List<String> javaXMsgs () throws SAXException { 
         if (null == javaxSchema) javaxSchema(); 
@@ -387,8 +381,8 @@ public class XMLSchema {
     }     
     
     /**
-     * Validates the XML document in the input string.
-     * Returns a list of validation messages.
+     * Validates the XML document in the input string against the XML schema
+     * represented by this object.  Returns a list of validation messages.
      * Returns an empty list if validation is completely successful.
      * @param doc -- A string containing an XML document
      * @return The list of validation messages
@@ -401,8 +395,8 @@ public class XMLSchema {
     }
     
     /**
-     * Validates the XML document in the input File.
-     * Returns a list of validation messages.
+     * Validates the XML document in the specified file against the XML schema
+     * represented by this object.  Returns a list of validation messages.
      * Returns an empty list if validation is completely successful.
      * @param f -- File containing an XML document
      * @return The list of validation messages
@@ -414,8 +408,8 @@ public class XMLSchema {
     }
     
     /**
-     * Validates the XML document in the input StreamSource.
-     * Returns a list of validation messages.
+     * Validates the XML document in the input StreamSource against the XML schema
+     * represented by this object.  Returns a list of validation messages.
      * Returns an empty list if validation is completely successful.
      * @param src -- StreamSource containing an XML document
      * @return The list of validation messages
@@ -440,15 +434,20 @@ public class XMLSchema {
     
     // Schema pile parsing info is created by the object constructor.
     
-    private Map<String,XMLSchemaDocument> sdocs = null;         // namespace URI -> sdoc object
-    private String pileRoot;                                    // common prefix of all document paths
+    private final List<XMLSchemaDocument> sdocL = new ArrayList<>();    // list of schema document objects
+    private final Map<String,XMLSchemaDocument> sdoc = new HashMap<>(); // namespace URI -> sdoc object
+    private String pileRoot;                                            // common prefix of all document paths
+
+    public List<XMLSchemaDocument> schemaDocumentL () {
+        return sdocL;
+    }
     
     /**
      * Returns the set of target namespace URIs from all documents in the pile.
      * @return set of namespace URIs
      */
-    public Set<String> schemaNamespaceURIs () {
-        return sdocs.keySet();
+    public Set<String> schemaNamespaceUs () {
+        return sdoc.keySet();
     }
     
     /**
@@ -458,10 +457,10 @@ public class XMLSchema {
      * @return XMLSchemaDocument object (or null)
      */
     public XMLSchemaDocument schemaDocument (String nsuri) {
-        return sdocs.get(nsuri);
+        return sdoc.get(nsuri);
     }
     
-     /**
+  /**
      * Returns the file: URI of the root directory of the schema document pile.
      * @return root directory URI string
      */
@@ -470,14 +469,14 @@ public class XMLSchema {
     }
     
     /**
-     * Turns a file URI into a file path relative to the pile root directory.
+     * Turns a file URI string into a file path relative to the pile root directory.
      * Returns an empty string if the URI is not in the pile root directory.
-     * @param docFileURI
+     * @param docFileU
      * @return relative file path
      */
-    public String filePath (String docFileURI) {
-        if (docFileURI.startsWith(pileRoot))
-            return docFileURI.substring(pileRoot.length());
+    public String fileUtoPath (String docFileU) {
+        if (docFileU.startsWith(pileRoot))
+            return docFileU.substring(pileRoot.length());
         return "";
     }
     
@@ -487,18 +486,16 @@ public class XMLSchema {
      * @param sd - XMLSchemaDocument object
      * @return - relative file path
      */
-    public String pilePath (XMLSchemaDocument sd) {
+    public String docFilePath (XMLSchemaDocument sd) {
         var sdUs = sd.docURI().toString();
-        return filePath(sdUs);
+        return fileUtoPath(sdUs);
     }
 
     private void parseSchemaPile () throws SAXException, ParserConfigurationException, IOException, XMLSchemaException {
-        if (null != sdocs ) return;     // already done
         if (null == xs) xsmodel();      // generate the XSModel object if necessary
         if (null == xs) {               // can't create XSModel object!
             throw new XMLSchemaException("unable to create XSModel object");
         }    
-        sdocs = new HashMap<>();
         
         // Iterate over XSNamespaceItems to process schema documents 
         // One entry for each namespace URI that was a @targetNamespace in any document
@@ -510,11 +507,11 @@ public class XMLSchema {
             StringList docl = xnsi.getDocumentLocations();
             if (null == nsuri || nsuri.isEmpty()) {
                 for (int j = 0; j < docl.getLength(); j++) {
-                    LOG.warn("schema document {} does not have a target namespace", docl.item(j));
+                    LOG.warn("Schema document {} does not have a target namespace", docl.item(j));
                 }
                 continue;
             }
-            if (sdocs.containsKey(nsuri)) continue;
+            if (sdoc.containsKey(nsuri)) continue;
             if (docl.size() < 1 && !W3C_XML_SCHEMA_NS_URI.equals(nsuri))
                 throw new XMLSchemaException(String.format("Xerces weirdness: no schema document for namespace %s", nsuri)); 
             else {
@@ -527,7 +524,8 @@ public class XMLSchema {
                     if (null != targNS && !nsuri.equals(targNS))
                         throw new XMLSchemaException(
                                 String.format("Xerces weirdness: schema document for namespace %s has targetNamespace %s", nsuri, targNS));
-                    sdocs.put(nsuri, sd);
+                    sdoc.put(nsuri, sd);
+                    sdocL.add(sd);
                 }
             }
         }
@@ -536,7 +534,7 @@ public class XMLSchema {
         // and find the greatest common prefix
         HashSet<String> alldocs = new HashSet<>();
         alldocs.addAll(catalogs);
-        for (var sd : sdocs.values()) {
+        for (var sd : sdoc.values()) {
             alldocs.add(sd.docURI().toString());
 //            for (var irec : sd.importRecs()) {
 //                alldocs.add(irec.imported());
@@ -554,19 +552,15 @@ public class XMLSchema {
         try {
             furi = URLDecoder.decode(locuri, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
-            LOG.error("Can't decode UTF-8: " + ex.getMessage());
+            LOG.error("URLDecoder can't decode UTF-8 charset??: " + ex.getMessage());
         }
         furi = furi.replace('\\', '/');
         return furi;
     }
     
-    // Override in a derived XMLSchema class to create a derived XMLSchemaDocument object.
+    // Override this in a derived XMLSchema class to create a derived XMLSchemaDocument object.
     protected XMLSchemaDocument newSchemaDocument (File sdF) throws SAXException, IOException, ParserConfigurationException {
         return new XMLSchemaDocument(sdF);
-    }
-    
-    public class XMLSchemaException extends Exception {
-        public XMLSchemaException (String msg) { super(msg); }
     }
 
 }

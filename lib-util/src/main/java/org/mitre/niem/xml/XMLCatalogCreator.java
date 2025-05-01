@@ -24,12 +24,11 @@
 package org.mitre.niem.xml;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Path;
 import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 
 /**
  * A class to create an OASIS XML Catalog file from a mapping of namespace URIs
@@ -41,38 +40,26 @@ import javax.xml.transform.TransformerException;
 public class XMLCatalogCreator {
     
     private final static String XML_CATALOG_NS_URI = "urn:oasis:names:tc:entity:xmlns:xml:catalog";
-    private final Map<String,String> nsmap;
     
     /**
      * Constructs a XMLCatalogCreator object for the specified map.
-     * @param map namespaceURI -> schemaLocation
      */
-    public XMLCatalogCreator (Map<String,String> map) {
-        nsmap = map;
-    }
+    public XMLCatalogCreator () { }
     
     /**
      * Writes an XML Catalog with the specified mappings to the File
-     * @param cf
-     * @throws IOException
-     * @throws ParserConfigurationException
-     * @throws TransformerConfigurationException
-     * @throws TransformerException 
      */
-    public void writeCatalog (File cf) throws IOException, ParserConfigurationException, TransformerConfigurationException, TransformerException {
-        var cfp = cf.toPath();
-        if (null != cfp.getParent()) cfp = cfp.getParent();
-        
+    public void writeCatalog (Map<String,String> map, Path catP, Writer w) throws IOException, ParserConfigurationException {        
         var db   = ParserBootstrap.docBuilder();
         var dom  = db.newDocument();
         var root = dom.createElementNS(XML_CATALOG_NS_URI, "catalog");
         dom.appendChild(root);
 
-        for (var nsuri : nsmap.keySet()) {
-            var sfn = nsmap.get(nsuri);             // name of schema document
+        for (var nsuri : map.keySet()) {
+            var sfn = map.get(nsuri);             // name of schema document
             var sff = new File(sfn);
             var sfp = sff.toPath();
-            var relp = cfp.relativize(sfp);         // path relative to catalog's directory
+            var relp = catP.relativize(sfp);         // path relative to catalog's directory
             var uris = relp.toString();
             uris = uris.replace('\\', '/');
             
@@ -81,8 +68,8 @@ public class XMLCatalogCreator {
             entry.setAttribute("uri", uris);
             root.appendChild(entry);
         }
-        var ofs = new FileOutputStream(cf);
-        var xw = new XMLWriter(dom, ofs);
-        xw.writeXML();;
+        var xw = new XMLWriter();
+        xw.writeXML(dom, w);
+        
     }
 }

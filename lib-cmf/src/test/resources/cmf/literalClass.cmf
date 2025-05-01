@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="test">
+    <NamespaceURI>http://example.com/literalClass/</NamespaceURI>
+    <NamespacePrefixText>test</NamespacePrefixText>
+    <DocumentationText>
+      Literal class test schema. 
+      Inherited CSC type with model attribute.
+    </DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>literalClass.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="xml">
+    <NamespaceURI>http://www.w3.org/XML/1998/namespace</NamespaceURI>
+    <NamespacePrefixText>xml</NamespacePrefixText>
+    <DocumentFilePathText>niem/external/xml.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>XML</NamespaceCategoryCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <DataProperty structures:id="test.FooCodeLiteral">
+    <Name>FooCodeLiteral</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Datatype structures:ref="test.FooCodeSimpleType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="test.FooTopLiteral">
+    <Name>FooTopLiteral</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Datatype structures:ref="test.FooMiddleType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="test.personNameInitialIndicator">
+    <Name>personNameInitialIndicator</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>True if value represents the first letter or initials of a persons name; false otherwise.</DocumentationText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="test.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="xml.lang">
+    <Name>lang</Name>
+    <Namespace structures:ref="xml" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <Class structures:id="test.FooCodeType">
+    <Name>FooCodeType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.FooCodeLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.personNameInitialIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="test.FooTopType">
+    <Name>FooTopType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.FooTopLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.personNameInitialIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="test.PersonNameTextType">
+    <Name>PersonNameTextType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>A data type for a name by which a person is known, referred, or addressed.</DocumentationText>
+    <SubClassOf structures:ref="test.ProperNameTextType" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.personNameInitialIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="test.ProperNameTextType">
+    <Name>ProperNameTextType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>A data type for a word or phrase by which a person or thing is known, referred, or addressed.</DocumentationText>
+    <SubClassOf structures:ref="test.TextType" xsi:nil="true"/>
+  </Class>
+  <Class structures:id="test.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.TextLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="xml.lang" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Restriction structures:id="test.FooBottomType">
+    <Name>FooBottomType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+  </Restriction>
+  <Restriction structures:id="test.FooCodeSimpleType">
+    <Name>FooCodeSimpleType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
+    <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>GB</FacetValue>
+    </Facet>
+    <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>US</FacetValue>
+    </Facet>
+  </Restriction>
+  <Restriction structures:id="test.FooMiddleType">
+    <Name>FooMiddleType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <RestrictionBase structures:ref="test.FooBottomType" xsi:nil="true"/>
+  </Restriction>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

@@ -8,13 +8,12 @@
   <Namespace structures:id="test">
     <NamespaceURI>http://example.com/test/</NamespaceURI>
     <NamespacePrefixText>test</NamespacePrefixText>
-    <DocumentationText>
-      LocalTerm test case
-      Test term, literal, sourceURI, citation, documentation
-    </DocumentationText>
-    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentationText>LocalTerm test case</DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>localTerm.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
+    <NIEMVersionName>NIEM6.0</NIEMVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <LocalTerm>
       <TermName>2D</TermName>
@@ -30,11 +29,12 @@
       <SourceURI>http://example.com/1</SourceURI>
       <SourceURI>http://example.com/2</SourceURI>
       <SourceCitationText>citation #1</SourceCitationText>
-      <SourceCitationText>citation #2</SourceCitationText>
+      <SourceCitationText xml:lang="fr">citation numéro deux</SourceCitationText>
     </LocalTerm>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
 </Model>

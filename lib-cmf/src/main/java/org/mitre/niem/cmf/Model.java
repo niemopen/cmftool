@@ -48,6 +48,7 @@ public class Model extends CMFObject {
         super(); 
         nsmap = new NamespaceMap();
         var xsNS = new Namespace("xs", W3C_XML_SCHEMA_NS_URI);
+        xsNS.setKindCode("XSD");
         try { addNamespace(xsNS); } catch (CMFException ex) { } // CAN'T HAPPEN
     }
 
@@ -67,9 +68,10 @@ public class Model extends CMFObject {
     private List<Component> ordComp      = null;
     private List<Namespace> ordNS        = null;
     
-    public List<ClassType> classTypeL ()                { return new ArrayList<ClassType>(classMap.values()); }
-    public List<Datatype> datatypeL ()                  { return new ArrayList<Datatype>(dtypeMap.values()); }
-    public List<Property> propertyL ()                  { return new ArrayList<Property>(propMap.values()); }
+    public List<ClassType> classTypeL ()                { return new ArrayList<>(classMap.values()); }
+    public List<Datatype> datatypeL ()                  { return new ArrayList<>(dtypeMap.values()); }
+    public List<Property> propertyL ()                  { return new ArrayList<>(propMap.values()); }
+    public List<DataProperty> dataPropertyL ()          { return new ArrayList<>(dpropMap.values()); }
     
     public Component qnToComponent (String qn)          { return compMap.get(qnToURI(qn)); }
     public ClassType qnToClassType (String qn)          { return classMap.get(qnToURI(qn)); }
@@ -219,10 +221,21 @@ public class Model extends CMFObject {
         c.setModel(this);
     }
     
+    public void addProperty (Property p) {
+        if (p.isDataProperty()) addDataProperty((DataProperty) p);
+        else addObjectProperty((ObjectProperty)p);
+    }
+    
     public void removeClassType (ClassType ct) {
         if (null == ct) return;
         compMap.remove(ct.uri());
         classMap.remove(ct.uri());
+        ordComp = null;
+    }
+    
+    public void removeDatatype (String dtU) {
+        compMap.remove(dtU);
+        dtypeMap.remove(dtU);
         ordComp = null;
     }
     

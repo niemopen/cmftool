@@ -24,8 +24,9 @@
 package org.mitre.niem.xml;
 
 import java.io.File;
-import java.net.URI;
+import org.assertj.core.api.Assertions;
 import static org.assertj.core.api.Assertions.assertThat;
+import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mitre.niem.xml.XMLSchemaDocument.getDocumentation;
@@ -40,6 +41,7 @@ public class XMLSchemaDocumentTest {
     private final static File resDF   = new File("src/test/resources");
     private final static File xsDocF  = new File(resDF, "xsd/xsDocTest.xsd");
     private final static File goodXsF =  new File(resDF, "xsd/goodXsTest.xsd");
+    private final static File badXsF  =  new File(resDF, "xsd/badTest.xsd");
     
     @Test
     public void testFileConstructor () throws Exception {
@@ -84,7 +86,30 @@ public class XMLSchemaDocumentTest {
     public void testImportElements () throws Exception {
         var xsd  = new XMLSchemaDocument(goodXsF);
         var imps = xsd.importElements();
-        assertEquals(3, imps.getLength());
+        assertEquals(3, imps.size());
+        assertThat(imps)
+            .extracting(XMLSchemaImport::nsU)
+            .containsExactly (
+                "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/",
+                "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-gml/6.0/",
+                "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/");
+        assertThat(imps)
+            .extracting(XMLSchemaImport::sloc)
+            .containsExactly (
+                "niem/niem-core-skel.xsd",
+                "niem/adapters/niem-gml.xsd",
+                "niem/utility/structures.xsd");
+        assertThat(imps.get(0).attL())
+            .extracting(XMLAttribute::namespace, XMLAttribute::name, XMLAttribute::value)
+            .containsExactly(
+                Assertions.tuple(
+                    "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",
+                    "externalImportIndicator",
+                    "false")
+            );
+        assertThat(imps.get(2).docL())
+            .extracting(LanguageString::text)
+            .containsExactly("Import documentation.");
     }
     
     @Test
@@ -108,7 +133,7 @@ public class XMLSchemaDocumentTest {
     @Test
     public void testNsdecls() throws Exception {
         var xsd = new XMLSchemaDocument(xsDocF);
-        var nsd = xsd.nsdecls();
+        var nsd = xsd.namespaceDeclarations();
         assertThat(nsd)
                 .hasSize(4)
                 .satisfiesExactlyInAnyOrder(

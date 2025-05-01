@@ -15,17 +15,22 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
 }
 
-project.version = '1.0-alpha.3-SNAPSHOT'
+project.version = '1.0-alpha.3'
 
 dependencies {
+    implementation 'net.sf.saxon:Saxon-HE:12.5'
     implementation 'xerces:xercesImpl:2.12.2'
-    implementation 'xml-apis:xml-apis:1.4.01'
-    implementation 'xml-resolver:xml-resolver:1.2'  // Xerces XML Schema API not compatable with JRE 11 javax.xml.catalog    
-    implementation 'commons-io:commons-io:2.11.0'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
-    implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
-    implementation 'org.apache.logging.log4j:log4j-core:2.17.1'
+    implementation 'org.xmlresolver:xmlresolver:6.0.14'
+//    implementation 'xml-apis:xml-apis:1.4.01'
+//    implementation 'xml-resolver:xml-resolver:1.2'  // Xerces XML Schema API not compatable with JRE 11 javax.xml.catalog    
+    implementation 'xalan:xalan:2.7.3'
+    implementation 'xalan:serializer:2.7.3'
+    implementation 'commons-io:commons-io:2.18.0'
+    implementation 'org.apache.commons:commons-lang3:3.17.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.24.3'
+    implementation 'org.apache.logging.log4j:log4j-api:2.24.3'
     implementation 'org.javatuples:javatuples:1.2'
+    implementation 'org.jcommander:jcommander:2.0'
 
     testImplementation libs.junit.jupiter
     testImplementation 'org.assertj:assertj-core:3.26.0'
@@ -50,4 +55,7 @@ jar {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+tasks.withType(JavaCompile) {
+    options.debug = true
 }

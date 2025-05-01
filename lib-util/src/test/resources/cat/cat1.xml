@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<c:catalog xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
-           xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:c="urn:oasis:names:tc:entity:xmlns:xml:catalog"
-           prefer="public">
+<c:catalog 
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:c="urn:oasis:names:tc:entity:xmlns:xml:catalog"
+  prefer="public">
   <c:uri name="http://example.com/goodXsTest/" uri="../xsd/goodXsTest.xsd"/>
   <c:uri name="http://example.com/remote-resource/"  uri="http://example.com/something/"/>
   <c:uri name="http://example.com/other-remote/"     uri="file://example.com/something/"/>

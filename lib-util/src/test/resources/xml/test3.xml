@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A comment block
+  with some comment lines -->
+<c:catalog 
+  xmlns:c="urn:oasis:names:tc:entity:xmlns:xml:catalog"
+  xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  prefer="public">
+  <c:uri name="http://example.com/goodXsTest/" uri="../xsd/goodXsTest.xsd"/>
+  <c:uri name="http://example.com/remote-resource/" uri="http://example.com/something/"/>
+  <c:uri name="http://example.com/other-remote/" uri="file://example.com/something/"/>
+  <c:uri name="http://example.com/not-xsd/" uri="../xsd/00-README.txt"/>       <!-- not XSD -->
+  <c:uri name="http://example.com/no-such-file/" uri="../nosuchfile"/>
+  <c:uri name="http://example.com/Foo/1.0/" uri="../xsd/goodXsTest.xsd"/>      <!-- wrong target namespace --> 
+  <c:nextCatalog catalog="../xsd/niem/xml-catalog.xml"/>
+</c:catalog>

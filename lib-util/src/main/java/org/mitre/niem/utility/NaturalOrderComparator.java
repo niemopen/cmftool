@@ -23,6 +23,7 @@
  */
 package org.mitre.niem.utility;
 
+import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.regex.Pattern;
 
@@ -46,11 +47,16 @@ public class NaturalOrderComparator implements Comparator<String> {
         var mOne = PAT.matcher(one);
         var mTwo = PAT.matcher(two);
         while (mOne.find() && mTwo.find()) {
-           var sOne = mOne.group(); 
-           var sTwo = mTwo.group();
-           int res;
-           if (isNumeric(sOne) && isNumeric(sTwo)) {
-               res = Integer.compare(Integer.parseInt(sOne), Integer.parseInt(sTwo));
+            var sOne = mOne.group(); 
+            var sTwo = mTwo.group();
+            int res;
+            if (isNumeric(sOne) && isNumeric(sTwo)) {
+                if (sOne.length() > 8 || sTwo.length() > 8) {
+                    var bOne = new BigInteger(sOne);
+                    var bTwo = new BigInteger(sTwo);
+                    res = bOne.compareTo(bTwo);
+                }
+                else res = Integer.compare(Integer.parseInt(sOne), Integer.parseInt(sTwo));
            }
            else res = sOne.compareTo(sTwo);
            if (res != 0) return res;

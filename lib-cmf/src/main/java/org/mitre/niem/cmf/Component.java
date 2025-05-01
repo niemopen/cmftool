@@ -55,8 +55,13 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     public String namespaceURI ()               { return namespace.uri(); }
     public String name ()                       { return name; }
     public String outsideURI ()                 { return outsideURI; }
+    public CodeListBinding codeListBinding ()   { return null; }
+    public String referenceCode ()              { return ""; }
+    public boolean isAbstract ()                { return false; }
     public boolean isDeprecated ()              { return isDeprecated; }
+    public boolean isOrdered ()                 { return false; }
     public boolean isOutsideRef ()              { return !outsideURI.isEmpty() && null == namespace; }
+    public boolean isModelComponent ()          { return namespace().isModelNS(); }
     
     public List<LanguageString> docL ()         { return docL; }
     
@@ -83,14 +88,6 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     }
     
     /**
-     * Returns the @structures:id value for this compnent; eg. "nc.TextType"
-     */
-    public String idRef () {
-        if (null ==  namespace ||  null == name) return "";
-        return namespace.prefix() + "." + name;
-    }
-    
-    /**
      * Returns the absolute URI of this component; e.g.
      * https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/TextType.
      * For components defined in this model, the URI is composed of namespace URI
@@ -105,7 +102,37 @@ public abstract class Component extends CMFObject implements Comparable<Componen
         var nsuri = namespace.uri();
         if (nsuri.endsWith("/")) return nsuri + name;
         return nsuri + "/" + name;
+    }    
+    
+    /**
+     * Returns the @structures:id value for this compnent; eg. "nc.TextType"
+     */
+    public String idRef () {
+        if (null ==  namespace ||  null == name) return "";
+        return namespace.prefix() + "." + name;
     }
+
+    /**
+     * Returns the prefix portion of a QName
+     * @param qn
+     * @return 
+     */
+    public static String qnToPrefix (String qn) {
+        var indx = qn.indexOf(":");
+        if (indx < 1 || indx >= qn.length()-1) return "";
+        return qn.substring(0, indx);        
+    }
+    
+    /**
+     * Returns the local name portion of a QName
+     * @param qn
+     * @return 
+     */
+    public static String qnToName (String qn) {
+        var indx = qn.indexOf(":");
+        if (indx < 1 || indx >= qn.length()-1) return "";        
+        return qn.substring(indx+1);
+    }    
     
     /**
      * Returns the name portion of a component URI; for example, returns "FooType"
@@ -113,7 +140,7 @@ public abstract class Component extends CMFObject implements Comparable<Componen
      * @param uri - component URI
      * @return - component name
      */
-    public static String uriNamePart (String uri) {
+    public static String uriToName (String uri) {
         int indx = uri.lastIndexOf("/");
         if (indx < 0 || indx >= uri.length()) return "";
         return uri.substring(indx+1);

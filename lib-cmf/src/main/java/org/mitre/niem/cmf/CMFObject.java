@@ -40,6 +40,7 @@ public class CMFObject {
     public static final int CMF_RESTRICTION = 8;
     public static final int CMF_UNION = 9;   
     public static final int CMF_ANYPROP = 10;
+    public static final int CMF_IMPORT_DOCUMENTATION = 11;
     
     // Override these functions in subclasses
     public String uri ()            { return ""; }
@@ -66,6 +67,7 @@ public class CMFObject {
     public boolean addToDataProperty (String eln, String loc, DataProperty p) { return false; }
     public boolean addToDatatype (String eln, String loc, Datatype dt) { return false; }
     public boolean addToFacet (String eln, String loc, Facet f) { return false; }
+    public boolean addToImportDoc (String eln, String loc, ImportDoc id) { return false; }
     public boolean addToListType (String eln, String loc, ListType lt) { return false; }
     public boolean addToProperty (String eln, String loc, Property p) { return false; }
     public boolean addToPropertyAssociation (String eln, String loc, PropertyAssociation h) { return false; }

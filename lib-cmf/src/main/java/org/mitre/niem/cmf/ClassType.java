@@ -54,7 +54,9 @@ public class ClassType extends Component {
     private final List<PropertyAssociation> propL = new ArrayList<>();  // cmf:ChildPropertyAssociation
     private final List<AnyProperty> anyL = new ArrayList<>();           // cmf:AnyProperty
     
+    @Override
     public boolean isAbstract ()                { return isAbstract; }
+    @Override
     public String referenceCode ()              { return refCode; }
     public ClassType subClass ()                { return subclass; }
     public List<PropertyAssociation> propL ()   { return propL; }
@@ -69,6 +71,15 @@ public class ClassType extends Component {
     }
     public void addAnyProperty (AnyProperty ap) {
         anyL.add(ap);
+    }
+    
+    public Datatype literalDatatype () {
+        if (propL.isEmpty()) return null;
+        var pa = propL().get(0);
+        var p  = pa.property();
+        if (!p.name().endsWith("Literal")) return null;
+        if (!p.isDataProperty()) return null;
+        return ((DataProperty)p).datatype();
     }
     
     @Override

@@ -40,6 +40,7 @@ import static org.apache.xerces.xs.XSConstants.ATTRIBUTE_DECLARATION;
 import static org.apache.xerces.xs.XSConstants.ELEMENT_DECLARATION;
 import static org.apache.xerces.xs.XSConstants.TYPE_DEFINITION;
 import org.apache.xerces.xs.XSElementDeclaration;
+import org.apache.xerces.xs.XSFacet;
 import org.apache.xerces.xs.XSObject;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
@@ -63,8 +64,8 @@ public class Xerces {
      * Returns a list of language strings from the document elements within the
      * annotation elements within the specified object.  Returns an empty list if
      * the specified object doesn't have annotations.     * 
-     * @param xobj
-     * @return 
+     * @param xobj - XSObject
+     * @return list of documentation language strings
      */
     public static List<LanguageString> getDocumentation (XSObject xobj) {
         var res   = new ArrayList<LanguageString>();
@@ -77,6 +78,12 @@ public class Xerces {
         return res;
     }
     
+    /**
+     * Returns a list of language strings from the document elements within an
+     * annotation element.
+     * @param xann - XSAnnotation object
+     * @return list of documentation language strings
+     */
     public static List<LanguageString> getDocumentation (XSAnnotation xann) {
         var res = new ArrayList<LanguageString>();
         try {
@@ -92,7 +99,7 @@ public class Xerces {
                 res.add(new LanguageString(text, lang));                    
             }
         } catch (ParserConfigurationException ex) {
-            LOG.error("internal parser error: {}", ex.getMessage());
+            LOG.error("Internal parser error: {}", ex.getMessage());
         }
         return res;
     }
@@ -306,6 +313,10 @@ public class Xerces {
             if (facetKind == dfr.kind && value.equals(dfr.value)) return true;
         }
         return false;
+    }
+    
+    public static boolean isDefaultFacet (XSTypeDefinition xtype, XSFacet f) {
+        return isDefaultFacet(xtype, f.getFacetKind(), f.getLexicalFacetValue());
     }
     
 }

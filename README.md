@@ -10,65 +10,48 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
-## CMFTool commands
+## What's new in version 1.0-alpha.3
 
-* `x2m` command generates CMF from a source or message XSD pile
-* `m2m` command generates a canonical version of a CMF file
-* `m2o` command generates OWL from CMF (needs work)
-* `m2xn5` command generates NIEM 5 XSD from CMF
-* `m2xs` command generates NIEM 6 source XSD from CMF
-* `m2xm` command generates NIEM 6 message XSD from CMF
-* `n5to6` command converts a NIEM 5 model (CMF or XSD) to NIEM 6 CMF, rewriting namespace URIs (needs fixing)
-* `xcanon` command generates a canonical version of an XSD document
-* `xcmp` command compares two XML schemas
+The code base is reorganized into four subprojects:
 
-Every command accepts a `–help` argument, for providing, well… help.
+* *app-cmftool:*  Code for the *cmftool* command-line program
+* *app-scheval:*  Code for the *scheval* command-line program.
+* *lib-cmf:*  Library for all things CMF and NIEM-XSD
+* *lib-util:*  Utility library for people who don't necessarily care about CMF
 
-## What's new in version 1.0-alpha.2
+The CMF specification has changed significantly since the alpha.2 release.  
 
-* CMF now has `ObjectProperty` and `DataProperty`
-* `cmf:ReferenceCode` and `appinfo:referenceCode` is working
-* Global element augmentation is working
-* Message schema generation is working
-* Builtin schema documents are updated to version PS02
-  * Add `structures:appliesToParent` to `AssociationType` and `ObjectType` in *structures.xsd*
-  * Add proxies for xs:Name, NCName, QName to *niem-xs.xsd*
+* The representation of augmentations is completely different (and much simpler)
+* Wildcards (xs:any and xs:anyAttribute) are supported
+* Internationalization support added for all documentation strings
 
-## Still to be done
+This version of CMFTool is not compatible with older CMF files.  Older versions of CMFTool are not compatible with current CMF files.
 
-* Writing partial models in CMF, composing a model from parts
-* Handle `appinfo:relationshipPropertyIndicator`
-* Implement `appinfo:AttributeAugmentation` 
-* Corner cases for `xs:simpleType`
-* Ordered properties and xs:list
-* Definitions
-  * Repeated (with `xml:lang`), including inside `LocalTerm` elements
-  * On element/attribute references (and HasProperty objects)
-  * On `xs:import elements`
+## Getting started
 
-## Quick start
-
-After a build, the directory "build/install/cmftool" contains a working installation.
-Put "build/install/cmftool/bin" in your PATH and cmftool will run from the command line.
-
-The release ZIP file has all the scripts, resources, and libraries, without the source code.  You could use that instead.
-
-Run "cmftool x2m foo.xsd" to generate CMF model (foo.cmf) from XSD.
-Run "cmftool m2xsrc -o tmp foo.cmf" to generate XSD from CMF.
-Run "cmftool help" for a list of commands.
+1. You must have a Java runtime environment.  JRE21 or later will work.  JRE17 might work.  
+   - Try `java –version` from the command line.  If that works, you should be OK
+   - Otherwise make sure your `JAVA_HOME` environment variable points to your JRE
+2. Unpack the executable distribution
+   - The *cmftool* program is in *app-cmftool/build/distributions*
+   - The *scheval* program is in *app-scheval/build/distributions*
+3. Put the *bin* directory into your PATH
+4. Try `cmftool help` from the command line
 
 ## Examples
 
-There is an "examples" directory, with... examples.  But they are still NIEM 5 based. 
+The *CrashDriver* message specification is in *lib-cmf/examples/CrashDriver*.  The XSD representation of the message model in the *model.xsd* directory exercises most of the features of the NIEM 6 naming and design rules. 
+
+* `cmftool x2m -o tmp.cmf model.xsd/cmf.xsd` will create the CMF version of the model in *tmp.cmf*.  This should be the same as *model.cmf*.
+* `cmftool m2x -o tmp tmp.cmf` will create the XSD version of the model in the *tmp* directory.  This should be the same as *model.xsd*.
 
 ## Testing
 
-The directory "src/test/resources" contains resources for the JUnit tests.  Many, many examples there.
+The *src/test/resources* directories contains resources for the JUnit tests.  Many, many examples there.
 
 ## Building
 
-This project was built with NetBeans 21.0, Gradle 8.6, and Oracle JDK 21.0.2
-Try "gradle installDist" 
+This project was built with NetBeans 24, Gradle 8.6, and Oracle JDK 21
 
 ## Other assets
 

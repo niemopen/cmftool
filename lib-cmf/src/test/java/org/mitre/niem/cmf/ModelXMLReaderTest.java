@@ -48,35 +48,31 @@ public class ModelXMLReaderTest extends ModelAssertions {
     public ModelXMLReaderTest() {
     }
     
-    // ClassType object test
-    // Test AnyProperty list
     @Test
-    public void testAnyProperties () {
+    public void testAny () {
         var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File(resDN, "class.cmf"));
-        checkAnyProperties(model);
+        var model = rdr.readFiles(new File(resDN, "any.cmf"));
+        checkAny(model);
+        assertEmptyLogs();        
+    }
+    
+    @Test
+    public void testAttAugment () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "attAugment.cmf"));
+        checkAttAugment(model);
         assertEmptyLogs();        
     }
     
     // AugmentRecord test
     @Test
-    public void testAugmentRecord () {
+    public void testAugment () {
         var rdr   = new ModelXMLReader();
         var model = rdr.readFiles(new File(resDN, "augment.cmf"));
-        checkAugmentRecord(model);
+        checkAugment(model);
         assertEmptyLogs();
     }
-               
-    // ClassType object test
-    // Test minoccurs, maxoccurs, documentation, orderedProp.
-    @Test
-    public void testChildPropAssoc () {
-        var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File(resDN, "childPropAssoc.cmf"));
-        checkChildPropertyAssociation (model);
-        assertEmptyLogs();
-    }
-           
+    
     // ClassType object test
     // Test abstract, augmentable, reference code.
     @Test
@@ -121,13 +117,61 @@ public class ModelXMLReaderTest extends ModelAssertions {
     // DataProperty object test. 
     // Test abstract, relationship, reference code, attribute, refAttribute.
     @Test
-    public void testDatatype () {
+    public void testDatatypes () {
         var rdr   = new ModelXMLReader();
         var model = rdr.readFiles(new File(resDN, "datatypes.cmf"));
-        checkDatatype(model);
+        checkDatatypes(model);
         assertEmptyLogs();
     }
-        
+
+    @Test
+    public void testExternals () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "externals.cmf"));
+        checkExternals(model);
+        assertEmptyLogs();
+    }
+    
+    @Test
+    public void testGlobalAttAugment () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "globalAttAugment.cmf"));
+        checkGlobalAttAugment(model);
+        assertEmptyLogs();        
+    }
+    
+    @Test
+    public void testImports () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "imports.cmf"));
+        checkImports(model);
+        assertEmptyLogs();        
+    }
+    
+    @Test
+    public void testList () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "list.cmf"));
+        checkList(model);
+        assertEmptyLogs();        
+    }
+    
+    @Test
+    public void testLiteralClass () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "literalClass.cmf"));
+        checkLiteralClass(model);
+        assertEmptyLogs();        
+    }  
+    
+    @Test
+    public void testLiteralProps () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "literalProps.cmf"));
+        checkLiteralProps(model);
+        assertEmptyLogs();        
+    }
+
     // LocalTerm object test
     // Test term, literal, sourceURI, citation, documentation
     @Test
@@ -147,7 +191,15 @@ public class ModelXMLReaderTest extends ModelAssertions {
         checkNamespace(model);
         assertEmptyLogs();        
     }
-                     
+                                     
+    @Test
+    public void testNiemVersions () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "niemVersions.cmf"));
+        checkNiemVersions(model);
+        assertEmptyLogs();        
+    }
+
     // ObjectProperty object test
     // Test abstract, relationship, reference code
     @Test
@@ -185,9 +237,35 @@ public class ModelXMLReaderTest extends ModelAssertions {
         dp = mod2.uriToProperty("http://example.com/part2/AnElement");
         assertTrue(dp.outsideURI().isEmpty());
         
-        var mod4 = rdr.readFiles(cf1, cf2);
+        var mod4 = rdr.readFiles(List.of(cf1, cf2));
         dp = mod2.uriToProperty("http://example.com/part2/AnElement");
         assertTrue(dp.outsideURI().isEmpty());        
+    }
+                   
+    // ClassType object test
+    // Test minoccurs, maxoccurs, documentation, orderedProp.
+    @Test
+    public void testPropAssoc () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "propAssoc.cmf"));
+        checkPropAssoc (model);
+        assertEmptyLogs();
+    }
+    
+    @Test
+    public void testSimpleTypes () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "simpleTypes.cmf"));
+        checkSimpleTypes (model);
+        assertEmptyLogs();
+    }
+    
+    @Test
+    public void testUnion () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "union.cmf"));
+        checkUnion (model);
+        assertEmptyLogs();
     }
     
     

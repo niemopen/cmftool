@@ -17,7 +17,7 @@
       <appinfo:LocalTerm term="3D" definition="Three-dimensional"/>
       <appinfo:LocalTerm term="Test" definition="only for test purposes" sourceURIs="http://example.com/1 http://example.com/2">
         <appinfo:SourceText>citation #1</appinfo:SourceText>
-        <appinfo:SourceText>citation #2</appinfo:SourceText>
+        <appinfo:SourceText xml:lang="fr">citation numéro deux</appinfo:SourceText>
       </appinfo:LocalTerm>
     </xs:appinfo>
   </xs:annotation>

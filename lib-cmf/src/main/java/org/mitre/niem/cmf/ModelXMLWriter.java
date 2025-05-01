@@ -24,7 +24,7 @@
 package org.mitre.niem.cmf;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,6 +35,7 @@ import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.mitre.niem.xml.LanguageString;
 import org.mitre.niem.xml.ParserBootstrap;
 import org.mitre.niem.xml.XMLWriter;
@@ -51,7 +52,9 @@ import org.w3c.dom.Element;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelXMLWriter {
-    static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(ModelXMLReader.class);  
+    static final Logger LOG = LogManager.getLogger(ModelXMLWriter.class);  
+    
+    public ModelXMLWriter () { }
     
     /**
      * Write a Model object as CMF-XML to a stream.  Returns true on success.  
@@ -59,8 +62,8 @@ public class ModelXMLWriter {
      * @param m - Model object
      * @param os - OutputStream
      */
-    public boolean writeXML (Model m, OutputStream os) {
-        return writeXML(m, m.namespaceSet(), os);
+    public boolean writeXML (Model m, Writer w) {
+        return writeXML(m, m.namespaceSet(), w);
     }
     
     /**
@@ -70,7 +73,7 @@ public class ModelXMLWriter {
      * @param nsparam - set of namespace URIs or prefix strings
      * @param os  - output stream
      */
-    public boolean writeXML (Model m, List<String> nsparam, OutputStream os) {
+    public boolean writeXML (Model m, List<String> nsparam, Writer w) {
         var nsS = new HashSet<Namespace>();
         for (var s : nsparam) {
             Namespace ns = null;
@@ -81,19 +84,19 @@ public class ModelXMLWriter {
                 return false;
             }
         }
-        return writeXML(m, nsS, os);
+        return writeXML(m, nsS, w);
     }
     
-    private boolean writeXML (Model m, Set<Namespace>nsS, OutputStream os) {
+    private boolean writeXML (Model m, Set<Namespace>nsS, Writer w) {
         try {
             var db   = ParserBootstrap.docBuilder();
             var doc  = db.newDocument();
-            var xw   = new XMLWriter(doc, os);
             var root = genModel(doc, m, nsS);
             doc.appendChild(root);
-            xw.writeXML();
+            var xw   = new XMLWriter();
+            xw.writeXML(doc, w);
         } catch (ParserConfigurationException ex) {
-            LOG.error("internal parser error: {}", ex.getMessage());
+            LOG.error("Internal parser error: {}", ex.getMessage());
             return false;
         } catch (IOException ex) {
             LOG.error("i/o error: {}", ex.getMessage());
@@ -126,14 +129,16 @@ public class ModelXMLWriter {
             for (var dls : x.docL()) appendDocumentation(doc, e, dls);
         for (var cta : x.ctargL()) appendSimpleChild(doc, e, "ConformanceTargetURI", cta);
         appendSimpleChild(doc, e, "DocumentFilePathText", x.documentFilePath());
+        appendSimpleChild(doc, e, "NamespaceCategoryCode", x.kindCode());
         appendSimpleChild(doc, e, "NamespaceVersionText", x.version());
+        appendSimpleChild(doc, e, "NIEMVersionName", x.niemVersion());
         appendSimpleChild(doc, e, "NamespaceLanguageName", x.language());
-        for (var dls : x.impDocL()) appendLanguageString(doc, e, "ImportDocumentationText", dls);
+        appendImportDocs(doc, e, x);
         Collections.sort(x.augL());
         Collections.sort(x.locTermL());
         for (AugmentRecord z : x.augL()) appendAugmentRecord(doc, e, z, nsS);
         for (LocalTerm z : x.locTermL()) appendLocalTerm(doc, e, z);
-        p.appendChild(e);    
+        p.appendChild(e);  
     }
     
     private void appendComponent (Document doc, Element p, Component x, Set<Namespace>nsS) {
@@ -253,9 +258,22 @@ public class ModelXMLWriter {
         if (null == x) return;
         var c = doc.createElementNS(CMF_NS_URI, "Facet");
         appendSimpleChild(doc, c, "FacetCategoryCode", x.category());
-        appendSimpleChild(doc, c, "FacetValue", x.value());
+        appendPerhapsEmptySimpleChild(doc, c, "FacetValue", x.value());
         for (var d : x.docL()) appendDocumentation(doc, c, d);
         p.appendChild(c);
+    }
+    
+    private void appendImportDocs (Document doc, Element p, Namespace x) {
+        if (null == x) return;
+        if (x.idocs().isEmpty()) return;
+        x.idocs().forEach((nsU,docL) -> {
+            var c = doc.createElementNS(CMF_NS_URI, "ImportDocumentation");
+            appendSimpleChild(doc, c, "NamespaceURI", nsU);
+            for (var ls : docL) {
+                appendLanguageString(doc, c, "DocumentationText", ls);
+            }
+            p.appendChild(c);
+        });
     }
     
     private void appendLanguageString (Document doc, Element p, String eln, LanguageString x) {
@@ -273,7 +291,7 @@ public class ModelXMLWriter {
         appendSimpleChild(doc, c, "DocumentationText", x.documentation());
         appendSimpleChild(doc, c, "TermLiteralText", x.literal());
         for (var suri : x.sourceL())  appendSimpleChild(doc, c, "SourceURI", suri);
-        for (var cit : x.citationL()) appendSimpleChild(doc, c, "SourceCitationText", cit);
+        for (var cit : x.citationL()) appendLanguageString(doc, c, "SourceCitationText", cit);
         p.appendChild(c);
     }
 
@@ -297,12 +315,17 @@ public class ModelXMLWriter {
         p.appendChild(c);       
     }
     
-    private void appendSimpleChild (Document doc, Element p, String eln, String value) {
+    private void appendPerhapsEmptySimpleChild (Document doc, Element p, String eln, String value) {
         if (null == value) return;
-        if (value.isBlank()) return;
         Element c = doc.createElementNS(CMF_NS_URI, eln);
         c.setTextContent(value);
         p.appendChild(c);
+    }
+    
+    private void appendSimpleChild (Document doc, Element p, String eln, String value) {
+        if (null == value) return;
+        if (value.isEmpty()) return;
+        appendPerhapsEmptySimpleChild(doc, p, eln, value);
     }
     
     private void appendSimpleChild (Document doc, Element p, String eln, boolean value) {

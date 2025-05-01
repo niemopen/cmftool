@@ -41,19 +41,27 @@ public class Property extends Component {
     
     @Override
     public boolean isProperty ()                { return true; }
+    public boolean isDataProperty ()            { return false; }
+    public boolean isObjectProperty ()          { return false; }
    
     private boolean isAbstract = false;         // cmf:AbstractIndicator
     private boolean isRelationship = false;     // cmf:RelationshipIndicator
     private Property subprop = null;            // cmf:SubPropertyOf
+    
+    public ClassType classType ()               { return null; }
+    public Datatype datatype ()                 { return null; }
+    public Component type ()                    { return null; }
  
+    @Override
     public boolean isAbstract ()                { return isAbstract; }
+    public boolean isAttribute ()               { return false; }
+    public boolean isRefAttribute()             { return false; }
     public boolean isRelationship ()            { return isRelationship; }
     public Property subProperty ()              { return subprop; }
     
     public void setIsAbstract (boolean f)       { isAbstract = f; }
     public void setIsRelationship (boolean f)   { isRelationship = f; }
     public void setSubproperty (Property p)     { subprop = p; }
-    
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

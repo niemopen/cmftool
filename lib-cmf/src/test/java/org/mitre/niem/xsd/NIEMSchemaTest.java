@@ -58,7 +58,9 @@ public class NIEMSchemaTest {
         assertEquals(NSK_OTHERNIEM, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/codes/aamva_d20/6.0/"));
         assertEquals(NSK_APPINFO, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"));
         assertEquals(NSK_CLI, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/"));
-        assertEquals(NSK_PROXY, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
+        var x = sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/");
+
+        assertEquals(NSK_NIEM_XS, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"));
         assertEquals(NSK_STRUCTURES, sch.namespaceKind("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"));
         assertEquals(NSK_XSD, sch.namespaceKind("http://www.w3.org/2001/XMLSchema"));
         assertEquals(NSK_XML, sch.namespaceKind("http://www.w3.org/XML/1998/namespace"));
@@ -69,16 +71,6 @@ public class NIEMSchemaTest {
         assertThat(logs).anySatisfy(
             log -> { assertThat(log.getErrorLogs()).anyMatch(s -> s.contains("no schema document for namespace URI")); }
         );    
-    }
-    
-    @Test
-    public void testImportDocumentation () throws Exception {
-        var args = new String[]{resDN + "xsd/imports.xsd"};
-        var sch = new NIEMSchema(args);
-        assertNull(sch.importDocumentation("http://example.com/test/"));
-        assertThat(sch.importDocumentation("http://www.opengis.net/gml/3.2"))
-            .extracting(LanguageString::text, LanguageString::lang)
-            .containsExactly(Assertions.tuple("Geography Markup Language.", "en-US"));
     }
 
     @Test

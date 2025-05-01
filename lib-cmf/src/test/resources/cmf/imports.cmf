@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="gml">
+    <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
+    <NamespacePrefixText>gml</NamespacePrefixText>
+    <DocumentationText>GML Subset schema for gml:AngleType,gml:Curve,gml:Envelope,gml:AbstractFeature,gml:AbstractGeometricPrimitiveType,gml:AbstractGeoemetry,gml:LengthType,gml:LineString,gml:MultiCurve,gml:MultiGeometry,gml:MultiPoint,gml:MultiSurface,gml:Point,gml:Polygon,gml:Surface, written by
+                    gmlSubset.xslt. </DocumentationText>
+    <DocumentFilePathText>niem/external/ogc/gml/3.2.1/gml.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTERNAL</NamespaceCategoryCode>
+    <NamespaceVersionText>3.2.1 2010-01-28</NamespaceVersionText>
+  </Namespace>
+  <Namespace structures:id="j">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/</NamespaceURI>
+    <NamespacePrefixText>j</NamespacePrefixText>
+    <DocumentationText>Justice</DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>niem/domains/justice-skel.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>DOMAIN</NamespaceCategoryCode>
+    <NamespaceVersionText>subset-1</NamespaceVersionText>
+    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+    <AugmentationRecord>
+      <Class structures:ref="nc.EducationType" xsi:nil="true"/>
+      <ObjectProperty structures:ref="j.EducationTotalYearsText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+      <AugmentationIndex>0</AugmentationIndex>
+    </AugmentationRecord>
+  </Namespace>
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DocumentationText>NIEM core test skeleton schema document.</DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>niem/niem-core-skel.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="test">
+    <NamespaceURI>http://example.com/test/</NamespaceURI>
+    <NamespacePrefixText>test</NamespacePrefixText>
+    <DocumentationText>Import test schema. Test documentation and external indicator</DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>imports.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+    <ImportDocumentation>
+      <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
+      <DocumentationText>Geography Markup Language.</DocumentationText>
+    </ImportDocumentation>
+  </Namespace>
+  <Namespace structures:id="xml">
+    <NamespaceURI>http://www.w3.org/XML/1998/namespace</NamespaceURI>
+    <NamespacePrefixText>xml</NamespacePrefixText>
+    <DocumentFilePathText>niem/external/xml.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>XML</NamespaceCategoryCode>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <ObjectProperty structures:id="j.EducationTotalYearsText">
+    <Name>EducationTotalYearsText</Name>
+    <Namespace structures:ref="j" xsi:nil="true"/>
+    <DocumentationText>A total number of years a person has been involved in attaining their education.</DocumentationText>
+    <Class structures:ref="nc.TextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.CommentText">
+    <Name>CommentText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A comment, note, or remark providing additional information.</DocumentationText>
+    <Class structures:ref="nc.TextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.EducationDescriptionText">
+    <Name>EducationDescriptionText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A description of a person's educational background.</DocumentationText>
+    <Class structures:ref="nc.TextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonEducation">
+    <Name>PersonEducation</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A person's educational background.</DocumentationText>
+    <Class structures:ref="nc.EducationType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonGivenName">
+    <Name>PersonGivenName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A first name of a person.</DocumentationText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonMiddleName">
+    <Name>PersonMiddleName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A middle name of a person.</DocumentationText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonName">
+    <Name>PersonName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A combination of names and/or titles by which a person is known.</DocumentationText>
+    <Class structures:ref="nc.PersonNameType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.personNameCommentText">
+    <Name>personNameCommentText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A comment about a kind of name for a person.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="nc.personNameInitialIndicator">
+    <Name>personNameInitialIndicator</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>True if value represents the first letter or initials of a persons name; false otherwise.</DocumentationText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.PersonSurName">
+    <Name>PersonSurName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A last name or family name of a person.</DocumentationText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="xml.lang">
+    <Name>lang</Name>
+    <Namespace structures:ref="xml" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <Class structures:id="nc.CommentType">
+    <Name>CommentType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a comment, note, or remark providing additional information.</DocumentationText>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.CommentText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.EducationType">
+    <Name>EducationType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a person's educational background.</DocumentationText>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.EducationDescriptionText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.PersonNameTextType">
+    <Name>PersonNameTextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a name by which a person is known, referred, or addressed.</DocumentationText>
+    <SubClassOf structures:ref="nc.ProperNameTextType" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="nc.personNameInitialIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.PersonNameType">
+    <Name>PersonNameType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a combination of names and/or titles by which a person is known.</DocumentationText>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.PersonGivenName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.PersonMiddleName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.PersonSurName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="nc.personNameCommentText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.PersonType">
+    <Name>PersonType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a human being.</DocumentationText>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.PersonEducation" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.PersonName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.ProperNameTextType">
+    <Name>ProperNameTextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a word or phrase by which a person or thing is known, referred, or addressed.</DocumentationText>
+    <SubClassOf structures:ref="nc.TextType" xsi:nil="true"/>
+  </Class>
+  <Class structures:id="nc.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="nc.TextLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="xml.lang" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Datatype structures:id="xs.anyURI">
+    <Name>anyURI</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.ID">
+    <Name>ID</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

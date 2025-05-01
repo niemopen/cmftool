@@ -40,16 +40,23 @@ public class DataProperty extends Property {
     public DataProperty (Namespace ns, String name) { super(ns,name); }
 
     @Override
-    public int getType ()           { return CMF_DATAPROP; }
+    public int getType ()               { return CMF_DATAPROP; }
     @Override
-    public String cmfElement ()     { return "DataProperty"; }
+    public String cmfElement ()         { return "DataProperty"; }
+    @Override
+    public boolean isDataProperty ()    { return true; }
     
     private boolean isAtt = false;              // cmf:AttributeIndicator
     private boolean isRefAtt = false;           // cmf:RefAttributeIndicator
     private Datatype datatype = null;           // cmf:Datatype
 
+    @Override
     public boolean isAttribute ()               { return isAtt; }
+    @Override
     public boolean isRefAttribute ()            { return isRefAtt; }
+    @Override
+    public Component type ()                    { return datatype; }
+    @Override
     public Datatype datatype ()                 { return datatype; }
     
     public void setIsAttribute (boolean f)      { isAtt = f; }

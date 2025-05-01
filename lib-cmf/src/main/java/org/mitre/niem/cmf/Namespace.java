@@ -24,8 +24,11 @@
 package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.mitre.niem.xml.LanguageString;
+import org.mitre.niem.xsd.NamespaceKind;
 
 /**
  * A class for a Namespace object in a NIEM model.
@@ -34,6 +37,8 @@ import org.mitre.niem.xml.LanguageString;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Namespace extends CMFObject implements Comparable<Namespace> {
+    
+    private static final List<LanguageString> EMPTY_LSL = List.of();
 
     public Namespace () { }
     public Namespace (String prefix, String uri) { 
@@ -47,47 +52,71 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     private String prefix = "";                                     // cmf:NamespacePrefixText
     private String uri = "";                                        // cmf:NamespaceURI
     private String docFP = "";                                      // cmf:DocumentFilePathText
+    private String kindCode = "";                                   // cmf:NamespaceCategoryCode
     private String version = "";                                    // cmf:NamespaceVersionText
+    private String niemVersion = "";                                // cmf:NIEMVersionName
     private String lang = "";                                       // cmf:NamespaceLanguageName
+    private boolean isModelF = false;                               // has a model schema document CTA
     private final List<LanguageString> docL = new ArrayList<>();    // cmf:DocumentationText
-    private final List<LanguageString> impDocL = new ArrayList<>(); // cmf:ImportDocumentationText
     private final List<String> ctargL = new ArrayList<>();          // cmf:ConformanceTargetURI
     private final List<LocalTerm> locTermL = new ArrayList<>();     // cmf:LocalTerm
     private final List<AugmentRecord> augL = new ArrayList<>();     // cmf:AugmentationRecord
+    private final Map<String,List<LanguageString>> idocs = new HashMap<>();      // cmf:ImportDocumentation
     
-    public Model model ()                       { return model; }
-    public String prefix ()                     { return prefix; }
+    public Model model ()                           { return model; }
+    public String prefix ()                         { return prefix; }
     @Override
-    public String uri ()                        { return uri; }
-    public String documentFilePath ()           { return docFP; }
-    public String version ()                    { return version ; }
-    public String language ()                   { return lang; }
-    public List<LanguageString> docL ()         { return docL; }
-    public List<LanguageString> impDocL ()      { return impDocL; }
-    public List<String> ctargL ()               { return ctargL; }
-    public List<LocalTerm> locTermL ()          { return locTermL; }
-    public List<AugmentRecord> augL ()          { return augL; }
+    public String uri ()                            { return uri; }
+    public String documentFilePath ()               { return docFP; }
+    public String kindCode ()                       { return kindCode; }
+    public String version ()                        { return version; }
+    public String niemVersion ()                    { return niemVersion; }
+    public String language ()                       { return lang; }
+    public List<LanguageString> docL ()             { return docL; }
+    public List<LanguageString> idocL (String nsU)  { return idocs.getOrDefault(nsU, EMPTY_LSL); }
+    public List<String> ctargL ()                   { return ctargL; }
+    public List<LocalTerm> locTermL ()              { return locTermL; }
+    public List<AugmentRecord> augL ()              { return augL; }
+    public boolean isModelNS ()                     { return isModelF; }
+    public boolean isExternal ()                    { return "EXTERNAL".equals(kindCode); }
+    public Map<String,List<LanguageString>> idocs() { return idocs; }
     
-    public void setDocumentFilePath (String s)  { docFP = s; }
-    public void setVersion (String s)           { version = s; }
-    public void setLanguage (String s)          { lang = s; }
+    public void setDocumentFilePath (String s)      { docFP = s; }
+    public void setKindCode (String s)              { kindCode = s; }
+    public void setVersion (String s)               { version = s; }
+    public void setNIEMVersion (String s)           { niemVersion = s; }
+    public void setLanguage (String s)              { lang = s; }
     
     public void addDocumentation (String doc, String lang) {
         docL.add(new LanguageString(doc, lang));
     }
-    public void addImportDocumentation (String doc, String lang) {
-        impDocL.add(new LanguageString(doc, lang));
+    public void addImportDocumentation (ImportDoc idoc) {
+        var nsU  = idoc.nsU();
+        for (var ls : idoc.docL())
+            addImportDocumentation(nsU, ls);
     }
+    
+    public void addImportDocumentation (String nsU, LanguageString ls) {
+        var dL = idocs.get(nsU);
+        if (null == dL) {
+            dL = new ArrayList<>();
+            idocs.put(nsU, dL);
+        }
+        dL.add(ls);
+    }
+    
     public void addConformanceTarget (String ct) {
         ctargL.add(ct);
+        if (NamespaceKind.isModelCTA(ct)) isModelF = true;
     }
     public void setConformanceTargets (String ctarg) {
         ctargL.clear();
-        for (var ct : ctarg.trim().split("\\s+")) ctargL.add(ct);
+        for (var ct : ctarg.trim().split("\\s+")) addConformanceTarget(ct);
     }
     public void setConformanceTargets (List<String> ctL) {
         ctargL.clear();
-        ctargL.addAll(ctL);
+        isModelF = false;
+        for (var ct : ctL) addConformanceTarget(ct);
     }
     public void addLocalTerm (LocalTerm lt)     { locTermL.add(lt); }
     public void addAugmentRecord (AugmentRecord a) { augL.add(a); }

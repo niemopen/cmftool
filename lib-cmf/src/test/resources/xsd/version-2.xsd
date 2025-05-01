@@ -13,7 +13,7 @@
   version="1"
   xml:lang="en-US">   
   <xs:annotation>
-    <xs:documentation>NIEM version test schema. Has conflicting structures imports.</xs:documentation>
+    <xs:documentation>NIEM version test schema. Has conflicting structures import and CTA.</xs:documentation>
   </xs:annotation>
-  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="../xsd5/niem/utility/structures.xsd"/>
+  <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/structures-5.xsd"/>
 </xs:schema>

@@ -5,63 +5,73 @@
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xml:lang="en-US">
-  <Namespace structures:id="test">
+  <Namespace structures:id="t">
     <NamespaceURI>http://example.com/components/</NamespaceURI>
-    <NamespacePrefixText>test</NamespacePrefixText>
+    <NamespacePrefixText>t</NamespacePrefixText>
     <DocumentationText>
       Components test schema. 
       Test name, namespace, documentation, deprecated.
       Test bogus appinfo.
     </DocumentationText>
-    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>component.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
+    <NIEMVersionName>NIEM6.0</NIEMVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
-  <DataProperty structures:id="test.anAttribute">
+  <DataProperty structures:id="t.anAttribute">
     <Name>anAttribute</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>Attribute doc string</DocumentationText>
     <Datatype structures:ref="xs.decimal" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </DataProperty>
-  <DataProperty structures:id="test.AnElement">
+  <DataProperty structures:id="t.AnElement">
     <Name>AnElement</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>AnElement doc string #1</DocumentationText>
     <DeprecatedIndicator>true</DeprecatedIndicator>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <DataProperty structures:id="test.AnotherElement">
+  <DataProperty structures:id="t.AnotherElement">
     <Name>AnotherElement</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>AnotherElement doc string #1</DocumentationText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <Class structures:id="test.Test1Type">
-    <Name>Test1Type</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <DocumentationText>Test1Type doc string #1</DocumentationText>
-    <DocumentationText xml:lang="fr">Voulez -vous coucher avec moi?</DocumentationText>
+  <Class structures:id="t.OneClassType">
+    <Name>OneClassType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>OneClassType doc string #1</DocumentationText>
+    <DocumentationText xml:lang="fr">chaîne de documentation</DocumentationText>
     <DeprecatedIndicator>true</DeprecatedIndicator>
-    <ReferenceCode>ANY</ReferenceCode>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.AnElement" xsi:nil="true"/>
+      <DataProperty structures:ref="t.AnElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Restriction structures:id="test.Test2DataType">
-    <Name>Test2DataType</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <DocumentationText>Test2DataType doc string</DocumentationText>
-    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+  <Restriction structures:id="t.TwoDataType">
+    <Name>TwoDataType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>Exercise code list</DocumentationText>
+    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
     <Facet>
-      <FacetValue>20</FacetValue>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>GB</FacetValue>
+      <DocumentationText>UNITED KINGDOM</DocumentationText>
+    </Facet>
+    <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>US</FacetValue>
+      <DocumentationText>UNITED STATES</DocumentationText>
+      <DocumentationText xml:lang="fr">LES ETAS-UNIS</DocumentationText>
     </Facet>
   </Restriction>
   <Datatype structures:id="xs.decimal">
@@ -70,6 +80,10 @@
   </Datatype>
   <Datatype structures:id="xs.string">
     <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
 </Model>

@@ -41,12 +41,13 @@ import static javax.xml.XMLConstants.XML_NS_URI;
  */
 public class NamespaceMap {
     
-    private final HashMap<String,String> prefix2URI = new HashMap<>();
-    private final HashMap<String,String> uri2Prefix = new HashMap<>();
+    private final HashMap<String,String> prefix2URI;
+    private final HashMap<String,String> uri2Prefix;
 
-    
     public NamespaceMap () { 
         // Initialize reserved namespace prefixes: xs, xsd, xml, xmlns
+        prefix2URI = new HashMap<>();
+        uri2Prefix = new HashMap<>();
         prefix2URI.put("xml", XML_NS_URI);  
         prefix2URI.put("xmlns", XMLNS_ATTRIBUTE_NS_URI);
         prefix2URI.put("xs", W3C_XML_SCHEMA_NS_URI);
@@ -59,6 +60,11 @@ public class NamespaceMap {
         uri2Prefix.put(W3C_XML_SCHEMA_NS_URI, "xs");
         uri2Prefix.put(XMLNS_ATTRIBUTE_NS_URI, "xmlns");
         uri2Prefix.put(XML_NS_URI, "xml");
+    }
+    
+    public NamespaceMap (NamespaceMap nm) {
+        prefix2URI = new HashMap<>(nm.prefix2URI);
+        uri2Prefix = new HashMap<>(nm.uri2Prefix);
     }
     
     public String getPrefix (String nsuri) { return uri2Prefix.get(nsuri); }

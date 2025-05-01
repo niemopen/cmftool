@@ -24,20 +24,15 @@
 package org.mitre.niem.cmf;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import static java.io.File.createTempFile;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import nl.altindag.log.LogCaptor;
+import java.io.OutputStreamWriter;
 import org.apache.commons.io.FileUtils;
-import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.mitre.niem.xml.XMLSchema;
+import org.mitre.niem.xml.XMLSchemaException;
 
 /**
  *
@@ -46,58 +41,27 @@ import org.mitre.niem.xml.XMLSchema;
  */
 public class ModelXMLWriterTest {
     private final static String resDN = "src/test/resources/cmf/"; 
-    
     private static XMLSchema cmfSch =  null;
     
     public ModelXMLWriterTest() {  }
     
-    @BeforeAll
-    public static void getCMFSchema () throws XMLSchema.XMLSchemaException {
-        var cmfXSD = new String[]{"src/main/CMF/model.xsd/cmf.xsd"};
-        cmfSch = new XMLSchema(cmfXSD);        
-    }
-    
     @Test
     public void testRoundTrip () throws Exception {
-        var outF  = File.createTempFile("ModelXMLWriterTest", ".cmf");
         var rdr   = new ModelXMLReader();
         var wr    = new ModelXMLWriter();
         var resDF = new File(resDN);
+        var outF  = createTempFile("ModelXMLWriterTest", ".cmf");
         var cmfFL = FileUtils.listFiles(resDF, new String[]{"cmf"}, false);
         for (var cmfF : cmfFL) {
             var model = rdr.readFiles(cmfF);
             var os    = new FileOutputStream(outF);
-            wr.writeXML(model, os);
-            os.close();
+            var ow    = new OutputStreamWriter(os, "UTF-8");
+            wr.writeXML(model, ow);
+            ow.close();
             var same = FileUtils.contentEqualsIgnoreEOL(cmfF, outF, "UTF-8");
             outF.delete();
             assertTrue(same);
         }
-
     }
-
-    
-    public static List<LogCaptor> logs;      
-    @BeforeAll
-    public static void setupLogCaptor () {
-        logs = new ArrayList<>();
-        logs.add(LogCaptor.forClass(ModelXMLReader.class));
-        logs.add(LogCaptor.forClass(ModelXMLWriter.class));
-    }
-    @AfterEach
-    public void clearLogs () {
-        for (var log : logs) log.clearLogs();;
-    }
-    @AfterAll
-    public static void tearDown () {
-        for (var log : logs) log.close();
-    }    
-    public void assertEmptyLogs () {
-        for (var log : logs) {
-            var errors = log.getErrorLogs();
-            var warns  = log.getWarnLogs();
-            assertThat(errors.isEmpty());
-            assertThat(warns.isEmpty());
-        }
-    }    
+  
 }

@@ -26,7 +26,7 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:element name="EducationAugmentation" type="j:EducationAugmentationType" substitutionGroup="nc:EducationAugmentationPoint" nillable="true">
+  <xs:element name="EducationAugmentation" type="j:EducationAugmentationType" substitutionGroup="nc:EducationAugmentationPoint">
     <xs:annotation>
       <xs:documentation>Additional information about an education.</xs:documentation>
     </xs:annotation>

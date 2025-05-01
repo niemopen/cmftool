@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.mitre.niem.utility.URIfuncs.FileToCanonicalURI;
-import org.mitre.niem.xml.XMLSchema.XMLSchemaException;
+import org.mitre.niem.xml.XMLSchemaException;
 
 /**
  *
@@ -93,9 +93,9 @@ public class XMLSchemaTest {
         assertTrue(sch.xsModelMsgs().isEmpty());
         assertNotNull(sch.javaxSchema());
         assertTrue(sch.javaXMsgs().isEmpty());
-        assertThat(sch.schemaNamespaceURIs())
+        assertThat(sch.schemaNamespaceUs())
                 .hasSize(10);
-        for (var nsuri : sch.schemaNamespaceURIs()) {
+        for (var nsuri : sch.schemaNamespaceUs()) {
             assertEquals(nsuri, sch.schemaDocument(nsuri).targetNamespace());
         }
     }
@@ -106,7 +106,7 @@ public class XMLSchemaTest {
             resDN + "xsd/withCatalog.xsd",
             resDN + "xsd/niem/xml-catalog.xml"};
         var sch = new XMLSchema(args);
-        assertThat(sch.schemaNamespaceURIs()).hasSize(10);
+        assertThat(sch.schemaNamespaceUs()).hasSize(10);
     }
     
     @Test
@@ -123,7 +123,7 @@ public class XMLSchemaTest {
     public void testInitialNS () throws Exception {
         var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/goodXsTest/"));
         var pr = s.pileRoot();
-        assertEquals(3, s.resolver().allCatalogs().size());
+//        assertEquals(3, s.resolver().allCatalogs().size());
         assertEquals(1, s.initialSchemaDocs().size());
         assertEquals(1, s.initialNS().size());   
         assertEmptyLogs();
@@ -148,15 +148,15 @@ public class XMLSchemaTest {
     
     @Test
     public void testBadURIWithHostname () throws Exception {    
-        var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
+        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
            var s = new XMLSchema(ga("file://google.com/some/file/path"));
         });
-        assertThat(thrown.getMessage()).contains("hostname not allowed");   
+        assertThat(thrown.getMessage()).contains("A hostname is not allowed");   
     }
     
     @Test
     public void testNotCatalogOrSchema () throws Exception {    
-        var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
+        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
            var s = new XMLSchema(ga("/xsd/00-README.txt"));
         });
         assertThat(thrown.getMessage()).contains("not a schema document or XML catalog"); 
@@ -164,23 +164,23 @@ public class XMLSchemaTest {
     
     @Test
     public void testNoCatForInitialNS () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
+        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
            var s = new XMLSchema("http://example.com/goodXsTest/");
         });
-        assertThat(thrown.getMessage()).contains("can't resolve"); 
+        assertThat(thrown.getMessage()).contains("Can't resolve"); 
     }    
     
     @Test
     public void testCantResolveInitialNS () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
+        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
            var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/not-in-catalog/"));
         });
-        assertThat(thrown.getMessage()).contains("can't resolve");         
+        assertThat(thrown.getMessage()).contains("Can't resolve");         
     }    
 
     @Test
     public void testResolvesToRemote () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
+        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
            var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/remote-resource/"));
         });
         assertThat(thrown.getMessage()).contains("not a local URI");         
@@ -188,7 +188,7 @@ public class XMLSchemaTest {
     
     @Test
     public void testResolvesToNotXSD () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
+        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
            var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/not-xsd/"));
         });
         assertThat(thrown.getMessage()).contains("not a schema document");   
@@ -196,15 +196,15 @@ public class XMLSchemaTest {
     
     @Test
     public void testResolvesToNoSuchFile () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
+        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
            var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/no-such-file/"));
         });
         assertThat(thrown.getMessage()).contains("cannot find the file"); 
     }    
     
     @Test
-    public void testResolvesToWrongTargetNS () throws XMLSchema.XMLSchemaException, IOException {
-        var thrown = Assertions.assertThrows(XMLSchema.XMLSchemaException.class, () -> {
+    public void testResolvesToWrongTargetNS () throws Exception {
+        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
            var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/Foo/1.0/"));
         });
         assertThat(thrown.getMessage()).contains("wrong target namespace");

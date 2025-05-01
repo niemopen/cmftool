@@ -15,39 +15,134 @@
       Test restriction type and all facets
       Test empty restriction
     </DocumentationText>
-    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/XNDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>datatypes.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
+    <NIEMVersionName>NIEM6.0</NIEMVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
     <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
     <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
+  <DataProperty structures:id="test.AttProperty">
+    <Name>AttProperty</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>An attribute property.</DocumentationText>
+    <DeprecatedIndicator>true</DeprecatedIndicator>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="test.Literal1Literal">
+    <Name>Literal1Literal</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Named CSC type extended with attributes</DocumentationText>
+    <Datatype structures:ref="test.Restrict8Type" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="test.Literal2Literal">
+    <Name>Literal2Literal</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Named simple type extended with attributes</DocumentationText>
+    <Datatype structures:ref="test.Literal2SimpleType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="test.Literal3Literal">
+    <Name>Literal3Literal</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Proxy type extended with attributes</DocumentationText>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="test.Literal4Literal">
+    <Name>Literal4Literal</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>XSD type extended with attributes and SimpleObjectAttributeGroup</DocumentationText>
+    <Datatype structures:ref="xs.integer" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="test.Literal1Type">
+    <Name>Literal1Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Named CSC type extended with attributes</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.Literal1Literal" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.AttProperty" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="test.Literal2Type">
+    <Name>Literal2Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Named simple type extended with attributes</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.Literal2Literal" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.AttProperty" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="test.Literal3Type">
+    <Name>Literal3Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Proxy type extended with attributes</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.Literal3Literal" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.AttProperty" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="test.Literal4Type">
+    <Name>Literal4Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>XSD type extended with attributes and SimpleObjectAttributeGroup</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.Literal4Literal" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.AttProperty" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
   <List structures:id="test.List1Type">
     <Name>List1Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>List of a named simple type</DocumentationText>
     <ListItemDatatype structures:ref="xs.integer" xsi:nil="true"/>
     <OrderedPropertyIndicator>true</OrderedPropertyIndicator>
   </List>
   <List structures:id="test.List2Type">
     <Name>List2Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>List of a union simple type</DocumentationText>
     <ListItemDatatype structures:ref="test.UnionType" xsi:nil="true"/>
   </List>
-  <Restriction structures:id="test.List3Type">
+  <List structures:id="test.List3Type">
     <Name>List3Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <DocumentationText>List of a restriction simple type</DocumentationText>
-    <RestrictionBase structures:ref="test.Restrict8Type" xsi:nil="true"/>
-    <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>US</FacetValue>
-    </Facet>
-    <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>GB</FacetValue>
-    </Facet>
+    <DocumentationText>List of a simple type with no corresponding CSC type</DocumentationText>
+    <ListItemDatatype structures:ref="test.Restrict8Type" xsi:nil="true"/>
+  </List>
+  <Restriction structures:id="test.Literal2SimpleType">
+    <Name>Literal2SimpleType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Simple type for Literal2Type</DocumentationText>
+    <RestrictionBase structures:ref="xs.float" xsi:nil="true"/>
   </Restriction>
   <Restriction structures:id="test.Restrict1Type">
     <Name>Restrict1Type</Name>
@@ -56,12 +151,12 @@
     <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
     <Facet>
       <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>FOO</FacetValue>
-      <DocumentationText>The FOO token</DocumentationText>
+      <FacetValue>BAR</FacetValue>
     </Facet>
     <Facet>
       <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>BAR</FacetValue>
+      <FacetValue>FOO</FacetValue>
+      <DocumentationText>The FOO token</DocumentationText>
     </Facet>
     <Facet>
       <FacetCategoryCode>maxLength</FacetCategoryCode>
@@ -97,11 +192,11 @@
     <RestrictionBase structures:ref="xs.integer" xsi:nil="true"/>
     <Facet>
       <FacetCategoryCode>maxExclusive</FacetCategoryCode>
-      <FacetValue>20</FacetValue>
+      <FacetValue>40</FacetValue>
     </Facet>
     <Facet>
       <FacetCategoryCode>minExclusive</FacetCategoryCode>
-      <FacetValue>10</FacetValue>
+      <FacetValue>30</FacetValue>
     </Facet>
   </Restriction>
   <Restriction structures:id="test.Restrict4Type">
@@ -160,36 +255,47 @@
       <FacetCategoryCode>enumeration</FacetCategoryCode>
       <FacetValue>US</FacetValue>
       <DocumentationText>UNITED STATES</DocumentationText>
+      <DocumentationText xml:lang="fr">LES ETAS-UNIS</DocumentationText>
     </Facet>
   </Restriction>
   <Restriction structures:id="test.Restrict8Type">
     <Name>Restrict8Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Exercise code list from named simple type</DocumentationText>
     <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
     <Facet>
       <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>US</FacetValue>
+      <FacetValue>GB</FacetValue>
     </Facet>
     <Facet>
       <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>GB</FacetValue>
+      <FacetValue>US</FacetValue>
     </Facet>
   </Restriction>
   <Restriction structures:id="test.Restrict9Type">
     <Name>Restrict9Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <DocumentationText>Exercise empty restriction</DocumentationText>
+    <DocumentationText>Exercise extension of XSD type</DocumentationText>
     <RestrictionBase structures:ref="xs.integer" xsi:nil="true"/>
   </Restriction>
   <Restriction structures:id="test.Restrict10Type">
     <Name>Restrict10Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <DocumentationText>Exercise empty restriction</DocumentationText>
+    <DocumentationText>Exercise empty restriction of proxy</DocumentationText>
     <RestrictionBase structures:ref="xs.integer" xsi:nil="true"/>
   </Restriction>
+  <Union structures:id="test.Union2Type">
+    <Name>Union2Type</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Union including restriction simple type</DocumentationText>
+    <UnionMemberDatatype structures:ref="xs.integer" xsi:nil="true"/>
+    <UnionMemberDatatype structures:ref="xs.float" xsi:nil="true"/>
+    <UnionMemberDatatype structures:ref="test.List3Type" xsi:nil="true"/>
+  </Union>
   <Union structures:id="test.UnionType">
     <Name>UnionType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>Union including restriction simple type</DocumentationText>
     <UnionMemberDatatype structures:ref="xs.integer" xsi:nil="true"/>
     <UnionMemberDatatype structures:ref="xs.float" xsi:nil="true"/>
     <UnionMemberDatatype structures:ref="test.Restrict8Type" xsi:nil="true"/>

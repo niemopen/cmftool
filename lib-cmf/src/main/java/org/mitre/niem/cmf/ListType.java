@@ -51,6 +51,7 @@ public class ListType extends Datatype {
     
     @Override
     public Datatype itemType ()             { return itemType; }
+    @Override
     public boolean isOrdered ()             { return isOrdered; }
     
     public void setItemType (Datatype d)    { itemType = d; }

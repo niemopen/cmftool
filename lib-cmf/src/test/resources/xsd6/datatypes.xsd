@@ -121,12 +121,12 @@
         <xs:minLength value="3"/>
         <xs:maxLength value="4"/>
         <xs:pattern value="[A-Z]{3}"/>
+        <xs:enumeration value="BAR"/>
         <xs:enumeration value="FOO">
           <xs:annotation>
             <xs:documentation>The FOO token</xs:documentation>
           </xs:annotation>
         </xs:enumeration>
-        <xs:enumeration value="BAR"/>
       </xs:restriction>
     </xs:simpleContent>
   </xs:complexType>
@@ -207,8 +207,8 @@
   </xs:complexType>
   <xs:simpleType name="Restrict8SimpleType">
     <xs:restriction base="xs:token">
-      <xs:enumeration value="US"/>
       <xs:enumeration value="GB"/>
+      <xs:enumeration value="US"/>
     </xs:restriction>
   </xs:simpleType>
   <xs:complexType name="Restrict8Type">
@@ -248,6 +248,19 @@
     </xs:annotation>
     <xs:simpleContent>
       <xs:extension base="test:UnionSimpleType">
+        <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:simpleType name="Union2SimpleType">
+    <xs:union memberTypes="xs:integer xs:float test:TestSimpleType"/>
+  </xs:simpleType>
+  <xs:complexType name="Union2Type">
+    <xs:annotation>
+      <xs:documentation>Union including restriction simple type</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="test:Union2SimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
     </xs:simpleContent>

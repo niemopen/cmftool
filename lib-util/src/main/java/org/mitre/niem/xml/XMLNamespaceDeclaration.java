@@ -24,7 +24,8 @@
 package org.mitre.niem.xml;
 
 /**
- * A class to record a namespace declaration in a XML Schema document
+ * A class to record a namespace declaration in a XML Schema document.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */

@@ -29,39 +29,40 @@ import java.io.InputStream;
 import java.net.URI;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mitre.niem.utility.Resource.getResourceFile;
-import static org.mitre.niem.utility.Resource.getResourceStream;
-import static org.mitre.niem.utility.Resource.getResourceURI;
+
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ResourceTest {
+public class ResourceManagerTest {
     
-    public ResourceTest() {
+    public ResourceManagerTest() {
     }
 
     @Test
     public void testGetResourceFile () {
-        File r = getResourceFile("xsd/XMLCatalogSchema.xsd");
+        var rm = new ResourceManager();
+        File r = rm.getResourceFile("xsd/XMLCatalogSchema.xsd");
         assertNotNull(r);
-        r = getResourceFile("foo");
+        r = rm.getResourceFile("foo");
         assertNull(r);
     }
    
     @Test
     public void testGetResourceStream () {
-        InputStream r = getResourceStream("xsd/XMLCatalogSchema.xsd");
+        var rm = new ResourceManager();
+        InputStream r = rm.getResourceStream("xsd/XMLCatalogSchema.xsd");
         assertNotNull(r);
-        r = getResourceStream("foo");
+        r = rm.getResourceStream("foo");
         assertNull(r);
     }
     
     @Test
     public void testGetResourceURI () {
-        URI u = getResourceURI("xsd/XMLCatalogSchema.xsd");
+        var rm = new ResourceManager();
+        URI u = rm.getResourceURI("xsd/XMLCatalogSchema.xsd");
         assertNotNull(u);
         assertEquals("file", u.getScheme());
     }
