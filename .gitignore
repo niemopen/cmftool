@@ -1,0 +1,9 @@
+/build/
+*/build/
+/.gradle/
+/gradle/
+/gradle.properties
+/nbproject/
+*/nbproject/
+/nb-configuration.xml
+*~

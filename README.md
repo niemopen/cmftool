@@ -32,9 +32,11 @@ This version of CMFTool is not compatible with older CMF files.  Older versions 
 1. You must have a Java runtime environment.  JRE21 or later will work.  JRE17 might work.  
    - Try `java –version` from the command line.  If that works, you should be OK
    - Otherwise make sure your `JAVA_HOME` environment variable points to your JRE
-2. Unpack the executable distribution
-   - The *cmftool* program is in *app-cmftool/build/distributions*
-   - The *scheval* program is in *app-scheval/build/distributions*
+2. Unpack the executable distribution from the Assets tab on the [Release page](https://github.com/niemopen/cmftool/releases)
+   - The *cmftool* program is in *cmftool-1.0-alpha.3.zip*
+   - The *scheval* program is in *scheval-1.0-beta.1.zip*
+   - It's OK to combine the *bin* and *lib* directories from both.
+
 3. Put the *bin* directory into your PATH
 4. Try `cmftool help` from the command line
 
@@ -51,7 +53,8 @@ The *src/test/resources* directories contains resources for the JUnit tests.  Ma
 
 ## Building
 
-This project was built with NetBeans 24, Gradle 8.6, and Oracle JDK 21
+This project was built with NetBeans 24, Gradle 8.6, and Oracle JDK 21.
+Try `gradlew 
 
 ## Other assets
 
