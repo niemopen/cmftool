@@ -53,8 +53,8 @@ The *src/test/resources* directories contains resources for the JUnit tests.  Ma
 
 ## Building
 
-This project was built with NetBeans 24, Gradle 8.6, and Oracle JDK 21.
-Try `gradlew 
+This project was built with NetBeans 24, Gradle 8.12, and Oracle JDK 21.
+Try `./gradlew build`
 
 ## Other assets
 
