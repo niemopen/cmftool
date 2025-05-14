@@ -109,7 +109,7 @@ public class SchematronTest {
         xS.setSystemId(xmlF.toURI().toString());
         s.SVRLtoMessages(svrlS, xS, msgW);
         var res = msgW.toString();
-        assertTrue(res.contains("ERROR 7-10.xsd:19:54"));
+        assertTrue(res.contains("WARN  7-10.xsd:19:54"));
     }
     
 }

@@ -76,6 +76,16 @@ public class AugmentRecord extends PropertyAssociation implements Comparable<Aug
     public int compareTo(AugmentRecord o) {
         int rv = 0;
         if (null != this.classType && null != o.classType) rv = this.classType.compareTo(o.classType);
-        if (0 == rv) rv = NaturalOrderComparator.comp(this.index(), o.index());
+        if (0 == rv) {
+            var tx = "0" + this.index();
+            var ox = "0" + o.index();
+            try {
+                var ti = Integer.parseInt(tx);
+                var oi = Integer.parseInt(ox);
+                rv = ti - oi;
+            }
+            catch(NumberFormatException ex) { } // IGNORE
+        }
+        if (0 == rv) rv = this.property().compareTo(o.property());
         return rv;}
 }

@@ -83,6 +83,7 @@ public class ModelXMLWriter {
                 LOG.error("{}: no such namespace in model", s);
                 return false;
             }
+            nsS.add(ns);
         }
         return writeXML(m, nsS, w);
     }
@@ -144,6 +145,7 @@ public class ModelXMLWriter {
     private void appendComponent (Document doc, Element p, Component x, Set<Namespace>nsS) {
         if (null == x) return;
         if (x.isOutsideRef()) return;
+        if (!nsS.contains(x.namespace())) return;
         var c = doc.createElementNS(CMF_NS_URI, x.cmfElement());
         c.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", x.idRef());
         appendSimpleChild(doc, c, "Name", x.name());

@@ -11,7 +11,7 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
-project.version = '1.0-alpha.3'
+project.version = '1.0-alpha.4-SNAPSHOT'
 
 dependencies {
     implementation project(':lib-util')

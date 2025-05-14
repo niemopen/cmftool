@@ -26,11 +26,11 @@ package org.mitre.niem.cmftool;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameters;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -58,19 +58,22 @@ import static org.mitre.niem.xsd.NamespaceKind.*;
 @Parameters(commandDescription = "convert a NIEM model in XSD to CMF")
 class CmdXSDtoCMF implements JCCommand {
 
-    @Parameter(names = "-o", description = "name of output model file")
+    @Parameter(order = 1, names = "-o", description = "name of output model file")
     private String modelFN = null;
 
-    @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
+    @Parameter(order = 2, names = "--only", description = "include only these namespace URIs or prefixes; eg. \"--only nc,j\"")
+    private String onlyArg = null;
+        
+    @Parameter(order = 3, names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
     
-    @Parameter(names = {"-p","--profile"}, description = "pause for profiler attachment")
+    @Parameter(names = {"-p","--profile"}, description = "pause for profiler attachment", hidden = true)
     private boolean profileFlag = false;
-
-    @Parameter(names = {"-q", "--quiet"}, description = "no output, exit status only")
-    private boolean quietFlag = false;
+//
+//    @Parameter(names = {"-q", "--quiet"}, description = "no output, exit status only")
+//    private boolean quietFlag = false;
      
-    @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
+    @Parameter(order = 4, names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
     @Parameter(description = "{schema, namespace URI, XML catalog}...")
@@ -173,17 +176,23 @@ class CmdXSDtoCMF implements JCCommand {
             System.err.println(String.format("Error building XML schema: %s", ex.getMessage()));
             System.exit(1);
         }
+        // Convert onlyArg to list of namespace URIs/prefixes
+        var onlyL = new ArrayList<String>();
+        if (null != onlyArg) {
+            onlyL.addAll(Arrays.asList(onlyArg.split("\\s*,\\s*")));
+        }
         // Write the NIEM model instance to the output stream
         var mw = new ModelXMLWriter();
         try {            
-            mw.writeXML(m, ow); 
+            if (onlyL.isEmpty()) mw.writeXML(m, ow); 
+            else mw.writeXML(m, onlyL, ow);
             ow.close();
         }catch (IOException ex) {
-            System.err.println(String.format("Output error: %s", ex.getMessage()));
+            System.err.println("Output error: " + ex.getMessage());
             System.exit(1);
         }
         // Report various error and warning messages captured in the schema object
-        if (quietFlag) System.exit(0);
+//        if (quietFlag) System.exit(0);
         var catmsgL = s.resolver().allMessages();
         var schmsgL = s.xsModelMsgs();
         if (!catmsgL.isEmpty()) {
