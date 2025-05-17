@@ -2,12 +2,12 @@ package org.mitre.niem.json;
 
 import com.google.gson.annotations.SerializedName;
 
-public class AllOfClassType {
+public class OfClassType extends Of{
   @SerializedName("$ref")
   private String propertyReference;
 
 
-  public AllOfClassType(String classRef){
+  public OfClassType(String classRef){
     propertyReference = "#properties/" + classRef;
   }
 

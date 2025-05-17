@@ -1,12 +1,12 @@
 /*
  * NOTICE
- * 
+ *
  * This software was produced for the U. S. Government
  * under Basic Contract No. W56KGU-18-D-0004, and is
  * subject to the Rights in Noncommercial Computer Software
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
- * 
+ *
  * Copyright 2020-2021 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,16 +35,16 @@ import java.util.Map;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class CMFTool {
-      
+
     public static void main (String[] args) {
         CMFTool obj = new CMFTool();
         obj.run(args);
-    }    
-    
+    }
+
     private void run (String[] args) {
-         
+
     // Uncomment arguments for debugging:
-     
+
     String xtd = "src/test/resources/xsd/";
     if (0 == args.length) {
         args = new String[]{"xval", "-d", "-s", "examples/Claim-iepd/extension/claim.xsd", "examples/Claim-iepd/xml-catalog.xml"};
@@ -52,13 +52,13 @@ public class CMFTool {
 //        args = new String[]{"xcmp", xtd+"nameinfo.xsd", xtd+"out/nameinfo.xsd"};
 //        args = new String[]{"m2x", "-d", "-o", xtd+"out", xtd+"twoversions-0.cmf", xtd+"twoversions-0.cmx"};
     }
-    
+
 
         JCommander jc = new JCommander();
-        CMFUsageFormatter uf = new CMFUsageFormatter(jc); 
+        CMFUsageFormatter uf = new CMFUsageFormatter(jc);
         jc.setUsageFormatter(uf);
         jc.setProgramName("cmftool");
-        
+
         CmdCMFtoCMF cmfToCmfCmd = new CmdCMFtoCMF(jc);
         CmdCMFtoOWL cmfToOwlCmd = new CmdCMFtoOWL(jc);
         CmdCMFtoXSD cmfToXsdCmd = new CmdCMFtoXSD(jc);
@@ -68,16 +68,16 @@ public class CMFTool {
         CmdXSDcmp xsdCmpCmd         = new CmdXSDcmp(jc);
         CmdXSDvalidate xsValCmd     = new CmdXSDvalidate(jc);
         CommandHelp helpCmd         = new CommandHelp(jc);
-        jc.addCommand("m2j", cmfToJsonCmf);
         jc.addCommand("m2m", cmfToCmfCmd);
         jc.addCommand("m2o", cmfToOwlCmd);
         jc.addCommand("m2x", cmfToXsdCmd);
+        jc.addCommand("m2j", cmfToJsonCmf);
         jc.addCommand("x2m", xsdToCmfCmd);
         jc.addCommand("xcanon", xsdCanon);
         jc.addCommand("xcmp", xsdCmpCmd);
         jc.addCommand("xval", xsValCmd);
         jc.addCommand("help", helpCmd, "usage");
-        
+
         if (args.length < 1) {
             System.out.println("Version: " + CMFTool.class.getPackage().getImplementationVersion());
             jc.usage();
@@ -91,28 +91,28 @@ public class CMFTool {
             jc.usage();
             System.exit(2);
         }
-        String command = jc.getParsedCommand();      
+        String command = jc.getParsedCommand();
         Map<String,JCommander> cmdMap = jc.getCommands();
         JCommander cob = cmdMap.get(command);
         List<Object> objs = cob.getObjects();
         JCCommand cmd = (JCCommand)objs.get(0);
-        CMFUsageFormatter cobuf = new CMFUsageFormatter(cob);        
+        CMFUsageFormatter cobuf = new CMFUsageFormatter(cob);
         cob.setUsageFormatter(cobuf);
-        cmd.runCommand(cob);               
-    }    
-    
+        cmd.runCommand(cob);
+    }
+
     @Parameters(commandDescription = "list of cmftool commands")
     private class CommandHelp implements JCCommand {
-        
+
         @Parameter(description = "display help for this command")
         List<String> helpArgs;
-        
+
         private final JCommander jc;
-        
+
         CommandHelp (JCommander jc) {
             this.jc = jc;
         }
-        
+
         @Override
         public void runMain (String[] args) {
         }
@@ -125,9 +125,9 @@ public class CMFTool {
                 Map<String, JCommander> cmdMap = jc.getCommands();
                 JCommander cob = cmdMap.get(cmdName);
                 List<Object> objs = cob.getObjects();
-                JCCommand cmd = (JCCommand) objs.get(0);  
-                CMFUsageFormatter cobuf = new CMFUsageFormatter(cob);        
-                cob.setUsageFormatter(cobuf);    
+                JCCommand cmd = (JCCommand) objs.get(0);
+                CMFUsageFormatter cobuf = new CMFUsageFormatter(cob);
+                cob.setUsageFormatter(cobuf);
                 String[] ha = {"--help"};
                 cmd.runMain(ha);
             }
@@ -137,5 +137,5 @@ public class CMFTool {
             }
         }
     }
-    
+
 }

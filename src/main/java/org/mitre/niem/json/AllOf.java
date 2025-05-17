@@ -3,18 +3,19 @@ package org.mitre.niem.json;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Property;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-public class AllOf {
-  private final String type = "object";
-  private LinkedHashMap<String, AllOfClassType> properties;
+public class AllOf extends Of{
+  // private final String type = "object";
+  private LinkedHashMap<String, OfClassType> properties = null;
+  public ArrayList<OneOf> oneOf = null;
 
   public AllOf(){
-    properties = new LinkedHashMap<>();
+    properties = null;
   }
 
-  public void addAllOfProperty(String propertyName, AllOfClassType allOfClassType){
+  public void addAllOfProperty(String propertyName, OfClassType allOfClassType){
     properties.put(propertyName, allOfClassType);
   }
 
@@ -26,7 +27,7 @@ public class AllOf {
           Property p = hp.getProperty();
           if (null != p && null != p.getNamespace()){
             String classRef = p.getNamespace().getNamespacePrefix() + ":" + p.getName();
-            var allOfClassType = new AllOfClassType(classRef);
+            var allOfClassType = new OfClassType(classRef);
             properties.put(classRef, allOfClassType);
           }
         }

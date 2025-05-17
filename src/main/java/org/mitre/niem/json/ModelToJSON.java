@@ -6,7 +6,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mitre.niem.NIEMConstants.*;
 import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
 
 public class ModelToJSON {
@@ -20,12 +19,20 @@ public class ModelToJSON {
     return jsonSchema;
   }
 
-  public void writeJSON () {
+  public String writeJSON () {
     addNamespaces();
     addProperties();
     addDefinitions();
+    jsonSchema.addRelatedDefinitions();
 //    writeClasses(ow);
 //    writeDatatypes(ow);
+    return this.getJsonSchema().toJSON();
+  }
+
+  public String writeJSON(PrintWriter writer) {
+    String json = this.writeJSON();
+    writer.print(json);
+    return json;
   }
 
   private void addNamespaces () {

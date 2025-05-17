@@ -1,17 +1,36 @@
 package org.mitre.niem.json;
 
 import com.google.gson.annotations.SerializedName;
+import org.mitre.niem.cmf.Property;
 
-public class JSONPropertyType {
+public class JSONPropertyType{
+  private transient String namespacePrefix;
   @SerializedName("$ref")
-  private String ref;
+  private String ref = null;
 
-  public JSONPropertyType(String refName){
-    this.ref = refName;
+  private String type = null;
+
+  public JSONPropertyType(String defString, String namespacePrefix, String name) {
+    this.namespacePrefix = namespacePrefix;
+    if (JSONSchemaHelper.isIntrinsicType(name)) {
+      this.type = name;
+    } else {
+      this.ref = String.format("%s%s:%s", defString, namespacePrefix, name);
+    }
   }
 
-  public void setRef(String refName){
-    ref = "#definitions/" + refName;
+  public JSONPropertyType(String name){
+    if (JSONSchemaHelper.isIntrinsicType(name)){
+      this.type = name;
+    }
+    else{
+      this.ref = name;
+    }
   }
 
+  public JSONPropertyType(Property property){
+    var nsPrefix = property.getNamespace().getNamespacePrefix();
+    var name = property.getName();
+    ref = String.format("%s%s:%s", JSONSchemaHelper.PROPERTIES_TEXT, nsPrefix, name);
+  }
 }

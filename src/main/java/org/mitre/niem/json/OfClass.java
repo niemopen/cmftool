@@ -1,11 +1,11 @@
 package org.mitre.niem.json;
 
-public class OneOfClass extends Of{
+public class OfClass extends Of{
   private String $ref;
 
 
-  public OneOfClass(String classRef){
-    $ref = "#/definitions/" + classRef;
+  public OfClass(String classRef){
+    $ref = classRef;
   }
 
   public String getReference() {
@@ -15,5 +15,4 @@ public class OneOfClass extends Of{
   public void setReference(String reference){
     this.$ref = reference;
   }
-
 }

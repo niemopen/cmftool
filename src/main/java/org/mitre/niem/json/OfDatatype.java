@@ -1,9 +1,9 @@
 package org.mitre.niem.json;
 
-public class OneOfDatatype extends OneOf{
+public class OfDatatype extends Of{
   private String datatype;
 
-  public OneOfDatatype(String datatype){
+  public OfDatatype(String datatype){
     this.datatype = datatype;
   }
 
