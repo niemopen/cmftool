@@ -1,7 +1,5 @@
-/build/
-*/build/
-/.gradle/
-/nbproject/
-*/nbproject/
-/nb-configuration.xml
+**/.gradle/
+**/build/
+**/dist/
+**/tmp/
 *~
