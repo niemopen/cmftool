@@ -77,6 +77,7 @@ public class CMFTool {
         jc.setUsageFormatter(uf);
         jc.setProgramName("cmftool");
         
+        var cmfToJSONCmd = new CmdCMFtoJSONSchema(jc);
         var cmfToCmfCmd  = new CmdCMFtoCMF(jc);
         var cmfToXsdCmd  = new CmdCMFtoXSD(jc);
 //        var cmfToMsgXsdCmd = new CmdCMFtoMsgXSD(jc);
@@ -87,7 +88,8 @@ public class CMFTool {
 //        var xsdCanon       = new CmdXSDcanonicalize(jc);
 //        var xsdCmpCmd      = new CmdXSDcmp(jc);
         var xsValCmd       = new CmdXSDvalidate(jc);
-        var helpCmd        = new CommandHelp(jc);    
+        var helpCmd        = new CommandHelp(jc); 
+        jc.addCommand("m2j",    cmfToJSONCmd);
         jc.addCommand("m2m",    cmfToCmfCmd);
 //        jc.addCommand("m2o",    cmfToOwlCmd);
         jc.addCommand("m2x", cmfToXsdCmd);

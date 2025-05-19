@@ -49,6 +49,12 @@ public class PropertyAssociation extends CMFObject {
     public boolean isOrdered ()         { return isOrdered; }
     public List<LanguageString> docL () { return docL; }
     
+    public boolean isMaxUnbounded ()    { return "unbounded".equals(maxOccurs); }
+    public int minOccursVal ()          { return stringToInt(minOccurs); }
+    public int maxOccursVal () { 
+        return "unbounded".equals(maxOccurs) ? -1 : stringToInt(maxOccurs);
+    }
+    
     public void setProperty (Property p)    { property = p; }
     public void setMinOccurs (String s)     { minOccurs = s; }
     public void setMaxOccurs (String s)     { maxOccurs = s; }
@@ -60,7 +66,14 @@ public class PropertyAssociation extends CMFObject {
     public void setDocumentation (List<LanguageString> dL) {
         docL.clear();
         docL.addAll(dL);
-    }    
+    }   
+    
+    public int stringToInt (String s) {
+        int res = 0;
+        try { res = Integer.parseInt(s); }
+        catch (Exception ex) { }
+        return res;
+    }
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

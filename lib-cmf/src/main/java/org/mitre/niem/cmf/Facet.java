@@ -44,6 +44,7 @@ public class Facet extends CMFObject implements Comparable<Facet> {
     public String category ()                       { return category; }
     public String value ()                          { return value; }
     public List<LanguageString> docL ()             { return docL; }
+    public String definition ()                     { return docL.isEmpty() ? null : docL.get(0).text(); }
     public String xsdFacetName ()                   { return StringUtils.uncapitalize(category); }
     
     public void setCategory (String k)              { category = k; }

@@ -10,8 +10,8 @@ public class JSONDefinitionEnum {
   public JSONDefinitionEnum(Facet facet){
     if ($enum == null) $enum = new ArrayList<>();
 
-    $enum.add(facet.getStringVal());
-    description = facet.getDefinition();
+    $enum.add(facet.value());
+    description = facet.definition();
   }
 
   @SerializedName("enum")

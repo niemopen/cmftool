@@ -73,6 +73,13 @@ public class ClassType extends Component {
         anyL.add(ap);
     }
     
+    public boolean isReferenceable () {
+        if (refCode.isEmpty()) return !isLiteralClass(); 
+        return (!"NONE".equals(refCode));
+    }
+    
+    public boolean isLiteralClass ()            { return null != literalDatatype(); }
+    
     public Datatype literalDatatype () {
         if (propL.isEmpty()) return null;
         var pa = propL().get(0);

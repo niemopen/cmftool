@@ -29,8 +29,8 @@ public class JSONPropertyType{
   }
 
   public JSONPropertyType(Property property){
-    var nsPrefix = property.getNamespace().getNamespacePrefix();
-    var name = property.getName();
+    var nsPrefix = property.namespace().prefix();
+    var name = property.name();
     ref = String.format("%s%s:%s", JSONSchemaHelper.PROPERTIES_TEXT, nsPrefix, name);
   }
 }

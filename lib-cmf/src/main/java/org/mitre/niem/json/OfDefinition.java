@@ -1,10 +1,10 @@
 package org.mitre.niem.json;
 
-import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Property;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import org.mitre.niem.cmf.PropertyAssociation;
 
 public class OfDefinition extends Of {
   protected String description;
@@ -40,22 +40,22 @@ public class OfDefinition extends Of {
     required.add(refName);
   }
 
-  public void setRequired(HasProperty property) {
+  public void setRequired(PropertyAssociation property) {
     String label = String.format("%s:%s",
-        property.getProperty().getNamespace().getNamespacePrefix(),
-        property.getProperty().getName());
+        property.property().namespace().prefix(),
+        property.property().name());
     // 0..1, 0..n
-    if (property.minOccurs() == 0) {
+    if (property.minOccursVal() == 0) {
       // do nothing
     }
 
     // 1..1, 1..n
-    if (property.minOccurs() == 1) {
+    if (property.minOccursVal() == 1) {
       addRequired(label);
     }
 
     // min > 1 and max < unbounded
-    if (property.minOccurs() > 1 && !property.maxUnbounded()) {
+    if (property.minOccursVal() > 1 && !property.isMaxUnbounded()) {
       addRequired(label);
       //
     }
@@ -78,8 +78,8 @@ public class OfDefinition extends Of {
         property = nonAbstractProperties.get(0);
       }
       String label = String.format("%s:%s",
-          property.getNamespace().getNamespacePrefix(),
-          property.getName());
+          property.namespace().prefix(),
+          property.name());
 
       addRequired(label);
     } else {
@@ -103,8 +103,8 @@ public class OfDefinition extends Of {
       } else {
         var property = cardinalities.get(0).getProperty();
         String label = String.format("%s:%s",
-            property.getNamespace().getNamespacePrefix(),
-            property.getName());
+            property.namespace().prefix(),
+            property.name());
 
         addRequired(label);
       }

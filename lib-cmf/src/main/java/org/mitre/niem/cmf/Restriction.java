@@ -53,6 +53,8 @@ public class Restriction extends Datatype {
     private CodeListBinding clb = null;                     // cmf:CodeListBinding
     
     @Override
+    public Restriction asRestriction ()                 { return this; }
+    @Override
     public Datatype base ()                             { return base; }
     @Override
     public List<Facet> facetL()                         { return facetL; }

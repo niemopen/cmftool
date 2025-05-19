@@ -1,7 +1,7 @@
 package org.mitre.niem.json;
 
-import org.mitre.niem.cmf.HasProperty;
 import org.mitre.niem.cmf.Property;
+import org.mitre.niem.cmf.PropertyAssociation;
 
 public class Cardinality {
   // public String propertyName;
@@ -22,24 +22,24 @@ public class Cardinality {
     this.isMaxUnbounded = isMaxUnbounded;
   }
 
-  public Cardinality(Property property, HasProperty hasProperty){
+  public Cardinality(Property property, PropertyAssociation hasProperty){
     this.property = property;
 
-    minOccurs = hasProperty.minOccurs();
-    maxOccurs = hasProperty.maxOccurs();
-    isMaxUnbounded = hasProperty.maxUnbounded();
+    minOccurs = hasProperty.minOccursVal();
+    maxOccurs = hasProperty.maxOccursVal();
+    isMaxUnbounded = hasProperty.isMaxUnbounded();
   }
 
   public String getPropertyName() {
-    if (property.getClassType() != null){
-      return property.getClassType().getName();
+    if (property.classType() != null){
+      return property.classType().name();
     }
 
-    return property.getName();
+    return property.name();
   }
 
-  public String getNamespacePrefix(){
-    return property.getNamespace().getNamespacePrefix();
+  public String prefix(){
+    return property.namespace().prefix();
   }
 
   public Property getProperty(){

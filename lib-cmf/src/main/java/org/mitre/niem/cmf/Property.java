@@ -56,6 +56,7 @@ public class Property extends Component {
     public boolean isAbstract ()                { return isAbstract; }
     public boolean isAttribute ()               { return false; }
     public boolean isRefAttribute()             { return false; }
+    public boolean isReferenceable ()           { return null == classType() ? false : classType().isReferenceable(); }
     public boolean isRelationship ()            { return isRelationship; }
     public Property subProperty ()              { return subprop; }
     

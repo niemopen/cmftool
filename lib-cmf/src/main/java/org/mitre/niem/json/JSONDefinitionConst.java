@@ -9,8 +9,8 @@ public class JSONDefinitionConst {
   public String description;
 
   public JSONDefinitionConst(Facet facet){
-    $const = facet.getStringVal();
-    description = facet.getDefinition();
+    $const = facet.value();
+    description = facet.definition();
   }
 
 }

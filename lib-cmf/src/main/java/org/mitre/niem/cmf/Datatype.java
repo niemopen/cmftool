@@ -51,6 +51,7 @@ public class Datatype extends Component {
     public boolean isDatatype ()        { return true; }
     
     // Override these in derived class (ListType, Restriction, Union)
+    public Restriction asRestriction ()         { return null; }
     public Datatype itemType ()                 { return null; }
     @Override
     public boolean isOrdered ()                 { return false; }

@@ -33,8 +33,8 @@ public class JSONProperty {
 
   public JSONProperty(Property property) {
     this.property = property;
-    this.namespace = property.getNamespace();
-    this.description = property.getDefinition();
+    this.namespace = property.namespace();
+    this.description = property.definition();
     usedInClasses = isPropertyUsedInClasses();
     cardinalities = getCardinalities();
 
@@ -52,7 +52,7 @@ public class JSONProperty {
   }
 
   public String getClassQName() {
-    return property.getQName();
+    return property.qname();
   }
 
   private HashMap<String, Cardinality> getCardinalities() {
@@ -63,29 +63,26 @@ public class JSONProperty {
     // search on the "subpropertyOf" name
     ArrayList<Property> propsToCheck = new ArrayList<>();
 
-    if (property.getSubPropertyOf() != null) {
-      propsToCheck.add(property.getSubPropertyOf());
+    if (property.subProperty() != null) {
+      propsToCheck.add(property.subProperty());
       propsToCheck.add(property);
     } else {
       propsToCheck.add(property);
     }
 
     for (var prop : propsToCheck) {
-      var searchName = prop.getName();
+      var searchName = prop.name();
 
       // Look through the components for a class with this property
       // if you find one, grab its min/max
-      for (var comp : prop.getModel().getComponentList()) {
-        if (comp.asClassType() == null) {
-          continue;
-        }
+      for (var cl : prop.model().classTypeL()) {
 
         // Skip any non-class components
-        var propsList = comp.asClassType().hasPropertyList();
+        var propsList = cl.propL();
         for (var p : propsList) {
-          if (p.getProperty().getName().equals(searchName)) {
+          if (p.property().name().equals(searchName)) {
             Cardinality c = new Cardinality(prop, p);
-            cardinalities.put(comp.getName(), c);
+            cardinalities.put(cl.name(), c);
           }
         }
       }
@@ -123,57 +120,57 @@ public class JSONProperty {
   }
 
   private String genRef() {
-    String nsPrefix = property.getNamespace().getNamespacePrefix();
+    String nsPrefix = property.namespace().prefix();
 
-    if (property.getSubPropertyOf() != null) {
-      nsPrefix = property.getSubPropertyOf().getNamespace().getNamespacePrefix();
-      if (property.getClassType() != null && property.getSubPropertyOf().isAbstract()) {
-        return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.getClassType().getName());
+    if (property.subProperty() != null) {
+      nsPrefix = property.subProperty().namespace().prefix();
+      if (property.classType() != null && property.subProperty().isAbstract()) {
+        return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
       }
       return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix,
-          property.getSubPropertyOf().getName());
-    } else if (property.getDatatype() != null) {
+          property.subProperty().name());
+    } else if (property.datatype() != null) {
       if (isIntrinsicType) {
-        return property.getDatatype().getName();
+        return property.datatype().name();
       } else {
-        nsPrefix = property.getDatatype().getNamespace().getNamespacePrefix();
-        return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.getDatatype().getName());
+        nsPrefix = property.datatype().namespace().prefix();
+        return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.datatype().name());
       }
-    } else if (property.getClassType() != null) {
-      nsPrefix = property.getClassType().getNamespace().getNamespacePrefix();
-      return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.getClassType().getName());
+    } else if (property.classType() != null) {
+      nsPrefix = property.classType().namespace().prefix();
+      return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
     }
     return "";
-    // throw new Exception("Property " + property.getName() + " has no data type or
+    // throw new Exception("Property " + property.name() + " has no data type or
     // class defined");
   }
 
   private boolean isPropertyUsedInClasses() {
-    String searchName = property.getName();
+    String searchName = property.name();
 
-    if (property.getSubPropertyOf() != null) {
-      searchName = property.getSubPropertyOf().getName();
+    if (property.subProperty() != null) {
+      searchName = property.subProperty().name();
     }
 
     // See if the property is used in any classes
-    for (Component comp : property.getModel().getComponentList()) {
-      if (comp.asClassType() != null) {
-        for (var cls : comp.asClassType().hasPropertyList()) {
-          if (cls.getProperty().getName().equals(searchName)) {
+    for (var cl : property.model().classTypeL()) {
+
+        for (var cls : cl.propL()) {
+          if (cls.property().name().equals(searchName)) {
             return true;
           }
         }
-      }
+      
     }
     return false;
   }
 
   private void processDataType() {
-    var dataType = property.getDatatype();
-    String dataTypeName = dataType.getName();
+    var dataType = property.datatype();
+    String dataTypeName = dataType.name();
     isIntrinsicType = JSONSchemaHelper.isIntrinsicType(dataTypeName);
 
-    var propName = (property.getSubPropertyOf() != null) ? property.getSubPropertyOf().getName() : property.getName();
+    var propName = (property.subProperty() != null) ? property.subProperty().name() : property.name();
 
     // intrinsic types are handled differently than others, regardless of
     // cardinality
@@ -191,11 +188,11 @@ public class JSONProperty {
             if (card.getMinOccurs() == 0) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  property.getNamespace().getNamespacePrefix(), dataTypeName);
+                  property.namespace().prefix(), dataTypeName);
             } else if (card.getMinOccurs() == 1) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  property.getNamespace().getNamespacePrefix(), dataTypeName);
+                  property.namespace().prefix(), dataTypeName);
             } else {
               System.out.println("???");
             }
@@ -218,26 +215,26 @@ public class JSONProperty {
                   type = dataTypeName;
                 }
               } else {
-                ref = JSONSchemaHelper.DEFINITIONS_TEXT + dataType.getQName();
+                ref = JSONSchemaHelper.DEFINITIONS_TEXT + dataType.qname();
               }
               /* 1 to unbounded */
             } else if (card.getMinOccurs() < card.getMaxOccurs()) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  property.getNamespace().getNamespacePrefix(), dataTypeName);
+                  property.namespace().prefix(), dataTypeName);
             }
           }
         }
       }
     } else {
       type = "array";
-      items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT, property.getNamespace().getNamespacePrefix(),
+      items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT, property.namespace().prefix(),
           dataTypeName);
     }
   }
 
   private void processClassType() {
-    String classTypeName = property.getClassType().getName();
+    String classTypeName = property.classType().name();
     isIntrinsicType = JSONSchemaHelper.isIntrinsicType(classTypeName);
 
     if (property.isReferenceable()) {
@@ -266,7 +263,7 @@ public class JSONProperty {
 
       for (var cardKey : cardinalities.keySet()) {
         var propName = cardinalities.get(cardKey).getPropertyName();
-        var nsPrefix = cardinalities.get(cardKey).getNamespacePrefix();
+        var nsPrefix = cardinalities.get(cardKey).prefix();
         // keep out duplicate references
         ofRef = new OfRef(String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, propName));
         if (!anyOfHashMap.containsKey(ofRef.toString())) {
@@ -297,7 +294,7 @@ public class JSONProperty {
             this.ref = oc.getReference();
             // this.items =
             // new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-            // property.getNamespace().getNamespacePrefix(), oc.getReference());
+            // property.namespace().prefix(), oc.getReference());
           }
         } else {
           System.out.println("???");
@@ -310,13 +307,13 @@ public class JSONProperty {
     /*****************************************
      * Rules for data types
      *****************************************/
-    if (property.getDatatype() != null) {
+    if (property.datatype() != null) {
       processDataType();
     }
     /*****************************************
      * Rules for classes
      *****************************************/
-    else if (property.getClassType() != null) {
+    else if (property.classType() != null) {
       processClassType();
     }
   }
@@ -328,7 +325,7 @@ public class JSONProperty {
       /**************************************************************************
        * Class Types
        *************************************************************************/
-      if (property.getClassType() != null) {
+      if (property.classType() != null) {
         if (c.isMaxUnbounded()) {
           if (c.getMinOccurs() == 0) {
             // zero to unbounded
@@ -351,7 +348,7 @@ public class JSONProperty {
       /**************************************************************************
        * Data Types
        *************************************************************************/
-      else if (property.getDatatype() != null) {
+      else if (property.datatype() != null) {
         // Unbounded
         if (c.isMaxUnbounded()) {
           if (c.getMinOccurs() == 0) {

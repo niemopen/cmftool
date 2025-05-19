@@ -21,12 +21,12 @@ public class AllOf extends Of{
 
   public void addClassTypeProperties(ClassType classType){
     if (null != classType) {
-      if (null != classType.getNamespace()){
+      if (null != classType.namespace()){
         // add a class reference
-        for (var hp: classType.hasPropertyList()){
-          Property p = hp.getProperty();
-          if (null != p && null != p.getNamespace()){
-            String classRef = p.getNamespace().getNamespacePrefix() + ":" + p.getName();
+        for (var hp: classType.propL()){
+          Property p = hp.property();
+          if (null != p && null != p.namespace()){
+            String classRef = p.namespace().prefix() + ":" + p.name();
             var allOfClassType = new OfClassType(classRef);
             properties.put(classRef, allOfClassType);
           }

@@ -2,7 +2,7 @@ package org.mitre.niem.json;
 
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Property;
-import org.mitre.niem.cmf.RestrictionOf;
+import org.mitre.niem.cmf.Restriction;
 
 public class QualifiedName {
   public String name;
@@ -13,18 +13,18 @@ public class QualifiedName {
   }
 
   public QualifiedName(ClassType classType){
-    this.nsPrefix = classType.getNamespace().getNamespacePrefix();
-    this.name = classType.getName();
+    this.nsPrefix = classType.namespace().prefix();
+    this.name = classType.name();
   }
 
-  public QualifiedName(RestrictionOf restrictionOf){
-    this.nsPrefix = restrictionOf.getDatatype().getNamespace().getNamespacePrefix();
-    this.name = restrictionOf.getDatatype().getName();
+  public QualifiedName(Restriction restrictionOf){
+    this.nsPrefix = restrictionOf.base().namespace().prefix();
+    this.name = restrictionOf.base().name();
   }
 
   public QualifiedName(Property property){
-    this.nsPrefix = property.getNamespace().getNamespacePrefix();
-    this.name = property.getName();
+    this.nsPrefix = property.namespace().prefix();
+    this.name = property.name();
   }
 
 

@@ -24,12 +24,8 @@ public class JSONSchemaHelper {
   public static ArrayList<Property> getSubpropertiesOf(Model m, Property property){
     ArrayList<Property> subproperties = new ArrayList<>();
 
-    for (var c: m.getComponentList()){
-      var p = c.asProperty();
-
-      if (null == p) continue;
-
-      if (p.getSubPropertyOf() != null && p.getSubPropertyOf().equals(property)){
+    for (var p : m.propertyL()) {
+      if (p.subProperty() != null && p.subProperty().equals(property)){
         subproperties.add(p);
       }
     }
@@ -38,27 +34,27 @@ public class JSONSchemaHelper {
   }
 
   public static String generateLabel(Property property){
-    return String.format("%s:%s", property.getNamespace().getNamespacePrefix(), property.getName());
+    return String.format("%s:%s", property.namespace().prefix(), property.name());
   }
 
   public static String generateLabel(ClassType classType){
-    return String.format("%s:%s", classType.getNamespace().getNamespacePrefix(), classType.getName());
+    return String.format("%s:%s", classType.namespace().prefix(), classType.name());
   }
 
-  public static String generateLabel(HasProperty hasProperty){
-    return String.format("%s:%s", hasProperty.getProperty().getNamespace().getNamespacePrefix(),
-                                  hasProperty.getProperty().getName());
+  public static String generateLabel(PropertyAssociation pa){
+    return String.format("%s:%s", pa.property().namespace().prefix(),
+                                  pa.property().name());
   }
 
-  public static String generateRef(RestrictionOf restrictionOf){
-    QualifiedName qName = new QualifiedName(restrictionOf);
+  public static String generateRef(Restriction r){
+    QualifiedName qName = new QualifiedName(r);
     return String.format("%s%s", DEFINITIONS_TEXT, qName);
   }
 
   public static String generateRef(ClassType classType){
     QualifiedName qName = null;
-    if (null != classType.getExtensionOfClass()){
-      qName = new QualifiedName(classType.getExtensionOfClass());
+    if (null != classType.subClass()){
+      qName = new QualifiedName(classType.subClass());
     }
     else{
       qName = new QualifiedName(classType);
@@ -75,8 +71,8 @@ public class JSONSchemaHelper {
     // search on the "subpropertyOf" name
     ArrayList<Property> propsToCheck = new ArrayList<>();
 
-    if (property.getSubPropertyOf() != null){
-      propsToCheck.add(property.getSubPropertyOf());
+    if (property.subProperty() != null){
+      propsToCheck.add(property.subProperty());
       propsToCheck.add(property);
     }
     else{
@@ -84,21 +80,18 @@ public class JSONSchemaHelper {
     }
 
     for (var prop: propsToCheck){
-      var searchName = prop.getName();
+      var searchName = prop.name();
 
       // Look through the components for a class with this property
       // if you find one, grab its min/max
-      for (var comp: prop.getModel().getComponentList()) {
-        if (comp.asClassType() == null) {
-          continue;
-        }
+      for (var cl : prop.model().classTypeL()) {
 
         // Skip any non-class components
-        var propsList = comp.asClassType().hasPropertyList();
+        var propsList = cl.propL();
         for (var p : propsList) {
-          if (p.getProperty().getName().equals(searchName)) {
+          if (p.property().name().equals(searchName)) {
             Cardinality c = new Cardinality(prop, p);
-            cardinalities.put(comp.getName(), c);
+            cardinalities.put(cl.name(), c);
           }
         }
       }

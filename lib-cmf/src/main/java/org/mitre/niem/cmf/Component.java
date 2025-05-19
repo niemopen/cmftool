@@ -51,6 +51,7 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     private boolean isDeprecated = false;       // cmf:DeprecatedIndicator
     private final List<LanguageString> docL = new ArrayList<>();  // cmf:DocumentationText
     
+    public Model model ()                       { return model; }
     public Namespace namespace ()               { return namespace; }
     public String namespaceURI ()               { return namespace.uri(); }
     public String name ()                       { return name; }
@@ -64,6 +65,7 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     public boolean isModelComponent ()          { return namespace().isModelNS(); }
     
     public List<LanguageString> docL ()         { return docL; }
+    public String definition ()                 { return docL.isEmpty() ? null : docL.get(0).text(); }
     
     public void setModel (Model m)              { model = m; }
     public void setNamespace (Namespace ns)     { namespace = ns; change(); }

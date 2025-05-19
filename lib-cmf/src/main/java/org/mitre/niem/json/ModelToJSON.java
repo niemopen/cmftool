@@ -1,12 +1,13 @@
 package org.mitre.niem.json;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import org.mitre.niem.cmf.*;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.mitre.niem.NIEMConstants.XSD_NS_URI;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 
 public class ModelToJSON {
   private JSONSchema jsonSchema;
@@ -29,9 +30,9 @@ public class ModelToJSON {
     return this.getJsonSchema().toJSON();
   }
 
-  public String writeJSON(PrintWriter writer) {
+  public String writeJSON (OutputStreamWriter writer) throws IOException {
     String json = this.writeJSON();
-    writer.print(json);
+    writer.write(json);
     return json;
   }
 
@@ -57,23 +58,23 @@ public class ModelToJSON {
 //      String propKind = getPropertyKind(p);
 //      if (null == p) continue;
 //      ow.print("\n");
-//      ow.print(p.getQName());
+//      ow.print(p.qname());
 //      if (null != p.getClassType()) {
 //        ow.print("\n    a owl:ObjectProperty");
 //        if (null != p.getSubPropertyOf()) {
-//          ow.print(" ;\n    rdfs:subPropertyOf " + p.getSubPropertyOf().getQName());
+//          ow.print(" ;\n    rdfs:subPropertyOf " + p.getSubPropertyOf().qname());
 //        }
 //        ow.print(" ;\n    rdfs:range " + componentQName(p.getClassType()));
 //      }
-//      else if (null != p.getDatatype()) {
+//      else if (null != p.datatype()) {
 //        ow.print("\n    a owl:DataProperty");
-//        ow.print(" ;\n    rdfs:range " + componentQName(p.getDatatype()));
+//        ow.print(" ;\n    rdfs:range " + componentQName(p.datatype()));
 //      }
 //      else {
 //        ow.print("\n    a " + propKind);
 //      }
-//      if (null != p.getDefinition()) {
-//        ow.print(" ;\n    rdfs:comment \"" + p.getDefinition() + "\"");
+//      if (null != p.definition()) {
+//        ow.print(" ;\n    rdfs:comment \"" + p.definition() + "\"");
 //      }
 //      ow.println(" .");
 //    }
@@ -84,13 +85,13 @@ public class ModelToJSON {
 //      ClassType ct = c.asClassType();
 //      if (null == ct) continue;
 //      ow.print("\n");
-//      ow.print(ct.getQName());
+//      ow.print(ct.qname());
 //      ow.print("\n    a owl:Class");
 //      if (null != ct.getExtensionOfClass()) {
-//        ow.print(" ;\n    rdfs:subClassOf " + ct.getExtensionOfClass().getQName());
+//        ow.print(" ;\n    rdfs:subClassOf " + ct.getExtensionOfClass().qname());
 //      }
-//      if (null != ct.getDefinition()) {
-//        ow.print(" ;\n    rdfs:comment \"" + ct.getDefinition() + "\"");
+//      if (null != ct.definition()) {
+//        ow.print(" ;\n    rdfs:comment \"" + ct.definition() + "\"");
 //      }
 //      for (HasProperty hp : ct.hasPropertyList()) {
 //        if (0 < hp.minOccurs()) {
@@ -103,7 +104,7 @@ public class ModelToJSON {
 //            if (!hp.maxUnbounded())
 //              ow.print(" ;\n        owl:maxCardinality \"" + hp.maxOccurs() + "\"^^xsd:nonNegativeInteger");
 //          }
-//          ow.print(" ;\n        owl:onProperty " + hp.getProperty().getQName());
+//          ow.print(" ;\n        owl:onProperty " + hp.getProperty().qname());
 //          ow.print("\n    ]");
 //        }
 //      }
@@ -131,13 +132,13 @@ public class ModelToJSON {
   }
 
   private void writeRestrictionOfDatatype (Datatype dt, PrintWriter ow) {
-    RestrictionOf r = dt.getRestrictionOf();
-    Datatype bdt    = r.getDatatype();
-    List<Facet> fl  = r.getFacetList();
+    Restriction r = dt.asRestriction();
+    Datatype bdt    = r.base();
+    List<Facet> fl  = r.facetL();
     ow.print("\n");
-    ow.print(dt.getQName());
+    ow.print(dt.qname());
     ow.print("\n    a rdfs:Datatype");
-    if (null != dt.getDefinition()) ow.print(" ;\n    rdfs:comment \"" + dt.getDefinition() + "\"");
+    if (null != dt.definition()) ow.print(" ;\n    rdfs:comment \"" + dt.definition() + "\"");
     if (null != bdt) {
       ow.print(" ;\n    owl:equivalentClass ");
       if (fl.isEmpty()) ow.print(componentQName(bdt));
@@ -149,21 +150,21 @@ public class ModelToJSON {
         List<Facet> enums = new ArrayList<>();
         List<Facet> resl  = new ArrayList<>();
         for (Facet f : fl) {
-          if ("Enumeration".equals(f.getFacetKind())) enums.add(f);
+          if ("Enumeration".equals(f.category())) enums.add(f);
           else resl.add(f);
         }
         if (!enums.isEmpty()) {
           ow.print("  ;\n        owl:oneOf (");
           for (Facet f : enums) {
-            ow.print("\n            \"" + f.getStringVal() + "\"");
+            ow.print("\n            \"" + f.value() + "\"");
           }
           ow.print("\n        )");
         }
         if (!resl.isEmpty()) {
           ow.print(" ;\n        owl:withRestrictions (");
           for (Facet f : resl) {
-            ow.print(String.format("\n            [ xsd:%s \"%s\"", f.getXSDFacet(), f.getStringVal()));
-            switch(f.getFacetKind()) {
+            ow.print(String.format("\n            [ xsd:%s \"%s\"", f.xsdFacetName(), f.value()));
+            switch(f.category()) {
               case "MaxExclusive":
               case "MaxInclusive":
               case "MinExclusive":
@@ -185,7 +186,7 @@ public class ModelToJSON {
   }
 
   private static String componentQName (Component c) {
-    if (XSD_NS_URI.equals(c.getNamespace().getNamespaceURI())) return("xsd:" + c.getName());
-    else return c.getQName();
+    if (W3C_XML_SCHEMA_NS_URI.equals(c.namespace().uri())) return("xsd:" + c.name());
+    else return c.qname();
   }
 }
