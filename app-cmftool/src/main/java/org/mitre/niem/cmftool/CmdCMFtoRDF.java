@@ -24,7 +24,6 @@
 package org.mitre.niem.cmftool;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.mitre.niem.cmf.ModelXMLReader;
-import org.mitre.niem.json.ModelToJSON;
+import org.mitre.niem.rdf.ModelToRDF;
 import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
@@ -45,27 +44,26 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "generate JSON Schema from CMF")
-    
-public class CmdCMFtoJSONSchema implements JCCommand {
+@Parameters(commandDescription = "generate model RDF from CMF")
 
-    @Parameter(order = 1, names = "-o", description = "name of output file")
+
+public class CmdCMFtoRDF implements JCCommand {
+
+    @com.beust.jcommander.Parameter(order = 1, names = "-o", description = "name of output file")
     private String modelFN = null;
      
-    @Parameter(order = 2, names = {"-h","--help"}, description = "display this usage message", help = true)
+    @com.beust.jcommander.Parameter(order = 2, names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "modelFile.cmf...")
+    @com.beust.jcommander.Parameter(description = "modelFile.cmf...")
     private List<String> mainArgs;
     
-    CmdCMFtoJSONSchema () {
-    }
-  
-    CmdCMFtoJSONSchema (JCommander jc) {
-    }
-
+    CmdCMFtoRDF () { }
+    
+    CmdCMFtoRDF (JCommander jc) { }
+    
     public static void main (String[] args) {       
-        CmdCMFtoCMF obj = new CmdCMFtoCMF();
+        var obj = new CmdCMFtoRDF();
         obj.runMain(args);
     }
     
@@ -121,7 +119,8 @@ public class CmdCMFtoJSONSchema implements JCCommand {
         } catch (IOException ex) {
             System.err.println(String.format("Can't write to output file %s: %s", modelFN, ex.getMessage()));
             System.exit(1);            
-        }       
+        } 
+        
         // Read the model object from the model instance file
         // Read the model object from the model file(s)
         var mr = new ModelXMLReader();  
@@ -129,10 +128,10 @@ public class CmdCMFtoJSONSchema implements JCCommand {
         for (var str : mainArgs) fileL.add(new File(str));
         var model = mr.readFiles(fileL);
         
-        // Generate JSON Schema
+        // Generate model RDF
         try {
-            var js = new ModelToJSON(model);
-            js.writeJSON(ow);
+            var js = new ModelToRDF(model);
+            js.writeRDF(ow);
             ow.close();
         }
         catch (IOException ex) {}

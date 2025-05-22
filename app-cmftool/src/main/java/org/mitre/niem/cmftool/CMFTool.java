@@ -79,6 +79,7 @@ public class CMFTool {
         
         var cmfToJSONCmd = new CmdCMFtoJSONSchema(jc);
         var cmfToCmfCmd  = new CmdCMFtoCMF(jc);
+        var cmfToRDFCmd  = new CmdCMFtoRDF(jc);
         var cmfToXsdCmd  = new CmdCMFtoXSD(jc);
 //        var cmfToMsgXsdCmd = new CmdCMFtoMsgXSD(jc);
 //        var cmfToSrcXsdCmd = new CmdCMFtoSrcXSD(jc);
@@ -91,6 +92,7 @@ public class CMFTool {
         var helpCmd        = new CommandHelp(jc); 
         jc.addCommand("m2j",    cmfToJSONCmd);
         jc.addCommand("m2m",    cmfToCmfCmd);
+        jc.addCommand("m2r",    cmfToRDFCmd);
 //        jc.addCommand("m2o",    cmfToOwlCmd);
         jc.addCommand("m2x", cmfToXsdCmd);
 //        jc.addCommand("m2xs",   cmfToSrcXsdCmd);
