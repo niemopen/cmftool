@@ -176,7 +176,10 @@ public class JSONProperty {
     // cardinality
     if (cardinalities.size() == 0) {
       // default cardinality
-      ref = genRef();
+      if (isIntrinsicType)
+        type = genRef();
+      else
+        ref = genRef();
     } else if (cardinalities.size() > 0) {
       // Check for cardinality
       for (var cardKey : cardinalities.keySet()) {
