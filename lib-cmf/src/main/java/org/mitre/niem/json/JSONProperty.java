@@ -1,13 +1,13 @@
 package org.mitre.niem.json;
 
-import com.google.gson.annotations.SerializedName;
-import org.mitre.niem.cmf.Component;
-import org.mitre.niem.cmf.Namespace;
-import org.mitre.niem.cmf.Property;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
+
+import org.mitre.niem.cmf.Namespace;
+import org.mitre.niem.cmf.Property;
+
+import com.google.gson.annotations.SerializedName;
 
 public class JSONProperty {
   private transient Property property;
@@ -188,11 +188,11 @@ public class JSONProperty {
             if (card.getMinOccurs() == 0) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  property.namespace().prefix(), dataTypeName);
+                  dataType.namespace().prefix(), dataTypeName);
             } else if (card.getMinOccurs() == 1) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  property.namespace().prefix(), dataTypeName);
+                  dataType.namespace().prefix(), dataTypeName);
             } else {
               System.out.println("???");
             }
@@ -228,7 +228,7 @@ public class JSONProperty {
       }
     } else {
       type = "array";
-      items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT, property.namespace().prefix(),
+      items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT, dataType.namespace().prefix(),
           dataTypeName);
     }
   }
