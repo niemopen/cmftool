@@ -122,18 +122,15 @@ public class JSONProperty {
   private String genRef() {
     String nsPrefix = property.namespace().prefix();
     String name = property.name();
-    if (property.subProperty() != null) {
-      nsPrefix = property.subProperty().namespace().prefix();
-      //if (property.classType() != null && property.subProperty().isAbstract())
-      if (property.subProperty().isAbstract()) {
-        if (property.classType() == null)
-          // FIXME: Return sub properties for abstract properties
-          return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.subProperty().name());
-        else
-          return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
-      }
-      return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.subProperty().name());
-    } else if (property.datatype() != null) {
+    //if (property.subProperty() != null) {
+    //  nsPrefix = property.subProperty().namespace().prefix();
+    //  if (property.classType() != null && property.subProperty().isAbstract()) {
+
+    //    return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
+    //  }
+     // return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.subProperty().name());
+    //} else 
+    if (property.datatype() != null) {
         String datatypeName = property.datatype().name();
         if (isIntrinsicType)
           return property.datatype().name();
@@ -180,6 +177,12 @@ public class JSONProperty {
     if (dataTypeName.equals("IDREFS")) {
       type = "array";
       items = new JSONPropertyType("string");
+      return;
+    }
+
+    // replace decimal with a number
+    if (dataTypeName.equals("decimal")) {
+      type = "number";
       return;
     }
     // intrinsic types are handled differently than others, regardless of
@@ -293,6 +296,7 @@ public class JSONProperty {
           var items = oi.getItems();
           for (var item : items.keySet()) {
             if (anyOf != null) {
+              String item2 = items.get(item);
               anyOf.add(new OfItem("array", items.get(item), oi.getCardinality()));
             } else {
               this.type = "array";
