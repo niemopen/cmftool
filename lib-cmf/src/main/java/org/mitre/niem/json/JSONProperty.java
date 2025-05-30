@@ -121,21 +121,25 @@ public class JSONProperty {
 
   private String genRef() {
     String nsPrefix = property.namespace().prefix();
-
+    String name = property.name();
     if (property.subProperty() != null) {
       nsPrefix = property.subProperty().namespace().prefix();
-      if (property.classType() != null && property.subProperty().isAbstract()) {
-        return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
+      //if (property.classType() != null && property.subProperty().isAbstract())
+      if (property.subProperty().isAbstract()) {
+        if (property.classType() == null)
+          // FIXME: Return sub properties for abstract properties
+          return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.subProperty().name());
+        else
+          return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
       }
-      return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix,
-          property.subProperty().name());
+      return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.subProperty().name());
     } else if (property.datatype() != null) {
-      if (isIntrinsicType) {
-        return property.datatype().name();
-      } else {
-        nsPrefix = property.datatype().namespace().prefix();
-        return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.datatype().name());
-      }
+        String datatypeName = property.datatype().name();
+        if (isIntrinsicType)
+          return property.datatype().name();
+        else
+          nsPrefix = property.datatype().namespace().prefix();
+          return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.datatype().name());
     } else if (property.classType() != null) {
       nsPrefix = property.classType().namespace().prefix();
       return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
@@ -172,6 +176,12 @@ public class JSONProperty {
 
     var propName = (property.subProperty() != null) ? property.subProperty().name() : property.name();
 
+    // replace IDREFS with an array of strings
+    if (dataTypeName.equals("IDREFS")) {
+      type = "array";
+      items = new JSONPropertyType("string");
+      return;
+    }
     // intrinsic types are handled differently than others, regardless of
     // cardinality
     if (cardinalities.size() == 0) {
