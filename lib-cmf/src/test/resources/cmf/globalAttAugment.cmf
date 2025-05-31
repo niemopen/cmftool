@@ -21,6 +21,7 @@
       <DataProperty structures:ref="test.aProp" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <GlobalClassCode>LITERAL</GlobalClassCode>
     </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="xs">

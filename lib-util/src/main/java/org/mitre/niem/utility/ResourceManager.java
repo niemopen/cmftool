@@ -40,8 +40,6 @@ import org.apache.logging.log4j.Logger;
 /**
  * A class to obtain a File, URI, or InputStream object for a project resource.  
  * Does the right thing when running from the IDE and when running from the JAR.
- * (Assumes the resources belong to the JAR or source directory containing this
- * class.  The constructor could take a Class object, but that's not needed now.)
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -61,7 +59,7 @@ public class ResourceManager {
         resPath = FilenameUtils.concat(jarPath, "../../../../src/main/resources/");        
     }
     
-    public InputStream getResourceStream (String name) {
+    public InputStream getResourceStream (String name) throws IOException {
         InputStream res = null;
         
         // Running from IDE?  Open stream on resource file in project directory
@@ -79,33 +77,18 @@ public class ResourceManager {
     }
     
     
-    public File getResourceFile (String name) {      
-        // Running from IDE?  Return resource file in project directory        
-        if (!jarPath.endsWith(".jar")) {
-            var rf = new File(resPath, name);
-            if (null == rf) return null;
-            var cr = rf.canRead();
-            if (!rf.canRead()) return null;
-            return rf;
-        }
-        // Running from JAR? Write resource stream into temporary file
-        File res = null;
-        var rs  = getResourceStream(name);
-        try {
-            var ow = new FileWriter(res);
-            res = File.createTempFile("temp", "");
-            IOUtils.copy(rs, ow, "UTF-8");
-            ow.close();
-        } catch (IOException ex) { res = null; }
-        return res;
+    public File getResourceFile (String name) throws IOException {     
+        var rF = File.createTempFile("cmfTool", "resource");
+        copyResourceToFile(name, rF);
+        return rF;
     }
     
     
-    public void copyResourceToFile (String resource, File outF) throws IOException {
-        var istr = getResourceStream("/"+resource);
+    public void copyResourceToFile (String name, File outF) throws IOException {
+        var istr = getResourceStream(name);
         var outW = new FileWriter(outF);
         if (null == istr) {
-            LOG.error("Can't find resource {}", resource);
+            LOG.error("Can't find resource {}", name);
             return;
         }
         IOUtils.copy(istr, outW, "UTF-8");

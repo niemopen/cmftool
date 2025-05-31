@@ -57,7 +57,13 @@ public class ObjectProperty extends Property {
     public String referenceCode ()              { return refCode; }
     
     public void setClassType (ClassType c)      { classType = c; }
-    public void setReferenceCode (String s)     { refCode = s; }
+    @Override
+    public void setReferenceCode (String s)     { super.setReferenceCode(s); refCode = s; }
+    
+    public String effectiveReferenceCode () {
+        if (!refCode.isEmpty()) return refCode;
+        return classType.effectiveReferenceCode();
+    }
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

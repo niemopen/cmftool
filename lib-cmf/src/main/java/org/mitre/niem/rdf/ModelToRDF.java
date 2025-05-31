@@ -75,7 +75,7 @@ public class ModelToRDF {
         else if (null != p.datatype()) rv = "owl:DataProperty";
         else {
             for (var op : m.propertyL()) {
-                if (op.subProperty() == p) {
+                if (op.subPropertyOf() == p) {
                     String rv2 = propertyKind(op);
                     if (null != rv2) {
                         rv = rv2;
@@ -98,8 +98,8 @@ public class ModelToRDF {
             ow.write(p.qname());            
             if (null != p.classType()) {
                 ow.write("\n    a owl:ObjectProperty");
-                if (null != p.subProperty()) {
-                    ow.write(" ;\n    rdfs:subPropertyOf " + p.subProperty().qname());
+                if (null != p.subPropertyOf()) {
+                    ow.write(" ;\n    rdfs:subPropertyOf " + p.subPropertyOf().qname());
                 }
                 ow.write(" ;\n    rdfs:range " + componentQName(p.classType()));
             }
@@ -122,8 +122,8 @@ public class ModelToRDF {
             ow.write("\n");
             ow.write(ct.qname());
             ow.write("\n    a owl:Class");
-            if (null != ct.subClass()) {
-                ow.write(" ;\n    rdfs:subClass " + ct.subClass().qname());
+            if (null != ct.subClassOf()) {
+                ow.write(" ;\n    rdfs:subClass " + ct.subClassOf().qname());
             }
             if (null != ct.definition()) {
                 ow.write(" ;\n    rdfs:comment \"" + ct.definition() + "\"");               

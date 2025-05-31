@@ -221,7 +221,16 @@ public class ModelFromXSDTest {
         checkPropAssoc(model);
         assertEmptyLogs();
     }
-    
+        
+    @Test
+    public void testRefCode () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/refCode.xsd");
+        var model = mb.createModel(sch);     
+        checkRefCode(model);
+        assertEmptyLogs();
+    }
+
     @Test
     public void testSimpleTypes () throws Exception {
         var mb  = new ModelFromXSD();

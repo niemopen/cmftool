@@ -25,7 +25,7 @@ public class JSONSchemaHelper {
     ArrayList<Property> subproperties = new ArrayList<>();
 
     for (var p : m.propertyL()) {
-      if (p.subProperty() != null && p.subProperty().equals(property)){
+      if (p.subPropertyOf() != null && p.subPropertyOf().equals(property)){
         subproperties.add(p);
       }
     }
@@ -53,8 +53,8 @@ public class JSONSchemaHelper {
 
   public static String generateRef(ClassType classType){
     QualifiedName qName = null;
-    if (null != classType.subClass()){
-      qName = new QualifiedName(classType.subClass());
+    if (null != classType.subClassOf()){
+      qName = new QualifiedName(classType.subClassOf());
     }
     else{
       qName = new QualifiedName(classType);
@@ -71,8 +71,8 @@ public class JSONSchemaHelper {
     // search on the "subpropertyOf" name
     ArrayList<Property> propsToCheck = new ArrayList<>();
 
-    if (property.subProperty() != null){
-      propsToCheck.add(property.subProperty());
+    if (property.subPropertyOf() != null){
+      propsToCheck.add(property.subPropertyOf());
       propsToCheck.add(property);
     }
     else{

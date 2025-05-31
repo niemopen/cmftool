@@ -42,11 +42,11 @@ public class JSONDefinition extends OfDefinition {
     this.type = null;
 
     // Has extensions and properties
-    if (null != classType.subClass() && classType.propL().size() > 0){
+    if (null != classType.subClassOf() && classType.propL().size() > 0){
       if (this.allOf == null) this.allOf = new ArrayList<>();
 
       // Add $ref
-      if (null != classType.subClass()){
+      if (null != classType.subClassOf()){
         this.allOf.add(new OfRef(JSONSchemaHelper.generateRef(classType)));
       }
       // Add HasProperty
@@ -64,11 +64,11 @@ public class JSONDefinition extends OfDefinition {
       }
     }
     // has extensions but no properties
-    else if (null != classType.subClass() && classType.propL().size() == 0){
+    else if (null != classType.subClassOf() && classType.propL().size() == 0){
       this.$ref = JSONSchemaHelper.generateRef(classType);
     }
     // has no extensions but has properties
-    else if (null == classType.subClass() && classType.propL().size() > 0){
+    else if (null == classType.subClassOf() && classType.propL().size() > 0){
       var propList = classType.propL();
       var propListDef = new OfDefinition();
       this.type = "object";
@@ -168,8 +168,8 @@ public class JSONDefinition extends OfDefinition {
     this.classType = classType;
     super.description = classType.definition();
 
-    if (null != classType.subClass()){
-      var extClass = classType.subClass();
+    if (null != classType.subClassOf()){
+      var extClass = classType.subClassOf();
       if (null != extClass.propL()){
         this.type = "object";
         for (var prop: extClass.propL()) {

@@ -156,6 +156,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
                 prefix, u, model.nsUToNSprefix(u)));    
     }
     
+    
     @Override
     public boolean addChild(String eln, String loc, CMFObject child) throws CMFException {
         return child.addToNamespace(eln, loc, this);

@@ -38,13 +38,13 @@ import org.mitre.niem.cmf.ModelXMLWriter;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ModelToXSDTest {
+public class ModelToXSDModelTest {
     private final static String resDN = "src/test/resources/";
 
     @TempDir
     File tmpD;
     
-    public ModelToXSDTest() {
+    public ModelToXSDModelTest() {
     }
 
     @Test
@@ -81,8 +81,7 @@ public class ModelToXSDTest {
         var xsdBase = FilenameUtils.getBaseName(xsdF.toString());
         var cmfOneF = new File(tmpD, "one.cmf");
         var cmfTwoF = new File(tmpD, "two.cmf");
-        var xsdOneD = new File(tmpD, "xsd.one");
-        var xsdTwoD = new File(tmpD, "xsd.two");
+        var xsdD    = new File(tmpD, "xsd");
 
         // Create first CMF file from XSD source
         var sch   = new NIEMSchema(xsdF);
@@ -95,24 +94,29 @@ public class ModelToXSDTest {
         ow.close();
         
         // Create a new XSD pile from CMF
-        var mtxsd = new ModelToXSD(model);
-        mtxsd.setRootNamespace("test");
+        var mtxsd = new ModelToXSDModel(model);
+        if (null != model.namespaceObj("test")) mtxsd.setRootNamespace("test");
+        else if (null != model.namespaceObj("t")) mtxsd.setRootNamespace("t");
         mtxsd.setCatalogPath("xml-catalog.xml");
-        mtxsd.writeModelXSD(xsdOneD);
-        var xsdOneF = new File(xsdOneD, xsdName);
+        mtxsd.writeModelXSD(xsdD);
+        var xsdOneF = new File(xsdD, xsdName);
         var schOne  = new NIEMSchema(xsdOneF);
         var msgs    = schOne.javaXMsgs();
         var goodXSD = msgs.isEmpty();
         assertTrue(goodXSD);
         
         // Create second CMF file from the new XSD pile
+        mfxsd = new ModelFromXSD();
         model = mfxsd.createModel(schOne);
         os    = new FileOutputStream(cmfTwoF);
         ow    = new OutputStreamWriter(os, "UTF-8");
+        mw = new ModelXMLWriter();
         mw.writeXML(model, ow);
         ow.close();
         
         var same = FileUtils.contentEqualsIgnoreEOL(cmfOneF, cmfTwoF, "UTF-8");
         assertTrue(same);
+        
+        FileUtils.cleanDirectory(tmpD);
     }
 }

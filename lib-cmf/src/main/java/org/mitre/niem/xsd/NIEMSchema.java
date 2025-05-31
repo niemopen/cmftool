@@ -176,7 +176,7 @@ public class NIEMSchema extends XMLSchema {
     public boolean isModelComponentU (String u) {
         if (u.isEmpty()) return false;
         var nsU = uriToNamespaceU(u);
-        return isModelNamespace(nsU);
+        return nsU.isEmpty() ? false : isModelNamespace(nsU);
     }
     
     /**

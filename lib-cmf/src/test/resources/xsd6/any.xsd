@@ -34,7 +34,7 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="Test2Type" appinfo:referenceCode="ANY">
+  <xs:complexType name="Test2Type">
     <xs:annotation>
       <xs:documentation>Test2Type doc string</xs:documentation>
     </xs:annotation>
@@ -48,7 +48,7 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="Test3Type" appinfo:referenceCode="URI">
+  <xs:complexType name="Test3Type">
     <xs:annotation>
       <xs:documentation>Test3Type extends Test1Type</xs:documentation>
     </xs:annotation>
@@ -61,7 +61,7 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="Test4Type" appinfo:referenceCode="REF">
+  <xs:complexType name="Test4Type">
     <xs:complexContent>
       <xs:extension base="test:Test1Type">
         <xs:sequence>
@@ -71,7 +71,7 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="Test5Type" appinfo:referenceCode="NONE">
+  <xs:complexType name="Test5Type">
     <xs:complexContent>
       <xs:extension base="test:Test1Type">
         <xs:sequence>

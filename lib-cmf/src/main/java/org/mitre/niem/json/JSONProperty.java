@@ -63,8 +63,8 @@ public class JSONProperty {
     // search on the "subpropertyOf" name
     ArrayList<Property> propsToCheck = new ArrayList<>();
 
-    if (property.subProperty() != null) {
-      propsToCheck.add(property.subProperty());
+    if (property.subPropertyOf() != null) {
+      propsToCheck.add(property.subPropertyOf());
       propsToCheck.add(property);
     } else {
       propsToCheck.add(property);
@@ -122,13 +122,13 @@ public class JSONProperty {
   private String genRef() {
     String nsPrefix = property.namespace().prefix();
 
-    if (property.subProperty() != null) {
-      nsPrefix = property.subProperty().namespace().prefix();
-      if (property.classType() != null && property.subProperty().isAbstract()) {
+    if (property.subPropertyOf() != null) {
+      nsPrefix = property.subPropertyOf().namespace().prefix();
+      if (property.classType() != null && property.subPropertyOf().isAbstract()) {
         return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
       }
       return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix,
-          property.subProperty().name());
+          property.subPropertyOf().name());
     } else if (property.datatype() != null) {
       if (isIntrinsicType) {
         return property.datatype().name();
@@ -148,8 +148,8 @@ public class JSONProperty {
   private boolean isPropertyUsedInClasses() {
     String searchName = property.name();
 
-    if (property.subProperty() != null) {
-      searchName = property.subProperty().name();
+    if (property.subPropertyOf() != null) {
+      searchName = property.subPropertyOf().name();
     }
 
     // See if the property is used in any classes
@@ -170,7 +170,7 @@ public class JSONProperty {
     String dataTypeName = dataType.name();
     isIntrinsicType = JSONSchemaHelper.isIntrinsicType(dataTypeName);
 
-    var propName = (property.subProperty() != null) ? property.subProperty().name() : property.name();
+    var propName = (property.subPropertyOf() != null) ? property.subPropertyOf().name() : property.name();
 
     // intrinsic types are handled differently than others, regardless of
     // cardinality

@@ -72,7 +72,7 @@ public class JSONSchema {
         }
 
         // System.out.println("\n a owl:ObjectProperty");
-        if (null != p.subProperty()) {
+        if (null != p.subPropertyOf()) {
           // System.out.println(" ;\n rdfs:subPropertyOf " +
           // p.subProperty().qname());
         }
@@ -90,7 +90,7 @@ public class JSONSchema {
         // System.out.println(" ;\n rdfs:range " + componentQName(p.datatype()));
       }
       // Handle a subproperty
-      else if (null != p.subProperty()) {
+      else if (null != p.subPropertyOf()) {
       }
       // handle abstract
       else if (p.isAbstract()) {
@@ -200,11 +200,11 @@ public class JSONSchema {
     jDefinition.description = classType.definition();
 
     // For the situation where the property has extensions AND property lists
-    if (null != classType.subClass() && null != classType.propL()) {
+    if (null != classType.subClassOf() && null != classType.propL()) {
       // Add the extension and property list
       jDefinition.allOf = new ArrayList<>();
 
-      if (null != classType.subClass()) {
+      if (null != classType.subClassOf()) {
         addRelatedDefinitions(classType);
         var extDef = new JSONDefinition(m, classType);
         // If this is in an allOf, remove the description
@@ -214,9 +214,9 @@ public class JSONSchema {
       }
       // var propListDef = processHasProperties(classType);
       // jDefinition.allOf.add(propListDef);
-    } else if (null != classType.subClass() && null == classType.propL()) {
+    } else if (null != classType.subClassOf() && null == classType.propL()) {
       addExtension(classType, jDefinition);
-    } else if (null == classType.subClass() && null != classType.propL()) {
+    } else if (null == classType.subClassOf() && null != classType.propL()) {
       var propListDef = processHasProperties(classType);
       jDefinition.type = propListDef.type;
       jDefinition.properties = propListDef.properties;
@@ -256,11 +256,11 @@ public class JSONSchema {
   }
 
   private void addRelatedDefinitions(ClassType classType) {
-    var currentExtOf = classType.subClass();
+    var currentExtOf = classType.subClassOf();
     while (null != currentExtOf) {
       relatedDefinitions.add(new QualifiedName(currentExtOf));
       // addExtension2(currentExtOf);
-      currentExtOf = currentExtOf.subClass();
+      currentExtOf = currentExtOf.subClassOf();
     }
   }
 
@@ -331,7 +331,7 @@ public class JSONSchema {
       rv = "owl:DataProperty";
     else {
       for (var op : m.propertyL()) {
-        if (op.subProperty() == p) {
+        if (op.subPropertyOf() == p) {
           String rv2 = propertyKind(op);
           if (null != rv2) {
             rv = rv2;
@@ -361,8 +361,8 @@ public class JSONSchema {
   }
 
   public void addExtension2(ClassType classType) {
-    if (null != classType.subClass()) {
-      var ext = classType.subClass();
+    if (null != classType.subClassOf()) {
+      var ext = classType.subClassOf();
       var jDef = new JSONDefinition(m, ext);
       jDef.description = classType.definition();
       definitions.put(JSONSchemaHelper.generateLabel(classType), jDef);
@@ -370,8 +370,8 @@ public class JSONSchema {
   }
 
   public void addExtension(ClassType classType, JSONDefinition jDefinition) {
-    var extensionOf = classType.subClass();
-    ClassType currentExtension = extensionOf.subClass();
+    var extensionOf = classType.subClassOf();
+    ClassType currentExtension = extensionOf.subClassOf();
 
     if (null != currentExtension) {
       var extDef = new JSONDefinition(m, currentExtension);

@@ -159,7 +159,7 @@ public class ModelXMLWriter {
     void addClassTypeChildren (Document doc, Element c, ClassType x, Set<Namespace>nsS) {
         if (null == x) return;
         appendOptionalIndicator(doc, c, "AbstractIndicator", x.isAbstract());
-        appendComponentReference(doc, c, "SubClassOf", x.subClass(), nsS);
+        appendComponentReference(doc, c, "SubClassOf", x.subClassOf(), nsS);
         appendSimpleChild(doc, c, "ReferenceCode", x.referenceCode());
         for (var cpa : x.propL()) appendPropertyAssociation(doc, c, cpa, nsS);
         for (var ap : x.anyL()) appendAnyProperty(doc, c, ap, nsS);
@@ -185,7 +185,7 @@ public class ModelXMLWriter {
     void addPropertyChildren (Document doc, Element c, Property x, Set<Namespace>nsS) {
         if (null == x) return;
         appendOptionalIndicator(doc, c, "AbstractIndicator", x.isAbstract());
-        appendComponentReference(doc, c, "SubPropertyOf", x.subProperty(), nsS);
+        appendComponentReference(doc, c, "SubPropertyOf", x.subPropertyOf(), nsS);
         appendOptionalIndicator(doc, c, "RelationshipIndicator", x.isRelationship());
     }
     

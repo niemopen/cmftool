@@ -10,7 +10,7 @@
     <NamespacePrefixText>nc</NamespacePrefixText>
     <DocumentationText>NIEM core test skeleton schema document.</DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>xsd6/niem/niem-core-skel.xsd</DocumentFilePathText>
+    <DocumentFilePathText>niem/niem-core-skel.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
     <NamespaceVersionText>ps02</NamespaceVersionText>
     <NIEMVersionName>NIEM6.0</NIEMVersionName>
@@ -21,7 +21,7 @@
     <NamespacePrefixText>nc5</NamespacePrefixText>
     <DocumentationText>NIEM Core v5 skeleton.</DocumentationText>
     <ConformanceTargetURI>http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>xsd5/niem/niem-core5-skel.xsd</DocumentFilePathText>
+    <DocumentFilePathText>niem5/niem-core5-skel.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NIEMVersionName>NIEM5.0</NIEMVersionName>
@@ -32,7 +32,7 @@
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>Test schema for multiple NIEM versions.</DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>xsd6/niemVersions.xsd</DocumentFilePathText>
+    <DocumentFilePathText>niemVersions.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NIEMVersionName>NIEM6.0</NIEMVersionName>
@@ -41,7 +41,7 @@
   <Namespace structures:id="xml">
     <NamespaceURI>http://www.w3.org/XML/1998/namespace</NamespaceURI>
     <NamespacePrefixText>xml</NamespacePrefixText>
-    <DocumentFilePathText>xsd6/niem/external/xml.xsd</DocumentFilePathText>
+    <DocumentFilePathText>niem/external/xml.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>XML</NamespaceCategoryCode>
   </Namespace>
   <Namespace structures:id="xs">

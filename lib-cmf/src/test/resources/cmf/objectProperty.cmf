@@ -10,7 +10,7 @@
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>
       ObjectProperty test schema. 
-      Test abstract, relationship, reference code.
+      Test abstract, relationship.
     </DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>objectProperty.xsd</DocumentFilePathText>
@@ -34,26 +34,22 @@
     <Name>OProp1</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <AbstractIndicator>true</AbstractIndicator>
-    <ReferenceCode>ANY</ReferenceCode>
     <Class structures:ref="test.TestType" xsi:nil="true"/>
   </ObjectProperty>
   <ObjectProperty structures:id="test.OProp2">
     <Name>OProp2</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <RelationshipIndicator>true</RelationshipIndicator>
-    <ReferenceCode>REF</ReferenceCode>
     <Class structures:ref="test.TestType" xsi:nil="true"/>
   </ObjectProperty>
   <ObjectProperty structures:id="test.OProp3">
     <Name>OProp3</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <ReferenceCode>URI</ReferenceCode>
     <Class structures:ref="test.TestType" xsi:nil="true"/>
   </ObjectProperty>
   <ObjectProperty structures:id="test.OProp4">
     <Name>OProp4</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <ReferenceCode>NONE</ReferenceCode>
     <Class structures:ref="test.TestType" xsi:nil="true"/>
   </ObjectProperty>
   <ObjectProperty structures:id="test.OProp5">

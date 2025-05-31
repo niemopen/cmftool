@@ -55,7 +55,7 @@ import static org.mitre.niem.xsd.NamespaceKind.*;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-@Parameters(commandDescription = "convert a NIEM model in XSD to CMF")
+@Parameters(commandDescription = "convert a NIEM model from XSD to CMF")
 class CmdXSDtoCMF implements JCCommand {
 
     @Parameter(order = 1, names = "-o", description = "name of output model file")

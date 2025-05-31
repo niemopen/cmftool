@@ -201,7 +201,7 @@
     <NIEMVersionName>NIEM6.0</NIEMVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <ImportDocumentation>
-      <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-gml/6.0/</NamespaceURI>
+      <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
       <DocumentationText>Geography Markup Language (GML) version 3.2.1 schemas.  See http://www.opengeospatial.org OGC document 07-036 for documentation: "The Geography Markup Language (GML) was originally developed within the Open Geospatial Consortium, Inc. (OGC). ISO 19136 was prepared by ISO/TC 211 jointly with the OGC."  See http://schemas.opengis.net/gml/ for schemas.</DocumentationText>
     </ImportDocumentation>
     <LocalTerm>
