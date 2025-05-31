@@ -191,6 +191,14 @@ public class JSONProperty {
       type = "string";
       return;
     }
+
+    // replace dateTime with a string
+    if (dataTypeName.equals("dateTime")) {
+      type = "string";
+      format = "date-time";
+      return;
+    }
+
     // intrinsic types are handled differently than others, regardless of
     // cardinality
     if (cardinalities.size() == 0) {
@@ -233,6 +241,9 @@ public class JSONProperty {
                 if (dataTypeName.equals("date")) {
                   type = "string";
                   format = "date";
+                } else if (dataTypeName.equals("dateTime")) {
+                  type = "string";
+                  format = "dateTime";
                 } else {
                   type = dataTypeName;
                 }
