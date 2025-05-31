@@ -261,6 +261,14 @@ public class ModelXMLReaderTest extends ModelAssertions {
     }
     
     @Test
+    public void testRefCode () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "refCode.cmf"));
+        checkRefCode (model);
+        assertEmptyLogs();
+    }
+    
+    @Test
     public void testUnion () {
         var rdr   = new ModelXMLReader();
         var model = rdr.readFiles(new File(resDN, "union.cmf"));

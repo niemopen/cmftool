@@ -58,11 +58,15 @@ import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
+import org.mitre.niem.cmf.ObjectProperty;
 import org.mitre.niem.cmf.Property;
+import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.ReferenceGraph;
 import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
 import static org.mitre.niem.utility.IndefiniteArticle.articalize;
+import org.mitre.niem.utility.MapToList;
+import org.mitre.niem.utility.MapToSet;
 import org.mitre.niem.utility.NaturalOrderComparator;
 import org.mitre.niem.utility.ResourceManager;
 import org.mitre.niem.xml.LanguageString;
@@ -70,20 +74,27 @@ import org.mitre.niem.xml.ParserBootstrap;
 import org.mitre.niem.xml.XMLCatalogCreator;
 import org.mitre.niem.xml.XSDWriter;
 import static org.mitre.niem.xsd.ModelFromXSD.replaceSuffix;
-//import static org.mitre.niem.xsd.NIEMSchemaDocument.qnToName;
-//import static org.mitre.niem.xsd.NIEMSchemaDocument.qnToPrefix;
-import static org.mitre.niem.xsd.NamespaceKind.*;
+import static org.mitre.niem.xsd.ModelToXSDModel.LOG;
+import static org.mitre.niem.xsd.ModelToXSDModel.rmgr;
+import static org.mitre.niem.xsd.NamespaceKind.NSK_APPINFO;
+import static org.mitre.niem.xsd.NamespaceKind.NSK_CLSA;
+import static org.mitre.niem.xsd.NamespaceKind.NSK_UNKNOWN;
+import static org.mitre.niem.xsd.NamespaceKind.NSK_XML;
+import static org.mitre.niem.xsd.NamespaceKind.NSK_XSD;
+import static org.mitre.niem.xsd.NamespaceKind.builtinNSU;
+import static org.mitre.niem.xsd.NamespaceKind.codeToKind;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * A class for writing a NIEM model as an XML Schema document pile.
+ * A class for writing a non-conforming schema document pile for validating
+ * an instance of an XML message format.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ModelToXSD {
-    static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
+public class ModelToXMLSchema {
+    static final Logger LOG = LogManager.getLogger(ModelToXMLSchema.class);
 
     protected Model m;
     protected String useNiemVersion = null;
@@ -94,8 +105,10 @@ public class ModelToXSD {
     protected final Map<String,String> namespaceU2Path  = new HashMap<>();      // nsU -> file path in outD
     protected final Map<String,Integer> namespaceU2Kind = new HashMap<>();      // nsU -> namespace kind
     protected final Set<String> extNSs                  = new HashSet<>();      // URIs of external namespaces
+    protected final MapToSet<String,String> subGroupL   = new MapToSet<>();     // propU -> set of substitutable propUs
+    protected final Set<String> refNSs                  = new HashSet<>();      // URIs of referenced namespaces
     
-    public ModelToXSD (Model m) {
+    public ModelToXMLSchema (Model m) {
         this.m = m;
     }
     
@@ -139,6 +152,7 @@ public class ModelToXSD {
         collectNamespaceKinds();
         establishFilePaths();
         identifySimpleTypes();
+        buildSubstitutionMap();
         for (var ns : m.namespaceSet())
             if (ns.isExternal()) extNSs.add(ns.uri());
         for (var ns : m.namespaceSet()) 
@@ -180,6 +194,7 @@ public class ModelToXSD {
         }
     }
     
+    // Construct the map of namespace URI to namespace kind code
     protected void collectNamespaceKinds () {
         for (var ns : m.namespaceSet()) {
             var nsU = ns.uri();
@@ -188,7 +203,7 @@ public class ModelToXSD {
             namespaceU2Kind.put(nsU, kind);
         }
         for (var nver : niemVersions) {
-            for (var kcode : builtins()) {
+            for (var kcode : NamespaceKind.builtins()) {
                 var kind = codeToKind(kcode);
                 var bnsU = builtinNSU(nver, kcode);
                 if (bnsU.isEmpty()) continue;
@@ -280,6 +295,14 @@ public class ModelToXSD {
             LOG.debug("need simple type: {}", dt.qname());
         }
     }
+    
+    // Update the substitution map with properties and subproperties
+    protected void buildSubstitutionMap () {
+        for (var subp : m.propertyL()) {
+            var p = subp.subPropertyOf();
+            if (null != p) subGroupL.add(p.qname(), subp.qname());
+        }
+    }
 
     
     protected void writeModelDocument (Namespace ns, File outD) throws ParserConfigurationException, IOException {       
@@ -310,46 +333,20 @@ public class ModelToXSD {
                 bc2pre.put(bcode, bpre);
                 bc2U.put(bcode, bnsU);
             }
-        }
-        var appinfoPre = bc2pre.get("APPINFO");
-        var appinfoU   = bc2U.get("APPINFO");        
+        }    
         var refnsUs    = new HashSet<String>();         // need prefixes and imports for these namespaces
         var defEL      = new ArrayList<Element>();      // list of type definition elements
         var decEL      = new ArrayList<Element>();      // list of attribute/element declaration elements
         
         // Create xs:annotation element; add namespace documentation
         var annE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
-        var appE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:appinfo");
         addDocumentation(doc, annE, ns.docL());
-        
-        // Add conformance target assertions
-        var ctNSU = versionToCtNsURI(nver);
-        var ctPre = nsmap.assignPrefix("ct", ctNSU);
-        var ctQ   = ctPre + ":" + "conformanceTargets";
-        root.setAttributeNS(ctNSU, ctQ, listToString(ns.ctargL()));
-        root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:"+ctPre, ctNSU); 
-            
-        // Add appinfo:Augmentation elements and appinfo:LocalTerm elements.
-        // If xs:appinfo has children, append it to xs:annotation.
-        // If xs:annotation has children, append it to xs:schema.
-        for (var arec : ns.augL()) {
-            if (!arec.property().isAttribute()) continue;
-            if ("-1".equals(arec.index())) continue;
-            var act  = arec.classType();
-            var augE = doc.createElementNS(appinfoU, appinfoPre + ":" + "Augmentation");
-            setAttribute(augE, "property", arec.property().qname());
-            setAttribute(augE, "globalClassCode", setToString(arec.codeS()));
-            if (null != act) setAttribute(augE, "class", act.qname());            
-            if ("1".equals(arec.minOccurs())) setAttribute(augE, "use", "required");
-            appE.appendChild(augE);
-        }
-        addLocalTerms(doc, appE, ns, appinfoPre, appinfoU);
-        if (appE.getChildNodes().getLength() > 0) {
-            annE.appendChild(appE);
-            refnsUs.add(appinfoU);            
-        }
         if (annE.getChildNodes().getLength() > 0) root.appendChild(annE);
+        
+        // Message schema documents don't have conformance target assertions,
+        // augmentation appinfo, or local terms.
 
+        // Create augmentation types and elements for this namespace
         var pU2subQ = new HashMap<String,String>();
         createAugmentationComponents(doc, defEL, decEL, refnsUs, ns, bc2pre, bc2U, pU2subQ);       
 
@@ -363,25 +360,25 @@ public class ModelToXSD {
         }
         // Create CSC types for datatypes.  But don't create a CSC wrapper around
         // a simple type if we already created a type with the same name.
-        for (var dt : m.datatypeL()) {
-            var wrapU = replaceSuffix(dt.uri(), "SimpleType", "Type");
-            if (!xctUs.contains(wrapU))
-                createCSCType(doc, defEL, refnsUs, nsU, dt, bc2pre, bc2U);
-        }
+//        for (var dt : m.datatypeL()) {
+//            var wrapU = replaceSuffix(dt.uri(), "SimpleType", "Type");
+//            if (!xctUs.contains(wrapU))
+//                createCSCType(doc, defEL, refnsUs, nsU, dt, bc2pre, bc2U);
+//        }
         // Create simple types and attribute/element declarations.
-        for (var dt : simpleTypes)   createSimpleType(doc, defEL, refnsUs, nsU, dt, bc2pre, bc2U);
+        for (var dt : m.datatypeL()) createSimpleType(doc, defEL, refnsUs, nsU, dt, bc2pre, bc2U);
         for (var p : m.propertyL())  createDeclaration(doc, decEL, refnsUs, nsU, p, bc2pre, bc2U, pU2subQ);
         
         // Need appinfo if an external namespace is referenced
         var extF = false;
         for (var refnsU : refnsUs) 
             if (extNSs.contains(refnsU)) extF = true;
-        if (extF) refnsUs.add(appinfoU);            
+//        if (extF) refnsUs.add(appinfoU);            
         
         // At this point we know all of the referenced namespaces.
         // Create namespace declarations; add import elements in a pleasing order.
         refnsUs.add(nsU);
-        refnsUs.add(bc2U.get("STRUCTURES"));
+        refNSs.addAll(refnsUs);
         var op = namespaceU2Path.get(nsU);
         var outF = new File(outD, namespaceU2Path.get(nsU));
         var outP = new File(namespaceU2Path.get(nsU)).getParentFile().toPath();
@@ -418,8 +415,8 @@ public class ModelToXSD {
             var impE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:import");
             impE.setAttribute("namespace", refnsU);
             impE.setAttribute("schemaLocation", sloc);
-            if (extNSs.contains(refnsU))
-                impE.setAttributeNS(appinfoU, appinfoPre + ":" + "externalImportIndicator", "true");
+//            if (extNSs.contains(refnsU))
+//                impE.setAttributeNS(appinfoU, appinfoPre + ":" + "externalImportIndicator", "true");
             addAnnotationDoc(doc, impE, ns.idocL(refnsU));
             root.appendChild(impE);
         }
@@ -432,6 +429,9 @@ public class ModelToXSD {
         writeXSD(doc, outF);
     }
     
+    // Create an augmentation type and element for each class augmented by
+    // this namespace. Note the substitution group for each element property
+    // augmentation. Update the substitution group map.
     protected void createAugmentationComponents (Document doc, 
         List<Element> defEL,                // add typedef elements to this list
         List<Element> decEL,                // add typedef elements to this list
@@ -441,32 +441,32 @@ public class ModelToXSD {
         Map<String,String> bc2U,            // URIs for builtin namespaces    
         Map<String,String> pU2subQ) {       // ordinary property aug subsitutionGroup QN
         
-        var classQ2ArecL = new HashMap<String,List<AugmentRecord>>();
+        // Create a list of AugmentRecords for each Class augmented by this namespace.
+        // Also establish the substitutionGroup for each element property augmentation.
+        var classQ2ArecL = new MapToList<String,AugmentRecord>();
         for (var arec : ns.augL()) {
-            if (null == arec.classType()) continue;         // do nothing for global augmentation
+            if (null == arec.classType()) continue;     // do nothing for global augmentation
             var propU  = arec.property().uri();
+            var propQ  = arec.property().qname();
             var classQ = arec.classType().qname();
             var augPQ  = replaceSuffix(classQ, "Type", "AugmentationPoint");
             if (arec.index().isEmpty()) {
-                pU2subQ.put(propU, augPQ);
+                pU2subQ.put(propU, augPQ);              // element property augmentation
+                subGroupL.add(augPQ, propQ);            // propQ is substitutable for augPQ
             }
-            else {
-                var arecL = classQ2ArecL.get(classQ);
-                if (null == arecL) {
-                    arecL = new ArrayList<>();
-                    classQ2ArecL.put(classQ, arecL);
-                }
-                arecL.add(arec);
-            }
+            else classQ2ArecL.add(classQ, arec);        // arec is augmentation record for classQ
         }
+        // Create augmentation type for each class augmented by this namespace.
+        // The list of augmentation records, sorted by index number, becomes the 
+        // property association list for the augmentation type.
         for (var classQ : classQ2ArecL.keySet()) {
-            var augmct = m.qnToClassType(classQ);
+            var augmct = m.qnToClassType(classQ);       // augmented class
             var propL  = classQ2ArecL.get(classQ);
             var augptQ = replaceSuffix(classQ, "Type", "AugmentationPoint");
             var cname  = qnToName(classQ);
             var cnoun  = articalize(replaceSuffix(cname, "Type", "").toLowerCase());
-            var aname  = replaceSuffix(cname, "Type", "Augmentation");
-            var atname = aname + "Type";
+            var aename = replaceSuffix(cname, "Type", "Augmentation");
+            var atname = aename + "Type";
             var docstr = "A data type for additional information about " + cnoun + ".";
             var augct  = new ClassType(ns, atname);
             Collections.sort(propL);
@@ -474,19 +474,23 @@ public class ModelToXSD {
             augct.propL().addAll(propL);
             createCCCType(doc, defEL, decEL, refnsUs, ns.uri(), augct, bc2pre, bc2U, false);
             
+            // Create the augmentation element to go with the augmentation type.
+            // No substitionGroup in a message schema
             docstr   = "Additional information about " + cnoun + ".";
             var augE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
             var docL = List.of(new LanguageString(docstr, "en-US"));
-            augE.setAttribute("name", aname);
-            augE.setAttribute("type", augct.qname());
-            augE.setAttribute("substitutionGroup", augptQ);
+            augE.setAttribute("name", aename);
+            augE.setAttribute("type", augct.qname());;
             addAnnotationDoc(doc, augE, docL);
             refnsUs.add(augmct.namespaceURI());
             decEL.add(augE);
+            subGroupL.add(augptQ, ns.prefix() + ":" + aename);
         }
     }
     
     // Create a complex type with complex content from a non-literal class object
+    private static Set<String> needURIcodes = Set.of("ANY", "ANYURI", "INTERNAL", "RELURI");
+    private static Set<String> needRefcodes = Set.of("ANY", "INTERNAL", "IDREF");
     protected void createCCCType (Document doc, 
         List<Element> defEL,                // add typedef elements to this list
         List<Element> decEL,                // add augmentation point elements to this list
@@ -498,11 +502,6 @@ public class ModelToXSD {
         boolean augPointF) {                // include an augmentation point?
         
         if (!nsU.equals(ct.namespaceURI())) return;
-        var appinfoPre    = bc2pre.get("APPINFO");
-        var appinfoU      = bc2U.get("APPINFO");
-        var proxyPre      = bc2pre.get("NIEM-XS");
-        var proxyU        = bc2U.get("NIEM-XS");
-        var structuresPre = bc2pre.get("STRUCTURES");
 
         var ctE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
         var anE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
@@ -510,37 +509,91 @@ public class ModelToXSD {
         var exE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
         var sqE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:sequence");
 
+        // Set xs:complexType name; add documentation.
         populateTypeElement(doc, ctE, ct, refnsUs, bc2pre, bc2U);
-        exE.appendChild(sqE);
-        ccE.appendChild(exE);
-        ctE.appendChild(ccE);
-
-        var baseQ = structuresPre + ":";
-        if (null != ct.subClass()) { 
-            baseQ = ct.subClass().qname();
-            refnsUs.add(ct.subClass().namespaceURI());
-        }
-        else if (ct.name().endsWith("AdapterType"))      baseQ = baseQ + "AdapterType";
-        else if (ct.name().endsWith("AssociationType"))  baseQ = baseQ + "AssociationType";
-        else if (ct.name().endsWith("AugmentationType")) baseQ = baseQ + "AugmentationType"; 
-        else baseQ = baseQ + "ObjectType";            
-        exE.setAttribute("base", baseQ);
         
-        for (var pa : ct.propL()) {
-            var p = pa.property();
-            if (p.isAttribute()) continue;
-            var elE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
-            elE.setAttribute("ref", p.qname());
-            if (!"1".equals(pa.minOccurs())) elE.setAttribute("minOccurs", pa.minOccurs());
-            if (!"1".equals(pa.maxOccurs())) elE.setAttribute("maxOccurs", pa.maxOccurs());
-            if (pa.isOrdered()) {
-                elE.setAttributeNS(appinfoU, appinfoPre + ":" + "orderedPropertyIndicator", "true");
-                refnsUs.add(appinfoU);
+        // Can't extend parent class if reference codes are not compatible.
+        var pct      = ct.subClassOf();
+        var refCode  = ct.effectiveReferenceCode();
+        var needURI  = needURIcodes.contains(refCode);
+        var needRef  = needRefcodes.contains(refCode);
+        var extendF  = false;
+        if (null != pct) {
+            var prefCode = pct.effectiveReferenceCode();
+            var pNeedURI = needURIcodes.contains(prefCode);
+            var pNeedRef = needRefcodes.contains(prefCode);
+            extendF = true;
+            if (pNeedURI && !needURI) extendF = false;
+            if (pNeedRef && !needRef) extendF = false;
+            if (extendF) {
+                needURI = needURI && !pNeedURI;
+                needRef = needRef && !pNeedRef;
             }
-            refnsUs.add(p.namespaceURI());
-            addAnnotationDoc(doc, elE, pa.docL());
-            sqE.appendChild(elE);
+        }            
+        // Need xs:complexContent and xs:extension elements if we are extending a parent class.
+        // Otherwise just need the xs:sequence element.
+        var attParentE = ctE;
+        if (extendF) {
+            refnsUs.add(pct.namespaceURI());
+            exE.setAttribute("base", pct.qname());
+            exE.appendChild(sqE);
+            ccE.appendChild(exE);
+            ctE.appendChild(ccE);
+            attParentE = exE;
         }
+        else ctE.appendChild(sqE);
+        
+        // Start with list of inherited properties if we can't extend from a parent class.
+        // Then add properties from this class.
+        var propL = new ArrayList<PropertyAssociation>();
+        if (!extendF && null != pct) getParentProperties(pct, propL);
+        propL.addAll(ct.propL());
+        
+        // Add augmentation point if needed
+        if (augPointF) {
+            var ns   = m.namespaceObj(nsU);
+            var name = replaceSuffix(ct.name(), "Type", "AugmentationPoint");
+            var pdoc = "An augmentation point for " + ct.name() + ".";
+            var p    = new ObjectProperty(ns, name);
+            var pa   = new PropertyAssociation();
+            p.setIsAbstract(true);
+            p.addDocumentation(pdoc, "en-US");
+            pa.setProperty(p);
+            pa.setMinOccurs("0");
+            pa.setMaxOccurs("unbounded");
+            propL.add(pa);
+        }        
+        // Add xs:element refs for all object property children.
+        // Omit abstract elements with no substitutions.
+        // Insert xs:choice if more than one substitution.
+        for (var pa : propL) {
+            var p    = pa.property();
+            var pQ   = p.qname();
+            var subs = subGroupL.get(pQ);
+            if (p.isAttribute()) continue;
+            if (!p.isAbstract()) subs.add(pQ);
+            var parE = sqE;
+            if (subs.size() > 1) {
+                parE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:choice");
+                if (!"1".equals(pa.minOccurs())) parE.setAttribute("minOccurs", pa.minOccurs());
+                if (!"1".equals(pa.maxOccurs())) parE.setAttribute("maxOccurs", pa.maxOccurs());
+                addAnnotationDoc(doc, parE, pa.docL());
+                sqE.appendChild(parE);
+            }
+            for (var spQ : subs) {
+                var ens = m.namespaceObj(qnToPrefix(spQ));
+                var elE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
+                elE.setAttribute("ref", spQ);
+                if (subs.size() == 1) {
+                    if (!"1".equals(pa.minOccurs())) elE.setAttribute("minOccurs", pa.minOccurs());
+                    if (!"1".equals(pa.maxOccurs())) elE.setAttribute("maxOccurs", pa.maxOccurs());
+                    addAnnotationDoc(doc, elE, pa.docL());
+                }
+                parE.appendChild(elE);
+                refnsUs.add(ens.uri());
+            }
+        }
+        // Add xs:any wildcards as needed
         for (var ap : ct.anyL()) {
             if (ap.isAttribute()) continue;
             var anyE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:any");            
@@ -550,20 +603,8 @@ public class ModelToXSD {
             setAttribute(anyE, "namespace", ap.nsConstraint());
             sqE.appendChild(anyE);
         }
-        if (augPointF) {
-            var elE    = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
-            var apname = replaceSuffix(ct.name(), "Type", "AugmentationPoint");
-            elE.setAttribute("ref", ct.namespace().prefix() + ":" + apname);
-            elE.setAttribute("minOccurs", "0");
-            elE.setAttribute("maxOccurs", "unbounded");
-            sqE.appendChild(elE);
-            var apE    = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
-            apE.setAttribute("name", apname);
-            apE.setAttribute("abstract", "true");
-            addAnnotationDoc(doc, apE, "An augmentation point for " + ct.name() + ".");
-            decEL.add(apE);
-        }
-        for (var pa : ct.propL()) {
+        // Add xs:attribute refs
+        for (var pa : propL) {
             var p = pa.property();
             if (!p.isAttribute()) continue;
             var atE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
@@ -572,16 +613,45 @@ public class ModelToXSD {
             if ("1".equals(pa.minOccurs())) atE.setAttribute("use", "required");
             refnsUs.add(p.namespaceURI());
             addAnnotationDoc(doc, atE, pa.docL());
-            exE.appendChild(atE);
+            attParentE.appendChild(atE);
         }
+        // Add xs:anyAttribute wildcards as needed
         for (var ap : ct.anyL()) {
             if (!ap.isAttribute()) continue;
             var anyE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:anyAttribute");            
             setAttribute(anyE, "processContents", ap.processCode());
             setAttribute(anyE, "namespace", ap.nsConstraint());
-            exE.appendChild(anyE);
+            attParentE.appendChild(anyE);
+        }
+        // Add reference attributes as needed
+        var structuresPre = bc2pre.get("STRUCTURES");
+        var structuresU   = bc2U.get("STRUCTURES");
+        if (needURI || needRef) {
+            var refE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
+            refE.setAttribute("ref", structuresPre + ":" + "id");
+            attParentE.appendChild(refE);
+            refnsUs.add(structuresU);
+        }
+        if (needURI) {
+            var refE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
+            refE.setAttribute("ref", structuresPre + ":" + "uri");
+            attParentE.appendChild(refE);
+            refnsUs.add(structuresU);
+        }
+        if (needRef) {
+            var refE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
+            refE.setAttribute("ref", structuresPre + ":" + "ref");
+            attParentE.appendChild(refE);
+            refnsUs.add(structuresU);
         }
         defEL.add(ctE);
+    }
+    
+    // Create a list of property associations for a class hierarchy, beginning
+    // with the top of the inheritance chain.
+    protected void getParentProperties (ClassType pct, List<PropertyAssociation> propL) {
+        if (null != pct.subClassOf()) getParentProperties(pct.subClassOf(), propL);
+        propL.addAll(pct.propL());
     }
 
     // Create a complex type with simple content from a literal class object,
@@ -595,11 +665,6 @@ public class ModelToXSD {
         Map<String,String> bc2U) {          // URIs for builtin namespaces
 
         if (!nsU.equals(ct.namespaceURI())) return;
-        var appinfoPre    = bc2pre.get("APPINFO");
-        var appinfoU      = bc2U.get("APPINFO");
-        var proxyPre      = bc2pre.get("NIEM-XS");
-        var proxyU        = bc2U.get("NIEM-XS");
-        var structuresPre = bc2pre.get("STRUCTURES");
         
         var ctE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
         var anE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
@@ -626,15 +691,12 @@ public class ModelToXSD {
         var ctname = ct.qname();
         var dt   = ct.literalDatatype();
         if (simpleTypes.contains(dt)) {
-            var agE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
-            var dtnsU = dt.namespaceURI();
-            var dtQ   = dt.qname();
-            if (!dtQ.endsWith("SimpleType"))
-                dtQ = replaceSuffix(dtQ, "Type", "SimpleType");
-            exE.setAttribute("base", dtQ);
-            agE.setAttribute("ref", structuresPre + ":" + "SimpleObjectAttributeGroup");
-            exE.appendChild(agE);
-            refnsUs.add(dtnsU);
+//            var dtnsU = dt.namespaceURI();
+//            var dtQ   = dt.qname();
+//            if (!dtQ.endsWith("SimpleType"))
+//                dtQ = replaceSuffix(dtQ, "Type", "SimpleType");
+//            exE.setAttribute("base", dtQ);
+//            refnsUs.add(dtnsU);
         }
         // Or the extension base may be another model class
         else if (null != dt && dt.namespace().isModelNS()) {
@@ -642,67 +704,16 @@ public class ModelToXSD {
             exE.setAttribute("base", baseQ);
             refnsUs.add(dt.namespaceURI());
         }
-        else if (null != ct.subClass()) {
-            var baseQ = ct.subClass().qname();
+        else if (null != ct.subClassOf()) {
+            var baseQ = ct.subClassOf().qname();
             exE.setAttribute("base", baseQ);
-            refnsUs.add(ct.subClass().namespaceURI());
+            refnsUs.add(ct.subClassOf().namespaceURI());
         }
         // Or the extension base may be a XSD primitive
         else if (null != dt) {
-            var baseQ = proxyPre + ":" + dt.name();
-            exE.setAttribute("base", baseQ);
-            refnsUs.add(proxyU);
+            exE.setAttribute("base", dt.qname());
         }   
         else LOG.error("Can't determine extension base for {}", ct.qname());
-        eL.add(ctE);
-    }
-    
-    // Create an xs:complexType element from a Datatype object.
-    protected void createCSCType (Document doc, 
-        List<Element> eL,                   // add typedef elements to this list
-        Set<String> refnsUs,                // URIs of referenced namespaces
-        String nsU,                         // URI of current namespace document
-        Datatype dt,                        // create typedefs from this class
-        Map<String,String> bc2pre,          // prefixes for builtin namespaces
-        Map<String,String> bc2U) {          // URIs for builtin namespaces
-        
-        if (!nsU.equals(dt.namespaceURI())) return;
-        if (W3C_XML_SCHEMA_NS_URI.equals(dt.namespaceURI())) return;
-        if (XML_NS_URI.equals(dt.namespaceURI())) return;
-        
-        var appinfoPre    = bc2pre.get("APPINFO");
-        var appinfoU      = bc2U.get("APPINFO");
-        var proxyPre      = bc2pre.get("NIEM-XS");
-        var proxyU        = bc2U.get("NIEM-XS");
-        var structuresPre = bc2pre.get("STRUCTURES");
-        
-        var ctE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");       
-        var scE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleContent");
-        
-        populateTypeElement(doc, ctE, dt, refnsUs, bc2pre, bc2U);
-        ctE.appendChild(scE);
-        if (dt.name().endsWith("SimpleType")) 
-            setAttribute(ctE, "name", replaceSuffix(dt.name(), "SimpleType", "Type"));
-
-        var atgE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
-        setAttribute(atgE, "ref", structuresPre + ":" + "SimpleObjectAttributeGroup");
-        
-        if (simpleTypes.contains(dt)) {
-            var extE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:extension");
-            setAttribute(extE, "base", datatypeQName(dt));
-            extE.appendChild(atgE);
-            scE.appendChild(extE);
-        }
-        else {
-            if (CMF_RESTRICTION != dt.getType()) {
-                LOG.error("{} is not a simple type or a restriction", dt.qname());
-                return;
-            }
-            var r    = (Restriction)dt;
-            var bdt  = dt.base();
-            var bdtQ = proxifyQName(bdt, refnsUs, proxyPre, proxyU);
-            addRestriction(doc, scE, refnsUs, r, bdtQ, bc2pre, bc2U);
-        }
         eL.add(ctE);
     }
     
@@ -721,8 +732,6 @@ public class ModelToXSD {
         
         var stE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleType");
         populateTypeElement(doc, stE, dt, refnsUs, bc2pre, bc2U);
-        if (!dt.name().endsWith("SimpleType")) 
-            setAttribute(stE, "name", replaceSuffix(dt.name(), "Type", "SimpleType"));
         
         switch (dt.getType()) {
         case CMF_LIST:          addList(doc, stE, refnsUs, dt, bc2pre, bc2U); break;
@@ -746,11 +755,6 @@ public class ModelToXSD {
         if (XML_NS_URI.equals(p.namespaceURI())) return;
         if (p.name().endsWith("Literal")) return;
 
-        var appinfoPre = bc2pre.get("APPINFO");
-        var appinfoU   = bc2U.get("APPINFO");      
-        var proxyPre   = bc2pre.get("NIEM-XS");
-        var proxyU     = bc2U.get("NIEM-XS");
-
         Element decE;
         if (p.isAttribute()) decE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
         else decE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
@@ -760,45 +764,15 @@ public class ModelToXSD {
         if (null != pt) { 
             refnsUs.add(pt.namespaceURI());
             ptQ = pt.qname();
-            if (!p.isAttribute() && W3C_XML_SCHEMA_NS_URI.equals(pt.namespaceURI())) {
-                ptQ = proxyPre + ":" + pt.name();
-                refnsUs.add(proxyU);
-            }
-            else if (p.isAttribute() && !ptQ.endsWith("SimpleType"))
+            if (p.isAttribute() && !ptQ.endsWith("SimpleType"))
                 ptQ = replaceSuffix(ptQ, "Type", "SimpleType");
         }
+        // No abstract, appinfo, or substitionGroup in a message schema
         decE.setAttribute("name", p.name());
         setAttribute(decE, "type", ptQ);
-        if (p.isAbstract()) decE.setAttribute("abstract", "true");
         if (!p.isAttribute()) decE.setAttribute("nillable", "true");
-        if (p.isDeprecated()) {
-            setAttribute(decE, appinfoU, appinfoPre + ":" + "deprecated", "true");
-            refnsUs.add(appinfoU);
-        }
-        if (p.isRefAttribute()) {
-            setAttribute(decE, appinfoU, appinfoPre + ":" + "referenceAttributeIndicator", "true");
-            refnsUs.add(appinfoU);
-        }
-        if (!p.referenceCode().isEmpty()) {
-            setAttribute(decE, appinfoU, appinfoPre + ":" + "referenceCode", p.referenceCode());
-            refnsUs.add(appinfoU);
-        }
-        if (p.isRelationship()) {
-            setAttribute(decE, appinfoU, appinfoPre + ":" + "relationshipPropertyIndicator", "true");
-            refnsUs.add(appinfoU);
-        }
         addAnnotationDoc(doc, decE, p.docL());
-        
-        var subQ = "";
-        if (null != p.subProperty()) subQ = p.subProperty().qname();
-        else subQ = pU2subQ.getOrDefault(p.uri(), "");
-        if (!subQ.isEmpty() && !p.isAttribute()) {
-            setAttribute(decE, "substitutionGroup", subQ);
-            var subpre = qnToPrefix(subQ);
-            var subnsU = prefixMap.getURI(subpre);
-            refnsUs.add(subnsU);
-        }
-        eL.add(decE);        
+        eL.add(decE);
     }
     
     protected void populateTypeElement (Document doc, 
@@ -807,41 +781,11 @@ public class ModelToXSD {
         Set<String> refnsUs,                // URIs of referenced namespaces
         Map<String,String> bc2pre,          // prefixes for builtin namespaces
         Map<String,String> bc2U) {          // URIs for builtin namespaces
-        
-        var appinfoPre = bc2pre.get("APPINFO");
-        var appinfoU   = bc2U.get("APPINFO"); 
-        var anE        = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
-        
-        if (null != c.codeListBinding()) {
-            var clsaPre = bc2pre.get("CLSA");
-            var clsaU   = bc2U.get("CLSA");
-            var clb     = c.codeListBinding();
-            var apE     = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:appinfo");
-            var clE     = doc.createElementNS(clsaU, clsaPre + ":" + "SimpleCodeListBinding");
-            setAttribute(clE, "codeListURI", clb.codeListURI());
-            setAttribute(clE, "columnName", clb.column());
-            if (clb.isConstraining()) setAttribute(clE, "constrainingIndicator", "true");
-            refnsUs.add(clsaU);
-            apE.appendChild(clE);
-            anE.appendChild(apE);
-        }
+         
+        var anE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
         addDocumentation(doc, anE, c.docL());
         if (anE.getChildNodes().getLength() > 0) e.appendChild(anE);
-        
-        setAttribute(e, "name", c.name());
-        if (c.isAbstract())   e.setAttribute("abstract", "true");
-        if (c.isDeprecated()) {
-            setAttribute(e, appinfoU, appinfoPre + ":" + "deprecated", "true");
-            refnsUs.add(appinfoU);
-        }
-        if (c.isOrdered()) {
-            setAttribute(e, appinfoU, appinfoPre + ":" + "orderedPropertyIndicator", "true");        
-            refnsUs.add(appinfoU);
-        }
-        if (!c.referenceCode().isEmpty()) {
-            setAttribute(e, appinfoU, appinfoPre + ":" + "referenceCode", c.referenceCode());        
-            refnsUs.add(appinfoU);
-        }
+        e.setAttribute("name", c.name());
     }
   
     protected void addList (Document doc, 
@@ -963,8 +907,8 @@ public class ModelToXSD {
     
     protected boolean hasSimpleContent (ClassType ct) {
         if (null != ct.literalDatatype()) return true;
-        else if (null == ct.subClass()) return false;
-        else return hasSimpleContent(ct.subClass());
+        else if (null == ct.subClassOf()) return false;
+        else return hasSimpleContent(ct.subClassOf());
     }
     
     protected String datatypeQName (Datatype dt) {
@@ -972,13 +916,10 @@ public class ModelToXSD {
         else return replaceSuffix(dt.qname(), "Type", "SimpleType");
     }
     
+    // Don't convert xs types to niem-xs types in a message schema
     protected String proxifyQName (Datatype dt, Set<String> refnsUs, String proxyPre, String proxyU) {
         if (simpleTypes.contains(dt)) return replaceSuffix(dt.qname(), "Type", "SimpleType");
-        else if (W3C_XML_SCHEMA_NS_URI.equals(dt.namespaceURI())) {
-            refnsUs.add(proxyU);
-            return proxyPre + ":" + dt.name();
-        }
-        else return dt.qname();
+        return dt.qname();
     }
     
     protected void setAttribute (Element e, String nsU, String qname, String value) {
@@ -991,14 +932,18 @@ public class ModelToXSD {
             e.setAttribute(name, value);
     }
 
-    protected ResourceManager rmgr = new ResourceManager(ModelToXSD.class);
+    protected ResourceManager rmgr = new ResourceManager(ModelToXSDModel.class);
     
+    // Write builtin schema documents for the specified NIEM version.
+    // Only write builtins and proxy types that are used in the model.
     protected void writeVersionBuiltins (String vers, File outD) {
         for (var kcode : NamespaceKind.builtins()) {
             var nsU  = NamespaceKind.builtinNSU(vers, kcode);
+            if (!refNSs.contains(nsU)) continue;
+            
             var vdir = NamespaceKind.versionDirName().get(vers);
             var rn   = NamespaceKind.builtinPath().get(kcode);
-            var res  = "xsd/" + vdir + rn;
+            var res  = "/xsd/" + vdir + rn;
             var path = namespaceU2Path.get(nsU);
             var outF = new File(outD, path);
             var outP = outF.toPath().getParent();
@@ -1090,6 +1035,5 @@ public class ModelToXSD {
             return oneK.compareToIgnoreCase(twoK);
         }
     }
-
-
+    
 }

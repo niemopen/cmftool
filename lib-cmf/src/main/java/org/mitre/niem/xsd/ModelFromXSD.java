@@ -79,6 +79,7 @@ import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
+import org.mitre.niem.utility.MapToList;
 import static org.mitre.niem.xml.XMLSchemaDocument.evalForNodes;
 import static org.mitre.niem.xml.XMLSchemaDocument.evalForString;
 import static org.mitre.niem.xml.XMLSchemaDocument.getDocumentation;
@@ -95,7 +96,7 @@ import org.w3c.dom.Element;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
 /**
- * A class to create a Model object from a NIEM XSD schema
+ * A class to create a Model object from a NIEM XSD schema. Not reusable.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -151,7 +152,8 @@ public class ModelFromXSD {
     // Construct a list of top-level type definition and component declaration
     // elements for each schema document.  Also collect the appinfo attributes for
     // all defs and decls in the schema.
-    private Map<String,List<Element>> types         = new HashMap<>();  // list of type defns in namespace
+//    private Map<String,List<Element>> types         = new HashMap<>();  // list of type defns in namespace
+    private MapToList<String,Element> types         = new MapToList<>();
     private Map<String,List<Element>> elements      = new HashMap<>();  // list of element decls in namespace
     private Map<String,List<Element>> attributes    = new HashMap<>();  // list of attribute decls in namespace
     private Map<String,Element> comp2Element        = new HashMap<>();  // component URI -> sdoc Element
@@ -160,11 +162,11 @@ public class ModelFromXSD {
         for (var sd : sch.schemaDocL()) {
             var vers  = sd.niemVersion();
             var nsU   = sd.targetNamespace();
-            var tL    = new ArrayList<Element>();   // type definitions
+//            var tL    = new ArrayList<Element>();   // type definitions
             var eL    = new ArrayList<Element>();   // element declarations
             var aL    = new ArrayList<Element>();   // attribute declarations
             var appU = builtinNSU(vers, "APPINFO"); // appinfo namespace URI in this document
-            types.put(nsU, tL);
+//            types.put(nsU, tL);
             elements.put(nsU, eL);
             attributes.put(nsU, aL);
             var root  = sd.dom().getDocumentElement();
@@ -174,11 +176,14 @@ public class ModelFromXSD {
                 if (ELEMENT_NODE != node.getNodeType()) continue;
                 var schE  = (Element)node;
                 var name  = schE.getAttribute("name");
+                if (name.isEmpty()) continue;
                 var compU = makeURI(nsU, name);
                 comp2Element.put(compU, schE);
+                var ln = node.getLocalName();
                 switch(node.getLocalName()) {
                     case "complexType":
-                    case "simpleType": tL.add(schE); break;
+//                    case "simpleType": tL.add(schE); break;
+                    case "simpleType": types.add(nsU, schE); break;
                     case "element":    eL.add(schE); break;
                     case "attribute":  aL.add(schE); break;
                 }
@@ -932,7 +937,7 @@ public class ModelFromXSD {
         for (var aprop : augPropL) {
             LOG.debug("aprop: {}", aprop.uri());
             var augt   = aprop.classType();             // augmentation type; eg. j:EducationAugmentationType
-            var apoint = aprop.subProperty();           // augmentation point property; eg. nc:EducationAugmentationPoint
+            var apoint = aprop.subPropertyOf();           // augmentation point property; eg. nc:EducationAugmentationPoint
             var augmtU = replaceSuffix(apoint.uri(), "AugmentationPoint", "Type"); // augmented class URI
             var atype  = m.uriToClassType(augmtU);      // augmented ClassType object
             var augns  = augt.namespace();              // augmenting namespace object
@@ -949,7 +954,7 @@ public class ModelFromXSD {
         }
         // Handle elements with augmentation point substitutionGroup
         for (var p : m.propertyL()) {
-            var apoint = p.subProperty();
+            var apoint = p.subPropertyOf();
             if (null == apoint) continue;
             if (!apoint.name().endsWith("AugmentationPoint")) continue;
             var augmtU = replaceSuffix(apoint.uri(), "AugmentationPoint", "Type");
@@ -978,7 +983,7 @@ public class ModelFromXSD {
                 var classQ = ae.getAttribute("class");
                 var propQ  = ae.getAttribute("property");
                 var use    = ae.getAttribute("use");
-                var codes  = ae.getAttribute("globalUseCode");
+                var codes  = ae.getAttribute("globalClassCode");
                 var classU = sd.qnToURI(ae, classQ);
                 var propU  = sd.qnToURI(ae, propQ);
                 var ct     = m.uriToClassType(classU);

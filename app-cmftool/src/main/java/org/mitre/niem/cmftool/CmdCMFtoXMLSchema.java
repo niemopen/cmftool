@@ -38,7 +38,7 @@ import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
-import org.mitre.niem.xsd.ModelToXSD;
+import org.mitre.niem.xsd.ModelToXMLSchema;
 
 /**
  *
@@ -46,9 +46,9 @@ import org.mitre.niem.xsd.ModelToXSD;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "write a NIEM model as a NIEM schema")
+@Parameters(commandDescription = "create an XSD message schema from a model")
 
-public class CmdCMFtoXSD implements JCCommand {
+public class CmdCMFtoXMLSchema implements JCCommand {
     
     @Parameter(order = 0, names = "-o", description = "write schema pile into this directory")
     private String outputDir = "";
@@ -59,7 +59,7 @@ public class CmdCMFtoXSD implements JCCommand {
     @Parameter(order = 2, names = "--catalog", description = "write XML catalog into this file")
     private String catPath = null;
     
-    @Parameter(order = 3, names = {"-r", "-root"}, description = "make this namespace import every namespace in schema")
+    @Parameter(order = 3, names = {"-r", "-root"}, description = "make this schema document have all necessary imports")
     private String rootNSarg = null;
     
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
@@ -71,11 +71,11 @@ public class CmdCMFtoXSD implements JCCommand {
     @Parameter(description = "modelFile.cmf...")
     private List<String> mainArgs;    
     
-    CmdCMFtoXSD () { }
-    CmdCMFtoXSD (JCommander jc) { }
+    CmdCMFtoXMLSchema () { }
+    CmdCMFtoXMLSchema (JCommander jc) { }
     
     public static void main (String[] args) {       
-        var obj = new CmdCMFtoXSD();
+        var obj = new CmdCMFtoXSDModel();
         obj.runMain(args);
     }
     
@@ -149,7 +149,7 @@ public class CmdCMFtoXSD implements JCCommand {
         for (var str : mainArgs) fileL.add(new File(str));
         var model = mr.readFiles(fileL);
         
-        var m2x =  new ModelToXSD(model);
+        var m2x =  new ModelToXMLSchema(model);
         m2x.setCatalogPath(catPath);
         m2x.setRootNamespace(rootNSarg);
         try {
@@ -169,5 +169,5 @@ public class CmdCMFtoXSD implements JCCommand {
         System.exit(0);        
         
     }
-    
+        
 }

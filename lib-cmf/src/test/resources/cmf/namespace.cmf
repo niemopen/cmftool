@@ -219,6 +219,11 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
     <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.CommentText" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
       <DataProperty structures:ref="t.AProp4" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>

@@ -24,7 +24,10 @@
 package org.mitre.niem.xml;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -57,6 +60,13 @@ public class XMLWriter {
     static final Logger LOG = LogManager.getLogger(XMLWriter.class);    
 
     public XMLWriter () { }
+    
+    public void writeXML (Document dom, File outF) throws IOException {
+        var os = new FileOutputStream(outF);
+        var ow = new OutputStreamWriter(os);
+        writeXML(dom, ow);
+        ow.close();
+    }
     
     /**
      * Write the Document to the output writer.

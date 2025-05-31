@@ -182,7 +182,6 @@ public class ModelAssertions {
             .extracting(LanguageString::text, LanguageString::lang)
             .containsExactly(Assertions.tuple("Attribute doc string", "en-US"));        
     }
-
         
     public static void checkClass (Model m) {
         var ct1 = m.qnToClassType("test:Test1Type");
@@ -193,8 +192,7 @@ public class ModelAssertions {
         
         var cp = ct1.propL().get(0);
         assertTrue(ct1.isAbstract());
-        assertNull(ct1.subClass());
-        assertEquals("", ct1.referenceCode());
+        assertNull(ct1.subClassOf());
         assertThat(ct1.propL()).hasSize(1);
         assertEquals("test:AnElement", cp.property().qname());
         assertEquals("0", cp.minOccurs());
@@ -211,8 +209,7 @@ public class ModelAssertions {
         
         cp = ct2.propL().get(0);
         assertFalse(ct2.isAbstract());
-        assertNull(ct2.subClass());
-        assertEquals("ANY", ct2.referenceCode());
+        assertNull(ct2.subClassOf());
         assertThat(ct2.propL()).hasSize(1);
         assertEquals("test:AnElement", cp.property().qname());
         assertEquals("1", cp.minOccurs());
@@ -227,8 +224,7 @@ public class ModelAssertions {
         
         cp = ct3.propL().get(0);
         assertFalse(ct3.isAbstract());
-        assertEquals("test:Test1Type", ct3.subClass().qname());
-        assertEquals("URI", ct3.referenceCode());
+        assertEquals("test:Test1Type", ct3.subClassOf().qname());
         assertThat(ct3.propL()).hasSize(1);
         assertEquals("test:AnotherElement", cp.property().qname());
         assertEquals("1", cp.minOccurs());
@@ -236,10 +232,7 @@ public class ModelAssertions {
         assertFalse(cp.isOrdered());
         assertThat(cp.docL()).hasSize(0);
         assertThat(ct3.anyL()).hasSize(0);   
-        
-        assertEquals("REF", ct4.referenceCode());
-        assertEquals("NONE", ct5.referenceCode());
-    }
+            }
     
     // Test the model built from xsd?/codeListBinding.xsd or read from cmf/codeListBinding.cmf
     // Test codeListURI, column name, isConstraining
@@ -680,7 +673,7 @@ public class ModelAssertions {
     }
     
     // Test the model built from xsd?/objectProperty.xsd or read from cmf/objectProperty.cmf 
-    // Test abstract, relationship, reference code.
+    // Test abstract, relationship.
     public static void checkObjectProperty (Model m) {
         var op1 = m.qnToObjectProperty("test:OProp1");
         var op2 = m.qnToObjectProperty("test:OProp2");
@@ -697,21 +690,16 @@ public class ModelAssertions {
         assertFalse(op3.isAbstract());
         assertFalse(op4.isAbstract());
         assertFalse(op5.isAbstract());    
-        assertEquals("ANY", op1.referenceCode());
-        assertEquals("REF", op2.referenceCode());
-        assertEquals("URI", op3.referenceCode());
-        assertEquals("NONE", op4.referenceCode());
-        assertEquals("", op5.referenceCode());
         assertFalse(op1.isRelationship());
         assertTrue(op2.isRelationship());
         assertFalse(op3.isRelationship());
         assertFalse(op4.isRelationship());
         assertFalse(op5.isRelationship());
-        assertNull(op1.subProperty());
-        assertNull(op2.subProperty());
-        assertNull(op3.subProperty());
-        assertNull(op4.subProperty());
-        assertEquals("test:OProp1", op5.subProperty().qname());
+        assertNull(op1.subPropertyOf());
+        assertNull(op2.subPropertyOf());
+        assertNull(op3.subPropertyOf());
+        assertNull(op4.subPropertyOf());
+        assertEquals("test:OProp1", op5.subPropertyOf().qname());
     }  
 
     public static void checkPropAssoc (Model m) {
@@ -762,6 +750,41 @@ public class ModelAssertions {
                 break;
             }                
         }
+    }
+    
+    public static void checkRefCode (Model m) {
+        var t1 = m.qnToClassType("t:OneType");
+        var t2 = m.qnToClassType("t:TwoType");
+        var t3 = m.qnToClassType("t:ThreeType");
+        var t4 = m.qnToClassType("t:FourType");
+        var t5 = m.qnToClassType("t:FiveType");    
+        assertEquals("", t1.referenceCode());
+        assertEquals("NONE", t1.effectiveReferenceCode());
+        
+        assertEquals("NONE", t2.referenceCode());
+        assertEquals("NONE", t2.effectiveReferenceCode());
+        
+        assertEquals("", t3.referenceCode());
+        assertEquals("NONE", t3.effectiveReferenceCode());
+        
+        assertEquals("INTERNAL", t4.referenceCode());
+        assertEquals("INTERNAL", t4.effectiveReferenceCode());
+        
+        assertEquals("", t5.referenceCode());
+        assertEquals("INTERNAL", t5.effectiveReferenceCode());
+        
+        var p3 = m.qnToObjectProperty("t:ThreeProp");
+        var p4 = m.qnToObjectProperty("t:FourProp");
+        var p5 = m.qnToObjectProperty("t:FiveProp");
+        
+        assertEquals("", p3.referenceCode());
+        assertEquals("NONE", p3.effectiveReferenceCode());
+        
+        assertEquals("INTERNAL", p4.referenceCode());
+        assertEquals("INTERNAL", p4.effectiveReferenceCode());
+
+        assertEquals("ANY", p5.referenceCode());
+        assertEquals("ANY", p5.effectiveReferenceCode());
     }
     
     public static void checkSimpleTypes (Model m) {

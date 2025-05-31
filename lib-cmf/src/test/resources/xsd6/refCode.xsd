@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/refCode/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:t="http://example.com/refCode/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>
+      Test reference code for class, object properties.
+    </xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:complexType name="OneType">
+    <xs:complexContent>
+      <xs:extension base="structures:ObjectType">
+        <xs:sequence>
+          <xs:element ref="t:DataProperty"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="TwoType" appinfo:referenceCode="NONE">
+    <xs:complexContent>
+      <xs:extension base="t:OneType">
+        <xs:sequence>
+          <xs:element ref="t:DataProperty"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ThreeType">
+    <xs:complexContent>
+      <xs:extension base="t:TwoType">
+        <xs:sequence>
+          <xs:element ref="t:DataProperty"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="FourType" appinfo:referenceCode="INTERNAL">
+    <xs:complexContent>
+      <xs:extension base="t:ThreeType">
+        <xs:sequence>
+          <xs:element ref="t:DataProperty"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="FiveType">
+    <xs:complexContent>
+      <xs:extension base="t:FourType">
+        <xs:sequence>
+          <xs:element ref="t:DataProperty"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="DataProperty" type="niem-xs:string"/>
+  <xs:element name="ThreeProp" type="t:ThreeType"/>
+  <xs:element name="FourProp" type="t:FourType" appinfo:referenceCode="INTERNAL"/>
+  <xs:element name="FiveProp" type="t:FiveType" appinfo:referenceCode="ANY"/>
+</xs:schema>

@@ -58,12 +58,13 @@ public class ClassType extends Component {
     public boolean isAbstract ()                { return isAbstract; }
     @Override
     public String referenceCode ()              { return refCode; }
-    public ClassType subClass ()                { return subclass; }
+    public ClassType subClassOf ()              { return subclass; }
     public List<PropertyAssociation> propL ()   { return propL; }
     public List<AnyProperty> anyL ()            { return anyL; }
     
     public void setIsAbstract (boolean f)       { isAbstract = f; }
-    public void setReferenceCode (String s)     { refCode = s; }
+    @Override
+    public void setReferenceCode (String s)     { super.setReferenceCode(s); refCode = s; }
     public void setSubclass (ClassType c)       { subclass = c; }
     
     public void addPropertyAssociation (PropertyAssociation pa) {
@@ -72,10 +73,14 @@ public class ClassType extends Component {
     public void addAnyProperty (AnyProperty ap) {
         anyL.add(ap);
     }
+    public String effectiveReferenceCode () {
+        if (!refCode.isEmpty()) return refCode;
+        else if (null != subclass) return subclass.effectiveReferenceCode();
+        else return "NONE";
+    }
     
     public boolean isReferenceable () {
-        if (refCode.isEmpty()) return !isLiteralClass(); 
-        return (!"NONE".equals(refCode));
+        return (!"NONE".equals(effectiveReferenceCode()));
     }
     
     public boolean isLiteralClass ()            { return null != literalDatatype(); }

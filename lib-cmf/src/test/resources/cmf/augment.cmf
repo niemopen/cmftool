@@ -52,13 +52,6 @@
     </AugmentationRecord>
     <AugmentationRecord>
       <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-      <DataProperty structures:ref="nc.personNameCommentText" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationIndex>-1</AugmentationIndex>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="nc.EducationType" xsi:nil="true"/>
       <DataProperty structures:ref="test.CommentDestinationText" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
@@ -77,6 +70,13 @@
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <AugmentationIndex>2</AugmentationIndex>
+    </AugmentationRecord>
+    <AugmentationRecord>
+      <Class structures:ref="nc.EducationType" xsi:nil="true"/>
+      <DataProperty structures:ref="nc.personNameCommentText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationIndex>-1</AugmentationIndex>
     </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="xml">

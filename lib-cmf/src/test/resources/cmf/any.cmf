@@ -58,7 +58,6 @@
     <Name>Test2Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <DocumentationText>Test2Type doc string</DocumentationText>
-    <ReferenceCode>ANY</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="test.AnElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
@@ -76,7 +75,6 @@
     <Namespace structures:ref="test" xsi:nil="true"/>
     <DocumentationText>Test3Type extends Test1Type</DocumentationText>
     <SubClassOf structures:ref="test.Test1Type" xsi:nil="true"/>
-    <ReferenceCode>URI</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="test.AnotherElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
@@ -87,7 +85,6 @@
     <Name>Test4Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <SubClassOf structures:ref="test.Test1Type" xsi:nil="true"/>
-    <ReferenceCode>REF</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="test.AnotherElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
@@ -98,7 +95,6 @@
     <Name>Test5Type</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <SubClassOf structures:ref="test.Test1Type" xsi:nil="true"/>
-    <ReferenceCode>NONE</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="test.AnotherElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>

@@ -63,8 +63,8 @@ public class JSONProperty {
     // search on the "subpropertyOf" name
     ArrayList<Property> propsToCheck = new ArrayList<>();
 
-    if (property.subProperty() != null) {
-      propsToCheck.add(property.subProperty());
+    if (property.subPropertyOf() != null) {
+      propsToCheck.add(property.subPropertyOf());
       propsToCheck.add(property);
     } else {
       propsToCheck.add(property);
@@ -149,8 +149,8 @@ public class JSONProperty {
   private boolean isPropertyUsedInClasses() {
     String searchName = property.name();
 
-    if (property.subProperty() != null) {
-      searchName = property.subProperty().name();
+    if (property.subPropertyOf() != null) {
+      searchName = property.subPropertyOf().name();
     }
 
     // See if the property is used in any classes
@@ -171,7 +171,7 @@ public class JSONProperty {
     String dataTypeName = dataType.name();
     isIntrinsicType = JSONSchemaHelper.isIntrinsicType(dataTypeName);
 
-    var propName = (property.subProperty() != null) ? property.subProperty().name() : property.name();
+    var propName = (property.subPropertyOf() != null) ? property.subPropertyOf().name() : property.name();
 
     // replace IDREFS with an array of strings
     if (dataTypeName.equals("IDREFS")) {

@@ -13,7 +13,7 @@
   <xs:annotation>
     <xs:documentation>
       ObjectProperty test schema. 
-      Test abstract, relationship, reference code.
+      Test abstract, relationship.
     </xs:documentation>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
@@ -28,9 +28,9 @@
     </xs:complexContent>
   </xs:complexType>
   <xs:element name="DataProperty" type="niem-xs:string" abstract="true"/>
-  <xs:element name="OProp1" type="test:TestType" abstract="true" appinfo:referenceCode="ANY"/>
-  <xs:element name="OProp2" type="test:TestType" abstract="false" appinfo:relationshipPropertyIndicator="true" appinfo:referenceCode="REF"/>
-  <xs:element name="OProp3" type="test:TestType" appinfo:relationshipPropertyIndicator="false"  appinfo:referenceCode="URI"/>
-  <xs:element name="OProp4" type="test:TestType" appinfo:referenceCode="NONE"/>
+  <xs:element name="OProp1" type="test:TestType" abstract="true"/>
+  <xs:element name="OProp2" type="test:TestType" abstract="false" appinfo:relationshipPropertyIndicator="true"/>
+  <xs:element name="OProp3" type="test:TestType" appinfo:relationshipPropertyIndicator="false"/>
+  <xs:element name="OProp4" type="test:TestType"/>
   <xs:element name="OProp5" type="test:TestType" substitutionGroup="test:OProp1"/>
 </xs:schema>

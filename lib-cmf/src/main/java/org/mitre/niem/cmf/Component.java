@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.mitre.niem.utility.NaturalOrderComparator;
 import org.mitre.niem.xml.LanguageString;
 import org.w3c.dom.Document;
@@ -38,7 +40,8 @@ import org.w3c.dom.Element;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public abstract class Component extends CMFObject implements Comparable<Component> {  
+public abstract class Component extends CMFObject implements Comparable<Component> {
+    static final Logger LOG = LogManager.getLogger(Component.class);
     
     public Component () { super(); } 
     public Component (String outsideURI) { super(); this.outsideURI = outsideURI; }
@@ -79,6 +82,12 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     public void setDocumentation (List<LanguageString> dL) {
         docL.clear();
         docL.addAll(dL);
+    }
+    
+    private static Set<String> refCodes = Set.of("", "ANY", "ANYURI", "INTERNAL", "RELURI", "IDREF", "NONE");
+    public void setReferenceCode (String code) {
+        if (!refCodes.contains(code))
+            LOG.warn("Invalid reference code {} for component {}", code, name);
     }
     
     /**

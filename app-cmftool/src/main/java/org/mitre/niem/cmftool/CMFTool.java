@@ -47,28 +47,10 @@ public class CMFTool {
          
     // Uncomment arguments for debugging:
      
-    String res = "../lib-util/src/test/resources/";
+    String res = "../lib-cmf/src/test/resources/xsd6/";
     if (0 == args.length) {
-//        args = new String[]{"m2x", "-o", "../lib-cmf/tmp/gtmp", "../lib-cmf/tmp/gml.cmf"};
-//        args = new String[]{"x2m", "-o", "../lib-cmf/tmp/foo.cmf", "../lib-cmf/tmp/gtmp/adapters/niem-gml.xsd"};
-        
-//        var td = "src/main/CMF/";
-//        args = new String[]{"m2xm", "-o", td+"tmp", td+"model.cmf"};
+        args = new String[]{"m2x", "-o", res+"tmp", res+"message.cmf"};
 
-//        var td = "src/test/resources/xsd6/";
-//        args = new String[]{"m2xs", "-o", td+"tmp", td+"literal-2.cmf"};
-
-//        args = new String[]{"m2xs", "-o", "tmp/tmp", "tmp/m60.cmf"};
-//        var td = "../../NIEM/ntac-admin/examples/src/Augmentation/01-N6-Subset/";
-//        args = new String[]{"m2xs", "-o", td+"tmp", td+"subset.cmf"};
-
-//        var td = "../../NIEM/ntac-admin/examples/src/Augmentation/08-AugOTwithA/";
-//        args = new String[]{"m2xm", "-o", td+"tmp", td+"augOTwA.cmf"};
-        
-//        var td = "../../NIEM/ntac-admin/examples/src/Augmentation/07-AugOTwithE/";
-//        args = new String[]{"m2xs", "-o", td+"tmp", td+"augOTwE.cmf"};
-//        args = new String[]{"x2m", "-o", td+"foo", td+"model.xsd/messageModel.xsd"};
-//        args = new String[]{"m2xm", "-o", xtd + "tmp", xtd + "augment.cmf"};
     }
     
 
@@ -77,11 +59,11 @@ public class CMFTool {
         jc.setUsageFormatter(uf);
         jc.setProgramName("cmftool");
         
-        var cmfToJSONCmd = new CmdCMFtoJSONSchema(jc);
+        var cmfToJSONSchemaCmd = new CmdCMFtoJSONSchema(jc);
         var cmfToCmfCmd  = new CmdCMFtoCMF(jc);
         var cmfToRDFCmd  = new CmdCMFtoRDF(jc);
-        var cmfToXsdCmd  = new CmdCMFtoXSD(jc);
-//        var cmfToMsgXsdCmd = new CmdCMFtoMsgXSD(jc);
+        var cmfToXsdModelCmd  = new CmdCMFtoXSDModel(jc);
+        var cmfToXMLSchemaCmd = new CmdCMFtoXMLSchema(jc);
 //        var cmfToSrcXsdCmd = new CmdCMFtoSrcXSD(jc);
 //        var cmfToOwlCmd    = new CmdCMFtoOWL(jc);
 //        var n5To6Cmd       = new CmdN5To6(jc);
@@ -90,11 +72,11 @@ public class CMFTool {
 //        var xsdCmpCmd      = new CmdXSDcmp(jc);
         var xsValCmd       = new CmdXSDvalidate(jc);
         var helpCmd        = new CommandHelp(jc); 
-        jc.addCommand("m2j",    cmfToJSONCmd);
         jc.addCommand("m2m",    cmfToCmfCmd);
         jc.addCommand("m2r",    cmfToRDFCmd);
-//        jc.addCommand("m2o",    cmfToOwlCmd);
-        jc.addCommand("m2x", cmfToXsdCmd);
+        jc.addCommand("m2x",    cmfToXsdModelCmd);
+        jc.addCommand("m2jmsg",    cmfToJSONSchemaCmd);
+        jc.addCommand("m2xmsg", cmfToXMLSchemaCmd);
 //        jc.addCommand("m2xs",   cmfToSrcXsdCmd);
 //        jc.addCommand("m2xm",   cmfToMsgXsdCmd);
 //        jc.addCommand("m2x5",   cmfToN5XsdCmd);
