@@ -63,7 +63,6 @@ public class JSONDefinition extends OfDefinition {
 
         propListDef.properties = new LinkedHashMap<>();
         for (var hasProperty: propList) {
-          //FIXME: Replace abstract properties with subproperties that replace it
           if (hasProperty instanceof PropertyAssociation) {
             Property property = ((PropertyAssociation) hasProperty).property();
             if (property.isAbstract()) {
