@@ -185,6 +185,12 @@ public class JSONProperty {
       type = "number";
       return;
     }
+
+    // replace token with a string
+    if (dataTypeName.equals("token")) {
+      type = "string";
+      return;
+    }
     // intrinsic types are handled differently than others, regardless of
     // cardinality
     if (cardinalities.size() == 0) {
