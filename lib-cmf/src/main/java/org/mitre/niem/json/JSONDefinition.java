@@ -1,9 +1,15 @@
 package org.mitre.niem.json;
 
-import org.mitre.niem.cmf.*;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+
+import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.Datatype;
+import org.mitre.niem.cmf.Facet;
+import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.Property;
+import org.mitre.niem.cmf.PropertyAssociation;
+import org.mitre.niem.cmf.Restriction;
 
 public class JSONDefinition extends OfDefinition {
   private transient Property property;
@@ -57,8 +63,22 @@ public class JSONDefinition extends OfDefinition {
 
         propListDef.properties = new LinkedHashMap<>();
         for (var hasProperty: propList) {
-          propListDef.properties.put(JSONSchemaHelper.generateLabel(hasProperty), new JSONPropertyType(hasProperty.property()));
-          propListDef.setRequired(hasProperty);
+          if (hasProperty instanceof PropertyAssociation) {
+            Property property = ((PropertyAssociation) hasProperty).property();
+            if (property.isAbstract()) {
+              // Get the subproperties of this property
+              var subProperties = JSONSchemaHelper.getSubpropertiesOf(model, hasProperty.property());
+              if (subProperties.size() > 0) {
+                for (var subProp: subProperties) {
+                  propListDef.properties.put(JSONSchemaHelper.generateLabel(subProp), new JSONPropertyType(subProp));
+                  //propListDef.setRequired(subProp);
+                }
+              }
+            } else {
+              propListDef.properties.put(JSONSchemaHelper.generateLabel(hasProperty), new JSONPropertyType(property));
+              propListDef.setRequired(hasProperty);
+            }
+          }
         }
         this.allOf.add(propListDef);
       }
@@ -75,8 +95,22 @@ public class JSONDefinition extends OfDefinition {
 
       this.properties = new LinkedHashMap<>();
       for (var hasProperty: propList) {
-        this.properties.put(JSONSchemaHelper.generateLabel(hasProperty), new JSONPropertyType(hasProperty.property()));
-        this.setRequired(hasProperty);
+        if (hasProperty instanceof PropertyAssociation) {
+          Property property = ((PropertyAssociation) hasProperty).property();
+          if (property.isAbstract()) {
+            // Get the subproperties of this property
+            var subProperties = JSONSchemaHelper.getSubpropertiesOf(model, hasProperty.property());
+            if (subProperties.size() > 0) {
+              for (var subProp: subProperties) {
+                this.properties.put(JSONSchemaHelper.generateLabel(subProp), new JSONPropertyType(subProp));
+               //this.setRequired(subProp);
+              }
+           }
+          } else {
+              this.properties.put(JSONSchemaHelper.generateLabel(hasProperty), new JSONPropertyType(property));
+              this.setRequired(hasProperty);
+          }
+        }
       }
     }
   }

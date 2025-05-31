@@ -1,13 +1,13 @@
 package org.mitre.niem.json;
 
-import com.google.gson.annotations.SerializedName;
-import org.mitre.niem.cmf.Component;
-import org.mitre.niem.cmf.Namespace;
-import org.mitre.niem.cmf.Property;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
+
+import org.mitre.niem.cmf.Namespace;
+import org.mitre.niem.cmf.Property;
+
+import com.google.gson.annotations.SerializedName;
 
 public class JSONProperty {
   private transient Property property;
@@ -121,21 +121,22 @@ public class JSONProperty {
 
   private String genRef() {
     String nsPrefix = property.namespace().prefix();
+    String name = property.name();
+    //if (property.subProperty() != null) {
+    //  nsPrefix = property.subProperty().namespace().prefix();
+    //  if (property.classType() != null && property.subProperty().isAbstract()) {
 
-    if (property.subPropertyOf() != null) {
-      nsPrefix = property.subPropertyOf().namespace().prefix();
-      if (property.classType() != null && property.subPropertyOf().isAbstract()) {
-        return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
-      }
-      return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix,
-          property.subPropertyOf().name());
-    } else if (property.datatype() != null) {
-      if (isIntrinsicType) {
-        return property.datatype().name();
-      } else {
-        nsPrefix = property.datatype().namespace().prefix();
-        return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.datatype().name());
-      }
+    //    return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
+    //  }
+     // return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.subProperty().name());
+    //} else 
+    if (property.datatype() != null) {
+        String datatypeName = property.datatype().name();
+        if (isIntrinsicType)
+          return property.datatype().name();
+        else
+          nsPrefix = property.datatype().namespace().prefix();
+          return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.datatype().name());
     } else if (property.classType() != null) {
       nsPrefix = property.classType().namespace().prefix();
       return String.format("%s%s:%s", JSONSchemaHelper.DEFINITIONS_TEXT, nsPrefix, property.classType().name());
@@ -172,11 +173,40 @@ public class JSONProperty {
 
     var propName = (property.subPropertyOf() != null) ? property.subPropertyOf().name() : property.name();
 
+    // replace IDREFS with an array of strings
+    if (dataTypeName.equals("IDREFS")) {
+      type = "array";
+      items = new JSONPropertyType("string");
+      return;
+    }
+
+    // replace decimal with a number
+    if (dataTypeName.equals("decimal")) {
+      type = "number";
+      return;
+    }
+
+    // replace token with a string
+    if (dataTypeName.equals("token")) {
+      type = "string";
+      return;
+    }
+
+    // replace dateTime with a string
+    if (dataTypeName.equals("dateTime")) {
+      type = "string";
+      format = "date-time";
+      return;
+    }
+
     // intrinsic types are handled differently than others, regardless of
     // cardinality
     if (cardinalities.size() == 0) {
       // default cardinality
-      ref = genRef();
+      if (isIntrinsicType)
+        type = genRef();
+      else
+        ref = genRef();
     } else if (cardinalities.size() > 0) {
       // Check for cardinality
       for (var cardKey : cardinalities.keySet()) {
@@ -188,11 +218,11 @@ public class JSONProperty {
             if (card.getMinOccurs() == 0) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  property.namespace().prefix(), dataTypeName);
+                  dataType.namespace().prefix(), dataTypeName);
             } else if (card.getMinOccurs() == 1) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  property.namespace().prefix(), dataTypeName);
+                  dataType.namespace().prefix(), dataTypeName);
             } else {
               System.out.println("???");
             }
@@ -211,6 +241,9 @@ public class JSONProperty {
                 if (dataTypeName.equals("date")) {
                   type = "string";
                   format = "date";
+                } else if (dataTypeName.equals("dateTime")) {
+                  type = "string";
+                  format = "dateTime";
                 } else {
                   type = dataTypeName;
                 }
@@ -228,7 +261,7 @@ public class JSONProperty {
       }
     } else {
       type = "array";
-      items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT, property.namespace().prefix(),
+      items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT, dataType.namespace().prefix(),
           dataTypeName);
     }
   }
@@ -280,6 +313,7 @@ public class JSONProperty {
           var items = oi.getItems();
           for (var item : items.keySet()) {
             if (anyOf != null) {
+              String item2 = items.get(item);
               anyOf.add(new OfItem("array", items.get(item), oi.getCardinality()));
             } else {
               this.type = "array";
