@@ -74,8 +74,6 @@ import org.mitre.niem.xml.ParserBootstrap;
 import org.mitre.niem.xml.XMLCatalogCreator;
 import org.mitre.niem.xml.XSDWriter;
 import static org.mitre.niem.xsd.ModelFromXSD.replaceSuffix;
-import static org.mitre.niem.xsd.ModelToXSDModel.LOG;
-import static org.mitre.niem.xsd.ModelToXSDModel.rmgr;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_APPINFO;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_CLSA;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_UNKNOWN;
@@ -445,9 +443,11 @@ public class ModelToXMLSchema {
         // Also establish the substitutionGroup for each element property augmentation.
         var classQ2ArecL = new MapToList<String,AugmentRecord>();
         for (var arec : ns.augL()) {
-            if (null == arec.classType()) continue;     // do nothing for global augmentation
-            var propU  = arec.property().uri();
-            var propQ  = arec.property().qname();
+            var p = arec.property();
+            if (null == arec.classType()) continue;     // do nothing here for global augmentation
+            if (p.isAttribute()) continue;              // do nothing here for attribute augmentation
+            var propU  = p.uri();
+            var propQ  = p.qname();
             var classQ = arec.classType().qname();
             var augPQ  = replaceSuffix(classQ, "Type", "AugmentationPoint");
             if (arec.index().isEmpty()) {

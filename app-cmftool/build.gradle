@@ -15,7 +15,7 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
 }
 
-project.version = '1.0-alpha.4-SNAPSHOT'
+project.version = '1.0-alpha.4'
 
 dependencies {
     implementation project(':lib-cmf')

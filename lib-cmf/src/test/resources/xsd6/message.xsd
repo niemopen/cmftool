@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/test/"
+  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:j="https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:t="http://example.com/test/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ExtensionSchemaDocument"
+  version="1"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>Test schema for XML message schema creation.</xs:documentation>
+    <xs:appinfo>
+      <appinfo:Augmentation class="t:T2Type" property="t:aprop2"/>
+    </xs:appinfo>
+  </xs:annotation>
+<!--  
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/" schemaLocation="niem/domains/justice-skel.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/" schemaLocation="niem/niem-core-skel.xsd"/>
+-->
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
+  <xs:complexType name="T1Type">
+    <xs:complexContent>
+    <xs:extension base="structures:ObjectType">
+      <xs:sequence>
+        <xs:element ref="t:Prop1"/>
+        <xs:element ref="t:T1AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute ref="t:aprop1"/>
+    </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="T2Type" appinfo:referenceCode="ANY">
+    <xs:complexContent>
+      <xs:extension base="t:T1Type">
+        <xs:sequence>
+          <xs:element ref="t:Prop2"/>
+          <xs:element ref="t:T2AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="T3Type" appinfo:referenceCode="IDREF">
+    <xs:complexContent>
+      <xs:extension base="t:T2Type">
+        <xs:sequence>
+          <xs:element ref="t:Prop3"/>
+          <xs:element ref="t:T3AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  
+  <xs:complexType name="T2AugmentationType">
+    <xs:complexContent>
+      <xs:extension base="structures:AugmentationType">
+        <xs:sequence>
+          <xs:element ref="t:AugProp2"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="T2Augmentation" type="t:T2AugmentationType" substitutionGroup="t:T2AugmentationPoint"/>
+  
+  <xs:element name="Prop1" type="niem-xs:string"/>
+  <xs:element name="Prop2" type="niem-xs:string"/>
+  <xs:element name="Prop3" type="niem-xs:string"/>
+  
+  <xs:attribute name="aprop1" type="xs:string"/>
+  <xs:attribute name="aprop2" type="xs:string"/>
+  <xs:attribute name="aprop3" type="xs:string"/>
+  
+  <xs:element name="T1AugmentationPoint" abstract="true"/>
+  <xs:element name="T2AugmentationPoint" abstract="true"/>
+  <xs:element name="T3AugmentationPoint" abstract="true"/>
+  
+  <xs:element name="AugProp1" type="niem-xs:string" substitutionGroup="t:T1AugmentationPoint"/>
+  <xs:element name="AugProp2" type="niem-xs:string"/>
+  <xs:element name="OtherAugProp2" type="niem-xs:string" substitutionGroup="t:T2AugmentationPoint"/>
+</xs:schema>

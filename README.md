@@ -10,6 +10,17 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 1.0-alpha.4
+
+* `cmftool m2jmsg` generates JSON Schema to validate a NIEM JSON message.
+* `cmftool m2xmsg` generates an XML Schema pile to validate a NIEM XML message.  This schema is much simpler than the XSD representation of a model.
+  * Abstract elements with no substitutions are removed
+  * Abstract elements with one substituting element are replaced by that element
+  * Abstract elements with more than one substituting element are replaced by `xs:choice`
+  * Datatypes are represented by `xs:simpleType`
+  * Proxy types are replaced by the corresponding XSD primitive
+  * Type definitions do not inherit from the structures namespace.  Reference attributes (`structures:id`, `ref`, and `uri` are explicitly added to type definitions according to `referenceCode`.
+
 ## What's new in version 1.0-alpha.3
 
 The code base is reorganized into four subprojects:
