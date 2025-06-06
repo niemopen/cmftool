@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -48,15 +49,20 @@ public class ResourceManager {
     private static final Logger LOG = LogManager.getLogger(ResourceManager.class);
     private final String jarPath;
     private final String resPath;
+    private final String resPath2;
     
     public ResourceManager () {
         jarPath = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-        resPath = FilenameUtils.concat(jarPath, "../../../../src/main/resources/");
+        //resPath = FilenameUtils.concat(jarPath, "../../../../src/main/resources/");
+        resPath = FilenameUtils.concat(jarPath, ""); //DEBUG  
+        resPath2 = FilenameUtils.concat(jarPath, "../../../resources/main"); //TESTING
     }
     
     public ResourceManager (Class c) {
         jarPath = c.getProtectionDomain().getCodeSource().getLocation().getPath();
-        resPath = FilenameUtils.concat(jarPath, "../../../../src/main/resources/");        
+        //resPath = FilenameUtils.concat(jarPath, "../../../../src/main/resources/");
+        resPath = FilenameUtils.concat(jarPath, ""); //DEBUG
+        resPath2 = FilenameUtils.concat(jarPath, "../../../resources/main"); //TESTING
     }
     
     public InputStream getResourceStream (String name) throws IOException {
@@ -64,11 +70,20 @@ public class ResourceManager {
         
         // Running from IDE?  Open stream on resource file in project directory
         if (!jarPath.endsWith(".jar")) {
-            var rf = getResourceFile(name);
+            //var rf = getResourceFile(name);
+            var rf = new File(resPath, name);
             if (null == rf) return null;
             try {
                 res = new FileInputStream(rf);
-            } catch (FileNotFoundException ex) {} //IGNORE
+            } catch (FileNotFoundException ex) {
+                try {
+                    rf = new File(resPath2, name);
+                    if (null == rf) return null;
+                    res = new FileInputStream(rf);
+                } catch (FileNotFoundException ex2) {
+                // LOG.error("Can't find resource {}", name); //IGNORE
+                }
+            }
             return res;
         }
         // Running from JAR? Get resource stream
