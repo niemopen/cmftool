@@ -15,6 +15,7 @@ public class JSONProperty {
   @SerializedName("$ref")
   public String ref;
   public String type;
+  public String pattern;
   public String format;
   public JSONPropertyType items = null;
   public Integer minItems = null;
@@ -173,10 +174,17 @@ public class JSONProperty {
 
     var propName = (property.subPropertyOf() != null) ? property.subPropertyOf().name() : property.name();
 
+    // replace IDREF with a string
+    if (dataTypeName.equals("IDREF")) {
+      type = "string";
+      pattern = "^[_A-Za-z][-._A-Za-z0-9]*$";
+      return;
+    }
+
     // replace IDREFS with an array of strings
     if (dataTypeName.equals("IDREFS")) {
       type = "array";
-      items = new JSONPropertyType("string");
+      items = new JSONPropertyType("string", "^[_A-Za-z][-._A-Za-z0-9]*$");
       return;
     }
 
@@ -189,6 +197,7 @@ public class JSONProperty {
     // replace token with a string
     if (dataTypeName.equals("token")) {
       type = "string";
+      pattern = "^\\S*$";
       return;
     }
 
