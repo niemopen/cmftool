@@ -49,20 +49,22 @@ public class ResourceManager {
     private static final Logger LOG = LogManager.getLogger(ResourceManager.class);
     private final String jarPath;
     private final String resPath;
-    private final String resPath2;
     
+    public static boolean isDebuggerAttached() {
+        // Check if a debugger is attached
+        String args = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString();
+        boolean isDebuggerAttached = args.contains("-Xdebug") || args.contains("-agentlib:jdwp");
+        return isDebuggerAttached;
+    }
+
     public ResourceManager () {
         jarPath = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-        //resPath = FilenameUtils.concat(jarPath, "../../../../src/main/resources/");
-        resPath = FilenameUtils.concat(jarPath, ""); //DEBUG  
-        resPath2 = FilenameUtils.concat(jarPath, "../../../resources/main"); //TESTING
+        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
     }
     
     public ResourceManager (Class c) {
         jarPath = c.getProtectionDomain().getCodeSource().getLocation().getPath();
-        //resPath = FilenameUtils.concat(jarPath, "../../../../src/main/resources/");
-        resPath = FilenameUtils.concat(jarPath, ""); //DEBUG
-        resPath2 = FilenameUtils.concat(jarPath, "../../../resources/main"); //TESTING
+        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
     }
     
     public InputStream getResourceStream (String name) throws IOException {
@@ -76,13 +78,7 @@ public class ResourceManager {
             try {
                 res = new FileInputStream(rf);
             } catch (FileNotFoundException ex) {
-                try {
-                    rf = new File(resPath2, name);
-                    if (null == rf) return null;
-                    res = new FileInputStream(rf);
-                } catch (FileNotFoundException ex2) {
-                // LOG.error("Can't find resource {}", name); //IGNORE
-                }
+                //LOG.error("Can't find resource {}", name); //IGNORE
             }
             return res;
         }
