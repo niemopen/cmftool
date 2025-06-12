@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CMFTool",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2x -o ${workspaceFolder}/../m2x ${workspaceFolder}/lib-cmf/example/CrashDriver/model.cmf",
+            "classPaths": [
+                //"${workspaceFolder}/app-cmftool/build/classes/java/main",
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+            //"vmArgs": "-cp c:/users/JamesCabral/git/cmftool/app-cmftool/build/classes/java/main;c:/users/JamesCabral/git/cmftool/app-cmftool/build/install/cmftool/lib/*"
+        }
+    ]
+}
