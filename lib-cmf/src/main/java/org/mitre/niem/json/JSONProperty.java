@@ -188,6 +188,7 @@ public class JSONProperty {
       return;
     }
 
+
     // replace decimal with a number
     if (dataTypeName.equals("decimal")) {
       type = "number";
@@ -198,6 +199,13 @@ public class JSONProperty {
     if (dataTypeName.equals("token")) {
       type = "string";
       pattern = "^\\S*$";
+      return;
+    }
+
+    // replace normalizedString with a string
+    if (dataTypeName.equals("normalizedString")) {
+      type = "string";
+      pattern = "^\\s?(\\S+\\\s?)+\\\s?$";
       return;
     }
 
@@ -233,7 +241,7 @@ public class JSONProperty {
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
                   dataType.namespace().prefix(), dataTypeName);
             } else {
-              System.out.println("???");
+              System.out.println("??? minoccurs = " + card.getMinOccurs());
             }
           } else {
             /* 0 to 1 cardinality */
@@ -340,7 +348,7 @@ public class JSONProperty {
             // property.namespace().prefix(), oc.getReference());
           }
         } else {
-          System.out.println("???");
+          System.out.println("???  of type " + of.getClass().getName());
         }
       }
     }
@@ -384,7 +392,7 @@ public class JSONProperty {
           } else if (c.getMinOccurs() == 1 && c.getMaxOccurs() == 1) {
             ofs.add(new OfClass(genRef()));
           } else if (c.getMinOccurs() < c.getMaxOccurs()) {
-            System.out.println("???");
+            System.out.println("??? property " + property.name() + " has minOccurs = " + c.getMinOccurs() + ", maxOccurs = " + c.getMaxOccurs());
           }
         }
       }
