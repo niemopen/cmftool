@@ -27,8 +27,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.xsd.NIEMConstants.CTAS30;
@@ -44,15 +46,27 @@ public class NamespaceKind {
     
     private static final String[] ctaNSU = {
       "NIEM6.0", CTAS60,
+      "NIEM5.2", CTAS30,
+      "NIEM5.1", CTAS30,
       "NIEM5.0", CTAS30,
+      "NIEM4.2", CTAS30,
+      "NIEM4.1", CTAS30,
       "NIEM4.0", CTAS30,
+      "NIEM3.0", CTAS30,
+      "NIEM3.0", CTAS30,    
       "NIEM3.0", CTAS30
     };
     
     private static final String[] ctaPrefix = {
       "NIEM6.0", "https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/",
+      "NIEM5.2", "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/",
+      "NIEM5.1", "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/",
       "NIEM5.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/",
+      "NIEM4.2", "http://reference.niem.gov/niem/specification/naming-and-design-rules/4.0/",
+      "NIEM4.1", "http://reference.niem.gov/niem/specification/naming-and-design-rules/4.0/",
       "NIEM4.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/4.0/",
+      "NIEM3.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/3.0/", 
+      "NIEM3.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/3.0/", 
       "NIEM3.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/3.0/" 
     };
     
@@ -203,7 +217,7 @@ public class NamespaceKind {
     
     // The known versions and builtin codes.  Builtin codes are the same as the
     // preferred namespace prefix when made lowercase.
-    private static Set<String> versions = Set.of("NIEM6.0", "NIEM5.0", "NIEM4.0", "NIEM3.0");
+    private static Set<String> versions = Set.of("NIEM6.0", "NIEM5.0", "NIEM5.1", "NIEM5.2", "NIEM4.0", "NIEM4.1", "NIEM4.2", "NIEM3.0", "NIEM3.1", "NIEM3.2");
     private static Set<String> builtins = Set.of("APPINFO", "CLSA", "CLI", "NIEM-XS", "STRUCTURES", "XML");
     public static Set<String> knownVersions() { return versions; }
     public static Set<String> builtins() { return builtins; }
@@ -213,8 +227,14 @@ public class NamespaceKind {
     // within the version directory.
     private static final Map<String,String> versDir = Map.of(
         "NIEM6.0", "niem6/",
+        "NIEM5.2", "niem5/",
+        "NIEM5.1", "niem5/",
         "NIEM5.0", "niem5/",
+        "NIEM4.2", "niem4/",
+        "NIEM4.1", "niem4/",
         "NIEM4.0", "niem4/",
+        "NIEM3.2", "niem3/",
+        "NIEM3.1", "niem3/",
         "NIEM3.0", "niem3/");
     private static final Map<String,String> builtinPath = Map.of(
         "APPINFO",    "utility/appinfo.xsd",
@@ -234,18 +254,50 @@ public class NamespaceKind {
       "NIEM6.0", "NIEM-XS",    "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/",
       "NIEM6.0", "STRUCTURES", "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/",
 
+      "NIEM5.2", "APPINFO",    "http://release.niem.gov/niem/appinfo/5.0/",   
+      "NIEM5.2", "CLSA",       "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
+      "NIEM5.2", "CLI",        "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
+      "NIEM5.2", "NIEM-XS",    "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
+      "NIEM5.2", "STRUCTURES", "http://release.niem.gov/niem/structures/5.0/",
+
+      "NIEM5.1", "APPINFO",    "http://release.niem.gov/niem/appinfo/5.0/",   
+      "NIEM5.1", "CLSA",       "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
+      "NIEM5.1", "CLI",        "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
+      "NIEM5.1", "NIEM-XS",    "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
+      "NIEM5.1", "STRUCTURES", "http://release.niem.gov/niem/structures/5.0/",
+
       "NIEM5.0", "APPINFO",    "http://release.niem.gov/niem/appinfo/5.0/",   
       "NIEM5.0", "CLSA",       "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-schema-appinfo/",
       "NIEM5.0", "CLI",        "http://reference.niem.gov/niem/specification/code-lists/5.0/code-lists-instance/",
       "NIEM5.0", "NIEM-XS",    "http://release.niem.gov/niem/proxy/niem-xs/5.0/",
       "NIEM5.0", "STRUCTURES", "http://release.niem.gov/niem/structures/5.0/",
 
+      "NIEM4.2", "APPINFO",     "http://release.niem.gov/niem/appinfo/4.0/",   
+      "NIEM4.2", "CLSA",        "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
+      "NIEM4.2", "CLI",         "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
+      "NIEM4.2", "NIEM-XS",     "http://release.niem.gov/niem/proxy/xsd/4.0/",
+      "NIEM4.2", "STRUCTURES",  "http://release.niem.gov/niem/structures/4.0/",    
+
+      "NIEM4.1", "APPINFO",     "http://release.niem.gov/niem/appinfo/4.0/",   
+      "NIEM4.1", "CLSA",        "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
+      "NIEM4.1", "CLI",         "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
+      "NIEM4.1", "NIEM-XS",     "http://release.niem.gov/niem/proxy/xsd/4.0/",
+      "NIEM4.1", "STRUCTURES",  "http://release.niem.gov/niem/structures/4.0/",    
+
       "NIEM4.0", "APPINFO",     "http://release.niem.gov/niem/appinfo/4.0/",   
       "NIEM4.0", "CLSA",        "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-schema-appinfo/",
       "NIEM4.0", "CLI",         "http://reference.niem.gov/niem/specification/code-lists/4.0/code-lists-instance/",
       "NIEM4.0", "NIEM-XS",     "http://release.niem.gov/niem/proxy/xsd/4.0/",
       "NIEM4.0", "STRUCTURES",  "http://release.niem.gov/niem/structures/4.0/",    
-      
+
+      "NIEM3.2", "APPINFO",    "http://release.niem.gov/niem/appinfo/3.0/",   
+      "NIEM3.2", "NIEM-XS",    "http://release.niem.gov/niem/proxy/xsd/3.0/",
+      "NIEM3.2", "STRUCTURES", "http://release.niem.gov/niem/structures/3.0/", 
+
+      "NIEM3.1", "APPINFO",    "http://release.niem.gov/niem/appinfo/3.0/",   
+      "NIEM3.1", "NIEM-XS",    "http://release.niem.gov/niem/proxy/xsd/3.0/",
+      "NIEM3.1", "STRUCTURES", "http://release.niem.gov/niem/structures/3.0/", 
+
       "NIEM3.0", "APPINFO",    "http://release.niem.gov/niem/appinfo/3.0/",   
       "NIEM3.0", "NIEM-XS",    "http://release.niem.gov/niem/proxy/xsd/3.0/",
       "NIEM3.0", "STRUCTURES", "http://release.niem.gov/niem/structures/3.0/" 
