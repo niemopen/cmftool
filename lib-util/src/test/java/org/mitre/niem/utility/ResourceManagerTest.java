@@ -42,7 +42,7 @@ public class ResourceManagerTest {
     }
 
     @Test
-    public void testGetResourceFile () {
+    public void testGetResourceFile () throws Exception {
         var rm = new ResourceManager();
         File r = rm.getResourceFile("xsd/XMLCatalogSchema.xsd");
         assertNotNull(r);
@@ -51,7 +51,7 @@ public class ResourceManagerTest {
     }
    
     @Test
-    public void testGetResourceStream () {
+    public void testGetResourceStream () throws Exception {
         var rm = new ResourceManager();
         InputStream r = rm.getResourceStream("xsd/XMLCatalogSchema.xsd");
         assertNotNull(r);

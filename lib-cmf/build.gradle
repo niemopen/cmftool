@@ -11,13 +11,13 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
-project.version = '1.0-alpha.4'
+project.version = '1.0-alpha.5-SNAPSHOT'
 
 dependencies {
     implementation project(':lib-util')
     implementation 'xerces:xercesImpl:2.12.2'
-    implementation 'xml-apis:xml-apis:1.4.01'
-    implementation 'xml-resolver:xml-resolver:1.2'  // Xerces XML Schema API not compatable with JRE 11 javax.xml.catalog    
+//    implementation 'xml-apis:xml-apis:1.4.01'
+//    implementation 'xml-resolver:xml-resolver:1.2'  // Xerces XML Schema API not compatable with JRE 11 javax.xml.catalog    
     implementation 'xalan:xalan:2.7.3'
     implementation 'xalan:serializer:2.7.3'
     implementation 'commons-io:commons-io:2.18.0'

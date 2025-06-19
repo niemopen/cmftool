@@ -77,7 +77,13 @@ public class ResourceManager {
     }
     
     
-    public File getResourceFile (String name) throws IOException {     
+    public File getResourceFile (String name) throws IOException {   
+        // Running from IDE?  Return file object in project directory
+        if (!jarPath.endsWith(".jar")) {
+            var rF = new File(resPath, name);
+            if (rF.canRead()) return rF;
+            return null;
+        }
         var rF = File.createTempFile("cmfTool", "resource");
         copyResourceToFile(name, rF);
         return rF;
