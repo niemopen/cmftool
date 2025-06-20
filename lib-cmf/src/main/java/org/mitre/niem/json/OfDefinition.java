@@ -1,9 +1,9 @@
 package org.mitre.niem.json;
 
-import org.mitre.niem.cmf.Property;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+
+import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.PropertyAssociation;
 
 public class OfDefinition extends Of {
@@ -92,7 +92,12 @@ public class OfDefinition extends Of {
           allOf = new ArrayList<>();
         var ao = new AllOf();
         ao.oneOf = new ArrayList<>();
-        for (int i = 0; i < cardinalities.size(); i++) {
+        int cardinalitySize = cardinalities.size();
+        var property = cardinalities.get(0).getProperty();
+        if (property.isAbstract()) {
+          cardinalitySize = nonAbstractProperties.size();
+        }
+        for (int i = 0; i < cardinalitySize; i++) {
           var name = new QualifiedName(nonAbstractProperties.get(i));
           var oo = new OneOf();
           oo.addRequired(name);

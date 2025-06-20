@@ -211,6 +211,7 @@ public class JSONSchema {
         extDef.description = null;
         extDef.properties = null;
         jDefinition.allOf = extDef.allOf;
+        jDefinition.$ref = extDef.$ref;
       }
       // var propListDef = processHasProperties(classType);
       // jDefinition.allOf.add(propListDef);

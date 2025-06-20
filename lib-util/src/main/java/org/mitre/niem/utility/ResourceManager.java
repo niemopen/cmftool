@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -49,14 +50,21 @@ public class ResourceManager {
     private final String jarPath;
     private final String resPath;
     
+    public static boolean isDebuggerAttached() {
+        // Check if a debugger is attached
+        String args = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString();
+        boolean isDebuggerAttached = args.contains("-Xdebug") || args.contains("-agentlib:jdwp");
+        return isDebuggerAttached;
+    }
+
     public ResourceManager () {
         jarPath = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-        resPath = FilenameUtils.concat(jarPath, "../../../../src/main/resources/");
+        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
     }
     
     public ResourceManager (Class c) {
         jarPath = c.getProtectionDomain().getCodeSource().getLocation().getPath();
-        resPath = FilenameUtils.concat(jarPath, "../../../../src/main/resources/");        
+        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
     }
     
     public InputStream getResourceStream (String name) throws IOException {
@@ -64,11 +72,14 @@ public class ResourceManager {
         
         // Running from IDE?  Open stream on resource file in project directory
         if (!jarPath.endsWith(".jar")) {
-            var rf = getResourceFile(name);
+            //var rf = getResourceFile(name);
+            var rf = new File(resPath, name);
             if (null == rf) return null;
             try {
                 res = new FileInputStream(rf);
-            } catch (FileNotFoundException ex) {} //IGNORE
+            } catch (FileNotFoundException ex) {
+                //LOG.error("Can't find resource {}", name); //IGNORE
+            }
             return res;
         }
         // Running from JAR? Get resource stream

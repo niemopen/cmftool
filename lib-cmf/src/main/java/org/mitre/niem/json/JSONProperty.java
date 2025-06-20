@@ -15,6 +15,7 @@ public class JSONProperty {
   @SerializedName("$ref")
   public String ref;
   public String type;
+  public String pattern;
   public String format;
   public JSONPropertyType items = null;
   public Integer minItems = null;
@@ -173,12 +174,20 @@ public class JSONProperty {
 
     var propName = (property.subPropertyOf() != null) ? property.subPropertyOf().name() : property.name();
 
+    // replace IDREF with a string
+    if (dataTypeName.equals("IDREF")) {
+      type = "string";
+      pattern = "^[_A-Za-z][-._A-Za-z0-9]*$";
+      return;
+    }
+
     // replace IDREFS with an array of strings
     if (dataTypeName.equals("IDREFS")) {
       type = "array";
-      items = new JSONPropertyType("string");
+      items = new JSONPropertyType("string", "^[_A-Za-z][-._A-Za-z0-9]*$");
       return;
     }
+
 
     // replace decimal with a number
     if (dataTypeName.equals("decimal")) {
@@ -189,6 +198,14 @@ public class JSONProperty {
     // replace token with a string
     if (dataTypeName.equals("token")) {
       type = "string";
+      pattern = "^\\S*$";
+      return;
+    }
+
+    // replace normalizedString with a string
+    if (dataTypeName.equals("normalizedString")) {
+      type = "string";
+      pattern = "^\\s?(\\S+\\\s?)+\\\s?$";
       return;
     }
 
@@ -224,7 +241,7 @@ public class JSONProperty {
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
                   dataType.namespace().prefix(), dataTypeName);
             } else {
-              System.out.println("???");
+              System.out.println("??? minoccurs = " + card.getMinOccurs());
             }
           } else {
             /* 0 to 1 cardinality */
@@ -331,7 +348,7 @@ public class JSONProperty {
             // property.namespace().prefix(), oc.getReference());
           }
         } else {
-          System.out.println("???");
+          System.out.println("???  of type " + of.getClass().getName());
         }
       }
     }
@@ -375,7 +392,7 @@ public class JSONProperty {
           } else if (c.getMinOccurs() == 1 && c.getMaxOccurs() == 1) {
             ofs.add(new OfClass(genRef()));
           } else if (c.getMinOccurs() < c.getMaxOccurs()) {
-            System.out.println("???");
+            System.out.println("??? property " + property.name() + " has minOccurs = " + c.getMinOccurs() + ", maxOccurs = " + c.getMaxOccurs());
           }
         }
       }
