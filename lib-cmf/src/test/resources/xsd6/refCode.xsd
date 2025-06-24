@@ -62,6 +62,24 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
+  <xs:complexType name="URIRefType" appinfo:referenceCode="ANYURI">
+    <xs:complexContent>
+      <xs:extension base="structures:ObjectType">
+        <xs:sequence>
+          <xs:element ref="t:DataProperty"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="AnyRefType" appinfo:referenceCode="ANY">
+    <xs:complexContent>
+      <xs:extension base="structures:ObjectType">
+        <xs:sequence>
+          <xs:element ref="t:DataProperty"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
   <xs:element name="DataProperty" type="niem-xs:string"/>
   <xs:element name="ThreeProp" type="t:ThreeType"/>
   <xs:element name="FourProp" type="t:FourType" appinfo:referenceCode="INTERNAL"/>

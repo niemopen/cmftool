@@ -491,6 +491,7 @@ public class ModelToXMLSchema {
     // Create a complex type with complex content from a non-literal class object
     private static Set<String> needURIcodes = Set.of("ANY", "ANYURI", "INTERNAL", "RELURI");
     private static Set<String> needRefcodes = Set.of("ANY", "INTERNAL", "IDREF");
+    private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM4.0", "NIEM5.0");
     protected void createCCCType (Document doc, 
         List<Element> defEL,                // add typedef elements to this list
         List<Element> decEL,                // add augmentation point elements to this list
@@ -502,7 +503,10 @@ public class ModelToXMLSchema {
         boolean augPointF) {                // include an augmentation point?
         
         if (!nsU.equals(ct.namespaceURI())) return;
-
+        var ns  = m.namespaceObj(nsU);    
+        var ver = ns.niemVersion();
+        if (null != useNiemVersion) ver = useNiemVersion;
+        
         var ctE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
         var anE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
         var ccE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexContent");
@@ -551,7 +555,6 @@ public class ModelToXMLSchema {
         
         // Add augmentation point if needed
         if (augPointF) {
-            var ns   = m.namespaceObj(nsU);
             var name = replaceSuffix(ct.name(), "Type", "AugmentationPoint");
             var pdoc = "An augmentation point for " + ct.name() + ".";
             var p    = new ObjectProperty(ns, name);
@@ -643,6 +646,12 @@ public class ModelToXMLSchema {
             refE.setAttribute("ref", structuresPre + ":" + "ref");
             attParentE.appendChild(refE);
             refnsUs.add(structuresU);
+        }
+        if (needMetadata.contains(ver)) {
+            var refE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
+            refE.setAttribute("ref", structuresPre + ":" + "metadata");
+            attParentE.appendChild(refE);
+            refnsUs.add(structuresU);            
         }
         defEL.add(ctE);
     }

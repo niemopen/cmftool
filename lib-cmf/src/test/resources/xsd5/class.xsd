@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
-  targetNamespace="http://example.com/t"
+  targetNamespace="http://example.com/test/"
   xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
   xmlns:ct="http://release.niem.gov/niem/conformanceTargets/3.0/"
   xmlns:nc="http://release.niem.gov/niem/niem-core/5.0/"
@@ -8,7 +8,7 @@
   xmlns:structures="http://release.niem.gov/niem/structures/5.0/"
   xmlns:test="http://example.com/test/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
-  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ReferenceSchemaDocument"
+  ct:conformanceTargets="http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/#ExtensionSchemaDocument"
   version="1"
   xml:lang="en-US">
   <xs:annotation>
@@ -16,7 +16,7 @@
   </xs:annotation>
   <xs:import namespace="http://release.niem.gov/niem/proxy/niem-xs/5.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
   <xs:import namespace="http://release.niem.gov/niem/structures/5.0/" schemaLocation="niem/utility/structures.xsd"/>
-  <xs:complexType name="Test1Type" abstract="true">
+  <xs:complexType name="Test1Type">
     <xs:annotation>
       <xs:documentation>Test1Type doc string #1</xs:documentation>
       <xs:documentation>Test1Type doc string #2</xs:documentation>

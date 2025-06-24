@@ -45,11 +45,12 @@ public class CMFTool {
     
     private void run (String[] args) {
          
-    // Uncomment arguments for debugging:
-     
-    String res = "../lib-cmf/src/test/resources/xsd6/";
+
+        // Uncomment arguments for debugging:
+//    String res = "../lib-cmf/src/test/resources/xsd5/";     
+//    String res = "../lib-cmf/src/test/resources/xsd6/";
     if (0 == args.length) {
-//        args = new String[]{"m2x", "-o", res+"tmp", res+"message.cmf"};
+//        args = new String[]{"m2xmsg", "-o", res+"tmp", res+"class.cmf"};
     }
     
 
