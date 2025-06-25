@@ -284,8 +284,12 @@ public class ModelFromXSD {
                 var codes  = augE.getAttribute("globalClassCode");
                 aeL.add(augE);
                 if (codes.isBlank()) {
-                    var classU = m.qnToURI(classQ);
-                    augClassU.add(classU);
+                    if (null == m.qnToClassType(classQ))
+                        LOG.warn("{}: can't find augmentation class {}", ns.uri(), classQ);
+                    else {
+                        var classU = m.qnToURI(classQ);
+                        augClassU.add(classU);
+                    }
                 }
                 else {
                     var codeL = codes.trim().split("\\s+");

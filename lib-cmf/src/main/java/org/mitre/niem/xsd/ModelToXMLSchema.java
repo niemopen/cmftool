@@ -151,6 +151,7 @@ public class ModelToXMLSchema {
         establishFilePaths();
         identifySimpleTypes();
         buildSubstitutionMap();
+        organizeAttAugmentations();
         for (var ns : m.namespaceSet())
             if (ns.isExternal()) extNSs.add(ns.uri());
         for (var ns : m.namespaceSet()) 
@@ -301,7 +302,46 @@ public class ModelToXMLSchema {
             if (null != p) subGroupL.add(p.qname(), subp.qname());
         }
     }
-
+    
+    // Create a list of attribute augmentations for each augmented class,
+    // and for each kind of global augmentation.
+    protected MapToList<String,PropertyAssociation> classAugs = new MapToList<>();
+    protected MapToList<String,PropertyAssociation> globalAugs = new MapToList<>();
+    protected void organizeAttAugmentations () {
+        for (var ns : m.namespaceSet()) {
+            for (var arec : ns.augL()) {
+                var p   = arec.property();
+                if (!p.isAttribute()) continue;
+                var ct  = arec.classType();
+                var gcs = arec.codeS();
+                if (null != ct) {
+                    var attL = classAugs.get(ct.uri());
+                    addAttributeToPropList(attL, arec);                        
+                }
+                for (var gc : gcs) {
+                    var attL = globalAugs.get(gc);
+                    addAttributeToPropList(attL, arec);
+                }
+            }
+        }
+    }
+    
+    protected void addAttributeToPropList (List<PropertyAssociation> lst, PropertyAssociation pa) {
+        PropertyAssociation inset = null;
+        var dpU = pa.property().uri();
+        for (var spa : lst) {
+            if (dpU.equals(spa.property().uri())) inset = spa;
+        }
+        if (null == inset) lst.add(pa);
+        else if (inset.minOccursVal() == 0 && pa.minOccursVal() > 0) {
+            lst.remove(inset);
+            lst.add(pa);
+        }
+    }
+    
+   protected void addAttributeToPropList (List<PropertyAssociation> lst, List<PropertyAssociation> adds) {
+       for (var pa : adds) addAttributeToPropList(lst, pa);
+   }    
     
     protected void writeModelDocument (Namespace ns, File outD) throws ParserConfigurationException, IOException {       
         // Initialize the document and xs:schema root element
@@ -606,8 +646,13 @@ public class ModelToXMLSchema {
             setAttribute(anyE, "namespace", ap.nsConstraint());
             sqE.appendChild(anyE);
         }
-        // Add xs:attribute refs
-        for (var pa : propL) {
+        // Add xs:attribute refs.  Start with attributes in this class.  Then
+        // add agumentations not already present.  Then add any global augmentations.
+        var apropL = new ArrayList<>(ct.propL());
+        addAttributeToPropList(apropL, classAugs.get(ct.uri()));
+        if (ct.isAssociationClass()) addAttributeToPropList(apropL, globalAugs.get("ASSOCIATION"));
+        if (ct.isObjectClass())      addAttributeToPropList(apropL, globalAugs.get("OBJECT"));
+        for (var pa : apropL) {
             var p = pa.property();
             if (!p.isAttribute()) continue;
             var atE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
@@ -618,6 +663,8 @@ public class ModelToXMLSchema {
             addAnnotationDoc(doc, atE, pa.docL());
             attParentE.appendChild(atE);
         }
+        // Add attribute augmentations
+        
         // Add xs:anyAttribute wildcards as needed
         for (var ap : ct.anyL()) {
             if (!ap.isAttribute()) continue;
