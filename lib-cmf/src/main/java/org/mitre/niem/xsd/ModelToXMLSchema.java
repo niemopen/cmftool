@@ -42,6 +42,7 @@ import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FilenameUtils;
 import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
+import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.javatuples.Pair;
@@ -53,6 +54,7 @@ import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
 import static org.mitre.niem.cmf.Component.qnToName;
 import static org.mitre.niem.cmf.Component.qnToPrefix;
+import static org.mitre.niem.cmf.Component.uriToName;
 import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ListType;
@@ -151,7 +153,7 @@ public class ModelToXMLSchema {
         establishFilePaths();
         identifySimpleTypes();
         buildSubstitutionMap();
-        organizeAttAugmentations();
+        organizeAugmentations();
         for (var ns : m.namespaceSet())
             if (ns.isExternal()) extNSs.add(ns.uri());
         for (var ns : m.namespaceSet()) 
@@ -303,30 +305,37 @@ public class ModelToXMLSchema {
         }
     }
     
-    // Create a list of attribute augmentations for each augmented class,
+    // Create a list of augmentations for each augmented class,
     // and for each kind of global augmentation.
-    protected MapToList<String,PropertyAssociation> classAugs = new MapToList<>();
-    protected MapToList<String,PropertyAssociation> globalAugs = new MapToList<>();
-    protected void organizeAttAugmentations () {
+    protected MapToList<String,PropertyAssociation> ns2classAugs = new MapToList<>();
+    protected MapToList<String,PropertyAssociation> globalCode2augs = new MapToList<>();
+    protected MapToSet<String,String> ns2refAttUS = new MapToSet<>();
+    protected void organizeAugmentations () {
         for (var ns : m.namespaceSet()) {
             for (var arec : ns.augL()) {
                 var p   = arec.property();
-                if (!p.isAttribute()) continue;
                 var ct  = arec.classType();
                 var gcs = arec.codeS();
                 if (null != ct) {
-                    var attL = classAugs.get(ct.uri());
-                    addAttributeToPropList(attL, arec);                        
+                    var attL = ns2classAugs.get(ct.uri());
+                    addAugToPropList(attL, arec);
+                    if (ct.isLiteralClass() && !p.isAttribute())
+                        ns2refAttUS.add(ns.uri(), p.name());
                 }
                 for (var gc : gcs) {
-                    var attL = globalAugs.get(gc);
-                    addAttributeToPropList(attL, arec);
+                    var attL = globalCode2augs.get(gc);
+                    addAugToPropList(attL, arec);
+                    if ("LITERAL".equals(gc)) 
+                        ns2refAttUS.add(ns.uri(), p.name());
                 }
             }
         }
     }
     
-    protected void addAttributeToPropList (List<PropertyAssociation> lst, PropertyAssociation pa) {
+    // Adds an augmentation record (which is derived from PropertyAssociation) to a
+    // property list, but only if it isn't already there.  Also replaces an optional
+    // augmentation with a required.
+    protected void addAugToPropList (List<PropertyAssociation> lst, PropertyAssociation pa) {
         PropertyAssociation inset = null;
         var dpU = pa.property().uri();
         for (var spa : lst) {
@@ -338,9 +347,9 @@ public class ModelToXMLSchema {
             lst.add(pa);
         }
     }
-    
+   
    protected void addAttributeToPropList (List<PropertyAssociation> lst, List<PropertyAssociation> adds) {
-       for (var pa : adds) addAttributeToPropList(lst, pa);
+       for (var pa : adds) addAugToPropList(lst, pa);
    }    
     
     protected void writeModelDocument (Namespace ns, File outD) throws ParserConfigurationException, IOException {       
@@ -396,16 +405,19 @@ public class ModelToXMLSchema {
             else createCCCType(doc, defEL, decEL, refnsUs, nsU, ct, bc2pre, bc2U, !ct.name().endsWith("AdapterType"));
             xctUs.add(ct.uri());
         }
-        // Create CSC types for datatypes.  But don't create a CSC wrapper around
-        // a simple type if we already created a type with the same name.
-//        for (var dt : m.datatypeL()) {
-//            var wrapU = replaceSuffix(dt.uri(), "SimpleType", "Type");
-//            if (!xctUs.contains(wrapU))
-//                createCSCType(doc, defEL, refnsUs, nsU, dt, bc2pre, bc2U);
-//        }
         // Create simple types and attribute/element declarations.
         for (var dt : m.datatypeL()) createSimpleType(doc, defEL, refnsUs, nsU, dt, bc2pre, bc2U);
         for (var p : m.propertyL())  createDeclaration(doc, decEL, refnsUs, nsU, p, bc2pre, bc2U, pU2subQ);
+        
+        // Create reference attributes
+        for (var name : ns2refAttUS.get(nsU)) {
+            var rn = uncapitalize(name) + "Ref";
+            var aE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
+            aE.setAttribute("name", rn);
+            aE.setAttribute("type", "xs:IDREFS");
+            addAnnotationDoc(doc, aE, "A list of references to " + name + " objects.");
+            decEL.add(aE);
+        }
         
         // Need appinfo if an external namespace is referenced
         var extF = false;
@@ -649,9 +661,9 @@ public class ModelToXMLSchema {
         // Add xs:attribute refs.  Start with attributes in this class.  Then
         // add agumentations not already present.  Then add any global augmentations.
         var apropL = new ArrayList<>(ct.propL());
-        addAttributeToPropList(apropL, classAugs.get(ct.uri()));
-        if (ct.isAssociationClass()) addAttributeToPropList(apropL, globalAugs.get("ASSOCIATION"));
-        if (ct.isObjectClass())      addAttributeToPropList(apropL, globalAugs.get("OBJECT"));
+        addAttributeToPropList(apropL, ns2classAugs.get(ct.uri()));
+        if (ct.isAssociationClass()) addAttributeToPropList(apropL, globalCode2augs.get("ASSOCIATION"));
+        if (ct.isObjectClass())      addAttributeToPropList(apropL, globalCode2augs.get("OBJECT"));
         for (var pa : apropL) {
             var p = pa.property();
             if (!p.isAttribute()) continue;
@@ -674,31 +686,28 @@ public class ModelToXMLSchema {
         // Add reference attributes as needed
         var structuresPre = bc2pre.get("STRUCTURES");
         var structuresU   = bc2U.get("STRUCTURES");
-        if (needURI || needRef) {
-            var refE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
-            refE.setAttribute("ref", structuresPre + ":" + "id");
-            attParentE.appendChild(refE);
-            refnsUs.add(structuresU);
-        }
-        if (needURI) {
-            var refE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
-            refE.setAttribute("ref", structuresPre + ":" + "uri");
-            attParentE.appendChild(refE);
-            refnsUs.add(structuresU);
-        }
-        if (needRef) {
-            var refE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
-            refE.setAttribute("ref", structuresPre + ":" + "ref");
-            attParentE.appendChild(refE);
-            refnsUs.add(structuresU);
-        }
-        if (needMetadata.contains(ver)) {
-            var refE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
-            refE.setAttribute("ref", structuresPre + ":" + "metadata");
-            attParentE.appendChild(refE);
-            refnsUs.add(structuresU);            
-        }
+        if (needURI || needRef)
+            addStructuresAttribute(doc, attParentE, "id", refnsUs, structuresPre, structuresU);
+        if (needURI)
+            addStructuresAttribute(doc, attParentE, "uri", refnsUs, structuresPre, structuresU);
+        if (needRef)
+            addStructuresAttribute(doc, attParentE, "ref", refnsUs, structuresPre, structuresU);
+        if (null == pct && needMetadata.contains(ver))
+            addStructuresAttribute(doc, attParentE, "metadata", refnsUs, structuresPre, structuresU);
+        if (null == pct)
+            addStructuresAttribute(doc, attParentE, "appliesToParent", refnsUs, structuresPre, structuresU);
         defEL.add(ctE);
+    }
+    
+    protected void addStructuresAttribute (Document doc, 
+        Element parE, String name, 
+        Set<String> refnsUs,
+        String spre, String sU) {
+        
+        var refE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
+        refE.setAttribute("ref", spre + ":" + name);
+        parE.appendChild(refE);
+        refnsUs.add(sU);   
     }
     
     // Create a list of property associations for a class hierarchy, beginning
@@ -731,15 +740,22 @@ public class ModelToXMLSchema {
 
         // Add all the attribute references to xs:extension.  Start with attributes
         // in this class.  Then add augmentations not already present.  Then add
-        // any global augmentations.
+        // any global augmentations.  If the augmentation is an object property,
+        // create and add a reference attribute instead.
         var apropL = new ArrayList<>(ct.propL());
-        addAttributeToPropList(apropL, classAugs.get(ct.uri()));
-        addAttributeToPropList(apropL, globalAugs.get("LITERAL"));        
+        addAttributeToPropList(apropL, ns2classAugs.get(ct.uri()));
+        addAttributeToPropList(apropL, globalCode2augs.get("LITERAL"));        
         for (var pa : apropL) {
-            var p = pa.property();
-            if (!p.isAttribute()) continue;
+            var p    = pa.property();
+            var refQ = p.qname();
+            if (refQ.endsWith("Literal")) continue;
+            if (!p.isAttribute()) {
+                var refp = qnToPrefix(refQ);
+                var refn = qnToName(refQ);
+                refQ = refp + ":" + uncapitalize(refn) + "Ref";
+            }
             var atE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
-            atE.setAttribute("ref", p.qname());
+            atE.setAttribute("ref", refQ);
             if ("1".equals(pa.minOccurs())) atE.setAttribute("use", "required");
             refnsUs.add(p.namespaceURI());
             addDocumentation(doc, atE, pa.docL());
