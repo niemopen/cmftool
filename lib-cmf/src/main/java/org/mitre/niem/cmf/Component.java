@@ -146,6 +146,18 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     }    
     
     /**
+     * Returns the namespace portion of a component URI; for example, 
+     * returns "http://someNS/" for http://someNS/FooType.
+     * @param uri - component URI
+     * @return - component name
+     */    
+    public static String uriToNamespace (String uri) {
+        int indx = uri.lastIndexOf("/");
+        if (indx < 0 || indx >= uri.length()) return "";
+        return uri.substring(0, indx+1);        
+    }
+    
+    /**
      * Returns the name portion of a component URI; for example, returns "FooType"
      * for http://someNS/FooType.
      * @param uri - component URI

@@ -18,6 +18,7 @@
     <xs:appinfo>
       <appinfo:Augmentation class="test:TCodeList2Type" property="test:aProp"/>
       <appinfo:Augmentation class="test:TCodeList3Type" property="test:aProp" use="required"/>
+      <appinfo:Augmentation class="test:TextType" property="test:aProp" use="required"/>
     </xs:appinfo>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
@@ -53,6 +54,11 @@
       <xs:extension base="test:TCodeList3SimpleType">
         <xs:attributeGroup ref="structures:SimpleObjectAttributeGroup"/>
       </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="TextType">
+    <xs:simpleContent>
+      <xs:extension base="niem-xs:string"/>
     </xs:simpleContent>
   </xs:complexType>
   <xs:attribute name="aProp" type="xs:token"/>

@@ -67,6 +67,7 @@ import org.mitre.niem.cmf.Component;
 import static org.mitre.niem.cmf.Component.makeURI;
 import static org.mitre.niem.cmf.Component.qnToName;
 import static org.mitre.niem.cmf.Component.qnToPrefix;
+import static org.mitre.niem.cmf.Component.uriToNamespace;
 import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
@@ -263,7 +264,7 @@ public class ModelFromXSD {
     // and literal classes.  We need this to decide whether a CSC type should be
     // a literal ClassType object or a Datatype object.    
     private final Map<String,List<Element>> augments = new HashMap<>(); // nsU -> appinfo:Augmentation elements
-    private final Set<String> augClassU              = new HashSet<>(); // set of classes with att augmentations
+    private final Set<String> attAugTypeUS           = new HashSet<>(); // set of types with att augmentations
     private boolean anyGlobalLitAugF = false;
     
     private void processAttributeAugmentations () {
@@ -279,16 +280,19 @@ public class ModelFromXSD {
             var aeL   = new ArrayList<Element>();
             augments.put(nsU, aeL);
             for (int i = 0; i < augNL.getLength(); i++)  {
-                var augE   = (Element)augNL.item(i);                
-                var classQ = augE.getAttribute("class");
-                var codes  = augE.getAttribute("globalClassCode");
+                var augE  = (Element)augNL.item(i);                
+                var typeQ = augE.getAttribute("class");
+                var codes = augE.getAttribute("globalClassCode");
                 aeL.add(augE);
                 if (codes.isBlank()) {
-                    if (null == m.qnToClassType(classQ))
-                        LOG.warn("{}: can't find augmentation class {}", ns.uri(), classQ);
+                    var typeU = m.qnToURI(typeQ);
+                    var tnsU  = uriToNamespace(typeU);
+                    var tname  = qnToName(typeQ);
+                    var xctype = xs.getTypeDefinition(tname, tnsU);
+                    if (null == xctype)
+                        LOG.warn("{}: can't find {} in Augmentation", ns.uri(), typeQ);
                     else {
-                        var classU = m.qnToURI(classQ);
-                        augClassU.add(classU);
+                        attAugTypeUS.add(typeU);
                     }
                 }
                 else {
@@ -353,7 +357,7 @@ public class ModelFromXSD {
             var rc     = appi.getOrDefault("referenceCode", "");
             var litF   = "ANY".equals(rc) || "REF".equals(rc) || "URI".equals(rc);
             if (!litF) litF = hasAttributes(xctype);
-            if (!litF) litF = augClassU.contains(cscU);
+            if (!litF) litF = attAugTypeUS.contains(cscU);
             if (!litF) litF = anyGlobalLitAugF;
             if (!litF) {
                 var anyAtt = evalForNodes(schE, XPR_ANYATT);

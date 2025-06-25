@@ -663,8 +663,6 @@ public class ModelToXMLSchema {
             addAnnotationDoc(doc, atE, pa.docL());
             attParentE.appendChild(atE);
         }
-        // Add attribute augmentations
-        
         // Add xs:anyAttribute wildcards as needed
         for (var ap : ct.anyL()) {
             if (!ap.isAttribute()) continue;
@@ -731,15 +729,19 @@ public class ModelToXMLSchema {
         scE.appendChild(exE);
         ctE.appendChild(scE);
 
-        // Add all the attribute references to xs:extension
-        for (int i = 0; i < ct.propL().size(); i++) {
-            var pa = ct.propL().get(i);
+        // Add all the attribute references to xs:extension.  Start with attributes
+        // in this class.  Then add augmentations not already present.  Then add
+        // any global augmentations.
+        var apropL = new ArrayList<>(ct.propL());
+        addAttributeToPropList(apropL, classAugs.get(ct.uri()));
+        addAttributeToPropList(apropL, globalAugs.get("LITERAL"));        
+        for (var pa : apropL) {
+            var p = pa.property();
+            if (!p.isAttribute()) continue;
             var atE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
-            var dp  = (DataProperty)pa.property();
-            if (!dp.isAttribute()) continue;
-            atE.setAttribute("ref", dp.qname());
+            atE.setAttribute("ref", p.qname());
             if ("1".equals(pa.minOccurs())) atE.setAttribute("use", "required");
-            refnsUs.add(dp.namespaceURI());
+            refnsUs.add(p.namespaceURI());
             addDocumentation(doc, atE, pa.docL());
             exE.appendChild(atE);
         }
