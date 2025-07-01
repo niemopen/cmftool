@@ -1,0 +1,6 @@
+{
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "git.ignoredRepositories": [
+        "lib-cmf/src/main/CMF",
+    ]
+}
