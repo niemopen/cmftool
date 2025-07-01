@@ -543,7 +543,8 @@ public class ModelToXMLSchema {
     // Create a complex type with complex content from a non-literal class object
     private static Set<String> needURIcodes = Set.of("ANY", "ANYURI", "INTERNAL", "RELURI");
     private static Set<String> needRefcodes = Set.of("ANY", "INTERNAL", "IDREF");
-    private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM3.1", "NIEM3.2", "NIEM4.0", "NIEM4.1", "NIEM4.2", "NIEM5.0", "NIEM5.1", "NIEM5.2");
+    private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM4.0", "NIEM5.0");
+    //private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM3.1", "NIEM3.2", "NIEM4.0", "NIEM4.1", "NIEM4.2", "NIEM5.0", "NIEM5.1", "NIEM5.2");
     protected void createCCCType (Document doc, 
         List<Element> defEL,                // add typedef elements to this list
         List<Element> decEL,                // add augmentation point elements to this list
