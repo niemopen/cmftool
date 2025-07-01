@@ -62,6 +62,10 @@ public class ClassType extends Component {
     public List<PropertyAssociation> propL ()   { return propL; }
     public List<AnyProperty> anyL ()            { return anyL; }
     
+    public boolean isAssociationClass ()        { return name().endsWith("AssociationType"); }
+    public boolean isAdapterClass ()            { return name().endsWith("AdapterType"); }
+    public boolean isObjectClass ()             { return !isAssociationClass() && !isAdapterClass(); }
+    
     public void setIsAbstract (boolean f)       { isAbstract = f; }
     @Override
     public void setReferenceCode (String s)     { super.setReferenceCode(s); refCode = s; }

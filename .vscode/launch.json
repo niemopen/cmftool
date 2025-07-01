@@ -1,0 +1,92 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CrashDriver message schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2xmsg -o ${workspaceFolder}/../tests/CrashDriver-m2xmsg ${workspaceFolder}/lib-cmf/examples/CrashDriver/model.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\app-cmftool-1.0-alpha.5-SNAPSHOT.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\lib-cmf-1.0-alpha.5-SNAPSHOT.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\lib-util-1.0-alpha.5-SNAPSHOT.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\jcommander-2.0.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\commons-io-2.18.0.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\commons-lang3-3.17.0.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\log4j-core-2.24.3.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\log4j-api-2.24.3.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\Saxon-HE-12.5.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\xmlresolver-6.0.14.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\xmlresolver-6.0.14-data.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\xercesImpl-2.12.2.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\xalan-2.7.3.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\serializer-2.7.3.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\gson-2.13.1.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\javatuples-1.2.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\xml-apis-1.4.01.jar",
+                //"${workspaceFolder}\\app-cmftool\\build\\install\\cmftool\\lib\\error_prone_annotations-2.38.0.jar"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "augment.cmf message schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2xmsg -o ${workspaceFolder}/../tests/augment-m2xmsg ${workspaceFolder}/lib-cmf/src/test/resources/cmf/augment.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "ecf5.cmf model schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2x -o ${workspaceFolder}/../tests/ecf5-m2x ${userHome}/OneDrive/xml/ecf5json/model/cmf/ecf5.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "ecf5.cmf message schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2xmsg -o ${workspaceFolder}/../tests/ecf5-m2xmsg ${userHome}/OneDrive/xml/ecf5json/model/cmf/ecf5.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "ecf5.cmf JSON message schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2jmsg -o ${workspaceFolder}/../tests/ecf5-m2jmsg.schema.json ${userHome}/OneDrive/xml/ecf5json/model/cmf/ecf5.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "alea-courtdispo model schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2x -o ${workspaceFolder}/../tests/alea-courtdispo-m2x ${userHome}/OneDrive/xml/mcp/alea-courtdispo/model/cmf/CourtDisposition.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+        }
+    ]
+}

@@ -48,37 +48,34 @@ public class MapToList<K,V> {
     }
     
     public void add (K key, V value) {
-        var s = map.get(key);
-        if (null == s) {
-            s = new ArrayList<>();
-            map.put(key, s);          
-        }
-        s.add(value);
+        var lst = get(key);
+        lst.add(value);
     }
     
     public void addAll (K key, Collection<V> values) {
-        var s = map.get(key);
-        if (null == s) {
-            s = new ArrayList<>();
-            map.put(key, s);          
-        }
-        s.addAll(values);
+        var lst = get(key);
+        lst.addAll(values);
     }
     
     public List<V> get (K key) {
-        return map.getOrDefault(key, Collections.emptyList());
+        var lst = map.get(key);
+        if (null == lst) {
+            lst = new ArrayList<>();
+            map.put(key, lst);          
+        }
+        return lst;
     }
     
     public V get (K key, int pos) {
-        var s = map.get(key);
-        if (null == s || pos < 0 || pos >= s.size()) return null;
-        return s.get(pos);
+        var lst = get(key);
+        if (null == lst || pos < 0 || pos >= lst.size()) return null;
+        return lst.get(pos);
     }
     
     public boolean remove (K key, V value) {
-        var s = map.get(key);
-        if (null == s) return false;
-        return s.remove(value);
+        var lst = map.get(key);
+        if (null == lst) return false;
+        return lst.remove(value);
     }
     
     public void removeKey (K key) {

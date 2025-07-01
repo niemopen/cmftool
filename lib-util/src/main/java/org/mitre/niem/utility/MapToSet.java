@@ -46,25 +46,22 @@ public class MapToSet<K,V> {
     }
     
     public void add (K key, V value) {
-        var s = map.get(key);
-        if (null == s) {
-            s = new HashSet<>();
-            map.put(key, s);          
-        }
+        var s = get(key);
         s.add(value);
     }
     
     public void addAll (K key, Collection<V> values) {
-        var s = map.get(key);
-        if (null == s) {
-            s = new HashSet<>();
-            map.put(key, s);          
-        }
+        var s = get(key);
         s.addAll(values);
     }
     
     public Set<V> get (K key) {
-        return map.getOrDefault(key, new HashSet<>());
+        var s = map.get(key);
+        if (null == s) {
+            s = new HashSet<>();
+            map.put(key, s);
+        }
+        return s;
     }
     
     public boolean remove (K key, V value) {
