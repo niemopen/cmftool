@@ -48,20 +48,21 @@ public class CMFTool {
     private void run (String[] args) {
     
     // check environment
-    /* 
-    System.out.println("JDK: " + System.getProperty("java.version"));
-    System.out.println("APP_HOME: " + System.getenv("APP_HOME"));
-    System.out.println("user.dir: " + System.getProperty("user.dir"));
-    System.out.println("java.class.path: " + System.getProperty("java.class.path"));
-    System.out.println("Thread Context ClassLoader: " + Thread.currentThread().getContextClassLoader());
-    System.out.println("java.io.tmpdir: " + System.getProperty("java.io.tmpdir"));
-    try {
-        System.out.println("STDIN Available: " + System.in.available());
-    } catch (Exception ex) {
-        System.out.println("STDIN not available: " + ex.getMessage());
+    final boolean DEBUG = false; // Set to true to enable debug prints
+    if (DEBUG) {
+        System.out.println("JDK: " + System.getProperty("java.version"));
+        System.out.println("APP_HOME: " + System.getenv("APP_HOME"));
+        System.out.println("user.dir: " + System.getProperty("user.dir"));
+        System.out.println("java.class.path: " + System.getProperty("java.class.path"));
+        System.out.println("Thread Context ClassLoader: " + Thread.currentThread().getContextClassLoader());
+        System.out.println("java.io.tmpdir: " + System.getProperty("java.io.tmpdir"));
+        try {
+            System.out.println("STDIN Available: " + System.in.available());
+        } catch (Exception ex) {
+            System.out.println("STDIN not available: " + ex.getMessage());
+        }
+        // System.out.println("Resolved resource: " + AppEnvironmentHelper.class.getResource("/config/app.yaml"));
     }
-    //System.out.println("Resolved resource: " + AppEnvironmentHelper.class.getResource("/config/app.yaml"));
-    */
     
         // Uncomment arguments for debugging:
 //    String res = "../lib-cmf/src/test/resources/xsd5/";     
