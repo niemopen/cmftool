@@ -67,29 +67,29 @@ public class ModelAssertions {
     }
     
     public static void checkAttAugment (Model m) {
-        assertNull(m.qnToDatatype("test:TCodeList2Type"));
-        assertNull(m.qnToDatatype("test:TCodeList3Type"));
-        var ct = m.qnToClassType("test:TCodeList2Type");
-        var dp = (DataProperty)ct.propL().get(0).property();
-        var dt = dp.datatype();
-        assertEquals("TCodeList2Literal", dp.name());
-        assertEquals("TCodeList2SimpleType", dt.name());
-        ct = m.qnToClassType("test:TCodeList3Type");
-        dp = (DataProperty)ct.propL().get(0).property();
-        dt = dp.datatype();
-        assertEquals("TCodeList3Literal", dp.name());
-        assertEquals("TCodeList3SimpleType", dt.name());
-        var ns = m.namespaceObj("test");
-        var arec = ns.augL().get(0);
-        assertEquals("test:TCodeList2Type", arec.classType().qname());
-        assertEquals("test:aProp", arec.property().qname());
-        assertEquals("0", arec.minOccurs());
-        assertTrue(arec.codeS().isEmpty());
-        arec = ns.augL().get(1);
-        assertEquals("test:TCodeList3Type", arec.classType().qname());
-        assertEquals("test:aProp", arec.property().qname());
-        assertEquals("1", arec.minOccurs());
-        assertTrue(arec.codeS().isEmpty());          
+        var tns = m.prefixToNamespaceObj("test");
+        var op = m.qnToProperty("test:ObjProp");
+        assertThat(tns.augL())
+            .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
+                AugmentRecord::maxOccurs, AugmentRecord::index)
+            .containsExactlyInAnyOrder(
+                Assertions.tuple(
+                    m.qnToClassType("test:CCOneType"),
+                    m.qnToProperty("test:attProp"),
+                    "0", "1", ""),
+                Assertions.tuple(
+                    m.qnToClassType("test:CCTwoType"),
+                    m.qnToProperty("test:attProp"),
+                    "1", "1", ""),
+                Assertions.tuple(
+                    m.qnToClassType("test:SCOneType"),
+                    m.qnToProperty("test:attProp"),
+                    "0", "1", ""),
+                 Assertions.tuple(
+                    m.qnToClassType("test:SCTwoType"),
+                    m.qnToProperty("test:ObjProp"),
+                    "0", "1", "")
+                 );  
     }
     
     public static void checkAugment (Model m) {
@@ -103,37 +103,41 @@ public class ModelAssertions {
 
         assertThat(jns.augL())
             .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
-                AugmentRecord::maxOccurs, AugmentRecord::index)
+                AugmentRecord::maxOccurs, AugmentRecord::index, AugmentRecord::codeString)
             .containsExactly(
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("j:EducationTotalYearsText"),
-                    "0", "unbounded", "0")
+                    "0", "unbounded", "0", "")
             );
         assertThat(tns.augL())
             .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
-                AugmentRecord::maxOccurs, AugmentRecord::index)
+                AugmentRecord::maxOccurs, AugmentRecord::index, AugmentRecord::codeString)
             .containsExactlyInAnyOrder(
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("nc:personNameCommentText"),
-                    "0", "1", "-1"),
+                    "0", "1", "-1", ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("test:CommentDestinationText"),
-                    "1", "1", "0"),
+                    "1", "1", "0", ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("nc:CommentText"),
-                    "0", "1", "1"),
+                    "0", "1", "1", ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("j:EducationTotalYearsText"),
-                    "1", "1", "2"),
+                    "1", "1", "2", ""),
+                Assertions.tuple(
+                    m.qnToClassType("nc:EducationType"),
+                    m.qnToProperty("test:TestAugElement"),
+                    "0", "unbounded", "", ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:CommentType"),
                     m.qnToProperty("test:CommentDestinationText"),
-                    "0", "unbounded", "")
+                    "0", "unbounded", "", "")           
             );            
         assertTrue(jns.augL().get(0).codeS().isEmpty());
         assertThat(tns.augL().get(0).codeS().isEmpty());
@@ -514,14 +518,73 @@ public class ModelAssertions {
         assertEquals("gml:Polygon", p.qname());
         assertNull(op.classType());        
     }
+
+    public static void checkGaLitAtt (Model m) throws Exception {
+        var tns = m.prefixToNamespaceObj("test");
+        var op = m.qnToProperty("test:ObjProp");
+        assertNull(m.qnToDatatype("test:SCOneType"));
+        assertNull(m.qnToDatatype("test:SCTwoType"));
+        assertThat(tns.augL())
+            .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
+                AugmentRecord::maxOccurs, AugmentRecord::index, AugmentRecord::codeString)
+            .containsExactly(
+                Assertions.tuple(
+                    null,
+                    m.qnToDataProperty("test:attProp"),
+                    "0", "1", "", "LITERAL")
+                 );         
+    }
     
-    public static void checkGlobalAttAugment (Model m) throws Exception {
-        assertNull(m.qnToDatatype("test:TCodeList2Type"));
-        assertNull(m.qnToDatatype("test:TCodeList3Type"));
-        assertNotNull(m.qnToClassType("test:TCodeList2Type"));
-        assertNotNull(m.qnToClassType("test:TCodeList2Type"));
-        assertNotNull(m.qnToDataProperty("test:TCodeList2Literal"));
-        assertNotNull(m.qnToDataProperty("test:TCodeList2Literal"));        
+    public static void checkGaLitObj (Model m) throws Exception {
+        var tns = m.prefixToNamespaceObj("test");
+        var op = m.qnToProperty("test:ObjProp");
+        assertNull(m.qnToDatatype("test:SCOneType"));
+        assertNull(m.qnToDatatype("test:SCTwoType"));
+        assertThat(tns.augL())
+            .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
+                AugmentRecord::maxOccurs, AugmentRecord::index, AugmentRecord::codeString)
+            .containsExactly(
+                Assertions.tuple(
+                    null,
+                    m.qnToObjectProperty("test:ObjProp"),
+                    "0", "1", "", "LITERAL")
+                 );          
+    }
+    
+    public static void checkGaObjAtt (Model m) throws Exception {
+        var tns = m.prefixToNamespaceObj("test");
+        var op = m.qnToProperty("test:ObjProp");
+        assertNotNull(m.qnToDatatype("test:SCOneType"));
+        assertNotNull(m.qnToDatatype("test:SCTwoType"));
+        assertThat(tns.augL())
+            .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
+                AugmentRecord::maxOccurs, AugmentRecord::index, AugmentRecord::codeString)
+            .containsExactly(
+                Assertions.tuple(
+                    null,
+                    m.qnToDataProperty("test:attProp"),
+                    "0", "1", "", "OBJECT")
+                 );         
+    }
+    
+    public static void checkGaObjObj (Model m) throws Exception {
+        var tns = m.prefixToNamespaceObj("test");
+        var op = m.qnToProperty("test:ObjProp");
+        assertNotNull(m.qnToDatatype("test:SCOneType"));
+        assertNotNull(m.qnToDatatype("test:SCTwoType"));
+        assertThat(tns.augL())
+            .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
+                AugmentRecord::maxOccurs, AugmentRecord::index, AugmentRecord::codeString)
+            .containsExactlyInAnyOrder(
+                Assertions.tuple(
+                    null,
+                    m.qnToDataProperty("test:DataProp"),
+                    "1", "1", "1", "OBJECT"),
+                 Assertions.tuple(
+                    null,
+                    m.qnToObjectProperty("test:ObjProp"),
+                    "1", "1", "0", "OBJECT")
+                 );         
     }
     
     public static void checkImports (Model m) {

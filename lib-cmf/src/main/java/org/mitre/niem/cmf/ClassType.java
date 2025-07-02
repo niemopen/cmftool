@@ -64,7 +64,12 @@ public class ClassType extends Component {
     
     public boolean isAssociationClass ()        { return name().endsWith("AssociationType"); }
     public boolean isAdapterClass ()            { return name().endsWith("AdapterType"); }
-    public boolean isObjectClass ()             { return !isAssociationClass() && !isAdapterClass(); }
+    public boolean isAugmentationClass ()       { return name().endsWith("AugmentationType"); }    
+    public boolean isLiteralClass ()            { return null != literalDatatype(); }
+    public boolean isObjectClass () { 
+        return !isAssociationClass() && !isAdapterClass() && !isAugmentationClass() && !isLiteralClass();
+    }
+
     
     public void setIsAbstract (boolean f)       { isAbstract = f; }
     @Override
@@ -87,8 +92,6 @@ public class ClassType extends Component {
         return (!"NONE".equals(effectiveReferenceCode()));
     }
     
-    public boolean isLiteralClass ()            { return null != literalDatatype(); }
-    
     public Datatype literalDatatype () {
         if (propL.isEmpty()) return null;
         var pa = propL().get(0);
@@ -97,6 +100,12 @@ public class ClassType extends Component {
         if (!p.isDataProperty()) return null;
         return ((DataProperty)p).datatype();
     }
+    
+    public boolean hasSimpleContent () {
+        if (null != literalDatatype()) return true;
+        else if (null == subClassOf()) return false;
+        else return subClassOf().hasSimpleContent();
+    }    
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

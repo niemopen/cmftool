@@ -25,6 +25,7 @@ package org.mitre.niem.cmf;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.StringJoiner;
 import org.mitre.niem.utility.NaturalOrderComparator;
 
 /**
@@ -33,7 +34,7 @@ import org.mitre.niem.utility.NaturalOrderComparator;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class AugmentRecord extends PropertyAssociation implements Comparable<AugmentRecord> {
+public class AugmentRecord extends PropertyAssociation {
     
     public AugmentRecord () { }
     public AugmentRecord (PropertyAssociation cpa) {
@@ -50,11 +51,17 @@ public class AugmentRecord extends PropertyAssociation implements Comparable<Aug
     
     public ClassType classType ()                   { return classType; }
     public String index ()                          { return index; }
+    @Override
     public Set<String> codeS ()                     { return codeS; }
+    public String codeString () {
+        var res = new StringJoiner(",");
+        for (var code : codeS) res.add(code);
+        return res.toString();
+    }
     
     public void setClassType (ClassType ct)         { classType = ct; }
     public void setIndex (String s)                 { index = s; }
-    public void addCode (String s)                  { codeS.add(s); }
+    public void addCode (String s)                  { if (null != s) codeS.add(s); }
     public void removeCode (String s)               { codeS.remove(s); }
     public void clearCodes ()                       { codeS.clear(); }
         
@@ -72,20 +79,5 @@ public class AugmentRecord extends PropertyAssociation implements Comparable<Aug
         return true;
     }
 
-    @Override
-    public int compareTo(AugmentRecord o) {
-        int rv = 0;
-        if (null != this.classType && null != o.classType) rv = this.classType.compareTo(o.classType);
-        if (0 == rv) {
-            var tx = "0" + this.index();
-            var ox = "0" + o.index();
-            try {
-                var ti = Integer.parseInt(tx);
-                var oi = Integer.parseInt(ox);
-                rv = ti - oi;
-            }
-            catch(NumberFormatException ex) { } // IGNORE
-        }
-        if (0 == rv) rv = this.property().compareTo(o.property());
-        return rv;}
+
 }

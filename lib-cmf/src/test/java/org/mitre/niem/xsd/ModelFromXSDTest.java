@@ -131,13 +131,30 @@ public class ModelFromXSDTest {
         assertEmptyLogs();
     }
 
-
     @Test
-    public void testGlobalAttAugment () throws Exception {
+    public void testGaLitAtt () throws Exception {
         var mb  = new ModelFromXSD();
-        var sch = new NIEMSchema(resDN + "xsd6/globalAttAugment.xsd");
+        var sch = new NIEMSchema(resDN + "xsd6/gaLitAtt.xsd");
         var model = mb.createModel(sch);
-        checkGlobalAttAugment(model);
+        checkGaLitAtt(model);
+        assertEmptyLogs();
+    }
+    
+    @Test
+    public void testGaObjAtt () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/gaObjAtt.xsd");
+        var model = mb.createModel(sch);
+        checkGaObjAtt(model);
+        assertEmptyLogs();
+    }
+    
+    @Test
+    public void testGaObjObj () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/gaObjObj.xsd");
+        var model = mb.createModel(sch);
+        checkGaObjObj(model);
         assertEmptyLogs();
     }
     

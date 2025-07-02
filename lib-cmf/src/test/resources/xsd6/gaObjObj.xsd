@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
   targetNamespace="http://example.com/test/"
-  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
   xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
   xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
@@ -12,14 +11,8 @@
   xml:lang="en-US">
   <xs:annotation>
     <xs:documentation>
-      Attribute augmentation appinfo test
+      Augment all objects with an object
     </xs:documentation>
-    <xs:appinfo>
-      <appinfo:Augmentation class="test:CCOneType" property="test:attProp"/>
-      <appinfo:Augmentation class="test:CCTwoType" property="test:attProp" use="required"/>
-      <appinfo:Augmentation class="test:SCOneType" property="test:attProp"/>
-      <appinfo:Augmentation class="test:SCTwoType" property="test:ObjProp"/>
-    </xs:appinfo>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="niem/utility/structures.xsd"/>
@@ -53,15 +46,38 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
+  <xs:complexType name="ObjectAugmentationType">
+    <xs:annotation>
+      <xs:documentation>A data type for additional information about an objectaugmentationtype.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="structures:AugmentationType">
+        <xs:sequence>
+          <xs:element ref="test:ObjProp"/>
+          <xs:element ref="test:DataProp"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
   <xs:complexType name="SCOneType">
     <xs:simpleContent>
-      <xs:extension base="niem-xs:string"/>
+      <xs:restriction base="niem-xs:string"/>
     </xs:simpleContent>
   </xs:complexType>
   <xs:complexType name="SCTwoType">
     <xs:simpleContent>
-      <xs:extension base="niem-xs:string"/>
+      <xs:restriction base="niem-xs:string"/>
     </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="TestAssociationType">
+    <xs:complexContent>
+      <xs:extension base="structures:AssociationType">
+        <xs:sequence>
+          <xs:element ref="test:DataProp"/>
+          <xs:element ref="test:TestAssociationAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
   </xs:complexType>
   <xs:attribute name="attProp" type="xs:token"/>
   <xs:element name="CCOneAugmentationPoint" abstract="true">
@@ -81,4 +97,14 @@
     </xs:annotation>
   </xs:element>
   <xs:element name="ObjProp" type="test:ObjType" nillable="true"/>
+  <xs:element name="ObjectAugmentation" type="test:ObjectAugmentationType" substitutionGroup="structures:ObjectAugmentationPoint">
+    <xs:annotation>
+      <xs:documentation>Additional information about an objectaugmentationtype.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="TestAssociationAugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for TestAssociationType.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
 </xs:schema>

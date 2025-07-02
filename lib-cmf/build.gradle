@@ -48,6 +48,13 @@ jar {
     }
 }
 
+tasks.processResources {
+    // Relocate the model.xsd directory during the resource processing phase
+    from('src/main/CMF/model.xsd') {
+        into 'xsd/cmf'
+    }
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }

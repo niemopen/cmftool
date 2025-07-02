@@ -9,19 +9,19 @@
     <NamespaceURI>http://example.com/test/</NamespaceURI>
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>
-      Attribute augmentation appinfo test
+      Augment all ordinary objects with an attribute
     </DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>globalAttAugment.xsd</DocumentFilePathText>
+    <DocumentFilePathText>gaObjAtt.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NIEMVersionName>NIEM6.0</NIEMVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
-      <DataProperty structures:ref="test.aProp" xsi:nil="true"/>
+      <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <GlobalClassCode>LITERAL</GlobalClassCode>
+      <GlobalClassCode>OBJECT</GlobalClassCode>
     </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="xs">
@@ -29,74 +29,72 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
-  <DataProperty structures:id="test.aProp">
-    <Name>aProp</Name>
+  <DataProperty structures:id="test.attProp">
+    <Name>attProp</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <Datatype structures:ref="xs.token" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </DataProperty>
-  <DataProperty structures:id="test.TCodeList2Literal">
-    <Name>TCodeList2Literal</Name>
+  <DataProperty structures:id="test.DataProp">
+    <Name>DataProp</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <Datatype structures:ref="test.TCodeList2SimpleType" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <DataProperty structures:id="test.TCodeList3Literal">
-    <Name>TCodeList3Literal</Name>
+  <ObjectProperty structures:id="test.ObjProp">
+    <Name>ObjProp</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <Datatype structures:ref="test.TCodeList3SimpleType" xsi:nil="true"/>
-  </DataProperty>
-  <Class structures:id="test.TCodeList2Type">
-    <Name>TCodeList2Type</Name>
+    <Class structures:ref="test.ObjType" xsi:nil="true"/>
+  </ObjectProperty>
+  <Class structures:id="test.CCOneType">
+    <Name>CCOneType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.TCodeList2Literal" xsi:nil="true"/>
+      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Class structures:id="test.TCodeList3Type">
-    <Name>TCodeList3Type</Name>
+  <Class structures:id="test.CCTwoType">
+    <Name>CCTwoType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.TCodeList3Literal" xsi:nil="true"/>
+      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Restriction structures:id="test.TCodeList2SimpleType">
-    <Name>TCodeList2SimpleType</Name>
+  <Class structures:id="test.ObjType">
+    <Name>ObjType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
-    <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>GB</FacetValue>
-    </Facet>
-    <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>US</FacetValue>
-    </Facet>
-    <CodeListBinding>
-      <CodeListURI>http://code.list.uri</CodeListURI>
-      <CodeListConstrainingIndicator>true</CodeListConstrainingIndicator>
-    </CodeListBinding>
-  </Restriction>
-  <Restriction structures:id="test.TCodeList3SimpleType">
-    <Name>TCodeList3SimpleType</Name>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="test.TestAssociationType">
+    <Name>TestAssociationType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
-    <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>GB</FacetValue>
-    </Facet>
-    <Facet>
-      <FacetCategoryCode>enumeration</FacetCategoryCode>
-      <FacetValue>US</FacetValue>
-    </Facet>
-    <CodeListBinding>
-      <CodeListURI>http://list.uri</CodeListURI>
-      <CodeListColumnName>key</CodeListColumnName>
-    </CodeListBinding>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Restriction structures:id="test.SCOneType">
+    <Name>SCOneType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
   </Restriction>
+  <Restriction structures:id="test.SCTwoType">
+    <Name>SCTwoType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+  </Restriction>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
   <Datatype structures:id="xs.token">
     <Name>token</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>

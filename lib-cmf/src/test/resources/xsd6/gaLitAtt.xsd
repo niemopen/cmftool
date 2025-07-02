@@ -12,13 +12,10 @@
   xml:lang="en-US">
   <xs:annotation>
     <xs:documentation>
-      Attribute augmentation appinfo test
+      Augment all literal objects with an attribute
     </xs:documentation>
     <xs:appinfo>
-      <appinfo:Augmentation class="test:CCOneType" property="test:attProp"/>
-      <appinfo:Augmentation class="test:CCTwoType" property="test:attProp" use="required"/>
-      <appinfo:Augmentation class="test:SCOneType" property="test:attProp"/>
-      <appinfo:Augmentation class="test:SCTwoType" property="test:ObjProp"/>
+      <appinfo:Augmentation property="test:attProp" globalClassCode="LITERAL"/>
     </xs:appinfo>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
@@ -63,6 +60,16 @@
       <xs:extension base="niem-xs:string"/>
     </xs:simpleContent>
   </xs:complexType>
+  <xs:complexType name="TestAssociationType">
+    <xs:complexContent>
+      <xs:extension base="structures:AssociationType">
+        <xs:sequence>
+          <xs:element ref="test:DataProp"/>
+          <xs:element ref="test:TestAssociationAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
   <xs:attribute name="attProp" type="xs:token"/>
   <xs:element name="CCOneAugmentationPoint" abstract="true">
     <xs:annotation>
@@ -81,4 +88,9 @@
     </xs:annotation>
   </xs:element>
   <xs:element name="ObjProp" type="test:ObjType" nillable="true"/>
+  <xs:element name="TestAssociationAugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for TestAssociationType.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
 </xs:schema>

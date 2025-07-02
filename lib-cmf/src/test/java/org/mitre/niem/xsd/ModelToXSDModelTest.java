@@ -50,6 +50,11 @@ public class ModelToXSDModelTest {
     @Test
     public void testWriteModelXSD_File_String() {
     }
+    
+//    @Test
+//    public void testOne () throws Exception {
+//        testRoundTrip(new File(resDN, "xsd6/globObjAug.xsd"));        
+//    }
 
     @Test
     public void testWriteModelXSD () throws Exception {
@@ -61,7 +66,10 @@ public class ModelToXSDModelTest {
         testRoundTrip(new File(resDN, "xsd6/dataProperty.xsd"));
         testRoundTrip(new File(resDN, "xsd6/datatypes.xsd"));
 //        testRoundTrip(new File(resDN, "xsd6/externals.xsd"));             // CAN'T ROUNDTRIP
-        testRoundTrip(new File(resDN, "xsd6/globalAttAugment.xsd"));
+        testRoundTrip(new File(resDN, "xsd6/gaLitAtt.xsd"));
+        testRoundTrip(new File(resDN, "xsd6/gaLitObj.xsd"));
+        testRoundTrip(new File(resDN, "xsd6/gaObjAtt.xsd"));
+        testRoundTrip(new File(resDN, "xsd6/gaObjObj.xsd"));
 //        testRoundTrip(new File(resDN, "xsd6/imports.xsd"));               // CAN'T ROUNDTRIP
         testRoundTrip(new File(resDN, "xsd6/list.xsd"));
         testRoundTrip(new File(resDN, "xsd6/literalClass.xsd"));

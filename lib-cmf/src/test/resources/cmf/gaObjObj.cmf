@@ -9,37 +9,27 @@
     <NamespaceURI>http://example.com/test/</NamespaceURI>
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>
-      Attribute augmentation appinfo test
+      Augment all objects with an object
     </DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>attAugment.xsd</DocumentFilePathText>
+    <DocumentFilePathText>gaObjObj.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NIEMVersionName>NIEM6.0</NIEMVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
-      <Class structures:ref="test.CCOneType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="test.CCTwoType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
+      <ObjectProperty structures:ref="test.ObjProp" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationIndex>0</AugmentationIndex>
+      <GlobalClassCode>OBJECT</GlobalClassCode>
     </AugmentationRecord>
     <AugmentationRecord>
-      <Class structures:ref="test.SCOneType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
+      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="test.SCTwoType" xsi:nil="true"/>
-      <ObjectProperty structures:ref="test.ObjProp" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationIndex>1</AugmentationIndex>
+      <GlobalClassCode>OBJECT</GlobalClassCode>
     </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="xs">
@@ -63,16 +53,6 @@
     <Namespace structures:ref="test" xsi:nil="true"/>
     <Class structures:ref="test.ObjType" xsi:nil="true"/>
   </ObjectProperty>
-  <DataProperty structures:id="test.SCOneLiteral">
-    <Name>SCOneLiteral</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </DataProperty>
-  <DataProperty structures:id="test.SCTwoLiteral">
-    <Name>SCTwoLiteral</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </DataProperty>
   <Class structures:id="test.CCOneType">
     <Name>CCOneType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
@@ -100,24 +80,25 @@
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Class structures:id="test.SCOneType">
+  <Class structures:id="test.TestAssociationType">
+    <Name>TestAssociationType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Restriction structures:id="test.SCOneType">
     <Name>SCOneType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.SCOneLiteral" xsi:nil="true"/>
-      <MinOccursQuantity>1</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-    </ChildPropertyAssociation>
-  </Class>
-  <Class structures:id="test.SCTwoType">
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+  </Restriction>
+  <Restriction structures:id="test.SCTwoType">
     <Name>SCTwoType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
-    <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.SCTwoLiteral" xsi:nil="true"/>
-      <MinOccursQuantity>1</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-    </ChildPropertyAssociation>
-  </Class>
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+  </Restriction>
   <Datatype structures:id="xs.string">
     <Name>string</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>

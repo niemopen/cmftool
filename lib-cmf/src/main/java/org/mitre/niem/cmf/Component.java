@@ -94,7 +94,9 @@ public abstract class Component extends CMFObject implements Comparable<Componen
      * Returns the qualified name of this component; e.g. "nc:TextType".
      */
     public String qname () {
-        if (null == namespace || null == name) return "";
+        if (null == namespace)
+            if (null == name) return "";
+            else return name;
         return namespace.prefix() + ":" + name;
     }
     
@@ -167,6 +169,10 @@ public abstract class Component extends CMFObject implements Comparable<Componen
         int indx = uri.lastIndexOf("/");
         if (indx < 0 || indx >= uri.length()) return "";
         return uri.substring(indx+1);
+    }
+    
+    public static String  makeQN (String prefix, String name) {
+        return prefix + ":" + name;
     }
     
     public static String makeURI (String nsuri, String name) {
