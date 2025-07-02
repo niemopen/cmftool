@@ -15,6 +15,9 @@ public class JSONDefinition extends OfDefinition {
   private transient Property property;
   private transient Datatype dataType;
   private transient ClassType classType;
+  public String pattern;
+  public Double multipleOf = null;
+  public String format = null;
   private transient Model model;
 
   public JSONDefinition(){
@@ -166,23 +169,18 @@ public class JSONDefinition extends OfDefinition {
     // return a type to consider adding
     QualifiedName name = new QualifiedName(restriction);
 
-    if (name.name.equals("token") || name.name.equals("string")){
-      this.type = "string";
-    }
-    else if (name.name.equals("decimal") || name.name.equals("integer") ||
-             name.name.equals("double")  || name.name.equals("single")){
-      this.type = "number";
-    }
-    else{
-      // unset the type value
-      type = null;
-      // name.nsPrefix = restriction.base().namespace().prefix();
-      this.$ref = String.format("%s%s", JSONSchemaHelper.DEFINITIONS_TEXT, name.toString());
-
-      // add this type in the list
+    if (JSONSchemaHelper.isXMLPrimitiveType(restriction.base())) {
+      processXMLPrimitiveDataType(restriction.base().name());
       return name;
     }
-    return null;
+
+    // unset the type value
+    type = null;
+    // name.nsPrefix = restriction.base().namespace().prefix();
+    this.$ref = String.format("%s%s", JSONSchemaHelper.DEFINITIONS_TEXT, name.toString());
+
+    // add this type in the list
+    return name;
   }
   public void addItem(String ref){
     items.put("$ref", JSONSchemaHelper.PROPERTIES_TEXT + ref);
@@ -258,6 +256,139 @@ public class JSONDefinition extends OfDefinition {
       for (Facet facet : restriction.facetL()) {
         addFacet(facet);
       }
+    }
+  }
+
+  protected void processXMLPrimitiveDataType(String dataTypeName) {
+
+    type = "string"; // Default type
+
+    switch (dataTypeName) {
+      case "boolean" ->
+        type = "boolean";
+      case "decimal", "double", "float" ->
+        type = "number";
+      case "int" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = -2147483648D;
+        maximum = 2147483647D;
+      }
+      case "integer" -> {
+        type = "number";
+        multipleOf = 1.0;
+      }
+      case "long" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = -9223372036854775808D;
+        maximum = 9223372036854775807D;
+      }
+      case "unsignedLong" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = 0D;
+        maximum = 9223372036854775807D;
+      }
+      case "unsignedInt" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = 0D;
+        maximum = 4294967295D;
+      }
+      case "short" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = -32768D;
+        maximum = 32767D;
+      }
+      case "unsignedShort" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = 0D;
+        maximum = 65535D;
+      }
+      case "byte" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = -128D;
+        maximum = 127D;
+      }
+      case "unsignedByte" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = 0D;
+        maximum = 255D;
+      }
+      case "negativeInteger" -> {
+        type = "number";
+        multipleOf = 1.0;
+        maximum = -1D;
+      }
+      case "nonNegativeInteger" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = 0D;
+      }
+      case "nonPositiveInteger" -> {
+        type = "number";
+        multipleOf = 1.0;
+        maximum = 0D;
+      }
+      case "positiveInteger" -> {
+        type = "number";
+        multipleOf = 1.0;
+        minimum = 1D;
+      }
+      case "date", "dateTime" ->
+        format = "date-time";
+      case "time" ->
+        pattern = "^([0-9]{2}):([0-9]{2}):([0-9]{2}([.][0-9]{1,6})?)([+-]([0-9]{2}):([0-9]{2}))?$";
+      case "duration" ->
+        pattern = "^[-+]?P(([0-9]+Y)|([0-9]+M)|([0-9]+D)|(T([0-9]+H)|([0-9]+M)|([0-9]+([.][0-9]{1,6})?S)))$";
+      case "gDay" ->
+        pattern = "^---[0-3][0-9]$";
+      case "gMonth" ->
+        pattern = "^--[0-1][0-9]$";
+      case "gMonthDay" ->
+        pattern = "^--[0-1][0-9]-[0-3][0-9]$";
+      case "gYear" ->
+        pattern = "^[0-9]{4}$";
+      case "gYearMonth" ->
+        pattern = "^[0-9]{4}-[0-1][0-9]$";
+      case "token" ->
+        pattern = "^\\S*$"; // Non-whitespace characters
+      case "normalizedString" ->
+        pattern = "^\\s?(\\S+\\s?)+\\s?$"; // Non-empty string with optional leading/trailing whitespace
+      case "NMTOKEN" ->
+        pattern = "^[-.:_A-Za-z0-9]+$"; // Matches NMTOKEN pattern
+      case "NMTOKENS" -> {
+        type = "array";
+        items = new LinkedHashMap<>();
+        items.put("type", "string");
+        items.put("pattern", "^([-.:_A-Za-z0-9]+\\s)+$");
+      }
+      case "NAME" ->
+        pattern = "^[_:A-Za-z][-.:_A-Za-z0-9]*$";
+      case "language" ->
+        pattern = "^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$";
+      case "hexBinary" ->
+        pattern = "^([A-Z0-9]{2})*$";
+      case "base64Binary" ->
+        pattern = "^[A-Za-z0-9+/=\\\\s]*$";
+      case "anyURI" ->
+        format = "uri";
+      case "ID", "IDREF", "NCNAME", "ENTITY" ->
+        pattern = "^[_A-Za-z][-._A-Za-z0-9]*$";
+      case "IDREFS", "ENTITIES" -> {
+        type = "array";
+        items = new LinkedHashMap<>();
+        items.put("type", "string");
+        items.put("pattern", "^[_A-Za-z][-._A-Za-z0-9]*$");
+      }
+      case "NOTATION", "QName" ->
+        pattern = "^[_A-Za-z][-._A-Za-z0-9]*:[_A-Za-z][-._A-Za-z0-9]*$";
+      default -> {}
     }
   }
 }

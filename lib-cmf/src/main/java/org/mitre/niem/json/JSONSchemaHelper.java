@@ -1,13 +1,27 @@
 package org.mitre.niem.json;
 
-import org.mitre.niem.cmf.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import javax.xml.XMLConstants;
+
+import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.Datatype;
+import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.Property;
+import org.mitre.niem.cmf.PropertyAssociation;
+import org.mitre.niem.cmf.Restriction;
 
 public class JSONSchemaHelper {
   public static final String DEFINITIONS_TEXT = "#/definitions/";
   public static final String PROPERTIES_TEXT = "#/properties/";
+
+  public static boolean isXMLPrimitiveType(Datatype datatype) {
+    String namespace = datatype.namespace().uri();
+    if (namespace == null)
+      return false;
+    return namespace.equals(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+  }
 
   public static boolean isIntrinsicType(String dataTypeName) {
     // Look for known data types
