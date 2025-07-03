@@ -9,37 +9,19 @@
     <NamespaceURI>http://example.com/test/</NamespaceURI>
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>
-      Attribute augmentation appinfo test
+      Augment all literal objects with an attribute
     </DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>attAugment.xsd</DocumentFilePathText>
+    <DocumentFilePathText>gaLitAtt.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
     <NIEMVersionName>NIEM6.0</NIEMVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
-      <Class structures:ref="test.CCOneType" xsi:nil="true"/>
       <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="test.CCTwoType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
-      <MinOccursQuantity>1</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="test.SCOneType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="test.SCTwoType" xsi:nil="true"/>
-      <ObjectProperty structures:ref="test.ObjProp" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
+      <GlobalClassCode>LITERAL</GlobalClassCode>
     </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="xs">
@@ -114,6 +96,15 @@
     <Namespace structures:ref="test" xsi:nil="true"/>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="test.SCTwoLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="test.TestAssociationType">
+    <Name>TestAssociationType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>

@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.mitre.niem.utility.MapToList;
 
 /**
  * A class to generate an output stream of lovely XSD from a Document object.
@@ -41,14 +42,24 @@ public class XSDWriter extends XMLWriter {
     // For <xs:element>, order as @ref, @minOccurs, @maxOccurs, @name, @type, @substitutionGroup, then others
     // For <xs:import>, order as @namespace, @schemaLocation, then others
     private static final Pattern linePat = Pattern.compile("^(\\s*)<([^\\s>]+)(.*)");
+    protected static final MapToList<String,String> reorderMap;
     protected static final String[][]reorder = {
                 { "xs:element", "name", "ref", "type", "minOccurs", "maxOccurs", "substitutionGroup" },
                 { "xs:import", "namespace", "schemaLocation" },
                 { "xs:complexType", "name", "type" },
                 { "xs:attribute", "name", "ref", "type", "use" },
-                { "xs:choice", "minOccurs", "maxOccurs" },
-                { "appinfo:LocalTerm", "term" }     // different prefix? too bad.
+                { "xs:choice", "minOccurs", "maxOccurs" }
         };
+    
+    static {
+        reorderMap = new MapToList<>();
+        for (int i = 0; i < reorder.length; i++) {
+            var key = reorder[i][0];
+            for (int j = 1; j < reorder[i].length; j++) {
+                reorderMap.add(key, reorder[i][j]);
+            }
+        }
+    }
     
     public XSDWriter () { }
     
@@ -67,28 +78,23 @@ public class XSDWriter extends XMLWriter {
         if (res.endsWith("/>")) end = "/>";
         res = res.substring(0, res.length() - end.length());
         
-        for (int i = 0; i < reorder.length; i++) {
-            if (tag.equals(reorder[i][0])) {
-                w.write(indent);
-                w.write("<" + tag);
-                var tmap = keyValMap(res);
-                for (int j = 1; j < reorder[i].length; j++) {
-                    var key = reorder[i][j];
-                    if (null != tmap.get(key)) {
-                        w.write(String.format(" %s=\"%s\"", key, tmap.get(key)));
-                        tmap.remove(key);
-                    }
+        if (reorderMap.containsKey(tag)) {
+            var amap = keyValMap(res);
+            var keyL = reorderMap.get(tag);
+            w.write(indent);
+            w.write("<" + tag);
+            for (var key : keyL) {
+                if (null != amap.get(key)) {
+                    w.write(String.format(" %s=\"%s\"", key, amap.get(key)));
+                    amap.remove(key);                    
                 }
-                for (var key : tmap.keySet()) 
-                    w.write(String.format(" %s=\"%s\"", key, tmap.get(key)));
-                
-                w.write(end + "\n");
-                line = null;            // this line was reordered
-                i = reorder.length;
             }
+            for (var key : amap.keySet()) {
+                w.write(String.format(" %s=\"%s\"", key, amap.get(key)));
+            }
+            w.write(end + "\n");                
         }
-        // Write unchanged line if not reordered
-        if (null != line) w.write(line + "\n");
+        else w.write(line + "\n");
     }
 
     // Rewrite the xs:schema element to make it pretty.

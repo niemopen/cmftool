@@ -167,8 +167,8 @@ class CmdXSDtoCMF implements JCCommand {
         // Construct the schema object from arguments
         String[] aa = mainArgs.toArray(new String[0]);
         NIEMSchema s = null;
-        Model m = null;
-        try {
+        Model m = null;        
+        try {           
             var mfact = new ModelFromXSD();
             s = new NIEMSchema(aa);
             m = mfact.createModel(s);

@@ -43,4 +43,9 @@
       <xs:documentation>Additional information about an education.</xs:documentation>
     </xs:annotation>
   </xs:element>
+  <xs:element name="TestAugElement" type="niem-xs:token" substitutionGroup="nc:EducationAugmentationPoint">
+    <xs:annotation>
+      <xs:documentation>An augmentation element not part of an augmentation type.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
 </xs:schema>

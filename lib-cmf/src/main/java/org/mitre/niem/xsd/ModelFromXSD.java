@@ -136,7 +136,7 @@ public class ModelFromXSD {
         xs = sch.xsmodel();
         buildElementLists();                // the component elements in model schema documents
         createNamespaces();                 // an object for each model namespace
-        processAttributeAugmentations();    // note each augmented class and any global augs
+        processAugmentRecords();            // note each augmented class and any global augs
         processTypeDefinitions();           // now we can distinguish datatypes from literal classes
         initializeDatatypes();              // now we can create Datatype objects
         populateDatatypes();                // and with all Datatypes in hand, we can fill them out
@@ -198,7 +198,6 @@ public class ModelFromXSD {
     // The XSD namespace is automatically part of every model.  The XML namespace
     // is added later on demand.
     private void createNamespaces () throws CMFException {
-        LOG.debug("createNamespaces");
         for (var sd : sch.schemaDocL()) {
             var kind = sch.namespaceKind(sd);
             var kcode = kindToCode(kind);
@@ -258,17 +257,16 @@ public class ModelFromXSD {
         }
     }
     
-    // Create a map from the URIs for ClassTypes that are augmented by one or more
-    // attribute properties, to a list of the URIs for the augmenting attributes.
-    // Also create lists of any global attribute augmentations for association, object,
-    // and literal classes.  We need this to decide whether a CSC type should be
-    // a literal ClassType object or a Datatype object.    
+    // Process the appinfo:Augmentation elements in all the namespaces.  
+    // In most, the augmenting property will be an attribute.  
+    // If the augmented type has simple content, the augmenting property can 
+    // also be an ObjectProperty -- and then the message schema will contain a
+    // reference attribute.
     private final Map<String,List<Element>> augments = new HashMap<>(); // nsU -> appinfo:Augmentation elements
     private final Set<String> attAugTypeUS           = new HashSet<>(); // set of types with att augmentations
     private boolean anyGlobalLitAugF = false;
     
-    private void processAttributeAugmentations () {
-        LOG.debug("indexAttributeAugmentations");
+    private void processAugmentRecords () {
         for (var ns : m.namespaceSet()) {
             var nsU   = ns.uri();
             var sd    = sch.schemaDocument(nsU);
@@ -289,11 +287,7 @@ public class ModelFromXSD {
                     var tnsU  = uriToNamespace(typeU);
                     var tname  = qnToName(typeQ);
                     var xctype = xs.getTypeDefinition(tname, tnsU);
-                    if (null == xctype)
-                        LOG.warn("{}: can't find {} in Augmentation", ns.uri(), typeQ);
-                    else {
-                        attAugTypeUS.add(typeU);
-                    }
+                    attAugTypeUS.add(typeU);
                 }
                 else {
                     var codeL = codes.trim().split("\\s+");
@@ -444,7 +438,6 @@ public class ModelFromXSD {
     // Create the right kind of datatype object (Restriction, List, Union)
     // and add to the model.  Objects are empty now, populated later.
     private void initializeDatatypes () {
-        LOG.debug("initializeDatatypes");
         for (var dtU : datatypeUs) {
             Datatype dt = null;
             var dtns  = m.compUToNamespaceObj(dtU);    // datatype namespace object
@@ -462,8 +455,7 @@ public class ModelFromXSD {
     // If we tried to do this in one pass, we would wind up trying to populate
     // <xs:list itemType="foo:BarType"> before we had the object for foo:BarType.
     // Two passes is so much easier than some complicated recursive approach!
-    private void populateDatatypes () throws CMFException {
-        LOG.debug("populateDatatypes");     
+    private void populateDatatypes () throws CMFException {    
         for (var dtU : datatypeUs) {
             if (!sch.isModelComponentU(dtU)) continue;  // init but don't populate external datatypes
             var dt     = m.uriToDatatype(dtU);
@@ -518,7 +510,6 @@ public class ModelFromXSD {
             String clsaU)                           // CLSA namespace URI in this schema doc
         throws CMFException {
         // Handle code list schema appinfo
-        LOG.debug("popRes {}", r.qname());
         var appiL = getAppinfoChildren(schE);
         for (var appi : appiL) {
             var clsaNL = appi.getElementsByTagNameNS(clsaU, "SimpleCodeListBinding");
@@ -651,7 +642,6 @@ public class ModelFromXSD {
     // be part of the model, but we create and add them here, use and remove them later.
     private final Set<String> allClassUs = new HashSet<>();
     private void initializeClassTypes () {
-        LOG.debug("initializeClassTypes");
         for (var ns : m.namespaceSet()) {
             if (!isModelKind(codeToKind(ns.kindCode()))) continue;
             var nsU = ns.uri();
@@ -665,7 +655,6 @@ public class ModelFromXSD {
                 if (CONTENTTYPE_SIMPLE == xctype.getContentType()) continue;
                 var ct   = new ClassType(ns, name);
                 m.addClassType(ct);
-                LOG.debug("initializeClassTypes {}", ct.qname());
                 allClassUs.add(ct.uri());
             }
         }
@@ -687,7 +676,6 @@ public class ModelFromXSD {
     // efficiently get the appinfo attributes.
     private final Map<String,Property> uri2externalProp = new HashMap<>();
     private void createPropertiesFromAttributes () {
-        LOG.debug("createPropertiesFromAttributes");
         for (var sd : sch.schemaDocL()) { 
             if (!sch.isModelNamespace(sd) && !sch.isExternal(sd)) continue;
             var nsU  = sd.targetNamespace();               // namespace URI
@@ -720,10 +708,10 @@ public class ModelFromXSD {
     // We create property objects for element declarations in external namespaces
     // but don't add them to the model yet.  Also keep track of augmentations 
     // and augmentation points, we use and remove them from the model later.
+    private final Set<ObjectProperty> globalAugS = new HashSet<>();
     private final List<ObjectProperty> augPropL = new ArrayList<>();
     private final List<ObjectProperty> augPointL = new ArrayList<>();
     private void initializePropertiesFromElements () {
-        LOG.debug("initializePropertiesFromElements");
         for (var sd : sch.schemaDocL()) { 
             if (sch.isModelNamespace(sd)) {
                 var nsU  = sd.targetNamespace();               // namespace URI
@@ -775,9 +763,8 @@ public class ModelFromXSD {
     // declarations.  Properties from external namespaces don't get populated because
     // they are just placeholders in CMF.
     private void populatePropertiesFromElements () {
-        LOG.debug("populatePropertiesFromElements");
          for (var sd : sch.schemaDocL()) {
-              if (!sch.isModelNamespace(sd)) continue;
+            if (!sch.isModelNamespace(sd)) continue;
             var nsU  = sd.targetNamespace();
             var ns   = m.namespaceObj(nsU);
             var vers = sd.niemVersion();
@@ -786,7 +773,7 @@ public class ModelFromXSD {
               for (var schE : eL) {
                 var appi  = getAppinfoAttributes(schE, appU);
                 var name  = schE.getAttribute("name");
-                 var typeQ = schE.getAttribute("type");
+                var typeQ = schE.getAttribute("type");
                 var typeU = schemaQNToURI(schE, typeQ);
                 var subQ  = schE.getAttribute("substitutionGroup");
                 var propU = makeURI(nsU, name);
@@ -806,9 +793,15 @@ public class ModelFromXSD {
                     p = dp;                      
                 }
                 if (!subQ.isEmpty()) {
-                    var subU = schemaQNToURI(schE, subQ);
-                    var subp = m.uriToProperty(subU);
-                    p.setSubproperty(subp);
+                    var subU   = schemaQNToURI(schE, subQ);
+                    var subnsU = uriToNamespace(subU);
+                    if (NSK_STRUCTURES == NamespaceKind.namespaceToKind(subnsU)) {
+                        globalAugS.add((ObjectProperty)p);
+                    }
+                    else {
+                        var subp = m.uriToProperty(subU);
+                        p.setSubproperty(subp);
+                    }
                 }
                 var xedec = xs.getElementDeclaration(name, nsU);
                 populateComponent(p, schE, appi);
@@ -821,7 +814,6 @@ public class ModelFromXSD {
     // Create the literal property for each literal class.  
     // Once created, add to the literal class object.
     private void createLiteralProperties () {
-        LOG.debug("createLiteralProperties");
         for (var ltU : litClassUs) {
             var ct     = m.uriToClassType(ltU);
             var schE   = comp2Element.get(ltU);
@@ -846,7 +838,6 @@ public class ModelFromXSD {
     // or correlate them with with the schema DOM.  Does make you wonder if using
     // the Xerces XML Schema API was a mistake.  Not going to rewrite all that now!
     private void populateClassTypes () {
-        LOG.debug("populateClassTypes");
         for (var sd : sch.schemaDocL()) {
             if (!sch.isModelNamespace(sd)) continue;
             var nsU  = sd.targetNamespace();               // namespace URI
@@ -940,20 +931,30 @@ public class ModelFromXSD {
     // Turn augmentation elements and augmentation types into AugmentRecord objects
     // belonging to the appropriate Namespace.  Remove all augmentation components
     // (FooAugmentation, FooAugmentationPoint, FooAugmentationType) from the model.
+    private static Set VALID_CODES = Set.of("ASSOCIATION", "OBJECT", "LITERAL");
     private void createAugmentRecords () {
-        LOG.debug("createElementAugmentations");
         for (var aprop : augPropL) {
-            LOG.debug("aprop: {}", aprop.uri());
+            ClassType atype = null;
+            String gcode = null;          
             var augt   = aprop.classType();             // augmentation type; eg. j:EducationAugmentationType
-            var apoint = aprop.subPropertyOf();           // augmentation point property; eg. nc:EducationAugmentationPoint
-            var augmtU = replaceSuffix(apoint.uri(), "AugmentationPoint", "Type"); // augmented class URI
-            var atype  = m.uriToClassType(augmtU);      // augmented ClassType object
-            var augns  = augt.namespace();              // augmenting namespace object
+            var augns  = augt.namespace();              // augmenting namespace object      
+            if (globalAugS.contains(aprop)) {
+                var name = aprop.name();
+                if (name.startsWith("Object")) gcode = "OBJECT";
+                if (name.startsWith("Association")) gcode = "ASSOCIATION";
+            }
+            else {
+                var augp = aprop.subPropertyOf();       // augmentation point property
+                var augU = augp.uri();                  // augmentation point URI; eg. nc:EducationAugmentationPoint
+                var augmtU = replaceSuffix(augU, "AugmentationPoint", "Type"); // augmented class URI
+                atype  = m.uriToClassType(augmtU);      // augmented ClassType object                
+            }
             var index  = 0;
             for (var cpa : augt.propL()) {
                 var pname = cpa.property().qname();
                 var arec = new AugmentRecord(cpa);
                 arec.setClassType(atype);
+                arec.addCode(gcode);
                 if (cpa.property().isAttribute()) arec.setIndex("-1");
                 else arec.setIndex(Integer.toString(index++));
                 augns.addAugmentRecord(arec);
@@ -996,7 +997,23 @@ public class ModelFromXSD {
                 var propU  = sd.qnToURI(ae, propQ);
                 var ct     = m.uriToClassType(classU);
                 var p      = m.uriToProperty(propU);
-                var codeL  = codes.split("\\s+");
+                var codeL  = new String[0];
+                if (!codes.isEmpty()) codeL  = codes.split("\\s+");
+                
+                // Let's do a little error checking!
+                var badProp  = (null == p);
+                var badClass = (!classQ.isEmpty() && null == ct);
+                var badCodes = false;
+                for (var code : codeL) if (!VALID_CODES.contains(code)) badCodes = true;
+                if (badProp || badClass || badCodes) {
+                    var aeStr = "<Augmentation property=\"" + propQ + "\"";
+                    if (!classQ.isEmpty()) aeStr = aeStr + " class=\"" + classQ + "\"";
+                    if (!codes.isEmpty())  aeStr = aeStr + " globalClassCode=\"" + codes + "\"";      
+                    aeStr = aeStr + ">";
+                    if (badProp)  LOG.warn("{}: unknown property in {}", nsU, aeStr);
+                    if (badClass) LOG.warn("{}: unknown class in {}", nsU, aeStr);
+                    if (badCodes) LOG.warn("{}: unknown globalClassCode in {}", nsU, aeStr);
+                }
                 var arec   = new AugmentRecord();
                 arec.setClassType(ct);
                 arec.setProperty(p);

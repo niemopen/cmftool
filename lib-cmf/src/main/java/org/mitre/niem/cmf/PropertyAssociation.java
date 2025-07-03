@@ -25,6 +25,7 @@ package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.mitre.niem.xml.LanguageString;
 
 /**
@@ -33,7 +34,7 @@ import org.mitre.niem.xml.LanguageString;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class PropertyAssociation extends CMFObject {
+public class PropertyAssociation extends CMFObject implements Comparable<PropertyAssociation> {
     
     public PropertyAssociation () { }
     
@@ -54,6 +55,10 @@ public class PropertyAssociation extends CMFObject {
     public int maxOccursVal () { 
         return "unbounded".equals(maxOccurs) ? -1 : stringToInt(maxOccurs);
     }
+    
+    public ClassType classType ()       { return null; }
+    public String index ()              { return ""; }
+    public Set<String> codeS ()         { return Set.of(); }    
     
     public void setProperty (Property p)    { property = p; }
     public void setMinOccurs (String s)     { minOccurs = s; }
@@ -85,4 +90,21 @@ public class PropertyAssociation extends CMFObject {
         c.addPropertyAssociation(this);
         return true;
     }
+    
+    @Override
+    public int compareTo(PropertyAssociation o) {
+        int rv = 0;
+        if (null != this.classType() && null != o.classType()) rv = this.classType().compareTo(o.classType());
+        if (0 == rv) {
+            var tx = "0" + this.index();
+            var ox = "0" + o.index();
+            try {
+                var ti = Integer.parseInt(tx);
+                var oi = Integer.parseInt(ox);
+                rv = ti - oi;
+            }
+            catch(NumberFormatException ex) { } // IGNORE
+        }
+        if (0 == rv) rv = this.property().compareTo(o.property());
+        return rv;}    
 }

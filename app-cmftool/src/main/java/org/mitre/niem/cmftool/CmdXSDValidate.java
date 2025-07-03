@@ -50,7 +50,7 @@ import org.xml.sax.SAXException;
 
 @Parameters(commandDescription = "validate XML documents")
 
-class CmdXSDvalidate implements JCCommand {
+class CmdXSDValidate implements JCCommand {
    
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
@@ -61,14 +61,14 @@ class CmdXSDvalidate implements JCCommand {
     @Parameter(description = "--schema f.xsd [...] --file doc.xml [...]")
     private List<String> mainArgs;
     
-    CmdXSDvalidate () {
+    CmdXSDValidate () {
     }
   
-    CmdXSDvalidate (JCommander jc) {
+    CmdXSDValidate (JCommander jc) {
     }
 
     public static void main (String[] args) {       
-        CmdXSDtoCMF obj = new CmdXSDtoCMF();
+        var obj = new CmdXSDValidate();
         obj.runMain(args);
     }
     

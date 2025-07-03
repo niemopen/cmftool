@@ -47,6 +47,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class ResourceManager {
     private static final Logger LOG = LogManager.getLogger(ResourceManager.class);
+    private final Class rc;
     private final String jarPath;
     private final String resPath;
     
@@ -58,13 +59,17 @@ public class ResourceManager {
     }
 
     public ResourceManager () {
+        rc = ResourceManager.class;
         jarPath = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
+//        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
+        resPath = FilenameUtils.concat(jarPath, "../../../resources/main");    
     }
     
     public ResourceManager (Class c) {
+        rc = c;
         jarPath = c.getProtectionDomain().getCodeSource().getLocation().getPath();
-        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
+//        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
+        resPath = FilenameUtils.concat(jarPath, "../../../resources/main");    
     }
     
     public InputStream getResourceStream (String name) throws IOException {
@@ -83,7 +88,7 @@ public class ResourceManager {
             return res;
         }
         // Running from JAR? Get resource stream
-        res = ResourceManager.class.getResourceAsStream(name);
+        res = rc.getResourceAsStream(name);
         return res;
     }
     

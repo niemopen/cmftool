@@ -67,8 +67,11 @@ public class CMFTool {
         // Uncomment arguments for debugging:
 //    String res = "../lib-cmf/src/test/resources/xsd5/";     
 //    String res = "../lib-cmf/src/test/resources/xsd6/";
+    String res = "../../../NIEM/ntac-admin/examples/src/Augmentation/09-ASCwA/";
     if (0 == args.length) {
-//        args = new String[]{"m2xmsg", "-o", res+"tmp", res+"class.cmf"};
+//        args = new String[]{"m2x", "-o", res+"tmp", res+"globObjAug.cmf"};
+//        args = new String[]{"m2xmsg", "-o", res+"message.xsd", res+"model.cmf"};
+        args = new String[]{"x2m", "-o", res+"model.cmf", res+"model.xsd/msg.xsd"};
     }
     
 
@@ -88,7 +91,9 @@ public class CMFTool {
         var xsdToCmfCmd    = new CmdXSDtoCMF(jc);       
 //        var xsdCanon       = new CmdXSDcanonicalize(jc);
 //        var xsdCmpCmd      = new CmdXSDcmp(jc);
-        var xsValCmd       = new CmdXSDvalidate(jc);
+        var cmfValCmd      = new CmdCMFValidate(jc);
+        var xsValCmd       = new CmdXSDValidate(jc);
+        var xsCanonCmd     = new CmdXSDCanonicalize(jc);
         var helpCmd        = new CommandHelp(jc); 
         jc.addCommand("m2m",    cmfToCmfCmd);
         jc.addCommand("m2r",    cmfToRDFCmd);
@@ -102,7 +107,9 @@ public class CMFTool {
         jc.addCommand("x2m",    xsdToCmfCmd);  
 //        jc.addCommand("xcanon", xsdCanon);
 //        jc.addCommand("xcmp",   xsdCmpCmd);
+        jc.addCommand("mval",   cmfValCmd);
         jc.addCommand("xval",   xsValCmd);
+        jc.addCommand("xcanon", xsCanonCmd);
         jc.addCommand("help",   helpCmd);
         
         if (args.length < 1) {

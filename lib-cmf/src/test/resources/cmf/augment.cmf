@@ -59,6 +59,12 @@
     </AugmentationRecord>
     <AugmentationRecord>
       <Class structures:ref="nc.EducationType" xsi:nil="true"/>
+      <DataProperty structures:ref="test.TestAugElement" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </AugmentationRecord>
+    <AugmentationRecord>
+      <Class structures:ref="nc.EducationType" xsi:nil="true"/>
       <ObjectProperty structures:ref="nc.CommentText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
@@ -164,6 +170,12 @@
     <DocumentationText>An intended recipient of the comment.</DocumentationText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
+  <DataProperty structures:id="test.TestAugElement">
+    <Name>TestAugElement</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>An augmentation element not part of an augmentation type.</DocumentationText>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
   <DataProperty structures:id="xml.lang">
     <Name>lang</Name>
     <Namespace structures:ref="xml" xsi:nil="true"/>
@@ -267,6 +279,10 @@
   </Datatype>
   <Datatype structures:id="xs.string">
     <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
 </Model>

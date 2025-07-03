@@ -118,7 +118,7 @@ public class Model extends CMFObject {
         if (null == uri || uri.isEmpty()) return "";
         int si = uri.lastIndexOf('/');
         if (si < 2) return "";
-        var base = uri.substring(0, si);
+        var base = uri.substring(0, si+1);
         var ln   = uri.substring(si+1);
         var pre  = nsmap.getPrefix(base);
         if (pre.isEmpty()) return "";

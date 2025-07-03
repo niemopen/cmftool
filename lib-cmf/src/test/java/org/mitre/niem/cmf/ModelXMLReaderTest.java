@@ -133,10 +133,34 @@ public class ModelXMLReaderTest extends ModelAssertions {
     }
     
     @Test
-    public void testGlobalAttAugment () throws Exception {
+    public void testGaLitAtt () throws Exception {
         var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File(resDN, "globalAttAugment.cmf"));
-        checkGlobalAttAugment(model);
+        var model = rdr.readFiles(new File(resDN, "gaLitAtt.cmf"));
+        checkGaLitAtt(model);
+        assertEmptyLogs();        
+    }    
+    
+    @Test
+    public void testGaLitObj () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "gaLitObj.cmf"));
+        checkGaLitObj(model);
+        assertEmptyLogs();        
+    }
+
+    @Test
+    public void testGaObjAtt() throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "gaObjAtt.cmf"));
+        checkGaObjAtt(model);
+        assertEmptyLogs();        
+    }
+
+    @Test
+    public void testGaObjObj () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "gaObjObj.cmf"));
+        checkGaObjObj(model);
         assertEmptyLogs();        
     }
     
