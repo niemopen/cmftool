@@ -30,7 +30,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.mitre.niem.xsd.NamespaceMap;
@@ -121,7 +123,7 @@ public class Model extends CMFObject {
         var base = uri.substring(0, si+1);
         var ln   = uri.substring(si+1);
         var pre  = nsmap.getPrefix(base);
-        if (pre.isEmpty()) return "";
+        if (pre == null || pre.isEmpty()) return "";
         return pre + ":" + ln;
     }
    

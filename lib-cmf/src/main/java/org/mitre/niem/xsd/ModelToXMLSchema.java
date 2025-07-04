@@ -3,7 +3,7 @@
  *
  * This software was produced for the U. S. Government
  * under Basic Contract No. W56KGU-18-D-0004, and is
- * subject to the Rights in Noncommercial Computer Software
+ * subject to the Rights in Noncommercial Computer Software`
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
@@ -508,7 +508,13 @@ public class ModelToXMLSchema {
             if (W3C_XML_SCHEMA_NS_URI.equals(refnsU)) continue;
             if (nsU.equals(refnsU)) continue;
             var rns  = m.namespaceObj(refnsU);
-            var snF  = new File(namespaceU2Path.get(refnsU));
+            // FIXME: extensions namespace URIs without an ending / error here
+            var nsP  = namespaceU2Path.get(refnsU);
+            if (nsP == null) {
+                LOG.warn("No path for namespace {} - uri should end in /", refnsU);
+                continue;
+            }
+            var snF  = new File(nsP);
             var snP  = snF.toPath();
             var relP = outP.relativize(snP);
             var sloc = separatorsToUnix(relP.toString());
@@ -599,6 +605,7 @@ public class ModelToXMLSchema {
     private static Set<String> needURIcodes = Set.of("ANY", "ANYURI", "INTERNAL", "RELURI");
     private static Set<String> needRefcodes = Set.of("ANY", "INTERNAL", "IDREF");
     private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM4.0", "NIEM5.0");
+    //private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM3.1", "NIEM3.2", "NIEM4.0", "NIEM4.1", "NIEM4.2", "NIEM5.0", "NIEM5.1", "NIEM5.2");
     protected void createCCCType (Document doc, 
         List<Element> defEL,                // add typedef elements to this list
         List<Element> decEL,                // add augmentation point elements to this list
