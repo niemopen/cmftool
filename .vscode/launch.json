@@ -25,6 +25,61 @@
             "classPaths": [
                 "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
             ],
+        },
+        {
+            "type": "java",
+            "name": "ecf5.cmf model schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2x -o ${workspaceFolder}/../tests/ecf5-m2x ${userHome}/OneDrive/xml/ecf5json/model/cmf/ecf5.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "ecf5.cmf message schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2xmsg -o ${workspaceFolder}/../tests/ecf5-m2xmsg ${userHome}/OneDrive/xml/ecf5json/model/cmf/ecf5.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "ecf5.cmf JSON message schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2jmsg -o ${workspaceFolder}/../tests/ecf5-m2jmsg.schema.json ${userHome}/OneDrive/xml/ecf5json/model/cmf/ecf5.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "alea-courtdispo model schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2x -o ${workspaceFolder}/../tests/alea-courtdispo-m2x ${userHome}/OneDrive/xml/mcp/alea-courtdispo/model/cmf/CourtDisposition.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
+        },
+        {
+            "type": "java",
+            "name": "alea-courtdispo message schema",
+            "request": "launch",
+            "mainClass": "org.mitre.niem.cmftool.CMFTool",
+            "projectName": "app-cmftool",
+            "args": "m2xmsg -o ${workspaceFolder}/../tests/alea-courtdispo-m2xmsg ${userHome}/OneDrive/xml/mcp/alea-courtdispo/model/cmf/CourtDisposition.cmf",
+            "classPaths": [
+                "${workspaceFolder}/app-cmftool/build/install/cmftool/lib/*"
+            ],
         }
     ]
 }

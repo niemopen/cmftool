@@ -3,7 +3,7 @@
  *
  * This software was produced for the U. S. Government
  * under Basic Contract No. W56KGU-18-D-0004, and is
- * subject to the Rights in Noncommercial Computer Software
+ * subject to the Rights in Noncommercial Computer Software`
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
@@ -508,7 +508,13 @@ public class ModelToXMLSchema {
             if (W3C_XML_SCHEMA_NS_URI.equals(refnsU)) continue;
             if (nsU.equals(refnsU)) continue;
             var rns  = m.namespaceObj(refnsU);
-            var snF  = new File(namespaceU2Path.get(refnsU));
+            // FIXME: extensions namespace URIs without an ending / error here
+            var nsP  = namespaceU2Path.get(refnsU);
+            if (nsP == null) {
+                LOG.warn("No path for namespace {} - uri should end in /", refnsU);
+                continue;
+            }
+            var snF  = new File(nsP);
             var snP  = snF.toPath();
             var relP = outP.relativize(snP);
             var sloc = separatorsToUnix(relP.toString());
