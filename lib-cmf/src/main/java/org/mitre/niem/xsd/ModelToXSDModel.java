@@ -415,6 +415,11 @@ public class ModelToXSDModel {
         for (var refnsU : refnsUs) {
             if (refnsU.isEmpty()) continue;
             var pre  = nsmap.getPrefix(refnsU);
+            // gracefully handle missing prefixes
+            if (pre == null || pre.isEmpty()) {
+                LOG.error("No prefix for namespace URI {}", refnsU);
+                continue;
+            }
             var kind = namespaceU2Kind.getOrDefault(refnsU, NSK_UNKNOWN);
             var key  = String.format("%02d%s", kind, pre);          
             if (NSK_APPINFO != kind && NSK_CLSA != kind) 
@@ -486,6 +491,16 @@ public class ModelToXSDModel {
         for (var ctU : ctU2augs.keySet()) {                 // http://FooNS/BarType or ObjectType
             var ctnsU = uriToNamespace(ctU);                // http://FooNS/ or ""
             var ctns  = m.namespaceObj(ctnsU);              // FooNS namespace object or null
+            // gracefully handle namespaces that do not end in /
+            if (ctns == null) {
+                if (ctnsU.endsWith("/"))
+                    ctnsU = ctnsU.substring(0, ctnsU.length() - 1);
+                    ctns = m.namespaceObj(ctnsU);
+                    if (ctns == null) {
+                        LOG.error("No namespace for class type URI {}", ctU);
+                        continue;
+                    }
+            }
             var ctN   =  "";                                // augmented type name
             if (null == ctns) ctN = ctU;                    // ObjectType
             else ctN  = uriToName(ctU);                     // BarType
@@ -512,7 +527,7 @@ public class ModelToXSDModel {
             var apQ  = "";
             if (null == ctns) apQ = bc2pre.get("STRUCTURES") + ":" + baseN;
             else apQ = ctns.prefix() + ":" + baseN;
-            apQ = apQ + "AugmentationPoint";
+                apQ = apQ + "AugmentationPoint";
 
             augE.setAttribute("name", aeN);
             augE.setAttribute("type", act.qname());
