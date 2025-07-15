@@ -716,6 +716,11 @@ public class ModelToXMLSchema {
               for (var spU : choiceUs) {                          // 
                 var spnsU = uriToNamespace(spU);
                 var spQ   = m.uriToQN(spU);
+                // gracefully handle namespaces not ending in /
+                if (spQ == null || spQ.isEmpty()) {
+                    LOG.warn("No namespace for class type URI {}", spU);
+                    //continue;
+                }
                 var elE  = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
                 elE.setAttribute("ref", spQ);
                 if (choiceUs.size() == 1) {

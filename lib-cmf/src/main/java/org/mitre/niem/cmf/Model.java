@@ -123,7 +123,15 @@ public class Model extends CMFObject {
         var base = uri.substring(0, si+1);
         var ln   = uri.substring(si+1);
         var pre  = nsmap.getPrefix(base);
-        if (pre == null || pre.isEmpty()) return "";
+        if (pre == null || pre.isEmpty()) {
+            // gracefully handle namespaces not ending in /
+            if (base.endsWith("/"))
+                pre = nsmap.getPrefix(base.substring(0, base.length()-1));
+        }
+        if (pre == null || pre.isEmpty()) {
+            LOG.warn("No prefix for namespace URI {}", base);
+            return "";
+        }
         return pre + ":" + ln;
     }
    
