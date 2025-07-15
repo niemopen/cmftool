@@ -494,6 +494,16 @@ public class ModelToXMLSchema {
         // Prepare list of imports for sorting
         for (var refnsU : refnsUs) {
             var pre  = nsmap.getPrefix(refnsU);
+            // gracefully handle missing prefixes
+            if (pre == null || pre.isEmpty()) {
+                if (refnsU.endsWith("/"))
+                    refnsU = refnsU.substring(0, refnsU.length() - 1);
+                    pre  = nsmap.getPrefix(refnsU);
+                    if (pre == null) {
+                        LOG.error("No namespace for class type URI {}", refnsU);
+                        continue;
+                    }
+            }
             var kind = namespaceU2Kind.getOrDefault(refnsU, NSK_UNKNOWN);
             var key  = String.format("%02d%s", kind, pre);          
             if (NSK_APPINFO != kind && NSK_CLSA != kind) 
@@ -510,10 +520,6 @@ public class ModelToXMLSchema {
             var rns  = m.namespaceObj(refnsU);
             // FIXME: extensions namespace URIs without an ending / error here
             var nsP  = namespaceU2Path.get(refnsU);
-            if (nsP == null) {
-                LOG.warn("No path for namespace {} - uri should end in /", refnsU);
-                continue;
-            }
             var snF  = new File(nsP);
             var snP  = snF.toPath();
             var relP = outP.relativize(snP);
@@ -606,6 +612,7 @@ public class ModelToXMLSchema {
     private static Set<String> needRefcodes = Set.of("ANY", "INTERNAL", "IDREF");
     private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM4.0", "NIEM5.0");
     //private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM3.1", "NIEM3.2", "NIEM4.0", "NIEM4.1", "NIEM4.2", "NIEM5.0", "NIEM5.1", "NIEM5.2");
+    private static Set<String> needAppliesToParent = Set.of("NIEM6.0");
     protected void createCCCType (Document doc, 
         List<Element> defEL,                // add typedef elements to this list
         List<Element> decEL,                // add augmentation point elements to this list
@@ -778,7 +785,7 @@ public class ModelToXMLSchema {
             addStructuresAttribute(doc, attParentE, "ref", refnsUs, structuresPre, structuresU);
         if (!extendF && needMetadata.contains(ver))
             addStructuresAttribute(doc, attParentE, "metadata", refnsUs, structuresPre, structuresU);
-        if (!extendF)
+        if (!extendF && needAppliesToParent.contains(ver))
             addStructuresAttribute(doc, attParentE, "appliesToParent", refnsUs, structuresPre, structuresU);
         defEL.add(ctE);
     }
