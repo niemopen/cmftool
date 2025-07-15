@@ -410,7 +410,7 @@ public class ModelToXSDModel {
             var pre  = nsmap.getPrefix(refnsU);
             // gracefully handle missing prefixes
             if (pre == null || pre.isEmpty()) {
-                LOG.error("No prefix for namespace URI {}", refnsU);
+                LOG.warn("No prefix for namespace URI {}", refnsU);
                 continue;
             }
             var kind = namespaceU2Kind.getOrDefault(refnsU, NSK_UNKNOWN);
