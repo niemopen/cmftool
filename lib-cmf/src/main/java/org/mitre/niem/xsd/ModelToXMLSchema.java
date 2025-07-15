@@ -491,6 +491,16 @@ public class ModelToXMLSchema {
         // Prepare list of imports for sorting
         for (var refnsU : refnsUs) {
             var pre  = nsmap.getPrefix(refnsU);
+            // gracefully handle missing prefixes
+            if (pre == null || pre.isEmpty()) {
+                if (refnsU.endsWith("/"))
+                    refnsU = refnsU.substring(0, refnsU.length() - 1);
+                    pre  = nsmap.getPrefix(refnsU);
+                    if (pre == null) {
+                        LOG.error("No namespace for class type URI {}", refnsU);
+                        continue;
+                    }
+            }
             var kind = namespaceU2Kind.getOrDefault(refnsU, NSK_UNKNOWN);
             var key  = String.format("%02d%s", kind, pre);          
             if (NSK_APPINFO != kind && NSK_CLSA != kind) 
@@ -507,10 +517,6 @@ public class ModelToXMLSchema {
             var rns  = m.namespaceObj(refnsU);
             // FIXME: extensions namespace URIs without an ending / error here
             var nsP  = namespaceU2Path.get(refnsU);
-            if (nsP == null) {
-                LOG.warn("No path for namespace {} - uri should end in /", refnsU);
-                continue;
-            }
             var snF  = new File(nsP);
             var snP  = snF.toPath();
             var relP = outP.relativize(snP);
