@@ -330,7 +330,7 @@ public class ModelXMLReader {
             }
             // Not a namespace or component; create right kind of object for element
             if (null == obj) switch (eln) {
-                case "AnyProperty":              obj = new AnyProperty(); break;
+                case "AnyPropertyAssociation":   obj = new AnyProperty(); break;
                 case "AugmentationRecord":       obj = new AugmentRecord(); break;
                 case "ChildPropertyAssociation": obj = new PropertyAssociation(); break; 
                 case "CodeListBinding":          obj = new CodeListBinding(); break;
@@ -351,6 +351,7 @@ public class ModelXMLReader {
                     break;
 
                 case "AbstractIndicator":
+                case "ArchitectureVersionName":
                 case "AttributeIndicator":
                 case "AugmentableIndicator":
                 case "AugmentationIndex":
@@ -376,7 +377,6 @@ public class ModelXMLReader {
                 case "NamespacePrefixText":                    
                 case "NamespaceURI": 
                 case "NamespaceVersionText":   
-                case "NIEMVersionName":
                 case "OrderedPropertyIndicator":
                 case "ProcessingCode":
                 case "RefAttributeIndicator":

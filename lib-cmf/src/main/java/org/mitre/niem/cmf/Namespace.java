@@ -54,7 +54,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     private String docFP = "";                                      // cmf:DocumentFilePathText
     private String kindCode = "";                                   // cmf:NamespaceCategoryCode
     private String version = "";                                    // cmf:NamespaceVersionText
-    private String niemVersion = "";                                // cmf:NIEMVersionName
+    private String archVersion = "";                                // cmf:ArchitectureVersionName
     private String lang = "";                                       // cmf:NamespaceLanguageName
     private boolean isModelF = false;                               // has a model schema document CTA
     private final List<LanguageString> docL = new ArrayList<>();    // cmf:DocumentationText
@@ -70,7 +70,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     public String documentFilePath ()               { return docFP; }
     public String kindCode ()                       { return kindCode; }
     public String version ()                        { return version; }
-    public String niemVersion ()                    { return niemVersion; }
+    public String archVersion ()                    { return archVersion; }
     public String language ()                       { return lang; }
     public List<LanguageString> docL ()             { return docL; }
     public List<LanguageString> idocL (String nsU)  { return idocs.getOrDefault(nsU, EMPTY_LSL); }
@@ -84,7 +84,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     public void setDocumentFilePath (String s)      { docFP = s; }
     public void setKindCode (String s)              { kindCode = s; }
     public void setVersion (String s)               { version = s; }
-    public void setNIEMVersion (String s)           { niemVersion = s; }
+    public void setArchVersion (String s)           { archVersion = s; }
     public void setLanguage (String s)              { lang = s; }
     
     public void addDocumentation (String doc, String lang) {

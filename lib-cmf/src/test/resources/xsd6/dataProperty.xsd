@@ -13,7 +13,7 @@
   <xs:annotation>
     <xs:documentation>
       DataProperty test schema. 
-      Test abstract, relationship, reference code, attribute, refAttribute.
+      Test abstract, relationship, reference code, attribute, refAttribute, orderedProp
     </xs:documentation>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
@@ -32,6 +32,6 @@
   <xs:element name="DataProperty" type="test:DataType" abstract="true" appinfo:referenceAttributeIndicator="true"/>
   <xs:element name="DProp2" type="niem-xs:string" nillable="true" appinfo:relationshipPropertyIndicator="false"/>
   <xs:element name="DProp3" type="niem-xs:string" appinfo:relationshipPropertyIndicator="true" nillable="true"/>
-  <xs:element name="DProp4" type="niem-xs:string" appinfo:referenceAttributeIndicator="true" nillable="true"/>
-  <xs:element name="DProp5" type="niem-xs:string" appinfo:relationshipPropertyIndicator="true" nillable="true"/>
+  <xs:element name="DProp4" type="niem-xs:string" appinfo:orderedPropertyIndicator="false"  appinfo:referenceAttributeIndicator="true" nillable="true"/>
+  <xs:element name="DProp5" type="niem-xs:string" appinfo:orderedPropertyIndicator="true" appinfo:relationshipPropertyIndicator="true" nillable="true"/>
 </xs:schema>

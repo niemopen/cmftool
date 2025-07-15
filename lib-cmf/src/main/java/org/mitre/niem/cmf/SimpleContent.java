@@ -167,6 +167,7 @@ public class SimpleContent extends CMFObject {
     @Override
     public boolean addToNamespace (String eln, String loc, Namespace n) throws CMFException {
         switch (eln) {
+        case "ArchitectureVersionName": n.setArchVersion(this.content()); break;
         case "ConformanceTargetURI":    n.addConformanceTarget(this.content()); break;
         case "DocumentationText":       n.addDocumentation(this.raw(), this.lang()); break;
         case "DocumentFilePathText":    n.setDocumentFilePath(this.content()); break;
@@ -175,7 +176,6 @@ public class SimpleContent extends CMFObject {
         case "NamespacePrefixText":     n.setPrefix(this.content()); break;
         case "NamespaceVersionText":    n.setVersion(this.content()); break;
         case "NamespaceURI":            n.setURI(this.content()); break;
-        case "NIEMVersionName":         n.setNIEMVersion(this.content()); break;
         default: error("Namespace", loc, eln);
         }
         return true;
@@ -193,8 +193,9 @@ public class SimpleContent extends CMFObject {
     @Override
     public boolean addToProperty (String eln, String loc, Property p) {
         switch (eln) {
-        case "AbstractIndicator":       p.setIsAbstract("true".equals(this.content())); break;
-        case "RelationshipIndicator":   p.setIsRelationship("true".equals(this.content())); break;
+        case "AbstractIndicator":           p.setIsAbstract("true".equals(this.content())); break;
+        case "OrderedPropertyIndicator":    p.setIsOrdered("true".equals(this.content())); break;
+        case "RelationshipIndicator":       p.setIsRelationship("true".equals(this.content())); break;
         default: return false;
         }
         return true;
@@ -206,7 +207,6 @@ public class SimpleContent extends CMFObject {
         case "DocumentationText":           pa.addDocumentation(this.raw(), this.lang()); break;
         case "MaxOccursQuantity":           pa.setMaxOccurs(this.content()); break;
         case "MinOccursQuantity":           pa.setMinOccurs(this.content()); break;
-        case "OrderedPropertyIndicator":    pa.setIsOrdered("true".equals(this.content())); break;
         default: return false;
         }
         return true;

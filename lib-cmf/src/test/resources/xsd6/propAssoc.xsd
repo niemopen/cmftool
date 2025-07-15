@@ -13,7 +13,7 @@
   <xs:annotation>
     <xs:documentation>
       PropertyAssociation test schema. 
-      Test minoccurs, maxoccurs, doctext, orderedprop, augmentingNS
+      Test minoccurs, maxoccurs, doctext, orderedprop
     </xs:documentation>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
@@ -22,8 +22,8 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="test:OProp2" appinfo:orderedPropertyIndicator="false"/>
-          <xs:element ref="test:OProp3" maxOccurs="unbounded" appinfo:orderedPropertyIndicator="true"/>
+          <xs:element ref="test:OProp2"/>
+          <xs:element ref="test:OProp3" maxOccurs="unbounded"/>
           <xs:element ref="test:OProp4" minOccurs="0"/>
           <xs:element ref="test:OProp5" minOccurs="0" maxOccurs="20">
             <xs:annotation>
@@ -31,9 +31,9 @@
             </xs:annotation>
           </xs:element>
         </xs:sequence>
-        <xs:attribute ref="test:AProp2" use="required" appinfo:augmentingNamespace="http:/notInModel.org/"/>
-        <xs:attribute ref="test:AProp3" appinfo:augmentingNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/" use="optional"/>
-        <xs:attribute ref="test:AProp4" appinfo:augmentingNamespace="nc j"/>
+        <xs:attribute ref="test:AProp2" use="required"/>
+        <xs:attribute ref="test:AProp3" use="optional"/>
+        <xs:attribute ref="test:AProp4"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

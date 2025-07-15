@@ -28,7 +28,7 @@
     <DocumentFilePathText>niem/utility/code-lists-instance.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>CLI</NamespaceCategoryCode>
     <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="gml">
@@ -63,7 +63,7 @@
     <DocumentFilePathText>niem/niem-core.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
     <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <LocalTerm>
       <TermName>2D</TermName>
@@ -198,7 +198,7 @@
     <DocumentFilePathText>niem/adapters/niem-gml-externals.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>OTHERNIEM</NamespaceCategoryCode>
     <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <ImportDocumentation>
       <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>
@@ -226,7 +226,7 @@
     <DocumentFilePathText>externals.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xml">

@@ -22,7 +22,7 @@
     <DocumentFilePathText>niem/domains/justice-skel.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>DOMAIN</NamespaceCategoryCode>
     <NamespaceVersionText>subset-1</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
       <Class structures:ref="nc.EducationType" xsi:nil="true"/>
@@ -40,7 +40,7 @@
     <DocumentFilePathText>niem/niem-core-skel.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
     <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="test">
@@ -51,7 +51,7 @@
     <DocumentFilePathText>imports.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <ImportDocumentation>
       <NamespaceURI>http://www.opengis.net/gml/3.2</NamespaceURI>

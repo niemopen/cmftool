@@ -15,7 +15,7 @@
     <DocumentFilePathText>refCode.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
@@ -45,6 +45,16 @@
     <Namespace structures:ref="t" xsi:nil="true"/>
     <Class structures:ref="t.ThreeType" xsi:nil="true"/>
   </ObjectProperty>
+  <Class structures:id="t.AnyRefType">
+    <Name>AnyRefType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ReferenceCode>ANY</ReferenceCode>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
   <Class structures:id="t.FiveType">
     <Name>FiveType</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>
@@ -90,6 +100,16 @@
     <Namespace structures:ref="t" xsi:nil="true"/>
     <SubClassOf structures:ref="t.OneType" xsi:nil="true"/>
     <ReferenceCode>NONE</ReferenceCode>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.URIRefType">
+    <Name>URIRefType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ReferenceCode>ANYURI</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>

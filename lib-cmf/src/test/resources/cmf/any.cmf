@@ -13,7 +13,7 @@
     <DocumentFilePathText>any.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
@@ -45,14 +45,13 @@
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>AnElement property of Test1Type</DocumentationText>
-      <OrderedPropertyIndicator>true</OrderedPropertyIndicator>
     </ChildPropertyAssociation>
-    <AnyProperty>
+    <AnyPropertyAssociation>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <NamespaceConstraintText>http://someNS/ http://otherNS/</NamespaceConstraintText>
       <ProcessingCode>lax</ProcessingCode>
-    </AnyProperty>
+    </AnyPropertyAssociation>
   </Class>
   <Class structures:id="test.Test2Type">
     <Name>Test2Type</Name>
@@ -63,12 +62,12 @@
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
-    <AnyProperty>
+    <AnyPropertyAssociation>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <AttributeIndicator>true</AttributeIndicator>
       <ProcessingCode>strict</ProcessingCode>
-    </AnyProperty>
+    </AnyPropertyAssociation>
   </Class>
   <Class structures:id="test.Test3Type">
     <Name>Test3Type</Name>

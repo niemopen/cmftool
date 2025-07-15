@@ -208,7 +208,7 @@ public class ModelFromXSD {
             ns.setDocumentFilePath(sch.docFilePath(sd));
             ns.setKindCode(kcode);
             ns.setVersion(sd.version());
-            ns.setNIEMVersion(sd.niemVersion());
+            ns.setArchVersion(sd.niemVersion());
             ns.setLanguage(sd.language());      
             ns.setConformanceTargets(sd.ctAssertions());
             ns.docL().addAll(sd.documentation());
@@ -488,7 +488,6 @@ public class ModelFromXSD {
     // the list item type from its simple type definition.
     private void populateListType (ListType lt, XSSimpleTypeDefinition xstype, Map<String,String>appi) throws CMFException {
         var ltname = lt.name();
-        var oFlag = appi.getOrDefault("orderedPropertyIndicator", "");
         var xitem = xstype.getItemType();       // list item simple type def from XS ST def
         var itemU = xObjToURI(xitem);           // URI for list item 
         var idt   = getDatatype(itemU);
@@ -496,7 +495,6 @@ public class ModelFromXSD {
             throw new CMFException(
                 String.format("can't find item datatype %s for list datatype %s", itemU, lt.uri()));
         lt.setItemType(idt);
-        if (null != oFlag) lt.setIsOrdered("true".equals(oFlag));
     }
     
     // Populate a Restriction object with appinfo from its CSC type definition,
@@ -806,6 +804,7 @@ public class ModelFromXSD {
                 var xedec = xs.getElementDeclaration(name, nsU);
                 populateComponent(p, schE, appi);
                 p.setIsAbstract(xedec.getAbstract());
+                p.setIsOrdered("true".equals(appi.getOrDefault("orderedPropertyIndicator", "")));
                 p.setIsRelationship("true".equals(appi.getOrDefault("relationshipPropertyIndicator", "")));
             }
         }
@@ -903,10 +902,8 @@ public class ModelFromXSD {
                         }
                         else {
                             var eapi = getAppinfoAttributes(e, appU);
-                            var ord  = eapi.getOrDefault("orderedPropertyIndicator", "");
                             if (!max.isBlank()) cpa.setMaxOccurs(max);
                             if (!min.isBlank()) cpa.setMinOccurs(min);
-                            cpa.setIsOrdered("true".equals(eapi.getOrDefault("orderedPropertyIndicator", "")));
                         }
                         ct.propL().add(cpa);
                         break;

@@ -66,6 +66,13 @@ public class ModelAssertions {
         assertThat(ct5.anyL()).hasSize(0);
     }
     
+    public static void checkArchVersions (Model m) {
+        var nc6 = m.namespaceObj("nc");
+        var nc5 = m.namespaceObj("nc5");
+        assertEquals("NIEM6.0", nc6.archVersion());
+        assertEquals("NIEM5.0", nc5.archVersion());
+    }
+        
     public static void checkAttAugment (Model m) {
         var tns = m.prefixToNamespaceObj("test");
         var op = m.qnToProperty("test:ObjProp");
@@ -201,7 +208,6 @@ public class ModelAssertions {
         assertEquals("test:AnElement", cp.property().qname());
         assertEquals("0", cp.minOccurs());
         assertEquals("1", cp.maxOccurs());
-        assertTrue(cp.isOrdered());
         assertThat(cp.docL())
             .extracting(LanguageString::text)
             .containsExactly("AnElement property of Test1Type");
@@ -218,7 +224,6 @@ public class ModelAssertions {
         assertEquals("test:AnElement", cp.property().qname());
         assertEquals("1", cp.minOccurs());
         assertEquals("1", cp.maxOccurs());
-        assertFalse(cp.isOrdered());
         assertThat(cp.docL()).hasSize(0);
         ap = ct2.anyL().get(0);
         assertThat(ct2.anyL()).hasSize(1);
@@ -233,7 +238,6 @@ public class ModelAssertions {
         assertEquals("test:AnotherElement", cp.property().qname());
         assertEquals("1", cp.minOccurs());
         assertEquals("1", cp.maxOccurs());
-        assertFalse(cp.isOrdered());
         assertThat(cp.docL()).hasSize(0);
         assertThat(ct3.anyL()).hasSize(0);   
             }
@@ -338,6 +342,16 @@ public class ModelAssertions {
         assertFalse(m.qnToDataProperty("test:aProp3").isRefAttribute());
         assertTrue (m.qnToDataProperty("test:aProp4").isRefAttribute());
         assertTrue (m.qnToDataProperty("test:aProp5").isRefAttribute());           
+    
+        assertFalse(m.qnToDataProperty("test:DataProperty").isOrdered());
+        assertFalse(m.qnToDataProperty("test:DProp2").isOrdered());
+        assertFalse(m.qnToDataProperty("test:DProp3").isOrdered());
+        assertFalse(m.qnToDataProperty("test:DProp4").isOrdered());
+        assertTrue(m.qnToDataProperty("test:DProp5").isOrdered());
+        assertFalse(m.qnToDataProperty("test:aProp2").isOrdered());
+        assertFalse(m.qnToDataProperty("test:aProp3").isOrdered());
+        assertFalse (m.qnToDataProperty("test:aProp4").isOrdered());
+        assertFalse(m.qnToDataProperty("test:aProp5").isOrdered()); 
     }
 
     // Test the model build from xsd?/datatypes.xsd or read from cmf/datatypes.cmf
@@ -594,11 +608,11 @@ public class ModelAssertions {
         var xml  = m.prefixToNamespaceObj("xml");
         var gml  = m.prefixToNamespaceObj("gml");
         
-        assertEquals("NIEM6.0", test.niemVersion());
-        assertEquals("NIEM6.0", nc.niemVersion());
-        assertEquals("NIEM6.0", j.niemVersion());
-        assertEquals("", xml.niemVersion());
-        assertEquals("", gml.niemVersion());
+        assertEquals("NIEM6.0", test.archVersion());
+        assertEquals("NIEM6.0", nc.archVersion());
+        assertEquals("NIEM6.0", j.archVersion());
+        assertEquals("", xml.archVersion());
+        assertEquals("", gml.archVersion());
         
         assertEquals("http://example.com/test/", test.uri());
         assertEquals("https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/", nc.uri());
@@ -701,7 +715,7 @@ public class ModelAssertions {
         assertEquals("namespace.xsd", ns.documentFilePath());
         assertEquals("EXTENSION", ns.kindCode());
         assertEquals("1-alpha.1", ns.version());
-        assertEquals("NIEM6.0", ns.niemVersion());
+        assertEquals("NIEM6.0", ns.archVersion());
         assertEquals("en-US", ns.language());
         assertThat(ns.ctargL())
             .containsExactly("https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument",
@@ -716,7 +730,7 @@ public class ModelAssertions {
         assertEquals("niem/niem-core-skel.xsd", ns.documentFilePath());
         assertEquals("CORE", ns.kindCode());
         assertEquals("ps02", ns.version());
-        assertEquals("NIEM6.0", ns.niemVersion());
+        assertEquals("NIEM6.0", ns.archVersion());
         assertEquals("en-US", ns.language());
 
         ns = m.prefixToNamespaceObj("xml");       
@@ -726,13 +740,6 @@ public class ModelAssertions {
         ns = m.prefixToNamespaceObj("xs");       
         assertEquals("", ns.documentFilePath());
         assertEquals("XSD", ns.kindCode());
-    }
-    
-    public static void checkNiemVersions (Model m) {
-        var nc6 = m.namespaceObj("nc");
-        var nc5 = m.namespaceObj("nc5");
-        assertEquals("NIEM6.0", nc6.niemVersion());
-        assertEquals("NIEM5.0", nc5.niemVersion());
     }
     
     // Test the model built from xsd?/objectProperty.xsd or read from cmf/objectProperty.cmf 
@@ -748,16 +755,25 @@ public class ModelAssertions {
         assertEquals("test:TestType", op3.classType().qname());
         assertEquals("test:TestType", op4.classType().qname());
         assertEquals("test:TestType", op5.classType().qname());
+        
         assertTrue(op1.isAbstract());
         assertFalse(op2.isAbstract());
         assertFalse(op3.isAbstract());
         assertFalse(op4.isAbstract());
-        assertFalse(op5.isAbstract());    
+        assertFalse(op5.isAbstract()); 
+        
         assertFalse(op1.isRelationship());
         assertTrue(op2.isRelationship());
         assertFalse(op3.isRelationship());
         assertFalse(op4.isRelationship());
         assertFalse(op5.isRelationship());
+        
+        assertFalse(op1.isOrdered());
+        assertFalse(op2.isOrdered());
+        assertFalse(op3.isOrdered());
+        assertTrue(op4.isOrdered());
+        assertFalse(op5.isOrdered());        
+        
         assertNull(op1.subPropertyOf());
         assertNull(op2.subPropertyOf());
         assertNull(op3.subPropertyOf());
@@ -773,43 +789,36 @@ public class ModelAssertions {
                 assertEquals("1", pa.minOccurs());
                 assertEquals("1", pa.maxOccurs());
                 assertTrue(pa.docL().isEmpty());
-                assertFalse(pa.isOrdered());
                 break;
             case "OProp3": 
                 assertEquals("1", pa.minOccurs());
                 assertEquals("unbounded", pa.maxOccurs());
                 assertTrue(pa.docL().isEmpty());
-                assertTrue(pa.isOrdered());
                 break;
             case "OProp4": 
                 assertEquals("0", pa.minOccurs());
                 assertEquals("1", pa.maxOccurs());
                 assertTrue(pa.docL().isEmpty());
-                assertFalse(pa.isOrdered());
                 break;
             case "OProp5": 
                 assertEquals("0", pa.minOccurs());
                 assertEquals("20", pa.maxOccurs());
                 assertEquals("reason for OProp5", pa.docL().get(0).text());
-                assertFalse(pa.isOrdered());
                 break;
             case "AProp2": 
                 assertEquals("1", pa.minOccurs());
                 assertEquals("1", pa.maxOccurs());
                 assertTrue(pa.docL().isEmpty());
-                assertFalse(pa.isOrdered());
                 break;
             case "AProp3": 
                 assertEquals("0", pa.minOccurs());
                 assertEquals("1", pa.maxOccurs());
                 assertTrue(pa.docL().isEmpty());
-                assertFalse(pa.isOrdered());
                 break;
             case "AProp4": 
                 assertEquals("0", pa.minOccurs());
                 assertEquals("1", pa.maxOccurs());
                 assertTrue(pa.docL().isEmpty());
-                assertFalse(pa.isOrdered());
                 break;
             }                
         }

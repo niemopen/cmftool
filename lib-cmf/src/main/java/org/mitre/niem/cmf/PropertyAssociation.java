@@ -41,13 +41,11 @@ public class PropertyAssociation extends CMFObject implements Comparable<Propert
     private Property property = null;                               // cmf:Property
     private String minOccurs = "1";                                 // cmf:MinOccursQuantity
     private String maxOccurs = "1";                                 // cmf:MaxOccursQuantity
-    private boolean isOrdered = false;                              // cmf:OrderedPropertyIndicator
     private final List<LanguageString> docL = new ArrayList<>();    // cmf:DocumentationText
     
     public Property property ()         { return property; }
     public String minOccurs ()          { return minOccurs; }
     public String maxOccurs ()          { return maxOccurs; }
-    public boolean isOrdered ()         { return isOrdered; }
     public List<LanguageString> docL () { return docL; }
     
     public boolean isMaxUnbounded ()    { return "unbounded".equals(maxOccurs); }
@@ -63,7 +61,6 @@ public class PropertyAssociation extends CMFObject implements Comparable<Propert
     public void setProperty (Property p)    { property = p; }
     public void setMinOccurs (String s)     { minOccurs = s; }
     public void setMaxOccurs (String s)     { maxOccurs = s; }
-    public void setIsOrdered (boolean f)    { isOrdered = f; }
     
     public void addDocumentation (String doc, String lang) {
         docL.add(new LanguageString(doc, lang));

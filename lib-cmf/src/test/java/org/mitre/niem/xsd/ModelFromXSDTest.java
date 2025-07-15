@@ -57,6 +57,15 @@ public class ModelFromXSDTest {
         checkAny(model);
         assertEmptyLogs();
     }
+
+    @Test
+    public void testArchVersions () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/archVersions.xsd");
+        var model = mb.createModel(sch);
+        checkArchVersions(model);
+        assertEmptyLogs();
+    }
     
     @Test
     public void testAttAugment () throws Exception {
@@ -209,16 +218,6 @@ public class ModelFromXSDTest {
         var sch = new NIEMSchema(resDN + "xsd6/namespace.xsd");
         var model = mb.createModel(sch);
         checkNamespace(model);        
-    }
-
-
-    @Test
-    public void testNiemVersions () throws Exception {
-        var mb  = new ModelFromXSD();
-        var sch = new NIEMSchema(resDN + "xsd6/niemVersions.xsd");
-        var model = mb.createModel(sch);
-        checkNiemVersions(model);
-        assertEmptyLogs();
     }
     
     @Test

@@ -58,6 +58,7 @@ public class ModelToXSDModelTest {
 
     @Test
     public void testWriteModelXSD () throws Exception {
+        testRoundTrip(new File(resDN, "xsd6/archVersions.xsd"));
         testRoundTrip(new File(resDN, "xsd6/attAugment.xsd"));
         testRoundTrip(new File(resDN, "xsd6/augment.xsd"));
         testRoundTrip(new File(resDN, "xsd6/class.xsd"));
@@ -76,7 +77,6 @@ public class ModelToXSDModelTest {
         testRoundTrip(new File(resDN, "xsd6/literalProps.xsd"));
         testRoundTrip(new File(resDN, "xsd6/localTerm.xsd"));
         testRoundTrip(new File(resDN, "xsd6/namespace.xsd"));
-        testRoundTrip(new File(resDN, "xsd6/niemVersions.xsd"));
         testRoundTrip(new File(resDN, "xsd6/objectProperty.xsd"));
         testRoundTrip(new File(resDN, "xsd6/propAssoc.xsd"));
         testRoundTrip(new File(resDN, "xsd6/simpleTypes.xsd"));

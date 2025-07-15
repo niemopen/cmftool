@@ -184,8 +184,8 @@ public class ModelToXMLSchema {
         if (null != useNiemVersion) niemVersions.add(useNiemVersion);
         else 
             for (var ns : m.namespaceSet()) {
-                var nver = ns.niemVersion();
-                if (!nver.isEmpty()) niemVersions.add(ns.niemVersion());
+                var nver = ns.archVersion();
+                if (!nver.isEmpty()) niemVersions.add(ns.archVersion());
         }
     }
     
@@ -429,7 +429,7 @@ public class ModelToXMLSchema {
         // Get namespace URI and NIEM version; set the xs:schema attributes that
         // don't need a namespace prefix. (We don't know what the prefixes are yet.)
         var nsU  = ns.uri();
-        var nver = ns.niemVersion();
+        var nver = ns.archVersion();
         if (null != useNiemVersion) nver = useNiemVersion;
         setAttribute(root, "targetNamespace", nsU);
         setAttribute(root, "version", ns.version());
@@ -610,7 +610,7 @@ public class ModelToXMLSchema {
         
         if (!nsU.equals(ct.namespaceURI())) return;
         var ns  = m.namespaceObj(nsU);    
-        var ver = ns.niemVersion();
+        var ver = ns.archVersion();
         if (null != useNiemVersion) ver = useNiemVersion;
         
         var ctE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");

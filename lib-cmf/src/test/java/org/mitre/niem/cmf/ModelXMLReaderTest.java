@@ -55,6 +55,14 @@ public class ModelXMLReaderTest extends ModelAssertions {
         checkAny(model);
         assertEmptyLogs();        
     }
+                                         
+    @Test
+    public void testArchVersions () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "archVersions.cmf"));
+        checkArchVersions(model);
+        assertEmptyLogs();        
+    }
     
     @Test
     public void testAttAugment () {
@@ -213,14 +221,6 @@ public class ModelXMLReaderTest extends ModelAssertions {
         var rdr   = new ModelXMLReader();
         var model = rdr.readFiles(new File(resDN, "namespace.cmf"));
         checkNamespace(model);
-        assertEmptyLogs();        
-    }
-                                     
-    @Test
-    public void testNiemVersions () {
-        var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File(resDN, "niemVersions.cmf"));
-        checkNiemVersions(model);
         assertEmptyLogs();        
     }
 

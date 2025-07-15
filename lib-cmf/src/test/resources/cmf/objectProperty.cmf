@@ -16,7 +16,7 @@
     <DocumentFilePathText>objectProperty.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
@@ -50,6 +50,7 @@
   <ObjectProperty structures:id="test.OProp4">
     <Name>OProp4</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
+    <OrderedPropertyIndicator>true</OrderedPropertyIndicator>
     <Class structures:ref="test.TestType" xsi:nil="true"/>
   </ObjectProperty>
   <ObjectProperty structures:id="test.OProp5">

@@ -45,6 +45,7 @@ public class Property extends Component {
     public boolean isObjectProperty ()          { return false; }
    
     private boolean isAbstract = false;         // cmf:AbstractIndicator
+    private boolean isOrdered = false;          // cmf:OrderedPropertyIndicator
     private boolean isRelationship = false;     // cmf:RelationshipIndicator
     private Property subprop = null;            // cmf:SubPropertyOf
     
@@ -57,10 +58,13 @@ public class Property extends Component {
     public boolean isAttribute ()               { return false; }
     public boolean isRefAttribute()             { return false; }
     public boolean isReferenceable ()           { return null == classType() ? false : classType().isReferenceable(); }
+    @Override
+    public boolean isOrdered ()                 { return isOrdered; }
     public boolean isRelationship ()            { return isRelationship; }
     public Property subPropertyOf ()            { return subprop; }
     
     public void setIsAbstract (boolean f)       { isAbstract = f; }
+    public void setIsOrdered (boolean f)        { isOrdered = f; }
     public void setIsRelationship (boolean f)   { isRelationship = f; }
     public void setSubproperty (Property p)     { subprop = p; }
     
