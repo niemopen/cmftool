@@ -127,11 +127,11 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
         if (null == m) return;
         if (null == prefix || null == uri) 
             throw new CMFException("can't add uninitialzed Namespace to a Model");
-        var mpre = m.nsUToNSprefix(uri);
+        var mpre = m.nsUToPrefix(uri);
         if (null != mpre && !mpre.equals(prefix)) {
             throw new CMFException(String.format(
                 "can't add namespace %s:%s to model (%s already assigned to %s)",
-                prefix, uri, prefix, m.prefixToNSuri(prefix)));
+                prefix, uri, prefix, m.prefixToNSU(prefix)));
         }
         model = m;
     }    
@@ -139,21 +139,21 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     public void setPrefix (String p) throws CMFException {
         prefix = p;
         if (null == model || null == uri) return;
-        var muri = model.prefixToNSuri(p);
+        var muri = model.prefixToNSU(p);
         if (null != muri && !uri.equals(muri))
             throw new CMFException(String.format(
                 "can't change prefix of URI %s to %s (already assigned to %s)",
-                uri, p, model.prefixToNSuri(p)));
+                uri, p, model.prefixToNSU(p)));
     }
     
     public void setURI (String u) throws CMFException {
         uri = u;
         if (null == model ||  null == prefix) return;
-        var mpr = model.nsUToNSprefix(u);
+        var mpr = model.nsUToPrefix(u);
         if (null != mpr && !prefix.equals(mpr))
             throw new CMFException(String.format(
                 "can't change URI of prefix %s to %s (already assigned to %s)",
-                prefix, u, model.nsUToNSprefix(u)));    
+                prefix, u, model.nsUToPrefix(u)));    
     }
     
     

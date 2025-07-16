@@ -332,4 +332,8 @@ public class NamespaceKind {
         return codeToKind(namespaceToKindCode(ns));
     }
     
+    public static boolean isBuiltin (String ns) {
+        return builtins.contains(namespaceToKindCode(ns));
+    }
+    
 }

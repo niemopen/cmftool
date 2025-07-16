@@ -65,15 +65,13 @@ import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
 import static org.mitre.niem.cmf.Component.makeURI;
-import static org.mitre.niem.cmf.Component.qnToName;
-import static org.mitre.niem.cmf.Component.qnToPrefix;
-import static org.mitre.niem.cmf.Component.uriToNamespace;
 import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
+import static org.mitre.niem.cmf.Model.uriToName;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.ObjectProperty;
 import org.mitre.niem.cmf.Property;
@@ -85,6 +83,8 @@ import static org.mitre.niem.xml.XMLSchemaDocument.evalForNodes;
 import static org.mitre.niem.xml.XMLSchemaDocument.evalForString;
 import static org.mitre.niem.xml.XMLSchemaDocument.getDocumentation;
 import static org.mitre.niem.xml.XMLSchemaDocument.getLanguageString;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import org.mitre.niem.xml.XMLSchemaException;
 import org.mitre.niem.xml.Xerces;
 import static org.mitre.niem.xsd.NIEMSchemaDocument.qnToURI;
@@ -284,7 +284,7 @@ public class ModelFromXSD {
                 aeL.add(augE);
                 if (codes.isBlank()) {
                     var typeU = m.qnToURI(typeQ);
-                    var tnsU  = uriToNamespace(typeU);
+                    var tnsU  = m.uriToNSU(typeU);
                     var tname  = qnToName(typeQ);
                     var xctype = xs.getTypeDefinition(tname, tnsU);
                     attAugTypeUS.add(typeU);
@@ -440,7 +440,7 @@ public class ModelFromXSD {
     private void initializeDatatypes () {
         for (var dtU : datatypeUs) {
             Datatype dt = null;
-            var dtns  = m.compUToNamespaceObj(dtU);    // datatype namespace object
+            var dtns  = m.uriToNSObj(dtU);    // datatype namespace object
             var name  = sch.uriToLocalName(dtU);
             var xstype = dtU2xstype.get(dtU);
             switch(xstype.getVariety()) {
@@ -658,8 +658,8 @@ public class ModelFromXSD {
         }
         // CCC types handled, now do the CSC types becoming ClassType objects
         for (var ctypeU : cscClassUs) {
-            var ctns   = m.compUToNamespaceObj(ctypeU);
-            var ctname = m.compUToName(ctypeU);
+            var ctns   = m.uriToNSObj(ctypeU);
+            var ctname = uriToName(ctypeU);
             var ct     = new ClassType(ctns, ctname);
             m.addClassType(ct);
             allClassUs.add(ct.uri());
@@ -792,7 +792,7 @@ public class ModelFromXSD {
                 }
                 if (!subQ.isEmpty()) {
                     var subU   = schemaQNToURI(schE, subQ);
-                    var subnsU = uriToNamespace(subU);
+                    var subnsU = m.uriToNSU(subU);
                     if (NSK_STRUCTURES == NamespaceKind.namespaceToKind(subnsU)) {
                         globalAugS.add((ObjectProperty)p);
                     }
@@ -888,7 +888,7 @@ public class ModelFromXSD {
                                 break;
                             }
                             var rname  = qnToName(ref);
-                            var refnsU = m.compUToNamespaceU(refU);
+                            var refnsU = m.uriToNSU(refU);
                             if (refU.endsWith("AugmentationPoint")) break;
                             if (!sch.isModelNamespace(refnsU)) break;
                             prop = m.uriToProperty(refU);

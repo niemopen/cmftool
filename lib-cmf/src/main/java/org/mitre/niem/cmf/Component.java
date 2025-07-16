@@ -96,7 +96,10 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     public String qname () {
         if (null == namespace)
             if (null == name) return "";
-            else return name;
+            else {
+                LOG.error("component named {} does not have a namespace", name);
+                return name;
+            }
         return namespace.prefix() + ":" + name;
     }
     
@@ -104,14 +107,15 @@ public abstract class Component extends CMFObject implements Comparable<Componen
      * Returns the absolute URI of this component; e.g.
      * https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/TextType.
      * For components defined in this model, the URI is composed of namespace URI
-     * plus a slash if needed, plus local name.  For outside components defined 
+     * plus a slash if needed, plus local name.  
+     * For placeholder components created for outside components defined 
      * elsewhere, the URI was provided when this placeholder object was created.
      * @return component URI
      */
     @Override
     public String uri () {
         if (null == namespace && !outsideURI.isEmpty()) return outsideURI;
-        if (null == namespace || name.isEmpty()) return "";
+        if (null == namespace || null == name || name.isEmpty()) return "";
         var nsuri = namespace.uri();
         if (nsuri.endsWith("/")) return nsuri + name;
         return nsuri + "/" + name;
@@ -123,58 +127,16 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     public String idRef () {
         if (null ==  namespace ||  null == name) return "";
         return namespace.prefix() + "." + name;
-    }
+    } 
 
     /**
-     * Returns the prefix portion of a QName
-     * @param qn
+     * Creates a component URI from a namespace URI (eg. http://someNS/) 
+     * and a local name.  Supplies a terminal slash if the namespace URI
+     * doesn't end in one.
+     * @param nsuri
+     * @param name
      * @return 
      */
-    public static String qnToPrefix (String qn) {
-        var indx = qn.indexOf(":");
-        if (indx < 1 || indx >= qn.length()-1) return "";
-        return qn.substring(0, indx);        
-    }
-    
-    /**
-     * Returns the local name portion of a QName
-     * @param qn
-     * @return 
-     */
-    public static String qnToName (String qn) {
-        var indx = qn.indexOf(":");
-        if (indx < 1 || indx >= qn.length()-1) return "";        
-        return qn.substring(indx+1);
-    }    
-    
-    /**
-     * Returns the namespace portion of a component URI; for example, 
-     * returns "http://someNS/" for http://someNS/FooType.
-     * @param uri - component URI
-     * @return - component name
-     */    
-    public static String uriToNamespace (String uri) {
-        int indx = uri.lastIndexOf("/");
-        if (indx < 0 || indx >= uri.length()) return "";
-        return uri.substring(0, indx+1);        
-    }
-    
-    /**
-     * Returns the name portion of a component URI; for example, returns "FooType"
-     * for http://someNS/FooType.
-     * @param uri - component URI
-     * @return - component name
-     */
-    public static String uriToName (String uri) {
-        int indx = uri.lastIndexOf("/");
-        if (indx < 0 || indx >= uri.length()) return "";
-        return uri.substring(indx+1);
-    }
-    
-    public static String  makeQN (String prefix, String name) {
-        return prefix + ":" + name;
-    }
-    
     public static String makeURI (String nsuri, String name) {
         if (nsuri.endsWith("/")) return nsuri + name;
         else return nsuri + "/" + name;

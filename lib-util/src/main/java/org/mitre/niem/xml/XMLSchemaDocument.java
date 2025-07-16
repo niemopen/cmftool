@@ -301,38 +301,36 @@ public class XMLSchemaDocument {
     }
     
     /**
-     * Returns the URI for a namespace plus local name.
-     * @param nsuri
-     * @param name
-     * @return component URI
-     */    
-    public static String makeURI (String nsuri, String name) {
-        if (nsuri.endsWith("/")) return nsuri + name;
-        else return nsuri + "/" + name;
-    }
-    
-    /**
      * Returns the local name portion of a QName
+     * Returns the input string if no prefix.
      * @param qn
      * @return 
      */
     public static String qnToName (String qn) {
         var indx = qn.indexOf(":");
-        if (indx < 1 || indx >= qn.length()-1) return "";        
+        if (indx < 1 || indx >= qn.length()-1) return qn;        
         return qn.substring(indx+1);
     }   
     
     /**
-     * Returns true if the Node is an xs:lname element.
-     * @param n
-     * @param lname
+     * Returns the prefix portion of a QName
+     * @param qn
      * @return 
      */
-    public static boolean isXS (Node n, String lname) {
-        if (ELEMENT_NODE != n.getNodeType()) return false;
-        if (!W3C_XML_SCHEMA_NS_URI.equals(n.getNamespaceURI())) return false;
-        if (!lname.equals(n.getLocalName())) return false;
-        return true;
+    public static String qnToPrefix (String qn) {
+        var indx = qn.indexOf(":");
+        if (indx < 1 || indx >= qn.length()-1) return "";
+        return qn.substring(0, indx);        
+    }
+    
+    /**
+     * Creates a QName from a prefix and local name.
+     * @param prefix
+     * @param name
+     * @return 
+     */
+    public static String  makeQN (String prefix, String name) {
+        return prefix + ":" + name;
     }
     
     /**

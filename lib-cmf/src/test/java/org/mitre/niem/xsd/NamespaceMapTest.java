@@ -86,6 +86,9 @@ public class NamespaceMapTest {
         assertEquals("http://example.com/foo", map.getURI("foo"));
         assertEquals("http://example.com/foo1", map.getURI("foo_1"));
         assertEquals("http://example.com/foo2", map.getURI("foo_2"));
+        
+        assertTrue(map.hasURI(XML_NS_URI));
+        assertFalse(map.hasURI("http://noSuchNS"));
     }
     
 }

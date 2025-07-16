@@ -68,7 +68,8 @@ public class NamespaceMap {
     }
     
     public String getPrefix (String nsuri) { return uri2Prefix.get(nsuri); }
-    public String getURI (String prefix)   { return prefix2URI.get(prefix); }    
+    public String getURI (String prefix)   { return prefix2URI.get(prefix); }
+    public boolean hasURI (String nsuri)   { return uri2Prefix.containsKey(nsuri); }
     
     private static final Pattern mungPat = Pattern.compile("(.*)_\\d+$");
     private static final Pattern versPat = Pattern.compile(".*/(\\d+)(\\.\\d+)*/?$");    

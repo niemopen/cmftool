@@ -440,7 +440,7 @@ public class ModelXMLReader {
         @Override
         public void startDocument () {
             langS.push("");
-            objStack.push(new CMFObject());
+            objStack.push(new Namespace());     // avoid empty stack check with this dummy object
         }
         
         @Override

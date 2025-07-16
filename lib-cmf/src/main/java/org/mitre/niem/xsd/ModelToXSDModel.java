@@ -51,18 +51,13 @@ import static org.mitre.niem.cmf.CMFObject.CMF_RESTRICTION;
 import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
-import static org.mitre.niem.cmf.Component.makeURI;
-import static org.mitre.niem.cmf.Component.qnToName;
-import static org.mitre.niem.cmf.Component.qnToPrefix;
-import static org.mitre.niem.cmf.Component.uriToName;
-import static org.mitre.niem.cmf.Component.uriToNamespace;
 import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.Model;
+import static org.mitre.niem.cmf.Model.uriToName;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
-import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.ReferenceGraph;
 import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
@@ -484,7 +479,7 @@ public class ModelToXSDModel {
             }
         }
         for (var ctU : ctU2augs.keySet()) {                 // http://FooNS/BarType or ObjectType
-            var ctnsU = uriToNamespace(ctU);                // http://FooNS/ or ""
+            var ctnsU = m.uriToNSU(ctU);              // http://FooNS/ or ""
             var ctns  = m.namespaceObj(ctnsU);              // FooNS namespace object or null
             var ctN   =  "";                                // augmented type name
             if (null == ctns) ctN = ctU;                    // ObjectType
@@ -830,7 +825,7 @@ public class ModelToXSDModel {
         if (null != p.subPropertyOf()) subU = p.subPropertyOf().uri();
         else subU = pU2subU.getOrDefault(p.uri(), "");
         if (!subU.isEmpty() && !p.isAttribute()) {
-            var subnsU = uriToNamespace(subU);
+            var subnsU = m.uriToNSU(subU);
             var subQ = m.uriToQN(subU);
             setAttribute(decE, "substitutionGroup", subQ);
             refnsUs.add(subnsU);
