@@ -48,12 +48,13 @@ public class CMFTool {
 
         // Uncomment arguments for debugging:
 //    String res = "../lib-cmf/src/test/resources/xsd5/";     
-//    String res = "../lib-cmf/src/test/resources/xsd6/";
-    String res = "../../../NIEM/ntac-admin/examples/src/Augmentation/09-ASCwA/";
+    String res = "../lib-cmf/src/test/resources/xsd6/";
+//    String res = "../../../NIEM/ntac-admin/examples/src/Augmentation/09-ASCwA/";
     if (0 == args.length) {
+        args = new String[]{"x2m", "-o", res+"foo", res+"dataProperty.xsd"};
 //        args = new String[]{"m2x", "-o", res+"tmp", res+"globObjAug.cmf"};
 //        args = new String[]{"m2xmsg", "-o", res+"message.xsd", res+"model.cmf"};
-        args = new String[]{"x2m", "-o", res+"model.cmf", res+"model.xsd/msg.xsd"};
+//        args = new String[]{"x2m", "-o", res+"model.cmf", res+"model.xsd/msg.xsd"};
     }
     
 
