@@ -341,8 +341,8 @@ public class JSONProperty {
   private void processDataType() {
     var dataType = property.datatype();
     String dataTypeName = dataType.name();
-
     isIntrinsicType = JSONSchemaHelper.isIntrinsicType(dataTypeName);
+
     var propName = (property.subPropertyOf() != null) ? property.subPropertyOf().name() : property.name();
 
     // process the XML data type
@@ -406,7 +406,7 @@ public class JSONProperty {
             } else if (card.getMinOccurs() < card.getMaxOccurs()) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  dataType.namespace().prefix(), dataTypeName);
+                  property.namespace().prefix(), dataTypeName);
             }
           }
         }
