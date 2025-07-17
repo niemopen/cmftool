@@ -26,10 +26,12 @@ package org.mitre.niem.xml;
 import java.io.File;
 import org.assertj.core.api.Assertions;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mitre.niem.xml.XMLSchemaDocument.getDocumentation;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 
 /**
  *
@@ -162,6 +164,15 @@ public class XMLSchemaDocumentTest {
                         assertThat(obj.depth() == 1);                        
                     }
                 );
+    }
+    
+    @Test
+    public void testQN () {
+        assertEquals("pre", qnToPrefix("pre:Lname"));
+        assertEquals("Lname", qnToName("pre:Lname"));
+        assertEquals("", qnToPrefix("name"));
+        assertEquals("name", qnToName("name"));
+        assertEquals("foo:bar", makeQN("foo", "bar"));
     }
     
 }

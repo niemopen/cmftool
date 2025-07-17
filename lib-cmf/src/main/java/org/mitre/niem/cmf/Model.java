@@ -35,6 +35,10 @@ import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
+import org.mitre.niem.xsd.NamespaceKind;
 import org.mitre.niem.xsd.NamespaceMap;
 
 /**
@@ -89,8 +93,8 @@ public class Model extends CMFObject {
     public ObjectProperty uriToObjectProperty (String uri){ return opropMap.get(uri); }
     public Property uriToProperty (String uri)          { return propMap.get(uri); }
     
-    public String nsUToNSprefix (String p)              { return nsmap.getURI(p); }
-    public String prefixToNSuri (String u)              { return nsmap.getPrefix(u); }
+    public String nsUToPrefix (String p)                { return nsmap.getURI(p); }
+    public String prefixToNSU (String u)                { return nsmap.getPrefix(u); }
     public Namespace nsUToNamespaceObj (String u)       { return uri2ns.get(u); }
     public Namespace prefixToNamespaceObj (String p) {
         var uri = nsmap.getURI(p);
@@ -103,82 +107,104 @@ public class Model extends CMFObject {
     }
     public Set<Namespace> namespaceSet ()               { return nsS; }
     
-    public String qnToURI (String qname) {
-        if (null == qname || qname.isEmpty()) return "";
-        var ci = qname.indexOf(':');
-        if (ci < 1) return "";
-        var p = qname.substring(0, ci);
-        var ln = qname.substring(ci+1);
-        var ns = prefixToNamespaceObj(p);
-        if (null == ns || ln.isBlank()) return "";
-        var uri = ns.uri();
-        if (uri.endsWith("/")) return uri + ln;
-        return uri + "/" + ln;       
+    
+    /**
+     * Constructs a component URI from a namespace URI and local name.
+     * @param nsU
+     * @param lname
+     * @return 
+     */
+    public static String makeURI (String nsU, String lname) {
+        if (nsU.startsWith("urn:")) return nsU + ":" + lname;   // urn:some:NS:lname
+        if (nsU.endsWith("/"))      return nsU + lname;         // http://someNS/lname
+        return nsU + "/" + lname;
     }
     
+    /**
+     * Returns the component URI corresponding to a QName.
+     * @param qname
+     * @return 
+     */
+    public String qnToURI (String qname) {
+        var pre = qnToPrefix(qname);
+        var ln  = qnToName(qname);
+        var nsU = nsmap.getURI(pre);
+        if (null == nsU || nsU.isEmpty()) return "";
+        return makeURI(nsU, ln);      
+    }
+    
+    /**
+     * Returns the QName corresponding to a component URI.
+     * Returns the empty string if the component's namespace is not in the model.
+     * @param uri
+     * @return 
+     */
     public String uriToQN (String uri) {
         if (null == uri || uri.isEmpty()) return "";
-        int si = uri.lastIndexOf('/');
-        if (si < 2) return "";
-        var base = uri.substring(0, si+1);
-        var ln   = uri.substring(si+1);
-        var pre  = nsmap.getPrefix(base);
-        if (pre == null || pre.isEmpty()) {
-            // gracefully handle namespaces not ending in /
-            if (base.endsWith("/"))
-                pre = nsmap.getPrefix(base.substring(0, base.length()-1));
-        }
-        if (pre == null || pre.isEmpty()) {
-            LOG.warn("No prefix for namespace URI {}", base);
-            return "";
-        }
-        return pre + ":" + ln;
-    }
-   
-    /**
-     * Returns the name portion of a component URI; e.g. "TextType" for
-     * https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/TextType.
-     * @param componentURI - NIEM component URI
-     * @return component name
-     */
-    public String compUToName (String componentURI) {
-        int indx = componentURI.lastIndexOf("/");
-        if (indx < 0 || indx + 1 >= componentURI.length()) return "";
-        return componentURI.substring(indx+1);
+        var nsU = uriToNSU(uri);
+        var ln  = uriToName(uri);
+        var pre = nsmap.getPrefix(nsU);
+        if (null == pre || pre.isEmpty()) return "";
+        return makeQN(pre, ln);
     }
     
     /**
-     * Returns the namespace URI portion of a component URI; e.g. 
-     * https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/ for
-     * https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/TextType.
+     * Returns the namespace object given a component URI in the model.
+     * @param uri - component URI string
+     * @return - namespace object
+     */    
+    public Namespace uriToNSObj (String uri) {
+        var nsU = uriToNSU(uri);
+        var ns  = namespaceObj(nsU);
+        return ns;
+    }
+     
+    /**
+     * Returns the URI of a namespace in the model, given a component URI.
+     * Returns "http://someNS/" for http://someNS/FooType.
+     * Returns "urn:some:NS" for "urn:some:NS:LocalName".
+     * Returns builtin namespace URI for builtin namespace components.
+     * Handles namespace URIs that do not end in a slash.
      * 
      * The URI for a NIEM namespace SHOULD end in a "/" character.  But it might
      * not.  The Model object can handle this... unless you have two namespaces
      * with URIs that vary only in the final "/" character... in which case, you
      * are beyond my help. :-)
-     * @param componentURI - NIEM component URI
-     * @return component namespace URI
-     */
-    public String compUToNamespaceU (String componentURI) {
-        int indx = componentURI.lastIndexOf("/");
-        if (indx < 0 || indx + 1 >= componentURI.length()) return "";
-        var compNSuri = componentURI.substring(0, indx+1);
-        if (uri2ns.containsKey(compNSuri)) return compNSuri;
-        compNSuri = compNSuri.substring(0, compNSuri.length()-1);
-        if (uri2ns.containsKey(compNSuri)) return compNSuri;
-        LOG.error("no namespace object matching component URI {}", componentURI);
+     * @param uri - component URI
+     * @return - component name
+     */    
+    public String uriToNSU (String uri) {
+        int indx = 0;
+        if (uri.startsWith("urn:")) indx = uri.lastIndexOf(":");
+        else indx = uri.lastIndexOf("/");
+        if (indx < 0 || indx >= uri.length()) {
+            LOG.error("bad component URI {}", uri);
+            return "";
+        }
+        var nsU  = uri.substring(0, indx+1);
+        var nsU2 = nsU.substring(0, nsU.length()-1);
+        if (nsmap.hasURI(nsU)) return nsU;              // http://someNS/
+        if (nsmap.hasURI(nsU2)) return nsU2;            // http://someNS
+        if (NamespaceKind.isBuiltin(nsU)) return nsU;   // https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/
+        LOG.error("no namespace in model for component URI {}", uri);
         return "";
     }
     
     /**
-     * Returns the namespace object for a component URI.
-     * @param componentURI - NIEM component URI
-     * @return namespace object
+     * Returns the name portion of a component URI.
+     * Returns "FooType" for http://someNS/FooType.
+     * Returns "LocalName" for "urn:some:NS:LocalName".
+     * @param uri - component URI
+     * @return - component name
      */
-    public Namespace compUToNamespaceObj (String componentURI) {
-        var nsuri = compUToNamespaceU(componentURI);
-        return namespaceObj(nsuri);
+    public static String uriToName (String uri) {
+        int indx = 0;
+        if (uri.startsWith("urn:")) indx = uri.lastIndexOf(":");
+        else indx = uri.lastIndexOf("/");
+        if (indx < 0 || indx >= uri.length()) return "";
+        return uri.substring(indx+1);
     }
+
    
     public void addNamespace (Namespace n) throws CMFException {
         if (null == n) return;
@@ -195,7 +221,6 @@ public class Model extends CMFObject {
         ordNS = null;
         n.setModel(this);
     }
-    
     
     public void addClassType (ClassType c) {
         if (null == c) return;

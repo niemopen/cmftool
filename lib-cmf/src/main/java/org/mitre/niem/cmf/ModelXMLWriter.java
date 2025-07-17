@@ -132,7 +132,7 @@ public class ModelXMLWriter {
         appendSimpleChild(doc, e, "DocumentFilePathText", x.documentFilePath());
         appendSimpleChild(doc, e, "NamespaceCategoryCode", x.kindCode());
         appendSimpleChild(doc, e, "NamespaceVersionText", x.version());
-        appendSimpleChild(doc, e, "NIEMVersionName", x.niemVersion());
+        appendSimpleChild(doc, e, "ArchitectureVersionName", x.archVersion());
         appendSimpleChild(doc, e, "NamespaceLanguageName", x.language());
         appendImportDocs(doc, e, x);
         Collections.sort(x.augL());
@@ -187,6 +187,7 @@ public class ModelXMLWriter {
         appendOptionalIndicator(doc, c, "AbstractIndicator", x.isAbstract());
         appendComponentReference(doc, c, "SubPropertyOf", x.subPropertyOf(), nsS);
         appendOptionalIndicator(doc, c, "RelationshipIndicator", x.isRelationship());
+        appendOptionalIndicator(doc, c, "OrderedPropertyIndicator", x.isOrdered());
     }
     
     void addRestrictionChildren (Document doc, Element c, Restriction x, Set<Namespace>nsS) {
@@ -203,7 +204,7 @@ public class ModelXMLWriter {
     
     private void appendAnyProperty (Document doc, Element p, AnyProperty x, Set<Namespace>nsS) {
         if (null == x) return;
-        var c = doc.createElementNS(CMF_NS_URI, "AnyProperty");
+        var c = doc.createElementNS(CMF_NS_URI, "AnyPropertyAssociation");
         appendSimpleChild(doc, c, "MinOccursQuantity", x.minOccurs());
         appendSimpleChild(doc, c, "MaxOccursQuantity", x.maxOccurs());
         appendOptionalIndicator(doc, c, "AttributeIndicator", x.isAttribute());
@@ -313,7 +314,6 @@ public class ModelXMLWriter {
         appendSimpleChild(doc, c, "MinOccursQuantity", x.minOccurs());
         appendSimpleChild(doc, c, "MaxOccursQuantity", x.maxOccurs());
         for (var dls : x.docL()) appendDocumentation(doc, c, dls);
-        appendOptionalIndicator(doc, c, "OrderedPropertyIndicator", x.isOrdered());
         p.appendChild(c);       
     }
     

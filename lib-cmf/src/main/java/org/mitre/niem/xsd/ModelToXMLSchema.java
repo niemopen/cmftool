@@ -42,7 +42,6 @@ import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FilenameUtils;
 import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
-import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,16 +52,11 @@ import static org.mitre.niem.cmf.CMFObject.CMF_RESTRICTION;
 import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
-import static org.mitre.niem.cmf.Component.makeQN;
 import static org.mitre.niem.cmf.Component.makeURI;
-import static org.mitre.niem.cmf.Component.qnToName;
-import static org.mitre.niem.cmf.Component.qnToPrefix;
-import static org.mitre.niem.cmf.Component.uriToName;
-import static org.mitre.niem.cmf.Component.uriToNamespace;
-import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.Model;
+import static org.mitre.niem.cmf.Model.uriToName;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.PropertyAssociation;
@@ -77,6 +71,9 @@ import org.mitre.niem.utility.ResourceManager;
 import org.mitre.niem.xml.LanguageString;
 import org.mitre.niem.xml.ParserBootstrap;
 import org.mitre.niem.xml.XMLCatalogCreator;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import org.mitre.niem.xml.XSDWriter;
 import static org.mitre.niem.xsd.ModelFromXSD.replaceSuffix;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_APPINFO;
@@ -184,8 +181,8 @@ public class ModelToXMLSchema {
         if (null != useNiemVersion) niemVersions.add(useNiemVersion);
         else 
             for (var ns : m.namespaceSet()) {
-                var nver = ns.niemVersion();
-                if (!nver.isEmpty()) niemVersions.add(ns.niemVersion());
+                var nver = ns.archVersion();
+                if (!nver.isEmpty()) niemVersions.add(ns.archVersion());
         }
     }
     
@@ -369,7 +366,7 @@ public class ModelToXMLSchema {
         for (var nsU : nsAugs.keySet()) {                   // http://AugmentingNS/
             var nsctU2augL = nsAugs.get(nsU);
             for (var actU : nsctU2augL.keySet()) {          // http://BarNS/BarType or Object
-                var actnsU = uriToNamespace(actU);          // http://BarNS/ or ""
+                var actnsU = m.uriToNSU(actU);        // http://BarNS/ or ""
                 var actN = uriToName(actU);                 // BarType or ""
                 actN = replaceSuffix(actN, "Type", "");     // Bar or ""
                 var aptU = "";
@@ -429,7 +426,7 @@ public class ModelToXMLSchema {
         // Get namespace URI and NIEM version; set the xs:schema attributes that
         // don't need a namespace prefix. (We don't know what the prefixes are yet.)
         var nsU  = ns.uri();
-        var nver = ns.niemVersion();
+        var nver = ns.archVersion();
         if (null != useNiemVersion) nver = useNiemVersion;
         setAttribute(root, "targetNamespace", nsU);
         setAttribute(root, "version", ns.version());
@@ -561,9 +558,9 @@ public class ModelToXMLSchema {
                 case "Object":      baseN = "Object"; break;
                 case "LITERAL":     continue;
                 default:                                        // http://BarNS/BarType
-                    actnsU = uriToNamespace(actU);              // http://BarNS/
-                    baseN   = uriToName(actU);                  // BarType
-                    baseN   = replaceSuffix(baseN, "Type", ""); // Bar
+                    actnsU = m.uriToNSU(actU);            // http://BarNS/
+                    baseN  = uriToName(actU);                   // BarType
+                    baseN  = replaceSuffix(baseN, "Type", "");  // Bar
             }
             var aeN = baseN + "Augmentation";                   // BarAugmentation or ObjectAugmentation
             var atN = aeN + "Type";                             // BarAugmentationType or ObjectAugmentationType
@@ -624,7 +621,7 @@ public class ModelToXMLSchema {
         
         if (!nsU.equals(ct.namespaceURI())) return;
         var ns  = m.namespaceObj(nsU);    
-        var ver = ns.niemVersion();
+        var ver = ns.archVersion();
         if (null != useNiemVersion) ver = useNiemVersion;
         
         var ctE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
@@ -714,7 +711,7 @@ public class ModelToXMLSchema {
                 sqE.appendChild(parE);
             }
               for (var spU : choiceUs) {                          // 
-                var spnsU = uriToNamespace(spU);
+                var spnsU = m.uriToNSU(spU);
                 var spQ   = m.uriToQN(spU);
                 // gracefully handle namespaces not ending in /
                 if (spQ == null || spQ.isEmpty()) {

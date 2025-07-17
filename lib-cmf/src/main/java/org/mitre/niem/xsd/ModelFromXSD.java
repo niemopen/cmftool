@@ -65,15 +65,13 @@ import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
 import static org.mitre.niem.cmf.Component.makeURI;
-import static org.mitre.niem.cmf.Component.qnToName;
-import static org.mitre.niem.cmf.Component.qnToPrefix;
-import static org.mitre.niem.cmf.Component.uriToNamespace;
 import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
 import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.LocalTerm;
 import org.mitre.niem.cmf.Model;
+import static org.mitre.niem.cmf.Model.uriToName;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.ObjectProperty;
 import org.mitre.niem.cmf.Property;
@@ -85,6 +83,8 @@ import static org.mitre.niem.xml.XMLSchemaDocument.evalForNodes;
 import static org.mitre.niem.xml.XMLSchemaDocument.evalForString;
 import static org.mitre.niem.xml.XMLSchemaDocument.getDocumentation;
 import static org.mitre.niem.xml.XMLSchemaDocument.getLanguageString;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
+import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import org.mitre.niem.xml.XMLSchemaException;
 import org.mitre.niem.xml.Xerces;
 import static org.mitre.niem.xsd.NIEMSchemaDocument.qnToURI;
@@ -208,7 +208,7 @@ public class ModelFromXSD {
             ns.setDocumentFilePath(sch.docFilePath(sd));
             ns.setKindCode(kcode);
             ns.setVersion(sd.version());
-            ns.setNIEMVersion(sd.niemVersion());
+            ns.setArchVersion(sd.niemVersion());
             ns.setLanguage(sd.language());      
             ns.setConformanceTargets(sd.ctAssertions());
             ns.docL().addAll(sd.documentation());
@@ -284,7 +284,7 @@ public class ModelFromXSD {
                 aeL.add(augE);
                 if (codes.isBlank()) {
                     var typeU = m.qnToURI(typeQ);
-                    var tnsU  = uriToNamespace(typeU);
+                    var tnsU  = m.uriToNSU(typeU);
                     var tname  = qnToName(typeQ);
                     var xctype = xs.getTypeDefinition(tname, tnsU);
                     attAugTypeUS.add(typeU);
@@ -440,7 +440,7 @@ public class ModelFromXSD {
     private void initializeDatatypes () {
         for (var dtU : datatypeUs) {
             Datatype dt = null;
-            var dtns  = m.compUToNamespaceObj(dtU);    // datatype namespace object
+            var dtns  = m.uriToNSObj(dtU);    // datatype namespace object
             var name  = sch.uriToLocalName(dtU);
             var xstype = dtU2xstype.get(dtU);
             switch(xstype.getVariety()) {
@@ -488,7 +488,6 @@ public class ModelFromXSD {
     // the list item type from its simple type definition.
     private void populateListType (ListType lt, XSSimpleTypeDefinition xstype, Map<String,String>appi) throws CMFException {
         var ltname = lt.name();
-        var oFlag = appi.getOrDefault("orderedPropertyIndicator", "");
         var xitem = xstype.getItemType();       // list item simple type def from XS ST def
         var itemU = xObjToURI(xitem);           // URI for list item 
         var idt   = getDatatype(itemU);
@@ -496,7 +495,6 @@ public class ModelFromXSD {
             throw new CMFException(
                 String.format("can't find item datatype %s for list datatype %s", itemU, lt.uri()));
         lt.setItemType(idt);
-        if (null != oFlag) lt.setIsOrdered("true".equals(oFlag));
     }
     
     // Populate a Restriction object with appinfo from its CSC type definition,
@@ -660,8 +658,8 @@ public class ModelFromXSD {
         }
         // CCC types handled, now do the CSC types becoming ClassType objects
         for (var ctypeU : cscClassUs) {
-            var ctns   = m.compUToNamespaceObj(ctypeU);
-            var ctname = m.compUToName(ctypeU);
+            var ctns   = m.uriToNSObj(ctypeU);
+            var ctname = uriToName(ctypeU);
             var ct     = new ClassType(ctns, ctname);
             m.addClassType(ct);
             allClassUs.add(ct.uri());
@@ -794,7 +792,7 @@ public class ModelFromXSD {
                 }
                 if (!subQ.isEmpty()) {
                     var subU   = schemaQNToURI(schE, subQ);
-                    var subnsU = uriToNamespace(subU);
+                    var subnsU = m.uriToNSU(subU);
                     if (NSK_STRUCTURES == NamespaceKind.namespaceToKind(subnsU)) {
                         globalAugS.add((ObjectProperty)p);
                     }
@@ -806,6 +804,7 @@ public class ModelFromXSD {
                 var xedec = xs.getElementDeclaration(name, nsU);
                 populateComponent(p, schE, appi);
                 p.setIsAbstract(xedec.getAbstract());
+                p.setIsOrdered("true".equals(appi.getOrDefault("orderedPropertyIndicator", "")));
                 p.setIsRelationship("true".equals(appi.getOrDefault("relationshipPropertyIndicator", "")));
             }
         }
@@ -889,7 +888,7 @@ public class ModelFromXSD {
                                 break;
                             }
                             var rname  = qnToName(ref);
-                            var refnsU = m.compUToNamespaceU(refU);
+                            var refnsU = m.uriToNSU(refU);
                             if (refU.endsWith("AugmentationPoint")) break;
                             if (!sch.isModelNamespace(refnsU)) break;
                             prop = m.uriToProperty(refU);
@@ -903,10 +902,8 @@ public class ModelFromXSD {
                         }
                         else {
                             var eapi = getAppinfoAttributes(e, appU);
-                            var ord  = eapi.getOrDefault("orderedPropertyIndicator", "");
                             if (!max.isBlank()) cpa.setMaxOccurs(max);
                             if (!min.isBlank()) cpa.setMinOccurs(min);
-                            cpa.setIsOrdered("true".equals(eapi.getOrDefault("orderedPropertyIndicator", "")));
                         }
                         ct.propL().add(cpa);
                         break;

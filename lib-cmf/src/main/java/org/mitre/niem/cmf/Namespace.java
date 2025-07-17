@@ -54,7 +54,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     private String docFP = "";                                      // cmf:DocumentFilePathText
     private String kindCode = "";                                   // cmf:NamespaceCategoryCode
     private String version = "";                                    // cmf:NamespaceVersionText
-    private String niemVersion = "";                                // cmf:NIEMVersionName
+    private String archVersion = "";                                // cmf:ArchitectureVersionName
     private String lang = "";                                       // cmf:NamespaceLanguageName
     private boolean isModelF = false;                               // has a model schema document CTA
     private final List<LanguageString> docL = new ArrayList<>();    // cmf:DocumentationText
@@ -70,7 +70,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     public String documentFilePath ()               { return docFP; }
     public String kindCode ()                       { return kindCode; }
     public String version ()                        { return version; }
-    public String niemVersion ()                    { return niemVersion; }
+    public String archVersion ()                    { return archVersion; }
     public String language ()                       { return lang; }
     public List<LanguageString> docL ()             { return docL; }
     public List<LanguageString> idocL (String nsU)  { return idocs.getOrDefault(nsU, EMPTY_LSL); }
@@ -84,7 +84,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     public void setDocumentFilePath (String s)      { docFP = s; }
     public void setKindCode (String s)              { kindCode = s; }
     public void setVersion (String s)               { version = s; }
-    public void setNIEMVersion (String s)           { niemVersion = s; }
+    public void setArchVersion (String s)           { archVersion = s; }
     public void setLanguage (String s)              { lang = s; }
     
     public void addDocumentation (String doc, String lang) {
@@ -127,11 +127,11 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
         if (null == m) return;
         if (null == prefix || null == uri) 
             throw new CMFException("can't add uninitialzed Namespace to a Model");
-        var mpre = m.nsUToNSprefix(uri);
+        var mpre = m.nsUToPrefix(uri);
         if (null != mpre && !mpre.equals(prefix)) {
             throw new CMFException(String.format(
                 "can't add namespace %s:%s to model (%s already assigned to %s)",
-                prefix, uri, prefix, m.prefixToNSuri(prefix)));
+                prefix, uri, prefix, m.prefixToNSU(prefix)));
         }
         model = m;
     }    
@@ -139,21 +139,21 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     public void setPrefix (String p) throws CMFException {
         prefix = p;
         if (null == model || null == uri) return;
-        var muri = model.prefixToNSuri(p);
+        var muri = model.prefixToNSU(p);
         if (null != muri && !uri.equals(muri))
             throw new CMFException(String.format(
                 "can't change prefix of URI %s to %s (already assigned to %s)",
-                uri, p, model.prefixToNSuri(p)));
+                uri, p, model.prefixToNSU(p)));
     }
     
     public void setURI (String u) throws CMFException {
         uri = u;
         if (null == model ||  null == prefix) return;
-        var mpr = model.nsUToNSprefix(u);
+        var mpr = model.nsUToPrefix(u);
         if (null != mpr && !prefix.equals(mpr))
             throw new CMFException(String.format(
                 "can't change URI of prefix %s to %s (already assigned to %s)",
-                prefix, u, model.nsUToNSprefix(u)));    
+                prefix, u, model.nsUToPrefix(u)));    
     }
     
     

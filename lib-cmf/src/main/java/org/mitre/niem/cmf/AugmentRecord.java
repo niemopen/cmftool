@@ -41,7 +41,6 @@ public class AugmentRecord extends PropertyAssociation {
         this.setProperty(cpa.property());
         this.setMaxOccurs(cpa.maxOccurs());
         this.setMinOccurs(cpa.minOccurs());
-        this.setIsOrdered(cpa.isOrdered());
         this.setDocumentation(cpa.docL());
     }
     

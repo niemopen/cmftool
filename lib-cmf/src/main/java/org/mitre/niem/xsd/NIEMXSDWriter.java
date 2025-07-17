@@ -25,7 +25,7 @@ package org.mitre.niem.xsd;
 
 import java.util.List;
 import java.util.Map;
-import static org.mitre.niem.cmf.Component.makeQN;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
 import org.mitre.niem.xml.XSDWriter;
 
 /**

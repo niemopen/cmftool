@@ -51,18 +51,13 @@ import static org.mitre.niem.cmf.CMFObject.CMF_RESTRICTION;
 import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
-import static org.mitre.niem.cmf.Component.makeURI;
-import static org.mitre.niem.cmf.Component.qnToName;
-import static org.mitre.niem.cmf.Component.qnToPrefix;
-import static org.mitre.niem.cmf.Component.uriToName;
-import static org.mitre.niem.cmf.Component.uriToNamespace;
 import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.Model;
+import static org.mitre.niem.cmf.Model.uriToName;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.Property;
-import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.ReferenceGraph;
 import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
@@ -176,8 +171,8 @@ public class ModelToXSDModel {
         if (null != useNiemVersion) niemVersions.add(useNiemVersion);
         else 
             for (var ns : m.namespaceSet()) {
-                var nver = ns.niemVersion();
-                if (!nver.isEmpty()) niemVersions.add(ns.niemVersion());
+                var nver = ns.archVersion();
+                if (!nver.isEmpty()) niemVersions.add(ns.archVersion());
         }
     }
     
@@ -303,7 +298,7 @@ public class ModelToXSDModel {
         // Get namespace URI and NIEM version; set the xs:schema attributes that
         // don't need a namespace prefix. (We don't know what the prefixes are yet.)
         var nsU  = ns.uri();
-        var nver = ns.niemVersion();
+        var nver = ns.archVersion();
         if (null != useNiemVersion) nver = useNiemVersion;
         setAttribute(root, "targetNamespace", nsU);
         setAttribute(root, "version", ns.version());
@@ -489,7 +484,7 @@ public class ModelToXSDModel {
             }
         }
         for (var ctU : ctU2augs.keySet()) {                 // http://FooNS/BarType or ObjectType
-            var ctnsU = uriToNamespace(ctU);                // http://FooNS/ or ""
+            var ctnsU = m.uriToNSU(ctU);              // http://FooNS/ or ""
             var ctns  = m.namespaceObj(ctnsU);              // FooNS namespace object or null
             // gracefully handle namespaces that do not end in /
             if (ctns == null) {
@@ -583,10 +578,6 @@ public class ModelToXSDModel {
             elE.setAttribute("ref", p.qname());
             if (!"1".equals(pa.minOccurs())) elE.setAttribute("minOccurs", pa.minOccurs());
             if (!"1".equals(pa.maxOccurs())) elE.setAttribute("maxOccurs", pa.maxOccurs());
-            if (pa.isOrdered()) {
-                elE.setAttributeNS(appinfoU, appinfoPre + ":" + "orderedPropertyIndicator", "true");
-                refnsUs.add(appinfoU);
-            }
             refnsUs.add(p.namespaceURI());
             addAnnotationDoc(doc, elE, pa.docL());
             sqE.appendChild(elE);
@@ -827,6 +818,10 @@ public class ModelToXSDModel {
             setAttribute(decE, appinfoU, appinfoPre + ":" + "deprecated", "true");
             refnsUs.add(appinfoU);
         }
+        if (p.isOrdered()) {
+            setAttribute(decE, appinfoU, appinfoPre + ":" + "orderedPropertyIndicator", "true");
+            refnsUs.add(appinfoU);
+        }
         if (p.isRefAttribute()) {
             setAttribute(decE, appinfoU, appinfoPre + ":" + "referenceAttributeIndicator", "true");
             refnsUs.add(appinfoU);
@@ -845,7 +840,7 @@ public class ModelToXSDModel {
         if (null != p.subPropertyOf()) subU = p.subPropertyOf().uri();
         else subU = pU2subU.getOrDefault(p.uri(), "");
         if (!subU.isEmpty() && !p.isAttribute()) {
-            var subnsU = uriToNamespace(subU);
+            var subnsU = m.uriToNSU(subU);
             var subQ = m.uriToQN(subU);
             setAttribute(decE, "substitutionGroup", subQ);
             refnsUs.add(subnsU);
@@ -884,10 +879,6 @@ public class ModelToXSDModel {
         if (c.isAbstract())   e.setAttribute("abstract", "true");
         if (c.isDeprecated()) {
             setAttribute(e, appinfoU, appinfoPre + ":" + "deprecated", "true");
-            refnsUs.add(appinfoU);
-        }
-        if (c.isOrdered()) {
-            setAttribute(e, appinfoU, appinfoPre + ":" + "orderedPropertyIndicator", "true");        
             refnsUs.add(appinfoU);
         }
         if (!c.referenceCode().isEmpty()) {

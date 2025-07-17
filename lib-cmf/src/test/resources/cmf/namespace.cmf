@@ -13,7 +13,7 @@
     <DocumentFilePathText>niem/niem-core-skel.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
     <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="t">
@@ -26,7 +26,7 @@
     <DocumentFilePathText>namespace.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1-alpha.1</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xml">

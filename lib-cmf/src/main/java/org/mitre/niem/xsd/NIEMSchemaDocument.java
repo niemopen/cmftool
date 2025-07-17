@@ -36,9 +36,9 @@ import static org.mitre.niem.xsd.NIEMConstants.CONFORMANCE_ATTRIBUTE_NAME;
 import static org.mitre.niem.xsd.NIEMConstants.CTAS30;
 import static org.mitre.niem.xsd.NIEMConstants.CTAS60;
 import static org.mitre.niem.xsd.NamespaceKind.namespaceToKindCode;
-import static org.mitre.niem.xsd.NamespaceKind.namespaceToNIEMVersion;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
+import static org.mitre.niem.xsd.NamespaceKind.namespaceToArchVersion;
 
 /**
  * A class to represent a schema document in a NIEM XML schema document pile.
@@ -100,13 +100,13 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
      */
     public String niemVersion () { 
         if (null != niemVersion) return niemVersion; 
-        niemVersion = namespaceToNIEMVersion(targetNamespace());
+        niemVersion = namespaceToArchVersion(targetNamespace());
         if (!niemVersion.isEmpty()) return niemVersion;
         for (var imp : importElements ()) {
             var insU  = imp.nsU();
             var kcode = namespaceToKindCode(insU);
             if ("STRUCTURES".equals(kcode)) {
-                niemVersion = namespaceToNIEMVersion(insU);
+                niemVersion = namespaceToArchVersion(insU);
                 return niemVersion;
             }
         }

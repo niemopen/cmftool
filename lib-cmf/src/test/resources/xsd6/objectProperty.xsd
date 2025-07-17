@@ -30,7 +30,7 @@
   <xs:element name="DataProperty" type="niem-xs:string" abstract="true"/>
   <xs:element name="OProp1" type="test:TestType" abstract="true"/>
   <xs:element name="OProp2" type="test:TestType" abstract="false" appinfo:relationshipPropertyIndicator="true"/>
-  <xs:element name="OProp3" type="test:TestType" appinfo:relationshipPropertyIndicator="false"/>
-  <xs:element name="OProp4" type="test:TestType"/>
+  <xs:element name="OProp3" type="test:TestType" appinfo:orderedPropertyIndicator="false" appinfo:relationshipPropertyIndicator="false"/>
+  <xs:element name="OProp4" type="test:TestType" appinfo:orderedPropertyIndicator="true" />
   <xs:element name="OProp5" type="test:TestType" substitutionGroup="test:OProp1"/>
 </xs:schema>

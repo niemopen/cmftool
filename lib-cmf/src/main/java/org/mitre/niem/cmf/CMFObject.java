@@ -29,7 +29,7 @@ package org.mitre.niem.cmf;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class CMFObject {
+public abstract class CMFObject {
     public static final int CMF_CLASS = 1;
     public static final int CMF_DATAPROP = 2;
     public static final int CMF_DATATYPE = 3;

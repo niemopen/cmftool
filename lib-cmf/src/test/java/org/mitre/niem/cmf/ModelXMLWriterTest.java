@@ -30,9 +30,7 @@ import java.io.OutputStreamWriter;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.BeforeAll;
 import org.mitre.niem.xml.XMLSchema;
-import org.mitre.niem.xml.XMLSchemaException;
 
 /**
  *

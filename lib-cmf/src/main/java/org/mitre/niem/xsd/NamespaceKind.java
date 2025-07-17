@@ -42,6 +42,7 @@ import static org.mitre.niem.xsd.NIEMConstants.CTAS60;
 public class NamespaceKind {
     static final Logger LOG = LogManager.getLogger(NamespaceKind.class);
     
+    // Architecture versions and the CTAS version they use
     private static final String[] ctaNSU = {
       "NIEM6.0", CTAS60,
       "NIEM5.0", CTAS30,
@@ -49,6 +50,7 @@ public class NamespaceKind {
       "NIEM3.0", CTAS30
     };
     
+    // Architecture versions and the prefix of the CTAs they use
     private static final String[] ctaPrefix = {
       "NIEM6.0", "https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/",
       "NIEM5.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/5.0/",
@@ -56,10 +58,17 @@ public class NamespaceKind {
       "NIEM3.0", "http://reference.niem.gov/niem/specification/naming-and-design-rules/3.0/" 
     };
     
+    // Conformance targets known to CMFTool
     private static final String[] ctaSuffix = {
         "#ReferenceSchemaDocument", "#ExtensionSchemaDocument", "#SubsetSchemaDocument" 
     };
     
+    /**
+     * Given an architecture version, returns the corresponding conformance target 
+     * assertion namespace.  Returns empty string for unknown architecture version.
+     * @param version -- architecture version
+     * @return CTA namespace
+     */
     public static String versionToCtNsURI (String version) {
         for (int i = 0; i < ctaNSU.length; i += 2) {
             if (ctaNSU[i].equals(version)) return ctaNSU[i+1];
@@ -84,24 +93,24 @@ public class NamespaceKind {
     }
     
     /**
-     * Returns a NIEM version ("NIEM6.0", etc.) from a conformance target assertion.
-     * Returns empty string if CTA doesn't define a unique NIEM version.
+     * Returns an architecture version ("NIEM6.0", etc.) from a conformance target assertion.
+     * Returns empty string if CTA doesn't define a unique architecture version.
      * @param cta - conformance target URI string
-     * @return NIEM version
+     * @return architecture version
      */
     public static String ctaToVersion (String cta) {
         for (int i = 0; i < ctaPrefix.length; i += 2) {
             if (cta.startsWith(ctaPrefix[i+1])) return ctaPrefix[i];
         }
-        LOG.warn("can't get NIEM version from conformance target assertion {}", cta);
+        LOG.warn("can't get architecture version from conformance target assertion {}", cta);
         return "";
     }
     
     /**
-     * Returns a conformance target assertion URI string for the specified NIEM version and
-     * conformance target ("#ReferenceSchemaDocument", etc.).  Returns empty string
-     * for an unknown NIEM version.
-     * @param version - NIEME version
+     * Returns a conformance target assertion URI string for the specified architecture
+     * version and conformance target ("#ReferenceSchemaDocument", etc.).  
+     * Returns empty string for an unknown architecture version.
+     * @param version - architecture version
      * @param kind - conformance target
      * @return URI string for CTA
      */
@@ -201,7 +210,7 @@ public class NamespaceKind {
         return false;
     }
     
-    // The known versions and builtin codes.  Builtin codes are the same as the
+    // The known architecture versions and builtin codes.  Builtin codes are the same as the
     // preferred namespace prefix when made lowercase.
     private static Set<String> versions = Set.of("NIEM6.0", "NIEM5.0", "NIEM4.0", "NIEM3.0");
     private static Set<String> builtins = Set.of("APPINFO", "CLSA", "CLI", "NIEM-XS", "STRUCTURES", "XML");
@@ -264,7 +273,7 @@ public class NamespaceKind {
     };
     
     /**
-     * Returns the namespace URI for the specified NIEM version and builtin kind.
+     * Returns the namespace URI for the specified architecture version and builtin kind.
      * Returns empty string if no such builtin namespace.
      */ 
     public static String builtinNSU (String version, String kindCode) {
@@ -279,12 +288,12 @@ public class NamespaceKind {
     }
     
     /**
-     * Returns the NIEM version when this can be determined from a namespace URI
+     * Returns the architecture version when this can be determined from a namespace URI
      * (which you can do for the builtin namespaces).
      * @param ns - namespace URI string
      * @return NIEM version
      */
-    public static String namespaceToNIEMVersion (String ns) {
+    public static String namespaceToArchVersion (String ns) {
         for (int i = 0; i < builtinTab.length; i += 3) {
             if (builtinTab[i+2].equals(ns)) return builtinTab[i];
         }
@@ -321,6 +330,10 @@ public class NamespaceKind {
      */    
     public static int namespaceToKind (String ns) {
         return codeToKind(namespaceToKindCode(ns));
+    }
+    
+    public static boolean isBuiltin (String ns) {
+        return builtins.contains(namespaceToKindCode(ns));
     }
     
 }
