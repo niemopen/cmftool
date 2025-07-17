@@ -16,10 +16,7 @@ public class JSONProperty {
   public String ref;
   public String type;
   public String pattern;
-  public Double multipleOf = null;
-  public Double minimum = null;
-  public Double maximum = null;
-  public String format = null;
+  public String format;
   public JSONPropertyType items = null;
   public Integer minItems = null;
   public Integer maxItems = null;
@@ -170,32 +167,52 @@ public class JSONProperty {
     return false;
   }
 
-
-
   private void processDataType() {
     var dataType = property.datatype();
     String dataTypeName = dataType.name();
-
     isIntrinsicType = JSONSchemaHelper.isIntrinsicType(dataTypeName);
+
     var propName = (property.subPropertyOf() != null) ? property.subPropertyOf().name() : property.name();
 
-    if (JSONSchemaHelper.isXMLPrimitiveType(dataType)) {
-      JSONDefinition jDefinition = new JSONDefinition();
-      jDefinition.processXMLPrimitiveDataType(dataType.name());
-      if (jDefinition.type != null)
-        type = jDefinition.type;
-      if (jDefinition.multipleOf != null)
-        multipleOf = jDefinition.multipleOf;
-      if (jDefinition.minimum != null)
-        minimum = jDefinition.minimum;
-      if (jDefinition.maximum != null)
-        maximum = jDefinition.maximum;
-      if (jDefinition.format != null)
-        format = jDefinition.format;
-      if (jDefinition.pattern != null)
-        pattern = jDefinition.pattern;
-      if (jDefinition.items != null)
-        items = new JSONPropertyType(jDefinition.items.get("type"), jDefinition.items.get("pattern"));
+    // replace IDREF with a string
+    if (dataTypeName.equals("IDREF")) {
+      type = "string";
+      pattern = "^[_A-Za-z][-._A-Za-z0-9]*$";
+      return;
+    }
+
+    // replace IDREFS with an array of strings
+    if (dataTypeName.equals("IDREFS")) {
+      type = "array";
+      items = new JSONPropertyType("string", "^[_A-Za-z][-._A-Za-z0-9]*$");
+      return;
+    }
+
+
+    // replace decimal with a number
+    if (dataTypeName.equals("decimal")) {
+      type = "number";
+      return;
+    }
+
+    // replace token with a string
+    if (dataTypeName.equals("token")) {
+      type = "string";
+      pattern = "^\\S*$";
+      return;
+    }
+
+    // replace normalizedString with a string
+    if (dataTypeName.equals("normalizedString")) {
+      type = "string";
+      pattern = "^\\s?(\\S+\\\s?)+\\\s?$";
+      return;
+    }
+
+    // replace dateTime with a string
+    if (dataTypeName.equals("dateTime")) {
+      type = "string";
+      format = "date-time";
       return;
     }
 
@@ -254,7 +271,7 @@ public class JSONProperty {
             } else if (card.getMinOccurs() < card.getMaxOccurs()) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  dataType.namespace().prefix(), dataTypeName);
+                  property.namespace().prefix(), dataTypeName);
             }
           }
         }

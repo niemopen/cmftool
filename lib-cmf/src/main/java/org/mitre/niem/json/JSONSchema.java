@@ -287,8 +287,6 @@ public class JSONSchema {
     }
     // Handle a new data type
     else if (null != newDataTypeToAdd) {
-      if (JSONSchemaHelper.isXMLPrimitiveType(newDataTypeToAdd))
-        return; // Skip XML primitive data types
       var jDefNewType = new JSONDefinition(m, newDataTypeToAdd);
       definitions.put(nameToAdd.toString(), jDefNewType);
     }
