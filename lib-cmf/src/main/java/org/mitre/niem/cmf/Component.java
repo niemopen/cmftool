@@ -26,6 +26,7 @@ package org.mitre.niem.cmf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -117,6 +118,7 @@ public abstract class Component extends CMFObject implements Comparable<Componen
         if (null == namespace && !outsideURI.isEmpty()) return outsideURI;
         if (null == namespace || null == name || name.isEmpty()) return "";
         var nsuri = namespace.uri();
+        if (nsuri.startsWith("urn:")) return nsuri + ":" + name;
         if (nsuri.endsWith("/")) return nsuri + name;
         return nsuri + "/" + name;
     }    
