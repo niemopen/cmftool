@@ -692,10 +692,10 @@ public class ModelToXMLSchema {
         for (var pa : propL) {
             Set<String> choiceUs = null;
             var p    = pa.property();
-            var pQ   = p.qname();
+            //var pQ   = p.qname();
             if (p.isAttribute()) continue;
             if (null == p.namespace()) {
-                choiceUs = subGroupL.get(p.name());                 // ObjectAugmentationPoint
+                choiceUs = subGroupL.get(p.name());                 // ObjectAugmentationPoint, AssociationAugmentationPoint
             }
             else {                                              
                 choiceUs = subGroupL.get(p.uri());
