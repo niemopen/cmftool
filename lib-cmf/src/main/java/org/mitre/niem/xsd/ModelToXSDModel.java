@@ -111,7 +111,6 @@ public class ModelToXSDModel {
     
     public void setCatalogPath (String path) {
         catalogPath = path;
-        LOG.debug("catalog path = {}", catalogPath);
     }
     
     public void setRootNamespace (String nsPrefixOrURI) {
@@ -283,7 +282,6 @@ public class ModelToXSDModel {
             if (W3C_XML_SCHEMA_NS_URI.equals(dtnsU)) continue;
             if (!dt.isModelComponent()) continue;
             simpleTypes.add(dt);        
-            LOG.debug("need simple type: {}", dt.qname());
         }
     }
 
@@ -479,7 +477,7 @@ public class ModelToXSDModel {
             }
         }
         for (var ctU : ctU2augs.keySet()) {                 // http://FooNS/BarType or ObjectType
-            var ctnsU = m.uriToNSU(ctU);              // http://FooNS/ or ""
+            var ctnsU = m.uriToNSU(ctU);                    // http://FooNS/ or ""
             var ctns  = m.namespaceObj(ctnsU);              // FooNS namespace object or null
             var ctN   =  "";                                // augmented type name
             if (null == ctns) ctN = ctU;                    // ObjectType

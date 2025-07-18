@@ -175,10 +175,7 @@ public class Model extends CMFObject {
         int indx = 0;
         if (uri.startsWith("urn:")) indx = uri.lastIndexOf(":");
         else indx = uri.lastIndexOf("/");
-        if (indx < 0 || indx >= uri.length()) {
-            LOG.error("bad component URI {}", uri);
-            return "";
-        }
+        if (indx < 0 || indx >= uri.length()) return "";
         var nsU  = uri.substring(0, indx+1);
         var nsU2 = nsU.substring(0, nsU.length()-1);
         if (nsmap.hasURI(nsU)) return nsU;              // http://someNS/

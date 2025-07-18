@@ -366,7 +366,7 @@ public class ModelToXMLSchema {
         for (var nsU : nsAugs.keySet()) {                   // http://AugmentingNS/
             var nsctU2augL = nsAugs.get(nsU);
             for (var actU : nsctU2augL.keySet()) {          // http://BarNS/BarType or Object
-                var actnsU = m.uriToNSU(actU);        // http://BarNS/ or ""
+                var actnsU = m.uriToNSU(actU);              // http://BarNS/ or ""
                 var actN = uriToName(actU);                 // BarType or ""
                 actN = replaceSuffix(actN, "Type", "");     // Bar or ""
                 var aptU = "";
@@ -681,7 +681,7 @@ public class ModelToXMLSchema {
             var pQ   = p.qname();
             if (p.isAttribute()) continue;
             if (null == p.namespace()) {
-                choiceUs = subGroupL.get(p.name());                 // ObjectAugmentationPoint
+                choiceUs = subGroupL.get(p.name()); // ObjectAugmentationPoint or AssociationAugmentationPoint
             }
             else {                                              
                 choiceUs = subGroupL.get(p.uri());
