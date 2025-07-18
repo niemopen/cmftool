@@ -39,6 +39,7 @@ import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
 import org.mitre.niem.xsd.ModelToXMLSchema;
+import org.mitre.niem.xsd.NamespaceKind;
 
 /**
  *
@@ -61,6 +62,9 @@ public class CmdCMFtoXMLSchema implements JCCommand {
     
     @Parameter(order = 3, names = {"-r", "-root"}, description = "make this schema document have all necessary imports")
     private String rootNSarg = null;
+    
+    @Parameter(order = 4, names = {"-v", "--archVersion"}, description = "builtins from this architecture (eg. \"NIEM5.0\")")
+    private String archVers = null;
     
     @Parameter(names = {"-d","--debug"}, description = "turn on debug logging")
     private boolean debugFlag = false;
@@ -121,6 +125,10 @@ public class CmdCMFtoXMLSchema implements JCCommand {
             }
         }
         // Sanity checking
+        if (null != archVers && !NamespaceKind.knownVersions().contains(archVers)) {
+            System.err.println("Unknown architecture version " + archVers);
+            System.exit(1);
+        }
         if (catFlag && null != catPath && !"xml-catalog.xml".equals(catPath)) {
             System.err.println("-c and --catalog options are in conflict");
             System.exit(1);
@@ -150,6 +158,7 @@ public class CmdCMFtoXMLSchema implements JCCommand {
         var model = mr.readFiles(fileL);
         
         var m2x =  new ModelToXMLSchema(model);
+        m2x.setArchVersion(archVers);
         m2x.setCatalogPath(catPath);
         m2x.setRootNamespace(rootNSarg);
         try {

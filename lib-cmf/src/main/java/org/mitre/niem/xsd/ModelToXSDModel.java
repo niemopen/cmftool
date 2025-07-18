@@ -90,11 +90,11 @@ public class ModelToXSDModel {
     static final Logger LOG = LogManager.getLogger(ModelToXSDModel.class);
 
     protected Model m;
-    protected String useNiemVersion = null;
+    protected String useArchVersion = null;
     protected String catalogPath = null;
     protected Namespace rootNS = null;
     protected final NamespaceMap prefixMap              = new NamespaceMap();   // all prefixes for namespaces in the model
-    protected final Set<String> niemVersions            = new HashSet<>();      // all the NIEM version names in the model
+    protected final Set<String> archVersions            = new HashSet<>();      // all the NIEM version names in the model
     protected final Map<String,String> namespaceU2Path  = new HashMap<>();      // nsU -> file path in outD
     protected final Map<String,Integer> namespaceU2Kind = new HashMap<>();      // nsU -> namespace kind
     protected final Set<String> extNSs                  = new HashSet<>();      // URIs of external namespaces
@@ -105,8 +105,8 @@ public class ModelToXSDModel {
         this.m = m;
     }
     
-    public void setNIEMVersion (String vers) {
-        
+    public void setArchVersion (String vers) {
+        useArchVersion = vers;
     }
     
     public void setCatalogPath (String path) {
@@ -125,10 +125,10 @@ public class ModelToXSDModel {
      * document for each model namespace gets the NIEM version specified in the
      * arguments.
      * @param outD
-     * @param niemVersion 
+     * @param archVersion 
      */
-    public void writeModelXSD (File outD, String niemVersion) throws ParserConfigurationException, IOException {
-        useNiemVersion = niemVersion;
+    public void writeModelXSD (File outD, String archVersion) throws ParserConfigurationException, IOException {
+        useArchVersion = archVersion;
         writeModelXSD(outD);
     }
     
@@ -139,7 +139,7 @@ public class ModelToXSDModel {
      * @param outD 
      */
     public void writeModelXSD (File outD) throws ParserConfigurationException, IOException {        
-        collectNIEMVersions();
+        collectArchVersions();
         collectNamespacePrefixes();
         collectNamespaceKinds();
         establishFilePaths();
@@ -148,7 +148,7 @@ public class ModelToXSDModel {
             if (ns.isExternal()) extNSs.add(ns.uri());
         for (var ns : m.namespaceSet()) 
             if (ns.isModelNS()) writeModelDocument(ns, outD);
-        for (var vers : niemVersions)
+        for (var vers : archVersions)
             writeVersionBuiltins(vers, outD);
         if (null != catalogPath) {
             var catF = new File(outD, catalogPath);
@@ -166,12 +166,12 @@ public class ModelToXSDModel {
 
     // Examine all the namespaces to collect all the NIEM versions.  If the version
     // was specified in the call to writeModelXSD, then there will only be one.
-    protected void collectNIEMVersions () {
-        if (null != useNiemVersion) niemVersions.add(useNiemVersion);
+    protected void collectArchVersions () {
+        if (null != useArchVersion) archVersions.add(useArchVersion);
         else 
             for (var ns : m.namespaceSet()) {
                 var nver = ns.archVersion();
-                if (!nver.isEmpty()) niemVersions.add(ns.archVersion());
+                if (!nver.isEmpty()) archVersions.add(ns.archVersion());
         }
     }
     
@@ -192,7 +192,7 @@ public class ModelToXSDModel {
             var kind  = NamespaceKind.codeToKind(kcode);
             namespaceU2Kind.put(nsU, kind);
         }
-        for (var nver : niemVersions) {
+        for (var nver : archVersions) {
             for (var kcode : NamespaceKind.builtins()) {
                 var kind = codeToKind(kcode);
                 var bnsU = builtinNSU(nver, kcode);
@@ -228,9 +228,9 @@ public class ModelToXSDModel {
             namespaceU2Path.put(ns.uri(), "./" + path);
         }
         // Now do the builtins for each NIEM version
-        for (var vers : niemVersions) {
+        for (var vers : archVersions) {
             var vdir = "";
-            if (null != useNiemVersion || 1 == niemVersions.size()) vdir = "niem/";
+            if (null != useArchVersion || 1 == archVersions.size()) vdir = "niem/";
             else vdir = NamespaceKind.versionDirName().get(vers);
             if (null == vdir) continue;
             for (var kcode : NamespaceKind.builtins()) {
@@ -297,7 +297,7 @@ public class ModelToXSDModel {
         // don't need a namespace prefix. (We don't know what the prefixes are yet.)
         var nsU  = ns.uri();
         var nver = ns.archVersion();
-        if (null != useNiemVersion) nver = useNiemVersion;
+        if (null != useArchVersion) nver = useArchVersion;
         setAttribute(root, "targetNamespace", nsU);
         setAttribute(root, "version", ns.version());
         setAttribute(root, "xml:lang", ns.language());
