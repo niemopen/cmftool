@@ -406,7 +406,7 @@ public class JSONProperty {
             } else if (card.getMinOccurs() < card.getMaxOccurs()) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  property.namespace().prefix(), dataTypeName);
+                  dataType.namespace().prefix(), dataTypeName);
             }
           }
         }
