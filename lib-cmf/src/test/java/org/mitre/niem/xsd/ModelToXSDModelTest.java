@@ -53,7 +53,7 @@ public class ModelToXSDModelTest {
     
 //    @Test
 //    public void testOne () throws Exception {
-//        testRoundTrip(new File(resDN, "xsd6/globObjAug.xsd"));        
+//        testRoundTrip(new File(resDN, "xsd6/gaObjObj.xsd"));        
 //    }
 
     @Test

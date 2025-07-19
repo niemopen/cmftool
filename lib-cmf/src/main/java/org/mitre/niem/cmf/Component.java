@@ -93,15 +93,14 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     
     /**
      * Returns the qualified name of this component; e.g. "nc:TextType".
+     * Returns the local name for dummy components with no namespace.
+     * Returns the empty string for components with no name (G$@#@)
      */
     public String qname () {
-        if (null == namespace)
-            if (null == name) return "";
-            else {
-                LOG.error("component named {} does not have a namespace", name);
-                return name;
-            }
-        return namespace.prefix() + ":" + name;
+        var ps = "";
+        if (null != namespace) ps = namespace.prefix() + ":";
+        if (null != name) return ps + name;
+        return "";
     }
     
     /**

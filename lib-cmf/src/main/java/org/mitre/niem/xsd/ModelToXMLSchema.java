@@ -97,11 +97,11 @@ public class ModelToXMLSchema {
     static final Logger LOG = LogManager.getLogger(ModelToXMLSchema.class);
 
     protected Model m;
-    protected String useNiemVersion = null;
+    protected String useArchVersion = null;
     protected String catalogPath = null;
     protected Namespace rootNS = null;
     protected final NamespaceMap prefixMap              = new NamespaceMap();   // all prefixes for namespaces in the model
-    protected final Set<String> niemVersions            = new HashSet<>();      // all the NIEM version names in the model
+    protected final Set<String> archVersions            = new HashSet<>();      // all the NIEM version names in the model
     protected final Map<String,String> namespaceU2Path  = new HashMap<>();      // nsU -> file path in outD
     protected final Map<String,Integer> namespaceU2Kind = new HashMap<>();      // nsU -> namespace kind
     protected final Set<String> extNSs                  = new HashSet<>();      // URIs of external namespaces
@@ -112,8 +112,8 @@ public class ModelToXMLSchema {
         this.m = m;
     }
     
-    public void setNIEMVersion (String vers) {
-        
+    public void setArchVersion (String vers) {
+        useArchVersion = vers;
     }
     
     public void setCatalogPath (String path) {
@@ -133,10 +133,10 @@ public class ModelToXMLSchema {
      * document for each model namespace gets the NIEM version specified in the
      * arguments.
      * @param outD
-     * @param niemVersion 
+     * @param archVersion 
      */
-    public void writeModelXSD (File outD, String niemVersion) throws ParserConfigurationException, IOException {
-        useNiemVersion = niemVersion;
+    public void writeModelXSD (File outD, String archVersion) throws ParserConfigurationException, IOException {
+        useArchVersion = archVersion;
         writeModelXSD(outD);
     }
     
@@ -147,7 +147,7 @@ public class ModelToXMLSchema {
      * @param outD 
      */
     public void writeModelXSD (File outD) throws ParserConfigurationException, IOException {
-        collectNIEMVersions();
+        collectArchVersions();
         collectNamespacePrefixes();
         collectNamespaceKinds();
         establishFilePaths();
@@ -159,7 +159,7 @@ public class ModelToXMLSchema {
             if (ns.isExternal()) extNSs.add(ns.uri());
         for (var ns : m.namespaceSet()) 
             if (ns.isModelNS()) writeModelDocument(ns, outD);
-        for (var vers : niemVersions)
+        for (var vers : archVersions)
             writeVersionBuiltins(vers, outD);
         if (null != catalogPath) {
             var catF = new File(outD, catalogPath);
@@ -177,12 +177,12 @@ public class ModelToXMLSchema {
 
     // Examine all the namespaces to collect all the NIEM versions.  If the version
     // was specified in the call to writeModelXSD, then there will only be one.
-    protected void collectNIEMVersions () {
-        if (null != useNiemVersion) niemVersions.add(useNiemVersion);
+    protected void collectArchVersions () {
+        if (null != useArchVersion) archVersions.add(useArchVersion);
         else 
             for (var ns : m.namespaceSet()) {
                 var nver = ns.archVersion();
-                if (!nver.isEmpty()) niemVersions.add(ns.archVersion());
+                if (!nver.isEmpty()) archVersions.add(ns.archVersion());
         }
     }
     
@@ -204,7 +204,7 @@ public class ModelToXMLSchema {
             var kind  = NamespaceKind.codeToKind(kcode);
             namespaceU2Kind.put(nsU, kind);
         }
-        for (var nver : niemVersions) {
+        for (var nver : archVersions) {
             for (var kcode : NamespaceKind.builtins()) {
                 var kind = codeToKind(kcode);
                 var bnsU = builtinNSU(nver, kcode);
@@ -240,9 +240,9 @@ public class ModelToXMLSchema {
             namespaceU2Path.put(ns.uri(), "./" + path);
         }
         // Now do the builtins for each NIEM version
-        for (var vers : niemVersions) {
+        for (var vers : archVersions) {
             var vdir = "";
-            if (null != useNiemVersion || 1 == niemVersions.size()) vdir = "niem/";
+            if (null != useArchVersion || 1 == archVersions.size()) vdir = "niem/";
             else vdir = NamespaceKind.versionDirName().get(vers);
             if (null == vdir) continue;
             for (var kcode : NamespaceKind.builtins()) {
@@ -366,7 +366,7 @@ public class ModelToXMLSchema {
         for (var nsU : nsAugs.keySet()) {                   // http://AugmentingNS/
             var nsctU2augL = nsAugs.get(nsU);
             for (var actU : nsctU2augL.keySet()) {          // http://BarNS/BarType or Object
-                var actnsU = m.uriToNSU(actU);        // http://BarNS/ or ""
+                var actnsU = m.uriToNSU(actU);              // http://BarNS/ or ""
                 var actN = uriToName(actU);                 // BarType or ""
                 actN = replaceSuffix(actN, "Type", "");     // Bar or ""
                 var aptU = "";
@@ -427,7 +427,7 @@ public class ModelToXMLSchema {
         // don't need a namespace prefix. (We don't know what the prefixes are yet.)
         var nsU  = ns.uri();
         var nver = ns.archVersion();
-        if (null != useNiemVersion) nver = useNiemVersion;
+        if (null != useArchVersion) nver = useArchVersion;
         setAttribute(root, "targetNamespace", nsU);
         setAttribute(root, "version", ns.version());
         setAttribute(root, "xml:lang", ns.language());
@@ -605,11 +605,10 @@ public class ModelToXMLSchema {
     }
     
     // Create a complex type with complex content from a non-literal class object
-    private static Set<String> needURIcodes = Set.of("ANY", "ANYURI", "INTERNAL", "RELURI");
-    private static Set<String> needRefcodes = Set.of("ANY", "INTERNAL", "IDREF");
-    private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM4.0", "NIEM5.0");
-    //private static Set<String> needMetadata = Set.of("NIEM2.0", "NIEM3.0", "NIEM3.1", "NIEM3.2", "NIEM4.0", "NIEM4.1", "NIEM4.2", "NIEM5.0", "NIEM5.1", "NIEM5.2");
-    private static Set<String> needAppliesToParent = Set.of("NIEM6.0");
+    private static Set<String> needURIcodes  = Set.of("ANY", "ANYURI", "INTERNAL", "RELURI");
+    private static Set<String> needRefcodes  = Set.of("ANY", "INTERNAL", "IDREF");
+    private static Set<String> needMetadata  = Set.of("NIEM2.0", "NIEM3.0", "NIEM4.0", "NIEM5.0");
+    private static Set<String> needAppliesTo = Set.of("NIEM6.0");
     protected void createCCCType (Document doc, 
         List<Element> defEL,                // add typedef elements to this list
         List<Element> decEL,                // add augmentation point elements to this list
@@ -622,7 +621,7 @@ public class ModelToXMLSchema {
         if (!nsU.equals(ct.namespaceURI())) return;
         var ns  = m.namespaceObj(nsU);    
         var ver = ns.archVersion();
-        if (null != useNiemVersion) ver = useNiemVersion;
+        if (null != useArchVersion) ver = useArchVersion;
         
         var ctE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
         var anE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
@@ -695,7 +694,7 @@ public class ModelToXMLSchema {
             //var pQ   = p.qname();
             if (p.isAttribute()) continue;
             if (null == p.namespace()) {
-                choiceUs = subGroupL.get(p.name());                 // ObjectAugmentationPoint, AssociationAugmentationPoint
+                choiceUs = subGroupL.get(p.name()); // ObjectAugmentationPoint or AssociationAugmentationPoint
             }
             else {                                              
                 choiceUs = subGroupL.get(p.uri());
@@ -787,7 +786,7 @@ public class ModelToXMLSchema {
             addStructuresAttribute(doc, attParentE, "ref", refnsUs, structuresPre, structuresU);
         if (!extendF && needMetadata.contains(ver))
             addStructuresAttribute(doc, attParentE, "metadata", refnsUs, structuresPre, structuresU);
-        if (!extendF && needAppliesToParent.contains(ver))
+        if (!extendF && needAppliesTo.contains(ver))
             addStructuresAttribute(doc, attParentE, "appliesToParent", refnsUs, structuresPre, structuresU);
         defEL.add(ctE);
     }
