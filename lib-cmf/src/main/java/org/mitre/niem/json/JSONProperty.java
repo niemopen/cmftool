@@ -17,6 +17,9 @@ public class JSONProperty {
   public String type;
   public String pattern;
   public String format;
+  public Double multipleOf;
+  public Long minimum;
+  public Long maximum;
   public JSONPropertyType items = null;
   public Integer minItems = null;
   public Integer maxItems = null;
@@ -167,6 +170,173 @@ public class JSONProperty {
     return false;
   }
 
+  private void processXMLDataType() {
+
+    var dataType = property.datatype();
+    String dataTypeName = dataType.name();
+
+    switch (dataTypeName) {
+      case "boolean" ->
+          type = "boolean";
+      case "decimal", "double", "float" ->
+          type = "number";
+      case "int" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = -2147483648L;
+          maximum = 2147483647L;
+      }
+      case "integer" -> {
+          type = "number";
+          multipleOf = 1.0;
+      }
+      case "long" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = -9223372036854775808L;
+          maximum = 9223372036854775807L;
+      }
+      case "unsignedLong" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = 0L;
+          maximum = 9223372036854775807L;
+      }
+      case "unsignedInt" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = 0L;
+          maximum = 4294967295L;
+      }
+      case "short" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = -32768L;
+          maximum = 32767L;
+      }
+      case "unsignedShort" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = 0L;
+          maximum = 65535L;
+      }
+      case "byte" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = -128L;
+          maximum = 127L;
+      }
+      case "unsignedByte" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = 0L;
+          maximum = 255L;
+      }
+      case "negativeInteger" -> {
+          type = "number";
+          multipleOf = 1.0;
+          maximum = -1L;
+      }
+      case "nonNegativeInteger" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = 0L;
+      }
+      case "nonPositiveInteger" -> {
+          type = "number";
+          multipleOf = 1.0;
+          maximum = 0L;
+      }
+      case "positiveInteger" -> {
+          type = "number";
+          multipleOf = 1.0;
+          minimum = 1L;
+      }
+      case "date", "dateTime" -> {
+          type = "string";
+          format = "date-time";
+      }
+      case "time" -> {
+          type = "string";
+          pattern = "^([0-9]{2}):([0-9]{2}):([0-9]{2}([.][0-9]{1,6})?)([+-]([0-9]{2}):([0-9]{2}))?$";
+      }
+      case "duration" -> {
+          type = "string";
+          pattern = "^[-+]?P(([0-9]d+Y)|([0-9]+M)|([0-9]+D)|(T([0-9]+H)|([0-9]+M)|([0-9]+([.][0-9]{1,6})?S)))$";
+      }
+      case "gDay" -> {
+          type = "string";
+          pattern = "^---[0-3][0-9]$";
+      }
+      case "gMonth" -> {
+          type = "string";
+          pattern = "^--[0-1][0-9]$";
+      }
+      case "gMonthDay" -> {
+          type = "string";
+          pattern = "^--[0-1][0-9]-[0-3][0-9]$";
+      }
+      case "gYear" -> {
+          type = "string";
+          pattern = "^[0-9]{4}$";
+      }
+      case "gYearMonth" -> {
+          type = "string";
+          pattern = "^[0-9]{4}-[0-1][0-9]$";
+      }
+      case "token" -> {
+          type = "string";
+          pattern = "^\\S*$";
+      }
+      case "normalizedString" -> {
+          type = "string";
+          pattern = "^\\s?(\\S+\\s?)+\\s?$";
+      }
+      case "NMTOKEN" -> {
+          type = "string";
+          pattern = "^[-.:_A-Za-z0-9]+$";
+      }
+      case "NMTOKENS" -> {
+          type = "string";
+          pattern = "^([-.:_A-Za-z0-9]+\\s)+$";
+      }
+      case "NAME" -> {
+          type = "string";
+          pattern = "^[_:A-Za-z][-.:_A-Za-z0-9]*$";
+      }
+      case "language" -> {
+          type = "string";
+          pattern = "^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$";
+      }
+      case "hexBinary" -> {
+          type = "string";
+          pattern = "^([A-Z0-9]{2})*$";
+      }
+      case "base64Binary" -> {
+          type = "string";
+          pattern = "^[A-Za-z0-9+/=\\s]*$";
+      }
+      case "anyURI" -> {
+          type = "string";
+          format = "uri";
+      }
+      case "ID", "IDREF", "NCNAME", "ENTITY" -> {
+          type = "string";
+          pattern = "^[_A-Za-z][-._A-Za-z0-9]*$";
+      }
+      case "IDREFS", "ENTITIES" -> {
+          type = "string";
+          pattern = "^([_A-Za-z][-._A-Za-z0-9]*\\s)*$";
+      }
+      case "NOTATION", "QName" -> {
+          type = "string";
+          pattern = "^[_A-Za-z][-._A-Za-z0-9]*:[_A-Za-z][-._A-Za-z0-9]*$";
+      }
+      default ->
+          type = "string";
+    }
+  }
+
   private void processDataType() {
     var dataType = property.datatype();
     String dataTypeName = dataType.name();
@@ -174,48 +344,12 @@ public class JSONProperty {
 
     var propName = (property.subPropertyOf() != null) ? property.subPropertyOf().name() : property.name();
 
-    // replace IDREF with a string
-    if (dataTypeName.equals("IDREF")) {
-      type = "string";
-      pattern = "^[_A-Za-z][-._A-Za-z0-9]*$";
+    // process the XML data type
+    if (dataType.namespace().uri().equals("http://www.w3.org/2001/XMLSchema")) {
+      processXMLDataType();
       return;
     }
-
-    // replace IDREFS with an array of strings
-    if (dataTypeName.equals("IDREFS")) {
-      type = "array";
-      items = new JSONPropertyType("string", "^[_A-Za-z][-._A-Za-z0-9]*$");
-      return;
-    }
-
-
-    // replace decimal with a number
-    if (dataTypeName.equals("decimal")) {
-      type = "number";
-      return;
-    }
-
-    // replace token with a string
-    if (dataTypeName.equals("token")) {
-      type = "string";
-      pattern = "^\\S*$";
-      return;
-    }
-
-    // replace normalizedString with a string
-    if (dataTypeName.equals("normalizedString")) {
-      type = "string";
-      pattern = "^\\s?(\\S+\\\s?)+\\\s?$";
-      return;
-    }
-
-    // replace dateTime with a string
-    if (dataTypeName.equals("dateTime")) {
-      type = "string";
-      format = "date-time";
-      return;
-    }
-
+    
     // intrinsic types are handled differently than others, regardless of
     // cardinality
     if (cardinalities.size() == 0) {
@@ -271,7 +405,7 @@ public class JSONProperty {
             } else if (card.getMinOccurs() < card.getMaxOccurs()) {
               type = "array";
               items = new JSONPropertyType(JSONSchemaHelper.DEFINITIONS_TEXT,
-                  property.namespace().prefix(), dataTypeName);
+                  dataType.namespace().prefix(), dataTypeName);
             }
           }
         }
