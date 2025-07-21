@@ -16,6 +16,7 @@ public class JSONProperty {
   public String ref;
   public String type;
   public String pattern;
+
   public String format;
   public Double multipleOf;
   public Long minimum;
