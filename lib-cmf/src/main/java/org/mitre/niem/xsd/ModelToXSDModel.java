@@ -64,7 +64,7 @@ import org.mitre.niem.cmf.Union;
 import static org.mitre.niem.utility.IndefiniteArticle.articalize;
 import org.mitre.niem.utility.MapToList;
 import org.mitre.niem.utility.MapToSet;
-import org.mitre.niem.utility.NaturalOrderComparator;
+import org.mitre.niem.utility.NaturalOrderIgnoreCaseComparator;
 import org.mitre.niem.utility.ResourceManager;
 import org.mitre.niem.xml.LanguageString;
 import org.mitre.niem.xml.ParserBootstrap;
@@ -584,7 +584,7 @@ public class ModelToXSDModel {
             var apE    = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
             apE.setAttribute("name", apname);
             apE.setAttribute("abstract", "true");
-            addAnnotationDoc(doc, apE, "An augmentation point for " + ct.name() + ".");
+            addAnnotationDoc(doc, apE, "An augmentation point for " + ct.qname() + ".");
             decEL.add(apE);
         }
         for (var pa : ct.propL()) {
@@ -952,8 +952,8 @@ public class ModelToXSDModel {
     protected void addLocalTerms (Document doc, Element appE, Namespace ns, String appPre, String appU) {
         for (var lt : ns.locTermL()) {
             var ltE = doc.createElementNS(appU, "appinfo:LocalTerm");
-            ltE.setAttribute("term", lt.term());
-            ltE.setAttribute("literal", lt.literal());
+            setAttribute(ltE, "term", lt.term());
+            setAttribute(ltE, "literal", lt.literal());
             setAttribute(ltE, "definition", lt.documentation());
             setAttribute(ltE, "sourceURIs", listToString(lt.sourceL()));
             for (var cit : lt.citationL()) {
@@ -1136,7 +1136,7 @@ public class ModelToXSDModel {
             if (i != 0) return i;
             var n1 = o1.getAttribute("name");
             var n2 = o2.getAttribute("name");
-            return NaturalOrderComparator.comp(n1, n2);
+            return NaturalOrderIgnoreCaseComparator.comp(n1, n2);
         }
     }
     
@@ -1146,7 +1146,7 @@ public class ModelToXSDModel {
         public int compare(Element o1, Element o2) {
             var n1 = o1.getAttribute("name");
             var n2 = o2.getAttribute("name");
-            return NaturalOrderComparator.comp(n1, n2);
+            return NaturalOrderIgnoreCaseComparator.comp(n1, n2);
         }
     }
 

@@ -33,10 +33,10 @@ import java.util.regex.Pattern;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class NaturalOrderComparator implements Comparator<String> {
+public class NaturalOrderIgnoreCaseComparator implements Comparator<String> {
 
     private static final Pattern PAT = Pattern.compile("(\\d+|\\D+)");
-    private static final NaturalOrderComparator NOC = new NaturalOrderComparator();
+    private static final NaturalOrderIgnoreCaseComparator NOC = new NaturalOrderIgnoreCaseComparator();
     
     public static int comp (String one, String two) {
         return NOC.compare(one, two);
@@ -58,7 +58,7 @@ public class NaturalOrderComparator implements Comparator<String> {
                 }
                 else res = Integer.compare(Integer.parseInt(sOne), Integer.parseInt(sTwo));
            }
-           else res = sOne.compareTo(sTwo);
+           else res = sOne.compareToIgnoreCase(sTwo);
            if (res != 0) return res;
         }
         return mOne.hitEnd() && mTwo.hitEnd() ? 0 : mOne.hitEnd() ? -1 : 1;

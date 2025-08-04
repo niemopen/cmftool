@@ -66,7 +66,7 @@ import org.mitre.niem.cmf.Union;
 import static org.mitre.niem.utility.IndefiniteArticle.articalize;
 import org.mitre.niem.utility.MapToList;
 import org.mitre.niem.utility.MapToSet;
-import org.mitre.niem.utility.NaturalOrderComparator;
+import org.mitre.niem.utility.NaturalOrderIgnoreCaseComparator;
 import org.mitre.niem.utility.ResourceManager;
 import org.mitre.niem.xml.LanguageString;
 import org.mitre.niem.xml.ParserBootstrap;
@@ -1161,7 +1161,7 @@ public class ModelToXMLSchema {
             if (i != 0) return i;
             var n1 = o1.getAttribute("name");
             var n2 = o2.getAttribute("name");
-            return NaturalOrderComparator.comp(n1, n2);
+            return NaturalOrderIgnoreCaseComparator.comp(n1, n2);
         }
     }
     
@@ -1171,7 +1171,7 @@ public class ModelToXMLSchema {
         public int compare(Element o1, Element o2) {
             var n1 = o1.getAttribute("name");
             var n2 = o2.getAttribute("name");
-            return NaturalOrderComparator.comp(n1, n2);
+            return NaturalOrderIgnoreCaseComparator.comp(n1, n2);
         }
     }
 

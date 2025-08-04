@@ -31,14 +31,15 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class NaturalOrderComparatorTest {
+public class NaturalOrderIgnoreCaseComparatorTest {
     
-    public NaturalOrderComparatorTest() {
+    public NaturalOrderIgnoreCaseComparatorTest() {
     }
     
     @Test
     public void test () {
-        assertEquals(-1, NaturalOrderComparator.comp("alpha.2.foo", "alpha.10.foo"));
+        assertEquals(-1, NaturalOrderIgnoreCaseComparator.comp("alpha.2.foo", "alpha.10.foo"));
+        assertEquals(0, NaturalOrderIgnoreCaseComparator.comp("foo", "FOO"));
     }
     
 }

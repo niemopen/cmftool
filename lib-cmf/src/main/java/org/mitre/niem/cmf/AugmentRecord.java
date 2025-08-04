@@ -26,7 +26,7 @@ package org.mitre.niem.cmf;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringJoiner;
-import org.mitre.niem.utility.NaturalOrderComparator;
+import org.mitre.niem.utility.NaturalOrderIgnoreCaseComparator;
 
 /**
  * A class for an AugmentationRecord object in a CMF model.

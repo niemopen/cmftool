@@ -29,7 +29,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.mitre.niem.utility.NaturalOrderComparator;
+import org.mitre.niem.utility.NaturalOrderIgnoreCaseComparator;
 import org.mitre.niem.xml.LanguageString;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -163,7 +163,7 @@ public abstract class Component extends CMFObject implements Comparable<Componen
         if (rv != 0) return rv;
         var thisName = StringUtils.lowerCase(name);
         var oName    = StringUtils.lowerCase(o.name());
-        return NaturalOrderComparator.comp(thisName, oName);
+        return NaturalOrderIgnoreCaseComparator.comp(thisName, oName);
     }
         
 }
