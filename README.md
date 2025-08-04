@@ -10,6 +10,15 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 1.0-alpha.5
+
+* Add -v option to cmftool m2x and m2xmsg
+* JSON Schema fixes
+* CMF changes (v1.0-beta.1)
+    * OrderedPropertyIndicator moves from ChildPropertyAssociationType to PropertyType
+    * AnyProperty becomes AnyPropertyAssociation
+    * NIEMVersion becomes ArchitectureVersion
+
 ## What's new in version 1.0-alpha.4
 
 * `cmftool m2jmsg` generates JSON Schema to validate a NIEM JSON message.
