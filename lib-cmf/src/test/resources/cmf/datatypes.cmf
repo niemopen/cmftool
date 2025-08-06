@@ -124,7 +124,6 @@
     <Namespace structures:ref="test" xsi:nil="true"/>
     <DocumentationText>List of a named simple type</DocumentationText>
     <ListItemDatatype structures:ref="xs.integer" xsi:nil="true"/>
-    <OrderedPropertyIndicator>true</OrderedPropertyIndicator>
   </List>
   <List structures:id="test.List2Type">
     <Name>List2Type</Name>

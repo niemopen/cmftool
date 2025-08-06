@@ -142,6 +142,7 @@ public class NIEMSchemaDocument extends XMLSchemaDocument {
         var nsU = e.lookupNamespaceURI(pre);
         if ("xml".equals(pre)) nsU = XML_NS_URI;
         if (null == nsU) return "";
+        if (nsU.startsWith("urn:")) return nsU + ":" + ln;
         if (nsU.endsWith("/")) return nsU + ln;
         return nsU + "/" + ln;
     }

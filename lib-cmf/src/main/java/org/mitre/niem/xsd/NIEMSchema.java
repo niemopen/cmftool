@@ -139,17 +139,18 @@ public class NIEMSchema extends XMLSchema {
      * @return 
      */
     public int namespaceKind (String nsuri) {
-        if (nsKind.containsKey(nsuri)) return nsKind.get(nsuri);
-        var kind = NamespaceKind.namespaceToKind(nsuri);
+        if (nsKind.containsKey(nsuri)) return nsKind.get(nsuri);    // cached result
+        var kind = NamespaceKind.namespaceToKind(nsuri);            // utility or model NS?
         if (NSK_UNKNOWN == kind) {
             var sd = nsdocs.get(nsuri);
             if (extNSs.contains(nsuri)) kind = NSK_EXTERNAL;
             else if (null == sd) 
                 LOG.error("no schema document for namespace URI '{}'", nsuri);
             else {
+              kind = NSK_NOTNIEM;
               for (var cta : nsdocs.get(nsuri).ctAssertions()) 
-                if (!NamespaceKind.ctaToVersion(cta).isEmpty()) kind = NSK_EXTENSION;
-              if (NSK_UNKNOWN == kind) kind = NSK_NOTNIEM;
+//                if (!NamespaceKind.ctaToVersion(cta).isEmpty()) kind = NSK_EXTENSION;
+                  if (NamespaceKind.isModelCTA(cta)) kind = NSK_EXTENSION;
             }
         }
         nsKind.put(nsuri, kind);

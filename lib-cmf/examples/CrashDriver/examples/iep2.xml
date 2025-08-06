@@ -45,9 +45,17 @@
       </j:CrashDriver>
     </j:CrashVehicle>
     <j:CrashPerson structures:uri="#P01">
-      <j:CrashPersonInjury priv:privacyMetadataRef="PMD01 PMD02">
+      <j:CrashPersonInjury>
         <nc:InjuryDescriptionText>Broken Arm</nc:InjuryDescriptionText>
         <j:InjurySeverityCode>3</j:InjurySeverityCode>
+        <exch:InjuryAugmentation>
+          <priv:PrivacyMetadata>
+            <priv:PrivacyCode>PII</priv:PrivacyCode>
+          </priv:PrivacyMetadata>
+          <priv:PrivacyMetadata>
+            <priv:PrivacyCode>MEDICAL</priv:PrivacyCode>
+          </priv:PrivacyMetadata>
+        </exch:InjuryAugmentation>
       </j:CrashPersonInjury>
     </j:CrashPerson>
   </j:Crash>
@@ -65,10 +73,4 @@
       <j:CriminalInformationIndicator>true</j:CriminalInformationIndicator>
     </j:MetadataAugmentation>
   </nc:Metadata>
-  <priv:PrivacyMetadata structures:id="PMD01">
-    <priv:PrivacyCode>PII</priv:PrivacyCode>
-  </priv:PrivacyMetadata>
-  <priv:PrivacyMetadata structures:id="PMD02">
-    <priv:PrivacyCode>MEDICAL</priv:PrivacyCode>
-  </priv:PrivacyMetadata>
 </exch:CrashDriverInfo>

@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:exch="http://example.com/CrashDriver/1.2/"
+  xmlns:j="https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  version="psd01"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>NIEM Core.</xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="http://example.com/CrashDriver/1.2/" schemaLocation="../CrashDriver.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/" schemaLocation="domains/justice.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="utility/structures.xsd"/>
+  <xs:complexType name="ActivityType">
+    <xs:annotation>
+      <xs:documentation>A data type for a single or set of related actions, events, or process steps.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:ActivityDate" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element ref="nc:ActivityLocation" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:simpleType name="AngularMinuteType">
+    <xs:annotation>
+      <xs:documentation>A data type for a minute of a degree, with a restricted range of 0 (inclusive) to 60 (exclusive).</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:decimal">
+      <xs:maxExclusive value="60.0"/>
+      <xs:minInclusive value="0.0"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="AssociationType">
+    <xs:annotation>
+      <xs:documentation>A data type for an association, connection, relationship, or involvement somehow linking people, things, and/or activities together.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence/>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="DateType">
+    <xs:annotation>
+      <xs:documentation>A data type for a calendar date.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:Date"/>
+    </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="IdentificationType">
+    <xs:annotation>
+      <xs:documentation>A data type for a representation of an identity.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:IdentificationID" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="IncidentType">
+    <xs:annotation>
+      <xs:documentation>A data type for an occurrence or an event that may require a response.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="nc:ActivityType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="InjuryType">
+    <xs:annotation>
+      <xs:documentation>A data type for a form of harm or damage sustained by a person.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:InjuryDescriptionText" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element ref="j:InjurySeverityCode" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element ref="exch:InjuryAugmentation" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="LatitudeCoordinateType">
+    <xs:annotation>
+      <xs:documentation>A data type for a measurement of the angular distance between a point on the Earth and the Equator.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:LatitudeDegreeValue" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:simpleType name="LatitudeDegreeType">
+    <xs:annotation>
+      <xs:documentation>A data type for a degree of latitude.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:decimal">
+      <xs:maxInclusive value="90.0"/>
+      <xs:minInclusive value="-90.0"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="LengthMeasureType">
+    <xs:annotation>
+      <xs:documentation>A data type for a measure of a distance or extent.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="nc:MeasureType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="Location2DGeospatialCoordinateType">
+    <xs:annotation>
+      <xs:documentation>A data type for a location identified by latitude and longitude.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:GeographicCoordinateLatitude"/>
+      <xs:element ref="nc:GeographicCoordinateLongitude"/>
+    </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="LocationType">
+    <xs:annotation>
+      <xs:documentation>A data type for geospatial location.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:Location2DGeospatialCoordinate" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="LongitudeCoordinateType">
+    <xs:annotation>
+      <xs:documentation>A data type for a measurement of the angular distance between a point on the Earth and the Prime Meridian.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:LongitudeDegreeValue" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:simpleType name="LongitudeDegreeType">
+    <xs:annotation>
+      <xs:documentation>A data type for a degree of longitude.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:decimal">
+      <xs:maxInclusive value="180.0"/>
+      <xs:minInclusive value="-180.0"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="MeasureType">
+    <xs:annotation>
+      <xs:documentation>A data type for a measurement.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="nc:MeasureDecimalValue"/>
+        <xs:element ref="nc:MeasureValueText"/>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="MetadataType">
+    <xs:annotation>
+      <xs:documentation>A data type for information that further qualifies primary data; data about data.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:ReportedDate" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element ref="j:MetadataAugmentation" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute ref="structures:id"/>
+    <xs:attribute ref="structures:uri"/>
+    <xs:attribute ref="structures:ref"/>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="PersonAssociationType">
+    <xs:annotation>
+      <xs:documentation>A data type for an association between people.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="nc:AssociationType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="PersonNameTextType">
+    <xs:annotation>
+      <xs:documentation>A data type for a name by which a person is known, referred, or addressed.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="nc:ProperNameTextType"/>
+  </xs:simpleType>
+  <xs:complexType name="PersonNameType">
+    <xs:annotation>
+      <xs:documentation>A data type for a combination of names and/or titles by which a person is known.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:PersonGivenName" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element ref="nc:PersonMiddleName" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element ref="nc:PersonSurName" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute ref="nc:personNameCommentText"/>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="PersonType">
+    <xs:annotation>
+      <xs:documentation>A data type for a human being.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:PersonBirthDate" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element ref="nc:PersonName" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="exch:PersonFictionalCharacterIndicator"/>
+        <xs:element ref="exch:PersonAugmentation"/>
+        <xs:element ref="j:PersonAugmentation"/>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute ref="structures:id"/>
+    <xs:attribute ref="structures:uri"/>
+    <xs:attribute ref="structures:ref"/>
+    <xs:attribute ref="structures:appliesToParent"/>
+  </xs:complexType>
+  <xs:complexType name="PersonUnionAssociationType">
+    <xs:annotation>
+      <xs:documentation>A data type for an association between two persons who are in a state of union with each other.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="nc:PersonAssociationType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="ProperNameTextType">
+    <xs:annotation>
+      <xs:documentation>A data type for a word or phrase by which a person or thing is known, referred, or addressed.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="nc:TextType"/>
+  </xs:simpleType>
+  <xs:simpleType name="TextType">
+    <xs:annotation>
+      <xs:documentation>A data type for a character string.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+  <xs:attribute name="metadataRef" type="xs:IDREFS">
+    <xs:annotation>
+      <xs:documentation>A list of metadata objects that apply to a node or object represented by an XML element.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+  <xs:attribute name="personNameCommentText" type="xs:string">
+    <xs:annotation>
+      <xs:documentation>A comment about a kind of name for a person.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+  <xs:element name="ActivityDate" type="nc:DateType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A date of an activity.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="ActivityLocation" type="nc:LocationType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A location of an activity.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="Date" type="xs:date" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A full date.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="GeographicCoordinateLatitude" type="nc:LatitudeCoordinateType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A measurement of the angular distance between a point on the Earth and the Equator.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="GeographicCoordinateLongitude" type="nc:LongitudeCoordinateType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A measurement of the angular distance between a point on the Earth and the Prime Meridian.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="IdentificationID" type="xs:string" nillable="true">
+    <xs:annotation>
+      <xs:documentation>An identifier.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="InjuryDescriptionText" type="nc:TextType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A description of an injury.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="ItemLengthMeasure" type="nc:LengthMeasureType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A measurement of the length of an item.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="LatitudeDegreeValue" type="nc:LatitudeDegreeType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A value that specifies the degree of a latitude. The value comes from a restricted range between -90 (inclusive) and +90 (inclusive).</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="Location2DGeospatialCoordinate" type="nc:Location2DGeospatialCoordinateType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A location identified by a latitude and longitude.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="LongitudeDegreeValue" type="nc:LongitudeDegreeType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A value that specifies the degree of a longitude. The value comes from a restricted range between -180 (inclusive) and +180 (inclusive).</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="MeasureDecimalValue" type="xs:decimal" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A decimal measurement value.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="MeasureValueText" type="nc:TextType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A textual description of a measurement value.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="Metadata" type="nc:MetadataType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>Information that further qualifies primary data; data about data.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="Person" type="nc:PersonType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A human being.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="PersonBirthDate" type="nc:DateType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A date a person was born.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="PersonGivenName" type="nc:PersonNameTextType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A first name of a person.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="PersonMiddleName" type="nc:PersonNameTextType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A middle name of a person.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="PersonName" type="nc:PersonNameType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A combination of names and/or titles by which a person is known.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="PersonSurName" type="nc:PersonNameTextType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A last name or family name of a person.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="PersonUnionAssociation" type="nc:PersonUnionAssociationType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>An association between two persons who are in a state of union with each other.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="ReportedDate" type="nc:DateType" nillable="true">
+    <xs:annotation>
+      <xs:documentation>A date information was observed, measured, identified, or became known.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+</xs:schema>

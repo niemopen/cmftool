@@ -32,7 +32,7 @@
     <NamespacePrefixText>test</NamespacePrefixText>
     <DocumentationText>Test schema for multiple NIEM versions.</DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>niemVersions.xsd</DocumentFilePathText>
+    <DocumentFilePathText>archVersions.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
     <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>

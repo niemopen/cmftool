@@ -649,7 +649,7 @@ public class ModelToXSDModel {
         // Extension base may be a simple type
         var ctname = ct.qname();
         var dt   = ct.literalDatatype();
-        if (simpleTypes.contains(dt)) {
+        if (null != dt && simpleTypes.contains(dt)) {
             var agE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attributeGroup");
             var dtnsU = dt.namespaceURI();
             var dtQ   = dt.qname();

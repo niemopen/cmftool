@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
@@ -118,7 +119,6 @@ public class ModelToXMLSchema {
     
     public void setCatalogPath (String path) {
         catalogPath = path;
-        LOG.debug("catalog path = {}", catalogPath);
     }
     
     public void setRootNamespace (String nsPrefixOrURI) {
@@ -154,7 +154,7 @@ public class ModelToXMLSchema {
         identifySimpleTypes();
         buildSubstitutionMap();
         processAugmentations();
-        
+
         for (var ns : m.namespaceSet())
             if (ns.isExternal()) extNSs.add(ns.uri());
         for (var ns : m.namespaceSet()) 
@@ -294,7 +294,6 @@ public class ModelToXMLSchema {
             if (W3C_XML_SCHEMA_NS_URI.equals(dtnsU)) continue;
             if (!dt.isModelComponent()) continue;
             simpleTypes.add(dt);        
-            LOG.debug("need simple type: {}", dt.qname());
         }
     }
     
@@ -464,6 +463,7 @@ public class ModelToXMLSchema {
         // Create complex types for literal classes and ordinary classes.
         var xctUs = new HashSet<String>();
         for (var ct : m.classTypeL()) {
+            var ctQ = ct.qname();
             if (ct.hasSimpleContent()) createCSCType(doc, defEL, refnsUs, nsU, ct, bc2pre, bc2U);
             else createCCCType(doc, defEL, decEL, refnsUs, nsU, ct, bc2pre, bc2U);
             xctUs.add(ct.uri());
@@ -677,17 +677,21 @@ public class ModelToXMLSchema {
         // Omit abstract elements with no substitutions.
         // Insert xs:choice if more than one substitution.
         for (var pa : propL) {
-            Set<String> choiceUs = null;
-            var p    = pa.property();
-            var pQ   = p.qname();
+            var p  = pa.property();
+            var pU = p.uri();
             if (p.isAttribute()) continue;
-            if (null == p.namespace()) {
-                choiceUs = subGroupL.get(p.name()); // ObjectAugmentationPoint or AssociationAugmentationPoint
+            var choiceUs = new HashSet<String>();            
+            var subUs = new Stack<String>();
+            subUs.push(pU);
+            while (!subUs.empty()) {
+                var subU = subUs.pop();
+                var subp = m.uriToProperty(subU);
+                var subS = subGroupL.get(subU);
+                for (var sU : subS) subUs.push(sU);
+                if (subU.endsWith("Augmentation") || (null != subp && !subp.isAbstract()))
+                    choiceUs.add(subU);
             }
-            else {                                              
-                choiceUs = subGroupL.get(p.uri());
-                if (!p.isAbstract()) choiceUs.add(p.uri());
-            }
+             
             // Append element refs to xs:choice if more than one choice
             var parE = sqE;
             if (choiceUs.size() > 1) {
@@ -697,18 +701,18 @@ public class ModelToXMLSchema {
                 addAnnotationDoc(doc, parE, pa.docL());
                 sqE.appendChild(parE);
             }
-              for (var spU : choiceUs) {                          // 
-                var spnsU = m.uriToNSU(spU);
-                var spQ   = m.uriToQN(spU);
-                var elE  = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
-                elE.setAttribute("ref", spQ);
-                if (choiceUs.size() == 1) {
-                    if (!"1".equals(pa.minOccurs())) elE.setAttribute("minOccurs", pa.minOccurs());
-                    if (!"1".equals(pa.maxOccurs())) elE.setAttribute("maxOccurs", pa.maxOccurs());
-                    addAnnotationDoc(doc, elE, pa.docL());
-                }
-                parE.appendChild(elE);
-                refnsUs.add(spnsU);
+            for (var spU : choiceUs) {                          // 
+              var spnsU = m.uriToNSU(spU);
+              var spQ   = m.uriToQN(spU);
+              var elE  = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
+              elE.setAttribute("ref", spQ);
+              if (choiceUs.size() == 1) {
+                  if (!"1".equals(pa.minOccurs())) elE.setAttribute("minOccurs", pa.minOccurs());
+                  if (!"1".equals(pa.maxOccurs())) elE.setAttribute("maxOccurs", pa.maxOccurs());
+                  addAnnotationDoc(doc, elE, pa.docL());
+              }
+              parE.appendChild(elE);
+              refnsUs.add(spnsU);
             }
         }
         // Add xs:any wildcards as needed
@@ -750,14 +754,6 @@ public class ModelToXMLSchema {
             addAnnotationDoc(doc, atE, pa.docL());
             attParentE.appendChild(atE);
         }
-        // Add xs:anyAttribute wildcards as needed
-        for (var ap : ct.anyL()) {
-            if (!ap.isAttribute()) continue;
-            var anyE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:anyAttribute");            
-            setAttribute(anyE, "processContents", ap.processCode());
-            setAttribute(anyE, "namespace", ap.nsConstraint());
-            attParentE.appendChild(anyE);
-        }
         // Add reference attributes as needed
         var structuresPre = bc2pre.get("STRUCTURES");
         var structuresU   = bc2U.get("STRUCTURES");
@@ -772,6 +768,15 @@ public class ModelToXMLSchema {
         if (!extendF && needAppliesTo.contains(ver))
             addStructuresAttribute(doc, attParentE, "appliesToParent", refnsUs, structuresPre, structuresU);
         defEL.add(ctE);
+        
+        // Add xs:anyAttribute wildcards as needed
+        for (var ap : ct.anyL()) {
+            if (!ap.isAttribute()) continue;
+            var anyE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:anyAttribute");            
+            setAttribute(anyE, "processContents", ap.processCode());
+            setAttribute(anyE, "namespace", ap.nsConstraint());
+            attParentE.appendChild(anyE);
+        }    
     }
     
     protected void addStructuresAttribute (Document doc, 
@@ -842,13 +847,13 @@ public class ModelToXMLSchema {
         // Extension base may be a simple type
         var ctname = ct.qname();
         var dt   = ct.literalDatatype();
-        if (simpleTypes.contains(dt)) {
-//            var dtnsU = dt.namespaceURI();
-//            var dtQ   = dt.qname();
+        if (dt != null && simpleTypes.contains(dt)) {
+            var dtnsU = dt.namespaceURI();
+            var dtQ   = dt.qname();
 //            if (!dtQ.endsWith("SimpleType"))
 //                dtQ = replaceSuffix(dtQ, "Type", "SimpleType");
-//            exE.setAttribute("base", dtQ);
-//            refnsUs.add(dtnsU);
+            exE.setAttribute("base", dtQ);
+            refnsUs.add(dtnsU);
         }
         // Or the extension base may be another model class
         else if (null != dt && dt.namespace().isModelNS()) {
@@ -882,6 +887,7 @@ public class ModelToXMLSchema {
         if (W3C_XML_SCHEMA_NS_URI.equals(dt.namespaceURI())) return;
         if (XML_NS_URI.equals(dt.namespaceURI())) return;
         
+        var dtQ = dt.qname();
         var stE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:simpleType");
         populateTypeElement(doc, stE, dt, refnsUs, bc2pre, bc2U);
         
@@ -1061,8 +1067,10 @@ public class ModelToXMLSchema {
 
     
     protected String datatypeQName (Datatype dt) {
-        if (!simpleTypes.contains(dt)) return dt.qname();
-        else return replaceSuffix(dt.qname(), "Type", "SimpleType");
+//        if (!simpleTypes.contains(dt)) return dt.qname();
+//        else return replaceSuffix(dt.qname(), "Type", "SimpleType");
+        var dtQ = dt.qname();
+        return replaceSuffix(dtQ, "SimpleType", "Type");
     }
     
     // Don't convert xs types to niem-xs types in a message schema

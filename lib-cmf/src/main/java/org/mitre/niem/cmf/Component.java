@@ -113,8 +113,11 @@ public abstract class Component extends CMFObject implements Comparable<Componen
      */
     @Override
     public String uri () {
-        if (null == namespace && !outsideURI.isEmpty()) return outsideURI;
-        if (null == namespace || null == name || name.isEmpty()) return "";
+        if (null == namespace) { 
+            if (!outsideURI.isEmpty()) return outsideURI;
+            if (null != name) return name;
+            return "";
+        }
         var nsuri = namespace.uri();
         if (nsuri.startsWith("urn:")) return nsuri + ":" + name;
         if (nsuri.endsWith("/")) return nsuri + name;

@@ -13,8 +13,8 @@
   <xs:annotation>
     <xs:documentation>Human Services</xs:documentation>
   </xs:annotation>
-  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="../adapters/niem-xs.xsd"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/" schemaLocation="../niem-core.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="../adapters/niem-xs.xsd"/>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="../utility/structures.xsd"/>
   <xs:complexType name="ChildType">
     <xs:annotation>
@@ -22,7 +22,9 @@
     </xs:annotation>
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
-        <xs:sequence/>
+        <xs:sequence>
+          <xs:element ref="hs:ChildAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -35,6 +37,7 @@
         <xs:sequence>
           <xs:element ref="hs:Child" minOccurs="0" maxOccurs="unbounded"/>
           <xs:element ref="hs:Parent" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="hs:ParentChildAssociationAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -271,6 +274,7 @@
       <xs:extension base="nc:AssociationType">
         <xs:sequence>
           <xs:element ref="hs:PersonOtherKinAssociationCategoryAbstract" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="hs:PersonOtherKinAssociationAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -278,6 +282,11 @@
   <xs:element name="Child" type="hs:ChildType" nillable="true">
     <xs:annotation>
       <xs:documentation>A person who was an unmarried minor at the time of his or her involvement in a judicial proceeding or non-judicial program.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="ChildAugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for hs:ChildType.</xs:documentation>
     </xs:annotation>
   </xs:element>
   <xs:element name="Parent" type="nc:PersonType" nillable="true">
@@ -290,9 +299,19 @@
       <xs:documentation>An association between a child and a person who is in a parent role toward that child.</xs:documentation>
     </xs:annotation>
   </xs:element>
+  <xs:element name="ParentChildAssociationAugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for hs:ParentChildAssociationType.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
   <xs:element name="PersonOtherKinAssociation" type="hs:PersonOtherKinAssociationType" nillable="true">
     <xs:annotation>
       <xs:documentation>A directed association that describes the kinship or other close personal relationship between the source object and the target object. The relationship between a parent and a child should be captured using the ParentChildAssociation</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="PersonOtherKinAssociationAugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for hs:PersonOtherKinAssociationType.</xs:documentation>
     </xs:annotation>
   </xs:element>
   <xs:element name="PersonOtherKinAssociationCategoryAbstract" abstract="true">

@@ -28,8 +28,8 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.io.TempDir;
 import org.mitre.niem.cmf.ModelXMLWriter;
 
@@ -39,23 +39,32 @@ import org.mitre.niem.cmf.ModelXMLWriter;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class ModelToXMLSchemaTest {
-    private final static String resDN = "src/test/resources/";
+    private final static String resDN = "src/test/resources/xsd6/";
     
     @TempDir
     File tmpD;
         
     public ModelToXMLSchemaTest() {
     }
-
+    
     @Test
-    public void testRoundTrip () throws Exception {
+    public void testWriteModelXSD () throws Exception {
+        var resF  = new File(resDN);
+        var files = FileUtils.listFiles(resF, new String[]{"xsd"}, false);
 
-        var xsdF   = new File(resDN, "xsd6/message.xsd");
+        for (var xsdF : files) {
+            if ("externals.xsd".equals(xsdF.getName())) continue;
+            if ("imports.xsd".equals(xsdF.getName())) continue;
+            testFile(xsdF);
+        }
+    }
+
+    public void testFile (File xsdF) throws Exception {
         var xsdName = xsdF.getName();
         var xsdBase = FilenameUtils.getBaseName(xsdF.toString());
         var cmfOneF = new File(tmpD, "one.cmf");
-        var cmfTwoF = new File(tmpD, "two.cmf");
         var xsdD    = new File(tmpD, "xsd");
+//        System.err.println(xsdName);
 
         // Create first CMF file from XSD source
         var sch   = new NIEMSchema(xsdF);
@@ -67,9 +76,8 @@ public class ModelToXMLSchemaTest {
         mw.writeXML(model, ow);
         ow.close();
         
-        // Create a XSD message schema from CMF
-//        var mtxsd = new ModelToXMLSchema(model);
-        var mtxsd = new ModelToXSDModel(model);
+        // Create a new XSD pile from CMF
+        var mtxsd = new ModelToXMLSchema(model);
         if (null != model.namespaceObj("test")) mtxsd.setRootNamespace("test");
         else if (null != model.namespaceObj("t")) mtxsd.setRootNamespace("t");
         mtxsd.setCatalogPath("xml-catalog.xml");
@@ -77,9 +85,13 @@ public class ModelToXMLSchemaTest {
         var xsdOneF = new File(xsdD, xsdName);
         var schOne  = new NIEMSchema(xsdOneF);
         var msgs    = schOne.javaXMsgs();
-
         var goodXSD = msgs.isEmpty();
-        assertTrue(goodXSD);
-
+        assertTrue(goodXSD);        
     }
+//    
+//    @Test
+//    public void testOneFile () throws Exception {
+//        var resF  = new File(resDN, "datatypes.xsd");
+//        testFile(resF);
+//    }
 }

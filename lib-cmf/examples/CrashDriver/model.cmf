@@ -26,7 +26,7 @@
     <DocumentFilePathText>niem/codes/aamva_d20.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>OTHERNIEM</NamespaceCategoryCode>
     <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <LocalTerm>
       <TermName>AAMVA</TermName>
@@ -68,13 +68,20 @@
   <Namespace structures:id="exch">
     <NamespaceURI>http://example.com/CrashDriver/1.2/</NamespaceURI>
     <NamespacePrefixText>exch</NamespacePrefixText>
-    <DocumentationText>This is the extension schema for an example IEPD used to illustrate guidance for representing an IEP in JSON-LD syntax.</DocumentationText>
-    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentationText>The CrashDriverInfo message type demonstrates most features of NIEM 6.</DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ExtensionSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>CrashDriver.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
+    <AugmentationRecord>
+      <Class structures:ref="nc.InjuryType" xsi:nil="true"/>
+      <ObjectProperty structures:ref="priv.PrivacyMetadata" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+      <AugmentationIndex>0</AugmentationIndex>
+    </AugmentationRecord>
     <AugmentationRecord>
       <Class structures:ref="nc.PersonType" xsi:nil="true"/>
       <DataProperty structures:ref="exch.PersonFictionalCharacterIndicator" xsi:nil="true"/>
@@ -90,7 +97,7 @@
     <DocumentFilePathText>niem/domains/hs.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>DOMAIN</NamespaceCategoryCode>
     <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="j">
@@ -101,7 +108,7 @@
     <DocumentFilePathText>niem/domains/justice.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>DOMAIN</NamespaceCategoryCode>
     <NamespaceVersionText>ps02</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
       <Class structures:ref="nc.MetadataType" xsi:nil="true"/>
@@ -133,7 +140,7 @@
     <DocumentFilePathText>niem/niem-core.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
     <NamespaceVersionText>psd01</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="priv">
@@ -144,7 +151,7 @@
     <DocumentFilePathText>PrivacyMetadata.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
-    <NIEMVersionName>NIEM6.0</NIEMVersionName>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
   <Namespace structures:id="xs">
@@ -495,13 +502,6 @@
     <Namespace structures:ref="priv" xsi:nil="true"/>
     <Class structures:ref="priv.PrivacyMetadataType" xsi:nil="true"/>
   </ObjectProperty>
-  <DataProperty structures:id="priv.privacyMetadataRef">
-    <Name>privacyMetadataRef</Name>
-    <Namespace structures:ref="priv" xsi:nil="true"/>
-    <Datatype structures:ref="xs.IDREFS" xsi:nil="true"/>
-    <AttributeIndicator>true</AttributeIndicator>
-    <RefAttributeIndicator>true</RefAttributeIndicator>
-  </DataProperty>
   <Class structures:id="exch.CrashDriverInfoType">
     <Name>CrashDriverInfoType</Name>
     <Namespace structures:ref="exch" xsi:nil="true"/>
@@ -583,6 +583,7 @@
     <Name>ChargeType</Name>
     <Namespace structures:ref="j" xsi:nil="true"/>
     <DocumentationText>A data type for a formal allegation that a specific person has committed a specific offense.</DocumentationText>
+    <ReferenceCode>INTERNAL</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="j.ChargeDescriptionText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
@@ -755,11 +756,6 @@
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </ChildPropertyAssociation>
-    <ChildPropertyAssociation>
-      <DataProperty structures:ref="priv.privacyMetadataRef" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-    </ChildPropertyAssociation>
   </Class>
   <Class structures:id="nc.LatitudeCoordinateType">
     <Name>LatitudeCoordinateType</Name>
@@ -831,6 +827,7 @@
     <Name>MetadataType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for information that further qualifies primary data; data about data.</DocumentationText>
+    <ReferenceCode>INTERNAL</ReferenceCode>
     <ChildPropertyAssociation>
       <ObjectProperty structures:ref="nc.ReportedDate" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
@@ -856,7 +853,6 @@
       <DataProperty structures:ref="nc.PersonMiddleName" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
-      <OrderedPropertyIndicator>true</OrderedPropertyIndicator>
     </ChildPropertyAssociation>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="nc.PersonSurName" xsi:nil="true"/>
@@ -873,6 +869,7 @@
     <Name>PersonType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for a human being.</DocumentationText>
+    <ReferenceCode>INTERNAL</ReferenceCode>
     <ChildPropertyAssociation>
       <ObjectProperty structures:ref="nc.PersonBirthDate" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
@@ -893,6 +890,7 @@
   <Class structures:id="priv.PrivacyMetadataType">
     <Name>PrivacyMetadataType</Name>
     <Namespace structures:ref="priv" xsi:nil="true"/>
+    <ReferenceCode>INTERNAL</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="priv.PrivacyCode" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>

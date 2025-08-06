@@ -88,7 +88,10 @@ public class NamespaceKind {
             for (int j = 0; j < ctaSuffix.length; j++) {
                 if (u.equals(ctaPrefix[i]+ctaSuffix[j])) return true;
             }
+            LOG.warn("unknown suffix in conformance target assertion {}", u);
+            return false;
         }
+        LOG.warn("unknown conformance target {}", u);
         return false;
     }
     
