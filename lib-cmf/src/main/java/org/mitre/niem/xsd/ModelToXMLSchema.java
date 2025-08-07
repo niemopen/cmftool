@@ -356,8 +356,21 @@ public class ModelToXMLSchema {
                         apU = apU + "AugmentationPoint";                // http://BarNS/BarAugmentationPoint
                         subGroupL.add(apU, p.uri());                    // or ObjectAugmentationPoint
                     }
-                    nsctU2augL.add(actU, arec);     // add aug rec to class augs from this NS
-                    ctU2augL.add(actU, arec);       // add aug rec to class augs from all NSs
+                    // See if this property already augments this class or global.
+                    // Only keep one augmentation record, with smallest minoccurs
+                    // and largest maxoccurs.
+                    var found = false;
+                    var classAugL = ctU2augL.get(actU);
+                    for (var erec : classAugL) {
+                        if (erec.property() == p) {
+                            if (erec.minOccursVal() > arec.minOccursVal()) erec.setMinOccurs(arec.minOccurs());
+                            if (arec.isMaxUnbounded()) erec.setMaxOccurs("unbounded");
+                            else if (erec.maxOccursVal() < arec.maxOccursVal()) erec.setMaxOccurs(arec.maxOccurs());
+                            found = true;
+                        }
+                    }
+                    if (!found) ctU2augL.add(actU, arec);       // add aug rec to class augs from all NSs
+                    nsctU2augL.add(actU, arec);                 // add aug rec to class augs from this NS     
                 }
             }
         }

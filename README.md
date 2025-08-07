@@ -10,6 +10,14 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 1.0-alpha.7
+
+* Fix duplicate properties in augmentation types
+
+## What's new in version 1.0-alpha.6
+
+* Several fixes to "cmftool m2xmsg" command
+
 ## What's new in version 1.0-alpha.5
 
 * Add -v option to cmftool m2x and m2xmsg

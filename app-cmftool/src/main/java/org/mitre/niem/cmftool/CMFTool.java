@@ -47,9 +47,9 @@ public class CMFTool {
          
 
         // Uncomment arguments for debugging:
-//        String res = "../lib-cmf/examples/CrashDriver/";
+        String res = "../lib-cmf/tmp/tmp/";
         if (0 == args.length) {
-//          args = new String[]{"m2xmsg", "-o", res+"tmp", res+"message.cmf"};
+          args = new String[]{"m2xmsg", "-o", res+"msg", res+"aug.cmf"};
         }
     
         var jc = new JCommander();
