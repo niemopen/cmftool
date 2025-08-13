@@ -47,7 +47,7 @@ public class CMFTool {
          
 
         // Uncomment arguments for debugging:
-        String res = "../lib-cmf/tmp/tmp/";
+        String res = "../lib-cmf/tmp/augtest/";
         if (0 == args.length) {
           args = new String[]{"m2xmsg", "-o", res+"msg", res+"aug.cmf"};
         }

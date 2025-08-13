@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -41,6 +42,7 @@ import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FilenameUtils;
+import static org.apache.commons.io.FilenameUtils.getPathNoEndSeparator;
 import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,6 +80,7 @@ import static org.mitre.niem.xsd.NamespaceKind.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import static org.w3c.dom.Node.ELEMENT_NODE;
 import org.xml.sax.SAXException;
 
 /**
@@ -1035,7 +1038,10 @@ public class ModelToXSDModel {
             var outP = outF.toPath().getParent();
             try {
                 Files.createDirectories(outP);
-                if ("NIEM-XS".equals(kcode)) writeProxyDocument(vers, nsU, res, outF);                    
+                if ("NIEM-XS".equals(kcode)) {
+                    var structU = NamespaceKind.builtinNSU(vers, "STRUCTURES");
+                    writeProxyDocument(vers, nsU, structU, res, outF);
+                }                    
                 else rmgr.copyResourceToFile(res, outF);
             } catch (IOException ex) {
                 LOG.error("Can't create builtin schema documents for {}: {}", vers, ex.getMessage());
@@ -1045,7 +1051,8 @@ public class ModelToXSDModel {
     
     // Write the proxy schema document for the specified proxy namespace.
     // Only include proxy types that are used in the model.
-    protected void writeProxyDocument (String vers, String proxyU, String res, File outF) throws IOException {
+    // Ensure import of structures namespace has correct schemaLocation.
+    protected void writeProxyDocument (String vers, String proxyU, String structU, String res, File outF) throws IOException {
         XMLSchemaDocument sch;
         var xw   = new XSDWriter();
         var resF = rmgr.getResourceFile(res);
@@ -1058,17 +1065,40 @@ public class ModelToXSDModel {
             LOG.error("Can't parse proxy file {}: {}", outF.toString(), ex.getMessage());
             return;
         }
+        // Compute relative path from niem-xs.xsd to structures.xsd
+        var structFN = namespaceU2Path.get(structU);
+        var proxyFN  = namespaceU2Path.get(proxyU);
+        var structP  = Paths.get(structFN).normalize().toAbsolutePath();
+        var proxyP   = Paths.get(proxyFN).normalize().toAbsolutePath();
+        var proxyD   = proxyP.getParent();
+        var relP     = proxyD.relativize(structP);
+        var relS     = relP.toString().replace("\\", "/"); 
+            
+        // Parse and modify the niem-xs.xsd resource to correct the import element
+        // for structures namespace, and to remove unused proxy types.
         var dom  = sch.dom();
         var root = dom.getDocumentElement();
         var delS = new HashSet<Node>();
         var nS   = proxyUs.get(proxyU);
         var cnds = root.getChildNodes();
         for (int i = 0; i < cnds.getLength(); i++) {
-            var node = cnds.item(i);
-            if (!"complexType".equals(node.getLocalName())) continue;
-            var e    = (Element)node;
-            var name = e.getAttribute("name");
-            if (!nS.contains(name)) delS.add(node);
+            var node  = cnds.item(i);
+            if (ELEMENT_NODE != node.getNodeType()) continue;
+            var nodeN = node.getLocalName();
+            var nodeE = (Element)node;
+            
+            switch (nodeN) {
+            case "import":
+                var insU = nodeE.getAttribute("namespace");
+                if (insU.equals(structU)) {
+                    nodeE.setAttribute("schemaLocation", relS);
+                }
+                break;
+            case "complexType":
+                var tname = nodeE.getAttribute("name");
+                if (!nS.contains(tname)) delS.add(node);
+                break;
+            }
         }
         if (!delS.isEmpty()) {
             var ctaNS = versionToCtNsURI(vers);

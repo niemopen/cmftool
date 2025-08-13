@@ -10,6 +10,11 @@ For more information on NIEMOpen, see the project's website at [www.niemopen.org
 
 General questions about OASIS Open Projects may be directed to OASIS staff at [project-admin@lists.oasis-open-projects.org](mailto:project-admin@lists.oasis-open-projects.org)
 
+## What's new in version 1.0-alpha.8
+
+* Fix a different bug causing duplicate properties in augmentation types
+* Ensure *niem-xs.xsd* has the right schemaLocation for *structures.xsd*
+
 ## What's new in version 1.0-alpha.7
 
 * Fix duplicate properties in augmentation types

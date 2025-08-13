@@ -232,7 +232,8 @@ public class ModelToXMLSchema {
         });
         // Now do the namespaces
         for (var ns : m.namespaceSet()) {
-            if (namespaceU2Path.containsKey(ns.uri())) continue;
+            var nsU = ns.uri();
+            if (namespaceU2Path.containsKey(nsU)) continue;
             var path = ns.documentFilePath();
             if (path.isEmpty()) continue;
             path = mungPath(paths, path);
@@ -559,7 +560,7 @@ public class ModelToXMLSchema {
                 case "Object":      baseN = "Object"; break;
                 case "LITERAL":     continue;
                 default:                                        // http://BarNS/BarType
-                    actnsU = m.uriToNSU(actU);            // http://BarNS/
+                    actnsU = m.uriToNSU(actU);                  // http://BarNS/
                     baseN  = uriToName(actU);                   // BarType
                     baseN  = replaceSuffix(baseN, "Type", "");  // Bar
             }
@@ -574,7 +575,7 @@ public class ModelToXMLSchema {
             // create the CCC type definition.
             var augct = new ClassType(ns, atN);                 // http://AugmentingNS/BarAugmentationType
             var propL = new ArrayList<PropertyAssociation>();
-            for (var prop : ctU2augL.get(actU)) {
+            for (var prop : nsctU2augL.get(actU)) {
                 if (!prop.index().isEmpty()) propL.add(prop);
             }
             Collections.sort(propL);

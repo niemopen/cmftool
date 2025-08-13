@@ -25,6 +25,7 @@ package org.mitre.niem.cmf;
 
 import java.util.List;
 import java.util.Set;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
@@ -61,6 +62,10 @@ public class Datatype extends Component {
     @Override
     public CodeListBinding codeListBinding ()   { return null; }
     
+    public Datatype baseXS () {
+        if (W3C_XML_SCHEMA_NS_URI.equals(namespaceURI())) return this;
+        else return base().baseXS();
+    }
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

@@ -26,6 +26,8 @@ package org.mitre.niem.cmf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import static javax.xml.XMLConstants.XML_NS_URI;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -92,13 +94,19 @@ public class ClassType extends Component {
         return (!"NONE".equals(effectiveReferenceCode()));
     }
     
-    public Datatype literalDatatype () {
+    public DataProperty literalDataProperty () {
         if (propL.isEmpty()) return null;
         var pa = propL().get(0);
         var p  = pa.property();
         if (!p.name().endsWith("Literal")) return null;
         if (!p.isDataProperty()) return null;
-        return ((DataProperty)p).datatype();
+        return ((DataProperty)p);
+    }
+    
+    public Datatype literalDatatype () {
+        var ldp = this.literalDataProperty();
+        if (null == ldp) return null;
+        return ldp.datatype();
     }
     
     public boolean hasSimpleContent () {
@@ -106,6 +114,25 @@ public class ClassType extends Component {
         else if (null == subClassOf()) return false;
         else return subClassOf().hasSimpleContent();
     }    
+    
+    public boolean hasXmlLang () {
+        for (var pa : propL()) {
+            var p = pa.property();
+            if (XML_NS_URI.equals(p.namespaceURI()) && "lang".equals(p.name()))
+                return true;
+        }
+        return false;
+    }
+    
+    public boolean isRepeatableProperty (Property p) {
+        for (var pa : propL()) {
+            if (p == pa.property()) {
+                if (pa.maxOccursVal() > 1 || pa.isMaxUnbounded())
+                    return true;
+            }
+        }
+        return false;
+    }
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {
