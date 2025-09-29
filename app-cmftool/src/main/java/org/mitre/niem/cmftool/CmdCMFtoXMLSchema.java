@@ -47,7 +47,7 @@ import org.mitre.niem.xsd.NamespaceKind;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "create an XSD message schema from a model")
+@Parameters(commandDescription = "generate an XML message schema from CMF")
 
 public class CmdCMFtoXMLSchema implements JCCommand {
     
@@ -172,7 +172,7 @@ public class CmdCMFtoXMLSchema implements JCCommand {
         for (var ns : model.namespaceSet()) {
             if ("EXTERNAL".equals(ns.kindCode())) {
                 System.out.println(String.format(
-                    "Copy schema document for %s to %s", ns.uri(), ns.documentFilePath()));
+                    "You must copy all schema documents required for %s to %s", ns.uri(), ns.documentFilePath()));
             }
         }
         System.exit(0);        

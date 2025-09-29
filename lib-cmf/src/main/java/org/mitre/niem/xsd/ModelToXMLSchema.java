@@ -607,10 +607,9 @@ public class ModelToXMLSchema {
     }
     
     // Create a complex type with complex content from a non-literal class object
-    private static Set<String> needURIcodes  = Set.of("ANY", "ANYURI", "INTERNAL", "RELURI");
-    private static Set<String> needRefcodes  = Set.of("ANY", "INTERNAL", "IDREF");
-    private static Set<String> needMetadata  = Set.of("NIEM2.0", "NIEM3.0", "NIEM4.0", "NIEM5.0");
-    private static Set<String> needAppliesTo = Set.of("NIEM6.0");
+    private static final Set<String> needURIcodes  = Set.of("ANY", "ANYURI", "INTERNAL", "RELURI");
+    private static final Set<String> needRefcodes  = Set.of("ANY", "INTERNAL", "IDREF");
+    private static final Set<String> needMetadata  = Set.of("NIEM2.0", "NIEM3.0", "NIEM4.0", "NIEM5.0");
     protected void createCCCType (Document doc, 
         List<Element> defEL,                // add typedef elements to this list
         List<Element> decEL,                // add augmentation point elements to this list
@@ -634,6 +633,8 @@ public class ModelToXMLSchema {
         // Set xs:complexType name; add documentation.
         populateTypeElement(doc, ctE, ct, refnsUs, bc2pre, bc2U);
         
+        // Make note of structures attributes needed in this complex type.
+        // Don't need any inherited structures attributes.
         // Can't extend parent class if reference codes are not compatible.
         var pct      = ct.subClassOf();
         var refCode  = ct.effectiveReferenceCode();
@@ -768,7 +769,7 @@ public class ModelToXMLSchema {
             addAnnotationDoc(doc, atE, pa.docL());
             attParentE.appendChild(atE);
         }
-        // Add reference attributes as needed
+        // Add structures attributes as needed
         var structuresPre = bc2pre.get("STRUCTURES");
         var structuresU   = bc2U.get("STRUCTURES");
         if (needURI || needRef)
@@ -779,8 +780,6 @@ public class ModelToXMLSchema {
             addStructuresAttribute(doc, attParentE, "ref", refnsUs, structuresPre, structuresU);
         if (!extendF && needMetadata.contains(ver))
             addStructuresAttribute(doc, attParentE, "metadata", refnsUs, structuresPre, structuresU);
-        if (!extendF && needAppliesTo.contains(ver))
-            addStructuresAttribute(doc, attParentE, "appliesToParent", refnsUs, structuresPre, structuresU);
         defEL.add(ctE);
         
         // Add xs:anyAttribute wildcards as needed
@@ -823,6 +822,8 @@ public class ModelToXMLSchema {
 
         if (!nsU.equals(ct.namespaceURI())) return;
         var ctU = ct.uri();
+        var ns  = m.namespaceObj(nsU);
+        var ver = ns.archVersion();
         
         var ctE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:complexType");
         var anE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:annotation");
@@ -832,7 +833,27 @@ public class ModelToXMLSchema {
         populateTypeElement(doc, ctE, ct, refnsUs, bc2pre, bc2U);
         scE.appendChild(exE);
         ctE.appendChild(scE);
-
+        
+        // Make note of structures attributes needed in this complex type.
+        // Don't need any inherited structures attributes.
+        // Can't extend parent class if reference codes are not compatible.
+        var pct      = ct.subClassOf();
+        var refCode  = ct.effectiveReferenceCode();
+        var needURI  = needURIcodes.contains(refCode);
+        var needRef  = needRefcodes.contains(refCode);
+        var extendF  = false;
+        if (null != pct) {
+            var prefCode = pct.effectiveReferenceCode();
+            var pNeedURI = needURIcodes.contains(prefCode);
+            var pNeedRef = needRefcodes.contains(prefCode);
+            extendF = true;
+            if (pNeedURI && !needURI) extendF = false;
+            if (pNeedRef && !needRef) extendF = false;
+            if (extendF) {
+                needURI = needURI && !pNeedURI;
+                needRef = needRef && !pNeedRef;
+            }
+        }      
         // Add all the attribute references to xs:extension.  Start with attributes
         // in this class.  Then add augmentations not already present.  Then add
         // any global augmentations.  If the augmentation is an object property,
@@ -858,6 +879,18 @@ public class ModelToXMLSchema {
             addDocumentation(doc, atE, pa.docL());
             exE.appendChild(atE);
         }
+        // Add structures attributes as needed
+        var structuresPre = bc2pre.get("STRUCTURES");
+        var structuresU   = bc2U.get("STRUCTURES");
+        if (needURI || needRef)
+            addStructuresAttribute(doc, exE, "id", refnsUs, structuresPre, structuresU);
+        if (needURI)
+            addStructuresAttribute(doc, exE, "uri", refnsUs, structuresPre, structuresU);
+        if (needRef)
+            addStructuresAttribute(doc, exE, "ref", refnsUs, structuresPre, structuresU);
+        if (!extendF && needMetadata.contains(ver))
+            addStructuresAttribute(doc, exE, "metadata", refnsUs, structuresPre, structuresU);
+            
         // Extension base may be a simple type
         var ctname = ct.qname();
         var dt   = ct.literalDatatype();
@@ -937,13 +970,14 @@ public class ModelToXMLSchema {
         if (null != pt) { 
             refnsUs.add(pt.namespaceURI());
             ptQ = pt.qname();
-            if (p.isAttribute() && !ptQ.endsWith("SimpleType"))
-                ptQ = replaceSuffix(ptQ, "Type", "SimpleType");
+//            if (p.isAttribute() && !ptQ.endsWith("SimpleType"))
+//                ptQ = replaceSuffix(ptQ, "Type", "SimpleType");
         }
         // No abstract, appinfo, or substitionGroup in a message schema
         decE.setAttribute("name", p.name());
         setAttribute(decE, "type", ptQ);
-        if (!p.isAttribute() && !p.name().endsWith("Augmentation")) 
+//        if (!p.isAttribute() && !p.name().endsWith("Augmentation")) 
+        if (p.isReferenceable())
             decE.setAttribute("nillable", "true");
         addAnnotationDoc(doc, decE, p.docL());
         eL.add(decE);

@@ -39,6 +39,7 @@ import static org.apache.commons.io.FilenameUtils.normalize;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.utility.ResourceManager;
+import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSInput;
@@ -52,12 +53,15 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-@Parameters(commandDescription = "validate CMF documents")
+@Parameters(commandDescription = "validate a CMF model file")
 
 class CmdCMFValidate implements JCCommand {
     
     private ResourceManager rmgr = new ResourceManager(Model.class);
-        
+    
+    @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
+    boolean help = false;
+    
     @Parameter(description = "model.cmf ...")
     private List<String> mainArgs;
     
@@ -88,6 +92,10 @@ class CmdCMFValidate implements JCCommand {
     
     private void run (JCommander cob) {
         
+        if (help) {
+            cob.usage();
+            System.exit(0);
+        }        
         var sfact = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         var hndlr = new Handler();
         var resv  = new ResourceResolver();
@@ -141,15 +149,20 @@ class CmdCMFValidate implements JCCommand {
         private StringBuilder msgs = new StringBuilder();
         @Override
         public void error (SAXParseException e) {
-            msgs.append("  [error]" + e.getMessage() + "\n");
+            addMessage("ERROR", e);
         }
         @Override
         public void fatalError (SAXParseException e) {
-            msgs.append("  [fatal]" + e.getMessage() + "\n");
+            addMessage("FATAL", e);
         }
         @Override
         public void warning (SAXParseException e) {
-            msgs.append("  [warn] " + e.getMessage() + "\n");
+            addMessage("WARN", e);
+        }
+        private void addMessage(String label, SAXParseException e) {
+            var xmlF = URIStringToFile(e.getSystemId());
+            msgs.append(String.format("[%s] %s:%d: %s\n", 
+                label, xmlF.getName(), e.getLineNumber(), e.getMessage()));
         }
         public String messages () { return msgs.toString(); }
         public void clear () { msgs = new StringBuilder(); }

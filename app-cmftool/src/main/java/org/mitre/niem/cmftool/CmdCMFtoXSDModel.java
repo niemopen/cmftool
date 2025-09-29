@@ -172,7 +172,7 @@ public class CmdCMFtoXSDModel implements JCCommand {
         for (var ns : model.namespaceSet()) {
             if ("EXTERNAL".equals(ns.kindCode())) {
                 System.out.println(String.format(
-                    "Copy schema document for %s to %s", ns.uri(), ns.documentFilePath()));
+                    "You must copy all schema documents required for %s to %s", ns.uri(), ns.documentFilePath()));
             }
         }
         System.exit(0);        

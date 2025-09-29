@@ -51,10 +51,10 @@ public class ModelToXSDModelTest {
     public void testWriteModelXSD_File_String() {
     }
     
-//    @Test
-//    public void testOne () throws Exception {
-//        testRoundTrip(new File(resDN, "xsd6/gaObjObj.xsd"));        
-//    }
+    @Test
+    public void testOne () throws Exception {
+        testRoundTrip(new File(resDN, "xsd6/literalProps.xsd"));        
+    }
 
     @Test
     public void testWriteModelXSD () throws Exception {

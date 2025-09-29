@@ -49,6 +49,8 @@ import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XsltTransformer;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.xml.Schematron;
 import org.xml.sax.InputSource;
@@ -62,25 +64,31 @@ import org.xml.sax.SAXException;
  */
 public class SCHEval {
     
-    @Parameter(names = {"-s","--schema"},  description = "apply rules from this schematron file")
+    @Parameter(order = 1, names = {"-s","--schema"},    description = "apply rules from this schematron file")
     private String schFN = null;
     
-    @Parameter(names = {"-x","--xslt"},    description = "apply rules from this compiled schematron file")
+    @Parameter(order = 2, names = {"-x","--xslt"},      description = "apply rules from this compiled schematron file")
     private String xsltFN = null;
     
-    @Parameter(names = {"-o","--output"},  description = "write output to this file (default = stdout)")
+    @Parameter(order = 3, names = {"-o","--output"},    description = "write output to this file (default = stdout)")
     private String outFN = null;
     
-    @Parameter(names = {"--compile"},      description = "only compile Schematron to XSLT")
+    @Parameter(order = 4, names = {"--svrl"},           description = "write output in SVRL format")
+    private boolean svrlFlag = false;
+    
+    @Parameter(order = 5, names = {"--compile"},        description = "compile schema and write output in XSLT format")
     private boolean compileFlag = false;
     
-    @Parameter(names = {"-c","--catalog"}, description = "provide this XML catalog file as $xml-catalog parameter")
+    @Parameter(order = 6, names = {"-c","--catalog"},   description = "provide this XML catalog file as $xml-catalog parameter")
     String catFN = null;
     
-    @Parameter(names = {"-k", "--keep"},   description = "keep temporary files")
+    @Parameter(order = 7, names = {"-k", "--keep"},     description = "keep temporary files")
     private boolean keepTemp = false;
-    
-    @Parameter(names = {"-h","--help"},    description = "display this usage message", help = true)
+            
+    @Parameter(order = 8, names = {"-d","--debug"},     description = "turn on debug logging")
+    private boolean debugFlag = false;
+
+    @Parameter(order = 9, names = {"-h","--help"},      description = "display this usage message", help = true)
     boolean help = false; 
     
     @Parameter(description = "[input.xml...]")
@@ -120,6 +128,9 @@ public class SCHEval {
             cob.usage();
             System.exit(0);
         }       
+        if (debugFlag) {
+            Configurator.setAllLevels(LogManager.getRootLogger().getName(), org.apache.logging.log4j.Level.DEBUG);
+        }
         if (null == schFN && null == xsltFN) {
             System.err.println("Error: must supply either schema or compiled schema file");
             cob.usage();
@@ -140,7 +151,11 @@ public class SCHEval {
             cob.usage();
             System.exit(1);
         }
-        
+        if (svrlFlag && null != xsltFN) {
+            System.err.println("Error: can't have both --svrl and --xslt");
+            cob.usage();
+            System.exit(1);
+        }        
         // Initialize Schematron object
         Schematron s = null;
         try {
@@ -235,7 +250,8 @@ public class SCHEval {
             System.exit(1);
         }
         
-        // Run the compiled SCH on each input XML file, parse SVRL, write results
+        // Run the compiled SCH on each input XML file
+        // Maybe write SVRL, maybe parse it and write the result
         for (var xmlFN : mainArgs) {
             var svrlW = new StringWriter();
             var xmlF  = new File(xmlFN);
@@ -249,7 +265,15 @@ public class SCHEval {
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(SCHEval.class.getName()).log(Level.SEVERE, null, ex);
             }
-
+            if (svrlFlag) {
+                try {
+                    outW.write(svrlW.toString());
+                } catch (IOException ex) {
+                    System.err.println("Error writing SVRL: " + ex.getMessage());
+                    System.exit(1);
+                }
+                continue;
+            }
             try {
                 var svrlR = new StringReader(svrlW.toString());
                 var svrlS = new InputSource(svrlR);

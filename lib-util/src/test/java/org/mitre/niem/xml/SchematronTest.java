@@ -23,7 +23,6 @@
  */
 package org.mitre.niem.xml;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.StringReader;

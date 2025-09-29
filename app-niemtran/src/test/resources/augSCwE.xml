@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<t:Message
+ xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+ xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+ xmlns:t="http://example.com/test/">
+  <t:StringProp t:litPropRef="C01 C09">FOO</t:StringProp>
+  <t:LitRefs>
+    <t:LitProp structures:id="C01">Dolly</t:LitProp>
+    <t:LitProp structures:id="C09">Hello</t:LitProp>
+  </t:LitRefs>
+</t:Message>

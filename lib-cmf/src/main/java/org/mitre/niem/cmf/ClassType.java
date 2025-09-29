@@ -94,8 +94,11 @@ public class ClassType extends Component {
         return (!"NONE".equals(effectiveReferenceCode()));
     }
     
+    // Returns the literal DataProperty of this class, if it has one,
+    // otherwise returns null.  If you want to know if the class inherits
+    // a literal property, you must follow the subClassOf links yourself.
     public DataProperty literalDataProperty () {
-        if (propL.isEmpty()) return null;
+        if (propL().isEmpty()) return null;
         var pa = propL().get(0);
         var p  = pa.property();
         if (!p.name().endsWith("Literal")) return null;
@@ -103,6 +106,8 @@ public class ClassType extends Component {
         return ((DataProperty)p);
     }
     
+    // Returns the datatype of the literal property of this class, if it
+    // has one, otherwise returns null.
     public Datatype literalDatatype () {
         var ldp = this.literalDataProperty();
         if (null == ldp) return null;

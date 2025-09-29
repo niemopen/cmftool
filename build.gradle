@@ -1,0 +1,66 @@
+plugins {
+  id 'java'
+  id 'distribution'
+  id 'org.cyclonedx.bom' version '2.3.1'
+}
+
+project.version = '1.0'
+
+subprojects {
+    version = rootProject.version
+}
+
+tasks.named('distZip') {
+    dependsOn tasks.named('collectDist')
+}
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+def tempDistDir = file("$buildDir/collectDist")
+
+tasks.register('prepareDist') {
+
+    dependsOn subprojects.findAll { it.plugins.hasPlugin('application') }.collect { it.tasks.named('installDist') }
+
+    doLast {
+        if (tempDistDir.exists()) {
+            tempDistDir.deleteDir()
+        }
+        tempDistDir.mkdirs()
+        subprojects.findAll { it.plugins.hasPlugin('application') }.each { subproject ->
+            def appExt = subproject.extensions.findByName('application')
+            def appName = appExt?.applicationName ?: subproject.name
+            def binDir = file("${subproject.buildDir}/install/${appName}/bin")
+            def libDir = file("${subproject.buildDir}/install/${appName}/lib")
+            def targetBin = new File(tempDistDir, "bin")
+            def targetLib = new File(tempDistDir, "lib")
+            if (binDir.exists()) {
+                targetBin.mkdirs()
+                binDir.listFiles()?.findAll { it.isFile() }?.each { f ->
+                    Files.copy(f.toPath(), new File(targetBin, f.name).toPath(), StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
+            if (libDir.exists()) {
+                targetLib.mkdirs()
+                libDir.listFiles()?.findAll { it.isFile() }?.each { f ->
+                    Files.copy(f.toPath(), new File(targetLib, f.name).toPath(), StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
+        }
+    }
+}
+
+tasks.register('collectDist', Zip) {
+
+    archiveBaseName.set('cmftool-allApps')
+    archiveVersion.set(project.version.toString())
+    destinationDirectory.set(file("$buildDir/distributions"))
+    dependsOn tasks.named('prepareDist')
+    from(tempDistDir)
+    doLast {
+        if (tempDistDir.exists()) {
+            tempDistDir.deleteDir()
+        }
+    }
+}

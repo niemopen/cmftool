@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'java-library'
+    //id 'org.cyclonedx.bom' version '3.0.0-alpha-1'
 }
 
 repositories {
@@ -11,7 +12,6 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
-project.version = '1.0-alpha.8'
 
 dependencies {
     implementation project(':lib-util')

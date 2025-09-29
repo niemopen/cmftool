@@ -69,7 +69,7 @@ public class ResourceManager {
         rc = c;
         jarPath = c.getProtectionDomain().getCodeSource().getLocation().getPath();
 //        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
-        resPath = FilenameUtils.concat(jarPath, "../../../resources/main");    
+        resPath = FilenameUtils.concat(jarPath, "../../../resources/main");  
     }
     
     public InputStream getResourceStream (String name) throws IOException {
@@ -79,7 +79,6 @@ public class ResourceManager {
         if (!jarPath.endsWith(".jar")) {
             //var rf = getResourceFile(name);
             var rf = new File(resPath, name);
-            if (null == rf) return null;
             try {
                 res = new FileInputStream(rf);
             } catch (FileNotFoundException ex) {
@@ -88,6 +87,7 @@ public class ResourceManager {
             return res;
         }
         // Running from JAR? Get resource stream
+        LOG.debug("Running from JAR, resource is {}", name);
         res = rc.getResourceAsStream(name);
         return res;
     }

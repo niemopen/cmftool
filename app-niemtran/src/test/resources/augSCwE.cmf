@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="t">
+    <NamespaceURI>http://example.com/test/</NamespaceURI>
+    <NamespacePrefixText>t</NamespacePrefixText>
+    <DocumentationText>XML to JSON: augmeent SC with E.</DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ExtensionSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>augSCwE.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+    <AugmentationRecord>
+      <Class structures:ref="t.SCType" xsi:nil="true"/>
+      <ObjectProperty structures:ref="t.LitProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentationRecord>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <DataProperty structures:id="t.attProp">
+    <Name>attProp</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="t.LitLiteral">
+    <Name>LitLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="t.LitProp">
+    <Name>LitProp</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.LitType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="t.LitRefs">
+    <Name>LitRefs</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.CommentRefType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="t.Message">
+    <Name>Message</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.MessageType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="t.SCLiteral">
+    <Name>SCLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="t.StringProp">
+    <Name>StringProp</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.SCType" xsi:nil="true"/>
+  </ObjectProperty>
+  <Class structures:id="t.CommentRefType">
+    <Name>CommentRefType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="t.LitProp" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.LitType">
+    <Name>LitType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ReferenceCode>IDREF</ReferenceCode>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.LitLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.attProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.MessageType">
+    <Name>MessageType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="t.StringProp" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="t.LitRefs" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.SCType">
+    <Name>SCType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.SCLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

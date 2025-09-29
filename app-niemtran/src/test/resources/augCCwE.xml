@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<t:Message
+ xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+ xmlns:t="http://example.com/test/">
+  <nc:PersonEducation>
+    <nc:EducationDescriptionText>Some learning</nc:EducationDescriptionText>
+    <t:EducationAugmentation>
+      <t:StringProp>An augmentation</t:StringProp>
+    </t:EducationAugmentation>
+  </nc:PersonEducation>
+</t:Message>

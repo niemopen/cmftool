@@ -1010,6 +1010,7 @@ public class ModelFromXSD {
                     if (badProp)  LOG.warn("{}: unknown property in {}", nsU, aeStr);
                     if (badClass) LOG.warn("{}: unknown class in {}", nsU, aeStr);
                     if (badCodes) LOG.warn("{}: unknown globalClassCode in {}", nsU, aeStr);
+                    continue;
                 }
                 var arec   = new AugmentRecord();
                 arec.setClassType(ct);

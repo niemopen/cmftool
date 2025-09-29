@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'java-library'
+    //id 'org.cyclonedx.bom' version '3.0.0-alpha-1'
 }
 
 repositories {
@@ -15,7 +16,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
 }
 
-project.version = '1.0-alpha.8'
 
 dependencies {
     implementation 'net.sf.saxon:Saxon-HE:12.5'

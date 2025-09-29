@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<t:Message xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+ xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+ xmlns:t="http://example.com/test/">
+  <nc:PersonName>
+    <nc:PersonGivenName nc:personNameCommentText="foo">Peter</nc:PersonGivenName>
+    <nc:PersonMiddleName>Death</nc:PersonMiddleName>
+    <nc:PersonMiddleName>Bredon</nc:PersonMiddleName>
+    <nc:PersonSurName>Wimsey</nc:PersonSurName>
+  </nc:PersonName>
+</t:Message>

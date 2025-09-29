@@ -1,0 +1,27 @@
+{
+  "t:Message": {
+    "t:StringProp": {
+      "http://example.com/test/LitProp": [
+        {
+          "@id": "#C01"
+        },
+        {
+          "@id": "#C09"
+        }
+      ],
+      "t:SCLiteral": "FOO"
+    },
+    "t:LitRefs": {
+      "t:LitProp": [
+        {
+          "@id": "#C01",
+          "t:LitLiteral": "Dolly"
+        },
+        {
+          "@id": "#C09",
+          "t:LitLiteral": "Hello"
+        }
+      ]
+    }
+  }
+}

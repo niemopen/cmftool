@@ -57,16 +57,16 @@ public class ModelToRDF {
     
     private void writeNamespaces (OutputStreamWriter ow) throws IOException {
         for (Namespace ns : m.namespaceList()) {
-            ow.write(String.format("@prefix %-15s <%s#> .\n", 
+            ow.write(String.format("@prefix %-15s <%s> .\n", 
                     ns.prefix()+":", 
                     ns.uri()));
         }
         ow.write("\n");
 //        ow.write(String.format("@prefix %-15s <%s#> .\n", "cmf:", CMF_NS_URI));
-        ow.write(String.format("@prefix %-15s <%s#> .\n", "owl:", OWL_NS_URI));
-        ow.write(String.format("@prefix %-15s <%s#> .\n", "rdfs:", RDFS_NS_URI));
-        ow.write(String.format("@prefix %-15s <%s#> .\n", "rdf:", RDF_NS_URI));        
-        ow.write(String.format("@prefix %-15s <%s#> .\n", "xsd:", W3C_XML_SCHEMA_NS_URI)); 
+        ow.write(String.format("@prefix %-15s <%s> .\n", "owl:", OWL_NS_URI));
+        ow.write(String.format("@prefix %-15s <%s> .\n", "rdfs:", RDFS_NS_URI));
+        ow.write(String.format("@prefix %-15s <%s> .\n", "rdf:", RDF_NS_URI));        
+        ow.write(String.format("@prefix %-15s <%s> .\n", "xsd:", W3C_XML_SCHEMA_NS_URI)); 
     }
     
     private String propertyKind (Property p) {
@@ -94,6 +94,7 @@ public class ModelToRDF {
             // Abstract with no subproperty is omitted
             String propKind = propertyKind(p);
             if (null == p) continue;
+            if (null == p.classType() && null == p.datatype()) continue;
             ow.write("\n");
             ow.write(p.qname());            
             if (null != p.classType()) {

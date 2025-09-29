@@ -54,16 +54,16 @@ public class CmdXSDCanonicalize implements JCCommand {
     private boolean inPlace = false;
     private String backSuf = "";
 
-    @Parameter(names = "-i", description = "canonicalize in place (-ibak = keep original with .bak suffix)")
+    @Parameter(order = 1, names = "-i", description = "canonicalize in place (-ibak = keep original with .bak suffix)")
     private boolean inPlaceOpt =  false;
     
-    @Parameter(names = "-o", description = "file for converter output")
+    @Parameter(order = 0, names = "-o", description = "file for converter output")
     private String objFile = "";
      
-    @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
+    @Parameter(order = 2, names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "schemaDoc.xsd")
+    @Parameter(description = "schemaDoc.xsd ...")
     private List<String> mainArgs;
     
     CmdXSDCanonicalize () {

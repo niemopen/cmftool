@@ -80,6 +80,7 @@ public class Schematron {
     public static String ISO_ABSTRACT = "iso_abstract_expand.xsl";
     public static String ISO_SVRL     = "iso_svrl_for_xslt2.xsl";
     public static String ISO_SKEL     = "iso_schematron_skeleton_for_saxon.xsl";
+    public static String XSLT_PP      = "xsltpp.xsl";
     public static String SVRL_NS      = "http://purl.oclc.org/dsdl/svrl";
     public static String SCHEVAL_NS   = "http://xml.niem.mitre.org/LOC/";
     
@@ -89,9 +90,10 @@ public class Schematron {
     private final TransformerFactory transFact;
     private final DocumentBuilderFactory docbldFact;
     private final XPathFactory xpathFact;
-    private XsltTransformer dsdlTrans = null;
-    private XsltTransformer abstractTrans = null;
-    private XsltTransformer svrlTrans = null;
+    private XsltTransformer dsdlTrans = null;           // expand sch:include elements
+    private XsltTransformer abstractTrans = null;       // expand abstract patterns and rules
+    private XsltTransformer svrlTrans = null;           // final stage in SCH to XSLT
+    private XsltTransformer xsltPPTrans = null;         // expand xsl:include in the compiled XSLT
     
     public Schematron () throws SaxonApiException {
         saxonProc  = new Processor(false);               // free version; license not required
@@ -144,7 +146,13 @@ public class Schematron {
         srcR = new StringReader(strW.toString());
         nsrc = new StreamSource(srcR);
         nsrc.setSystemId(srcID);
-        applyXslt(nsrc, svrlTrans, ow);
+        strW = new StringWriter();
+        applyXslt(nsrc, svrlTrans, strW);
+        
+        srcR = new StringReader(strW.toString());
+        nsrc = new StreamSource(srcR);
+        nsrc.setSystemId(srcID);
+        applyXslt(nsrc, xsltPPTrans, ow);
     }
     
     /**
@@ -276,12 +284,14 @@ public class Schematron {
         var absF =  new File(tmpF, ISO_ABSTRACT);
         var svrlF = new File(tmpF, ISO_SVRL);
         var skelF = new File(tmpF, ISO_SKEL);
-        var rmgr  = new ResourceManager();
+        var xsltF = new File(tmpF, XSLT_PP);
+        var rmgr  = new ResourceManager(this.getClass());
         try {
-            rmgr.copyResourceToFile("sch/" + ISO_DSDL, dsdlF);
-            rmgr.copyResourceToFile("sch/" + ISO_ABSTRACT, absF);
-            rmgr.copyResourceToFile("sch/" + ISO_SVRL, svrlF);
-            rmgr.copyResourceToFile("sch/" + ISO_SKEL, skelF);        
+            rmgr.copyResourceToFile("/sch/" + ISO_DSDL, dsdlF);
+            rmgr.copyResourceToFile("/sch/" + ISO_ABSTRACT, absF);
+            rmgr.copyResourceToFile("/sch/" + ISO_SVRL, svrlF);
+            rmgr.copyResourceToFile("/sch/" + ISO_SKEL, skelF);
+            rmgr.copyResourceToFile("/sch/" + XSLT_PP, xsltF);
         } catch (IOException ex) {
             LOG.error("Can't create schematron transform files: {}", ex.getMessage());
         }
@@ -291,6 +301,7 @@ public class Schematron {
         abstractTrans = saxonComp.compile(absF).load();
         svrlTrans = saxonComp.compile(svrlF).load();    
         svrlTrans.setParameter(new QName("allow-foreign"), new XdmAtomicValue("true"));
+        xsltPPTrans = saxonComp.compile(xsltF).load();
 
         try {
             FileUtils.deleteDirectory(tmpF);

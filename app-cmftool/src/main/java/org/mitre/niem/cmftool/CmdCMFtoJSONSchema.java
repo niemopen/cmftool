@@ -45,7 +45,7 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "generate JSON Schema from CMF")
+@Parameters(commandDescription = "generate a JSON message schema from CMF")
     
 public class CmdCMFtoJSONSchema implements JCCommand {
 

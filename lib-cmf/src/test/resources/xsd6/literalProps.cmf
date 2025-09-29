@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="t">
+    <NamespaceURI>http://example.com/test/</NamespaceURI>
+    <NamespacePrefixText>t</NamespacePrefixText>
+    <DocumentationText>
+      Test case for datatype of literal properties.
+    </DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>literalProps.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <DataProperty structures:id="t.aProp">
+    <Name>aProp</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="t.bProp">
+    <Name>bProp</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="t.FiveLiteral">
+    <Name>FiveLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:FiveLiteral has datatype t:AnotherType</DocumentationText>
+    <Datatype structures:ref="t.AnotherType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.FourLiteral">
+    <Name>FourLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:FourLiteral has datatype t:FourSimpleType</DocumentationText>
+    <Datatype structures:ref="t.FourSimpleType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.OneLiteral">
+    <Name>OneLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:OneLiteral has datatype xs:token</DocumentationText>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.SevenLiteral">
+    <Name>SevenLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:SevenLiteral has datatype t:ListType</DocumentationText>
+    <Datatype structures:ref="t.ListType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.SixLiteral">
+    <Name>SixLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:SixLiteral has datatype t:AnotherType</DocumentationText>
+    <Datatype structures:ref="t.AnotherType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.ThreeLiteral">
+    <Name>ThreeLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:ThreeLiteral has datatype t:SomeType</DocumentationText>
+    <Datatype structures:ref="t.SomeType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.TwoLiteral">
+    <Name>TwoLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:TwoLiteral has datatype xs:token</DocumentationText>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="t.EightType">
+    <Name>EightType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>There is no t:EightLiteral property.</DocumentationText>
+    <SubClassOf structures:ref="t.FiveType" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.bProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.FiveType">
+    <Name>FiveType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:FiveLiteral has datatype t:AnotherType</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.FiveLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.aProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.FourType">
+    <Name>FourType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:FourLiteral has datatype t:FourSimpleType</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.FourLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.aProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.OneType">
+    <Name>OneType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:OneLiteral has datatype xs:token</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.OneLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.aProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.SevenType">
+    <Name>SevenType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:SevenLiteral has datatype t:ListType</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.SevenLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.bProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.SixType">
+    <Name>SixType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:SixLiteral has datatype t:AnotherType</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.SixLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.bProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.ThreeType">
+    <Name>ThreeType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:ThreeLiteral has datatype t:SomeType</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.ThreeLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.aProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.TwoType">
+    <Name>TwoType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>t:TwoLiteral has datatype xs:token</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.TwoLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.aProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Restriction structures:id="t.AnotherType">
+    <Name>AnotherType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <RestrictionBase structures:ref="xs.decimal" xsi:nil="true"/>
+    <Facet>
+      <FacetCategoryCode>maxInclusive</FacetCategoryCode>
+      <FacetValue>3.14</FacetValue>
+    </Facet>
+  </Restriction>
+  <Restriction structures:id="t.FourSimpleType">
+    <Name>FourSimpleType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <RestrictionBase structures:ref="xs.integer" xsi:nil="true"/>
+    <Facet>
+      <FacetCategoryCode>maxInclusive</FacetCategoryCode>
+      <FacetValue>180</FacetValue>
+    </Facet>
+  </Restriction>
+  <List structures:id="t.ListType">
+    <Name>ListType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ListItemDatatype structures:ref="xs.integer" xsi:nil="true"/>
+  </List>
+  <Restriction structures:id="t.SomeType">
+    <Name>SomeType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+    <Facet>
+      <FacetCategoryCode>maxLength</FacetCategoryCode>
+      <FacetValue>5</FacetValue>
+    </Facet>
+  </Restriction>
+  <Datatype structures:id="xs.decimal">
+    <Name>decimal</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.integer">
+    <Name>integer</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

@@ -1,0 +1,12 @@
+{
+  "t:Message": {
+    "nc:PersonEducation": {
+      "t:aProp": "FOO",
+      "nc:EducationDescriptionText": [
+        {
+          "nc:TextLiteral": "Some learning"
+        }
+      ]
+    }
+  }
+}

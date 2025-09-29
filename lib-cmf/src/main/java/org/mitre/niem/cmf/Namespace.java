@@ -25,9 +25,11 @@ package org.mitre.niem.cmf;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import org.mitre.niem.xml.LanguageString;
+import static org.mitre.niem.xsd.ModelFromXSD.replaceSuffix;
 import org.mitre.niem.xsd.NamespaceKind;
 
 /**
@@ -86,6 +88,32 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     public void setVersion (String s)               { version = s; }
     public void setArchVersion (String s)           { archVersion = s; }
     public void setLanguage (String s)              { lang = s; }
+    
+    // Returns true if lname is the name of an augmentation element 
+    // defined in this namespace
+    public boolean isAugmentation (String lname) {
+        if (!lname.endsWith("Augmentation")) return false;
+        var cname = replaceSuffix(lname, "Augmentation", "Type");
+        for (var arec : augL()) {
+            var codeS = new HashSet<>(arec.codeS());
+            codeS.add("CLASS");
+            for (var code : codeS) {
+                switch (code) {
+                case "ASSOCIATION":
+                    if ("AssociationAugmentation".equals(lname)) return true;
+                    break;                
+                case "OBJECT":
+                    if ("ObjectAugmentation".equals(lname)) return true;
+                    break;
+                case "CLASS":
+                    var ct = arec.classType();
+                    if (null != ct && ct.name().equals(cname)) return true;
+                    break;
+                }
+            }
+        }
+        return false;
+    }
     
     public void addDocumentation (String doc, String lang) {
         docL.add(new LanguageString(doc, lang));

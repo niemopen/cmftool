@@ -47,9 +47,11 @@ public class CMFTool {
          
 
         // Uncomment arguments for debugging:
-        String res = "../lib-cmf/tmp/augtest/";
+//        String res = "../app-niemtran/src/test/resources/";
+//        String res = "../../../NIEM/CrashDriver/";
         if (0 == args.length) {
-          args = new String[]{"m2xmsg", "-o", res+"msg", res+"aug.cmf"};
+//          args = new String[]{"x2m", "-o", res+"augSCwE.cmf", res+"augSCwE.xsd"};
+//            args = new String[]{"mval", res+"model.cmf"};
         }
     
         var jc = new JCommander();
@@ -72,18 +74,14 @@ public class CMFTool {
         var xsValCmd       = new CmdXSDValidate(jc);
         var xsCanonCmd     = new CmdXSDCanonicalize(jc);
         var helpCmd        = new CommandHelp(jc); 
+        
+        // Help command lists subcommands in this order
+        jc.addCommand("x2m",    xsdToCmfCmd); 
+        jc.addCommand("m2x",    cmfToXsdModelCmd);
+        jc.addCommand("m2xmsg", cmfToXMLSchemaCmd);
+        jc.addCommand("m2jmsg", cmfToJSONSchemaCmd);
         jc.addCommand("m2m",    cmfToCmfCmd);
         jc.addCommand("m2r",    cmfToRDFCmd);
-        jc.addCommand("m2x",    cmfToXsdModelCmd);
-        jc.addCommand("m2jmsg",    cmfToJSONSchemaCmd);
-        jc.addCommand("m2xmsg", cmfToXMLSchemaCmd);
-//        jc.addCommand("m2xs",   cmfToSrcXsdCmd);
-//        jc.addCommand("m2xm",   cmfToMsgXsdCmd);
-//        jc.addCommand("m2x5",   cmfToN5XsdCmd);
-//        jc.addCommand("n5to6",  n5To6Cmd);
-        jc.addCommand("x2m",    xsdToCmfCmd);  
-//        jc.addCommand("xcanon", xsdCanon);
-//        jc.addCommand("xcmp",   xsdCmpCmd);
         jc.addCommand("mval",   cmfValCmd);
         jc.addCommand("xval",   xsValCmd);
         jc.addCommand("xcanon", xsCanonCmd);

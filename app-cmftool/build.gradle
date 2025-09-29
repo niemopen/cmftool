@@ -1,7 +1,7 @@
 plugins {
     id 'application'
     id 'distribution'
-    id 'org.cyclonedx.bom' version '2.3.1'
+    //id 'org.cyclonedx.bom' version '3.0.0-alpha-1'
 }
 
 repositories {
@@ -15,8 +15,6 @@ compileJava {
 java {
     sourceCompatibility = JavaVersion.VERSION_21
 }
-
-project.version = '1.0-alpha.8'
 
 dependencies {
     implementation project(':lib-cmf')
