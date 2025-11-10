@@ -313,7 +313,8 @@ public class XMLSchemaDocument {
     }   
     
     /**
-     * Returns the prefix portion of a QName
+     * Returns the prefix portion of a QName.
+     * Returns the empty string if no ":" in the input string.
      * @param qn
      * @return 
      */
@@ -332,7 +333,21 @@ public class XMLSchemaDocument {
     public static String  makeQN (String prefix, String name) {
         return prefix + ":" + name;
     }
-    
+        
+    /**
+     * Constructs a component URI from a namespace URI and local name.
+     * Prefers slash URIs, respects hash URIs and URNs.
+     * @param nsU
+     * @param lname
+     * @return 
+     */
+    public static String makeURI (String nsU, String lname) {
+        if (nsU.startsWith("urn:")) return nsU + ":" + lname;   // urn:some:NS:lname
+        if (nsU.endsWith("/"))      return nsU + lname;         // http://someNS/lname
+        if (nsU.endsWith("#"))      return nsU + lname;         // http://someNS#lname
+        return nsU + "/" + lname;
+    }
+
     /**
      * Given a schema document Element, return a list of LanguageString objects
      * created from the xs:annotation/xs:documentation children, each containing

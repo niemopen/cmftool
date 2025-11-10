@@ -62,6 +62,7 @@ public class CMFTool {
         var cmfToJSONSchemaCmd = new CmdCMFtoJSONSchema(jc);
         var cmfToCmfCmd  = new CmdCMFtoCMF(jc);
         var cmfToRDFCmd  = new CmdCMFtoRDF(jc);
+        var cmfToMappingCmd   = new CmdCMFtoMapping(jc);
         var cmfToXsdModelCmd  = new CmdCMFtoXSDModel(jc);
         var cmfToXMLSchemaCmd = new CmdCMFtoXMLSchema(jc);
 //        var cmfToSrcXsdCmd = new CmdCMFtoSrcXSD(jc);
@@ -82,6 +83,7 @@ public class CMFTool {
         jc.addCommand("m2jmsg", cmfToJSONSchemaCmd);
         jc.addCommand("m2m",    cmfToCmfCmd);
         jc.addCommand("m2r",    cmfToRDFCmd);
+        jc.addCommand("m2map",  cmfToMappingCmd);
         jc.addCommand("mval",   cmfValCmd);
         jc.addCommand("xval",   xsValCmd);
         jc.addCommand("xcanon", xsCanonCmd);

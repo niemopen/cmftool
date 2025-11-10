@@ -34,10 +34,10 @@ import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeURI;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import org.mitre.niem.xsd.NamespaceKind;
-import org.mitre.niem.xsd.NamespaceMap;
 
 /**
  * A class for a Model object in a CMF model.
@@ -105,18 +105,6 @@ public class Model extends CMFObject {
     }
     public Set<Namespace> namespaceSet ()               { return nsS; }
     
-    
-    /**
-     * Constructs a component URI from a namespace URI and local name.
-     * @param nsU
-     * @param lname
-     * @return 
-     */
-    public static String makeURI (String nsU, String lname) {
-        if (nsU.startsWith("urn:")) return nsU + ":" + lname;   // urn:some:NS:lname
-        if (nsU.endsWith("/"))      return nsU + lname;         // http://someNS/lname
-        return nsU + "/" + lname;
-    }
     
     /**
      * Returns the component URI corresponding to a QName.

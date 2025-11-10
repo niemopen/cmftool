@@ -131,19 +131,6 @@ public abstract class Component extends CMFObject implements Comparable<Componen
         if (null ==  namespace ||  null == name) return "";
         return namespace.prefix() + "." + name;
     } 
-
-    /**
-     * Creates a component URI from a namespace URI (eg. http://someNS/) 
-     * and a local name.  Supplies a terminal slash if the namespace URI
-     * doesn't end in one.
-     * @param nsuri
-     * @param name
-     * @return 
-     */
-    public static String makeURI (String nsuri, String name) {
-        if (nsuri.endsWith("/")) return nsuri + name;
-        else return nsuri + "/" + name;
-    }
   
     // Notify the model object that the name or namespace of one of 
     // its components has changed.

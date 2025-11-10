@@ -27,11 +27,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
@@ -45,6 +41,7 @@ import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
 import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
 import org.mitre.niem.xml.ParserBootstrap;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeURI;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_STRUCTURES;
 import static org.mitre.niem.xsd.NamespaceKind.namespaceToKind;
 import org.xml.sax.Attributes;
@@ -104,12 +101,12 @@ public class XMLMsgToJSON {
     private class SAXHandler extends DefaultHandler {
         
         private Locator loc;
-        private String base = "";
         private StringBuilder chars = new StringBuilder();
-        private final Stack<String> langS = new Stack<>();                // current in-scope value of xml:lang
-        private final Stack<ClassType> ctypeS = new Stack<>();            // class type of CCC element in model
-        private final Stack<Boolean> adapterS = new Stack<>();            // are we within an adapter property?
-        private final Stack<JsonObject> objS = new Stack<>();             // json object for XML element
+        private String base = "";                                   // @xml:base of message
+        private final Stack<String> langS = new Stack<>();          // current in-scope value of xml:lang
+        private final Stack<ClassType> ctypeS = new Stack<>();      // class type of CCC element in model
+        private final Stack<Boolean> adapterS = new Stack<>();      // are we within an adapter property?
+        private final Stack<JsonObject> objS = new Stack<>();       // json object for XML element
         
         SAXHandler(JsonObject m) {   
             objS.push(m);
@@ -122,6 +119,7 @@ public class XMLMsgToJSON {
         public void startElement(String nsuri, String lname, String qName, Attributes atts) {
             
             // Handle xml:base in the message element; reject it elsewhere
+            // If set, all reference URIs become absolute; otherwise are relative
             var baseAtt = atts.getValue("xml:base");
             if (null != baseAtt) {
                 if (1 == objS.size()) base = baseAtt;
@@ -135,14 +133,17 @@ public class XMLMsgToJSON {
             if (null == langAtt) langS.push(langS.peek());
             else langS.push(langAtt);
             
-            var pU = model.makeURI(nsuri, lname);
-            var p  = model.uriToProperty(pU);
-            var ns = model.namespaceObj(nsuri);
+            // Get URI, property, and namespace for current element
+            var pU = makeURI(nsuri, lname);             // eg. https://Some/Namespace/PropName
+            var p  = model.uriToProperty(pU);           // Property object
+            var ns = model.namespaceObj(nsuri);         // Namespace object
             
+            // See if current element is an adapter property
             var adaptF = adapterS.peek();
             if (null != p && null != p.classType() && p.classType().isAdapterClass()) adaptF = true;
             adapterS.push(adaptF);
             
+            // Get the class of the current object property; null for data properties
             if (null != ns && ns.isAugmentation(lname)) {
                 ctypeS.push(null);
             }
@@ -154,16 +155,20 @@ public class XMLMsgToJSON {
             else if (null == p) ctypeS.push(null);  // unknown property inside adapter element
             else ctypeS.push(p.classType());        // will be null if p is a data property
             
+            // Create the JSON object to be populated from current property
             var obj = new JsonObject();            
             objS.push(obj);
             
+            // Process attributes in current element
             for (int i = 0; i < atts.getLength(); i++) {
                 var ansU = atts.getURI(i);              // namespace URI for this attribute
                 var aQ   = atts.getQName(i);            // QName of this attribute in message
                 var anam = atts.getLocalName(i);
                 var aval = atts.getValue(i);
-                var aU   = model.makeURI(ansU, anam);   // model URI for this component
-                var aP   = model.uriToProperty(aU);
+                var aU   = makeURI(ansU, anam);         // model URI for this component
+                var aP   = model.uriToProperty(aU);     // attribute property
+                
+                // Handle @id, @ref, @uri from a structures namespace
                 if (NSK_STRUCTURES == namespaceToKind(ansU)) {
                     switch (anam) {
                         case "id":
@@ -179,10 +184,13 @@ public class XMLMsgToJSON {
                             status = CONVERT_WARN;
                     }
                 }
+                // Handle a reference attribute; eg. @ns:fooRef
+                // Creates an array of @id objects for the key "ns:Foo"
                 else if (anam.endsWith("Ref")) {
-                    var rpnam = capitalize(anam.substring(0, anam.length()-3));
-                    var rpQ   = model.makeURI(ansU, rpnam);
-                    var rP    = model.uriToProperty(rpQ);
+                    var rpln = capitalize(anam.substring(0, anam.length()-3)); // Foo from fooRef
+                    var rpU  = makeURI(ansU, rpln);
+                    var rpQ  = model.uriToQN(rpU);
+                    var rP   = model.uriToProperty(rpQ);
                     if (null == rP) {
                         LOG.warn("unknown reference attribute {} at {} (ignored)", aQ, locstr());
                         status = CONVERT_WARN;
@@ -203,6 +211,7 @@ public class XMLMsgToJSON {
                     }
                     obj.add(rpQ, refA);                    
                 }
+                // Unknown attribute, or it's an object property (how??)
                 else if (null == aP || !aP.isAttribute()) {
                     if (adaptF)
                         obj.addProperty(aQ, aval);
@@ -211,6 +220,7 @@ public class XMLMsgToJSON {
                         status = CONVERT_WARN;
                     }
                 }
+                // Add pair of attribute QName and its string value
                 else {
                     obj.addProperty(aQ, aval);
                 }
@@ -228,7 +238,7 @@ public class XMLMsgToJSON {
             var ptype  = ctypeS.peek();
             var adaptF = adapterS.pop();
             var lang   = langS.pop();
-            var pU     = model.makeURI(nsuri, lname);
+            var pU     = makeURI(nsuri, lname);
             var p      = model.uriToProperty(pU);
             var ns     = model.namespaceObj(nsuri);
             var key    = qName;
@@ -244,7 +254,8 @@ public class XMLMsgToJSON {
                 return;
             }
             
-            // Use model prefix for key when element is defined in model
+            // Use model prefix for key when element is defined in model; ie. use
+            // "nc:PersonName" even if message uses "funkyPrefix:PersonName".
             if (null != p) key = p.qname();
             
             // Object of literal class always has a literal property, possibly

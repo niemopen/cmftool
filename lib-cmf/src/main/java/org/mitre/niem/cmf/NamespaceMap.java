@@ -21,10 +21,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.xsd;
+package org.mitre.niem.cmf;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
@@ -40,6 +43,8 @@ import static javax.xml.XMLConstants.XML_NS_URI;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class NamespaceMap {
+    
+    private static final Set<String> RES_PREFIX = Set.of("xml", "xmlns", "xs", "xsd", "xsi");
     
     private final HashMap<String,String> prefix2URI;
     private final HashMap<String,String> uri2Prefix;
@@ -70,6 +75,11 @@ public class NamespaceMap {
     public String getPrefix (String nsuri) { return uri2Prefix.get(nsuri); }
     public String getURI (String prefix)   { return prefix2URI.get(prefix); }
     public boolean hasURI (String nsuri)   { return uri2Prefix.containsKey(nsuri); }
+    public boolean isReserved (String prefix)   { return RES_PREFIX.contains(prefix); }
+    
+    public List<String> prefixList () {
+        return prefix2URI.keySet().stream().sorted().collect(Collectors.toList());
+    }
     
     private static final Pattern mungPat = Pattern.compile("(.*)_\\d+$");
     private static final Pattern versPat = Pattern.compile(".*/(\\d+)(\\.\\d+)*/?$");    

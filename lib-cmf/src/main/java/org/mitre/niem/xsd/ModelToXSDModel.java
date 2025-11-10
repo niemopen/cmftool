@@ -23,6 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
+import org.mitre.niem.cmf.NamespaceMap;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

@@ -23,6 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
+import org.mitre.niem.cmf.NamespaceMap;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -53,7 +54,6 @@ import static org.mitre.niem.cmf.CMFObject.CMF_RESTRICTION;
 import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
-import static org.mitre.niem.cmf.Component.makeURI;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.Model;
@@ -73,6 +73,7 @@ import org.mitre.niem.xml.LanguageString;
 import org.mitre.niem.xml.ParserBootstrap;
 import org.mitre.niem.xml.XMLCatalogCreator;
 import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeURI;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import org.mitre.niem.xml.XSDWriter;

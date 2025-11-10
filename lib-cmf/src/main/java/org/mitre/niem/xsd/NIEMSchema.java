@@ -24,6 +24,7 @@
  */
 package org.mitre.niem.xsd;
 
+import org.mitre.niem.cmf.NamespaceMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
