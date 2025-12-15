@@ -4,7 +4,7 @@ plugins {
   id 'org.cyclonedx.bom' version '2.3.1'
 }
 
-project.version = '1.0.1-SNAPSHOT'
+project.version = '1.1-SNAPSHOT'
 
 subprojects {
     version = rootProject.version

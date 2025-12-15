@@ -15,8 +15,8 @@ public class MappingTest {
     void testReadValidSSSOM() throws Exception {
         String sssom =
                 "# curie_map:\n" +
-                "#   src: http://example.com/src#\n" +
-                "#   tgt: http://example.com/tgt#\n" +
+                "#   src: http://example.com/src/\n" +
+                "#   tgt: http://example.com/tgt/\n" +
                 "#   owl: http://www.w3.org/2002/07/owl#\n" +
                 "subject_id\tpredicate_id\tobject_id\n" +
                 "src:Foo\towl:sameAs\ttgt:Bar\n" +
@@ -29,8 +29,8 @@ public class MappingTest {
         Assertions.assertEquals("tgt:Qux", m.qnToQ("src:Baz"));
 
         // URI-to-URI lookups (based on provided base URIs and local names)
-        Assertions.assertEquals("http://example.com/tgt#Bar", m.uriToU("http://example.com/src#Foo"));
-        Assertions.assertEquals("http://example.com/tgt#Qux", m.uriToU("http://example.com/src#Baz"));
+        Assertions.assertEquals("http://example.com/tgt/Bar", m.uriToU("http://example.com/src/Foo"));
+        Assertions.assertEquals("http://example.com/tgt/Qux", m.uriToU("http://example.com/src/Baz"));
     }
 
     @Test
@@ -39,7 +39,7 @@ public class MappingTest {
         Mapping m = new Mapping();
         m.addPrefixMapping("src", "http://example.com/src#");
         m.addPrefixMapping("tgt", "http://example.com/tgt#");
-        m.addMapping("src:Foo", "tgt:Bar");
+        m.addQNameMapping("src:Foo", "tgt:Bar");
 
         StringWriter out = new StringWriter();
         m.write(out);
@@ -64,13 +64,13 @@ public class MappingTest {
         m.addPrefixMapping("a", "http://example.com/a#");
         m.addPrefixMapping("b", "http://example.com/b#");
 
-        m.addMapping("a:X", "b:Y");
+        m.addQNameMapping("a:X", "b:Y");
 
         // Same source to different target -> error
-        Assertions.assertThrows(MappingException.class, () -> m.addMapping("a:X", "b:Z"));
+        Assertions.assertThrows(MappingException.class, () -> m.addQNameMapping("a:X", "b:Z"));
 
         // Different source to same target -> error
-        Assertions.assertThrows(MappingException.class, () -> m.addMapping("a:W", "b:Y"));
+        Assertions.assertThrows(MappingException.class, () -> m.addQNameMapping("a:W", "b:Y"));
     }
 
     @Test
@@ -80,9 +80,9 @@ public class MappingTest {
         m.addPrefixMapping("a", "http://example.com/a#");
         m.addPrefixMapping("b", "http://example.com/b#");
 
-        m.addMapping("a:X", "b:Y");
+        m.addQNameMapping("a:X", "b:Y");
         // Adding the exact same mapping again should not throw
-        m.addMapping("a:X", "b:Y");
+        m.addQNameMapping("a:X", "b:Y");
 
         Assertions.assertEquals("b:Y", m.qnToQ("a:X"));
         Assertions.assertEquals("http://example.com/b#Y", m.uriToU("http://example.com/a#X"));
@@ -95,11 +95,11 @@ public class MappingTest {
         m.addPrefixMapping("tgt", "http://example.com/tgt#");
 
         // Undefined prefix "bad" should fail
-        Assertions.assertThrows(MappingException.class, () -> m.addMapping("bad:Foo", "tgt:Bar"));
+        Assertions.assertThrows(MappingException.class, () -> m.addQNameMapping("bad:Foo", "tgt:Bar"));
 
         // Not a QName (missing colon) should fail
         m.addPrefixMapping("src", "http://example.com/src#");
-        Assertions.assertThrows(MappingException.class, () -> m.addMapping("notAQName", "tgt:Bar"));
+        Assertions.assertThrows(MappingException.class, () -> m.addQNameMapping("notAQName", "tgt:Bar"));
     }
 
     @Test

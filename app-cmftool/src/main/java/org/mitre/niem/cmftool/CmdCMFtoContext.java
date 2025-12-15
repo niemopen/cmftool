@@ -30,13 +30,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 import javax.xml.parsers.ParserConfigurationException;
+import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Mapping;
+import org.mitre.niem.cmf.MappingException;
 import org.mitre.niem.cmf.ModelXMLReader;
+import org.mitre.niem.json.Context;
 import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
@@ -47,26 +47,26 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "create a mapping template from CMF")
+@Parameters(commandDescription = "create a JSON-LD context from a model file and mapping")
 
-public class CmdCMFtoMapping implements JCCommand {
-
-    @Parameter(order = 1, names = "-s,--single", description = "prefix=URI of single target namespace")
-    private String targetMap = null;
+public class CmdCMFtoContext implements JCCommand {
+    
+    @Parameter(order = 1, names = {"-s","--single"}, description = "map to single namespace with no prefixes")
+    private boolean noPrefix = false;
          
     @Parameter(order = 1, names = "-o", description = "name of output mapping file")
     private String mapFN = null;
 
     @Parameter(order = 2, names = {"-h","--help"}, description = "display this usage message", help = true)
-    boolean help = false;
+    private boolean help = false;
         
-    @Parameter(description = "model.cmf ...")
-    private List<String> mainArgs;    
+    @Parameter(description = "model.cmf [map.sssom]")
+    private List<String> mainArgs;        
     
-    CmdCMFtoMapping () {
+    CmdCMFtoContext () {
     }
   
-    CmdCMFtoMapping (JCommander jc) {
+    CmdCMFtoContext (JCommander jc) {
     }
 
     public static void main (String[] args) {       
@@ -86,19 +86,16 @@ public class CmdCMFtoMapping implements JCCommand {
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool m2map");
+        cob.setProgramName("cmftool m2context");
         run(cob);
-    }    
-
-    private static final Pattern SPLIT  = Pattern.compile("^\\s*(.*?)\\s*=\\s*(.+)\\s*$");
-    private static final Pattern NCNAME = Pattern.compile("^[A-Za-z_][A-Za-z0-9._-]*$"); 
-        
+    }     
+    
     private void run (JCommander cob) {
         if (help) {
             cob.usage();
             System.exit(0);
         }
-        if (mainArgs == null || mainArgs.isEmpty()) {
+        if (mainArgs == null || mainArgs.isEmpty() || mainArgs.size() > 2) {
             cob.usage();
             System.exit(1);
         }
@@ -112,29 +109,7 @@ public class CmdCMFtoMapping implements JCCommand {
                 cob.usage();
                 System.exit(1);
             }
-        }
-        // If single target namespace specified, make sure prefix and uri are valid
-        var targetP = "";
-        var targetU = "";
-        if (null != targetMap) {
-            var m = SPLIT.matcher(targetMap);
-            if (!m.matches()) {
-                System.err.println("--single must have form prefix=URI");
-                System.exit(1);
-            }
-            targetP = m.group(1).trim();
-            targetU = m.group(2).trim();
-            if (!NCNAME.matcher(targetP).matches() || targetP.toLowerCase().startsWith("xml")) {
-                System.err.println("--single " + targetMap + ": invalid prefix");
-                System.exit(1);
-            }
-            URI u = null;
-            try { u = new URI(targetU); } catch (Exception ex) {}
-            if (null == u || !u.isAbsolute()) {
-                System.err.println("--single " + targetMap + ": not an absolute URI");
-                System.exit(1);
-            }
-        }       
+        }     
         // Make sure output mapping file is writable      
         var ow = new OutputStreamWriter(System.out);
         if (null != mapFN) try {
@@ -151,26 +126,36 @@ public class CmdCMFtoMapping implements JCCommand {
             System.err.println("Internal parser error: " + ex.getMessage());
             System.exit(1);
         }
-        // Read the model object from the model instance file
-        // Read the model object from the model file(s)
-        var mr = new ModelXMLReader();  
-        var fileL = new ArrayList<File>();
-        for (var str : mainArgs) fileL.add(new File(str));
-        var model = mr.readFiles(fileL);
-
-        // Create mapping object from model, write to output
-        Mapping map;
-        
-        try {
-            if (null != targetMap) map = Mapping.createDefault(model, targetP, targetU);
-            else map = Mapping.createTemplate(model);
-            map.write(ow);
-            ow.close();
-        } catch (Exception ex) {
-            System.err.println("can't create mapping template: " + ex.getMessage());
+        // Read the model object from the model file
+        var mr    = new ModelXMLReader();  
+        var model = mr.readFiles(new File(mainArgs.get(0)));
+        if (null == model) {
+            System.err.println("Could not read model from CMF file " + mainArgs.get(0));
             System.exit(1);
         }
-        System.exit(0);       
-    }
-
+        // Read the mapping file if one was provided
+        Mapping map = null;
+        if (mainArgs.size() > 1) {
+            try {
+                map = Mapping.readFile(new File(mainArgs.get(1)));
+            } catch (IOException | MappingException ex) {
+                System.err.println(String.format("Can't read mapping file %s: %s", mainArgs.get(1), ex.getMessage()));
+                System.exit(1);
+            }
+        }
+        // Create context and write to output stream
+        try {
+            if (null == map) Context.createTo(ow, model);
+            else if (!noPrefix) Context.createTo(ow, model, map);
+            else Context.createTo(ow, model, map, true);
+            ow.close();
+        } catch (RuntimeException | IOException ex) {
+            System.err.println("Can't write context: " + ex.getMessage());
+            System.exit(1);
+        } catch (CMFException ex) {
+            System.err.println("Can't create context: " + ex.getMessage());
+            System.exit(1);
+        }
+        System.exit(0);            
+    }    
 }

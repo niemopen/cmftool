@@ -24,6 +24,9 @@
 package org.mitre.niem.cmf;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -56,16 +59,14 @@ import static org.mitre.niem.xsd.NIEMConstants.OWL_NS_URI;
  */
 public class Mapping {
 
-    private final NamespaceMap nsmap       = new NamespaceMap();
-    private final Map<String,String> sq2tQ = new HashMap<>();       // source QName -> target QName
-    private final Map<String,String> su2tU = new HashMap<>();       // source URI -> target URI
-    private final Map<String,String> tu2sU = new HashMap<>();       // target URI -> source URI
+    private final NamespaceMap nsmap       = new NamespaceMap();    // prefix/URI pairs known in mapping
+    private final Map<String,String> qn2Q  = new HashMap<>();       // QName -> mapped QName
+    private final Map<String,String> uri2U = new HashMap<>();       // URI -> mapped URI
     
     public Mapping () { }
     
-    
-    public String uriToU (String fromU)  { return su2tU.get(fromU); }
-    public String qnToQ (String fromQ)   { return sq2tQ.get(fromQ); }
+    public String uriToU (String fromU)  { return uri2U.get(fromU); }
+    public String qnToQ (String fromQ)   { return qn2Q.get(fromQ); }
     
     /**
      * Suppose you want a simple message format with a single namespace.  This method
@@ -83,51 +84,58 @@ public class Mapping {
      * @param defaultURI 
      * @return new Mapping object
      */
-    public static Mapping createDefault (Model model, String defaultPrefix, String defaultURI) throws MappingException {
-        var m = new Mapping();
-        for (var ns : model.namespaceList()) {
+    public static Mapping createDefault (Model m, String defaultPrefix, String defaultURI) throws MappingException {
+        var map = new Mapping();
+        for (var ns : m.namespaceList()) {
             if (ns.isModelNS())
-                m.addPrefixMapping(ns.prefix(), ns.uri());
+                map.addPrefixMapping(ns.prefix(), ns.uri());
         }
-        m.addPrefixMapping(defaultPrefix, defaultURI);
+        map.addPrefixMapping(defaultPrefix, defaultURI);
         
+        // How many times does a local name appear in the model?
         var lnct = new HashMap<String,Integer>();
-        for (var c : model.componentList()) {
+        for (var c : m.componentList()) {
             if (!c.namespace().isModelNS()) continue;
             var lct = lnct.getOrDefault(c.name(), 0);
             lnct.put(c.name(), lct + 1);
         }
-        for (var c : model.componentList()) {
+        // Add mappings; munged mapping when a local name appears more than once.
+        for (var c : m.componentList()) {
             if (!c.namespace().isModelNS()) continue;
             var lct = lnct.get(c.name());
             if (lct > 1) {
                 var prefix = qnToPrefix(c.qname());
-                m.addMapping(c.qname(), defaultPrefix + ":" + prefix + c.name());
+                map.addQNameMapping(c.qname(), defaultPrefix + ":" + prefix + c.name());
             }
-            else m.addMapping(c.qname(), defaultPrefix + ":" + c.name());
+            else map.addQNameMapping(c.qname(), defaultPrefix + ":" + c.name());
         }
-        return m;
+        return map;
     }
 
     /**
      * Creates a mapping object with a dummy "to" URI for each component in a model.
-     * @param model
+     * @param m
      */
-    public static Mapping createTemplate (Model model) throws MappingException {
-        var m   = new Mapping();
-        for (var ns : model.namespaceList()) {
+    public static Mapping createTemplate (Model m) throws MappingException {
+        var map   = new Mapping();
+        for (var ns : m.namespaceList()) {
             if (ns.isModelNS())
-                m.addPrefixMapping(ns.prefix(), ns.uri());
+                map.addPrefixMapping(ns.prefix(), ns.uri());
         }
-        var tPre = m.addPrefixMapping("T", "http://example.com/YourTargetNamespace");   
+        var tPre = map.addPrefixMapping("T", "http://example.com/YourTargetNamespace");   
         var num = 0;
-        for (var c : model.componentList()) {
+        for (var c : m.componentList()) {
             if (c.namespace().isModelNS())
-                m.addMapping(c.qname(), String.format("%s:TEMP%04d", tPre, num++));
+                map.addQNameMapping(c.qname(), String.format("%s:TEMP%04d", tPre, num++));
         }
-        return m;
+        return map;
     }
     
+    /**
+     * Writes the mapping object in SSSOM format.
+     * @param w
+     * @throws IOException 
+     */
     public void write (Writer w) throws IOException {
         var owlP = nsmap.assignPrefix("owl", OWL_NS_URI);
         w.write("# curie_map:\n");
@@ -136,17 +144,36 @@ public class Mapping {
                 w.write(String.format("#   %s: %s\n", prefix, nsmap.getURI(prefix)));
         }
         w.write("subject_id\tpredicate_id\tobject_id\n");
-        var srcList = sq2tQ.keySet().stream()
+        var srcList = qn2Q.keySet().stream()
             .sorted(new NaturalOrderIgnoreCaseComparator())
             .collect(Collectors.toList());
         for (String srcQ : srcList) {
-            w.write(String.format("%s\t%s:sameAs\t%s\n", srcQ, owlP, sq2tQ.get(srcQ)));
+            w.write(String.format("%s\t%s:sameAs\t%s\n", srcQ, owlP, qn2Q.get(srcQ)));
         }
+    }
+    
+    /**
+     * Reads a mapping object from a File in SSSOM format
+     * @param f
+     * @return
+     * @throws IOException
+     * @throws MappingException 
+     */
+    public static Mapping readFile (File f) throws IOException, MappingException {
+        var rdr = new BufferedReader(new FileReader(f));
+        return read(rdr);
     }
     
     private static final String OWL_SAMEAS = OWL_NS_URI + "sameAs";
     private static final Pattern CURIE_PAT = Pattern.compile("^#\\s\\s\\s+([A-Za-z0-9_\\-]+):\\s+(\\S+)\\s*$");
     
+    /**
+     * Reads a mapping object from a reader in SSSOM format.
+     * @param r
+     * @return
+     * @throws IOException
+     * @throws MappingException 
+     */
     public static Mapping read (Reader r) throws IOException, MappingException {
         var m     = new Mapping();
         var subI  = -1;             // index of subject column
@@ -210,7 +237,7 @@ public class Mapping {
                 var prdU = "";
                 try {
                     prdU = m.makeResourceU(prdQ);
-                    m.addMapping(subQ, objQ);
+                    m.addQNameMapping(subQ, objQ);
                 }
                 catch (MappingException ex) {
                     throw new MappingException("line " + lnum + ": " + ex.getMessage());
@@ -224,22 +251,38 @@ public class Mapping {
         return m;
     }
     
+    /**
+     * Adds a prefix/URI pair to the Mapping object.  The prefix may be munged
+     * if the desired prefix is already assigned.
+     * @param prefix -- desired prefix
+     * @param uri -- URI for prefix
+     * @return the assigned prefix (possibly munged)
+     */
     public String addPrefixMapping (String prefix, String uri) {
         return nsmap.assignPrefix(prefix, uri);
     }
     
-    public void addMapping (String srcQ, String objQ) throws MappingException {
-        var srcU = makeResourceU(srcQ);
+    /**
+     * Adds a mapping from the subject QName to the object QName, and vice versa.
+     * Subject and object prefixes must be known.  Subject and object must be 
+     * either unmapped, or already mapped to each other.
+     * @param subQ
+     * @param objQ
+     * @throws MappingException 
+     */
+    public void addQNameMapping (String subQ, String objQ) throws MappingException {
+        var subU = makeResourceU(subQ);
         var objU = makeResourceU(objQ);
-        var sub2U = su2tU.get(srcU);
-        var obj2U = tu2sU.get(objU);
+        var sub2U = uri2U.get(subU);
+        var obj2U = uri2U.get(objU);
         if (null != sub2U && !sub2U.equals(objU))
-            throw new MappingException(srcU + " already mapped");
-        if (null != obj2U && !obj2U.equals(srcU))
-            throw new MappingException(objU + " already mapped");
-        sq2tQ.put(srcQ, objQ);
-        su2tU.put(srcU, objU);
-        tu2sU.put(objU, srcU);
+            throw new MappingException(subU + " already mapped to " + sub2U);
+        if (null != obj2U && !obj2U.equals(subU))
+            throw new MappingException(objU + " already mapped to " + obj2U);
+        qn2Q.put(subQ, objQ);
+        uri2U.put(subU, objU);
+        qn2Q.put(objQ, subQ);
+        uri2U.put(objU, subU);
     }
     
     private String makeResourceU (String qname) throws MappingException {
