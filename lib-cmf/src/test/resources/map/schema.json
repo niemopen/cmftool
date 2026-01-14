@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [ "@context", "msg:Request" ],
+  "additionalProperties": false,
+  "properties": {
+    "msg:Request": {
+      "description": "A request for one or more items.",
+      "$ref": "#/definitions/msg:RequestType"
+    },
+    "@context": {
+      "anyOf": [
+        { "type": "object" }
+      ]
+    }
+  },
+  "definitions": {
+    "msg:RequestType": {
+      "description": "A data type for a request of one or more items.",
+      "type": "object",
+      "properties": {
+        "msg:RequestID": { "$ref": "#/definitions/xs:token" },
+        "msg:RequestedItem": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/nc:ItemType" },
+          "minItems": 1
+        },
+        "@id": { "$ref": "#/definitions/xs:anyURI" }
+      },
+      "required": [ "msg:RequestID", "msg:RequestedItem" ],
+      "additionalProperties": false
+    },
+    "nc:ItemType": {
+      "description": "A data type for an article or thing.",
+      "type": "object",
+      "properties": {
+        "nc:ItemName": { "$ref": "#/definitions/nc:TextType" },
+        "nc:ItemQuantity": { "$ref": "#/definitions/nc:QuantityType" }
+      },
+      "required": [ "nc:ItemName", "nc:ItemQuantity" ],
+      "additionalProperties": false
+    },
+    "nc:QuantityType": {
+      "description": "A data type for a count or tally.",
+      "type": "object",
+      "properties": {
+        "nc:QuantityLiteral": { "$ref": "#/definitions/nc:NumericType" },
+        "nc:quantityUnitText": { "$ref": "#/definitions/xs:string" }
+      },
+      "required": [ "nc:QuantityLiteral" ],
+      "additionalProperties": false
+    },
+    "nc:NumericType": {
+      "description": "A data type for a number value.",
+      "$ref": "#/definitions/xs:decimal"
+    },
+    "nc:TextType": {
+      "description": "A data type for a character string.",
+      "$ref": "#/definitions/xs:string"
+    },
+    "xs:anyURI": {
+      "type": "string",
+      "format": "uri"
+    },
+    "xs:decimal": { "type": "number" },
+    "xs:string": { "type": "string" },
+    "xs:token": {
+      "type": "string",
+      "pattern": "^\\S*$"
+    }
+  }
+}

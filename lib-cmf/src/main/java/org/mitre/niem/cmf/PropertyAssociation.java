@@ -26,6 +26,7 @@ package org.mitre.niem.cmf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.mitre.niem.xml.LanguageString;
 
 /**
@@ -49,9 +50,9 @@ public class PropertyAssociation extends CMFObject implements Comparable<Propert
     public List<LanguageString> docL () { return docL; }
     
     public boolean isMaxUnbounded ()    { return "unbounded".equals(maxOccurs); }
-    public int minOccursVal ()          { return stringToInt(minOccurs); }
+    public int minOccursVal ()          { return NumberUtils.toInt(minOccurs); }
     public int maxOccursVal () { 
-        return "unbounded".equals(maxOccurs) ? -1 : stringToInt(maxOccurs);
+        return "unbounded".equals(maxOccurs) ? -1 : NumberUtils.toInt(maxOccurs);
     }
     
     public ClassType classType ()       { return null; }
@@ -62,6 +63,7 @@ public class PropertyAssociation extends CMFObject implements Comparable<Propert
     public void setMinOccurs (String s)     { minOccurs = s; }
     public void setMaxOccurs (String s)     { maxOccurs = s; }
     
+    public String definition ()             { return docL.isEmpty() ? null : docL.get(0).text(); }    
     public void addDocumentation (String doc, String lang) {
         docL.add(new LanguageString(doc, lang));
     }
@@ -69,13 +71,6 @@ public class PropertyAssociation extends CMFObject implements Comparable<Propert
         docL.clear();
         docL.addAll(dL);
     }   
-    
-    public int stringToInt (String s) {
-        int res = 0;
-        try { res = Integer.parseInt(s); }
-        catch (Exception ex) { }
-        return res;
-    }
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

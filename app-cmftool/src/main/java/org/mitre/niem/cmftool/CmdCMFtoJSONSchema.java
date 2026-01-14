@@ -33,8 +33,11 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
+import org.mitre.niem.cmf.Mapping;
+import org.mitre.niem.cmf.MappingException;
 import org.mitre.niem.cmf.ModelXMLReader;
-import org.mitre.niem.json.ModelToJSON;
+import org.mitre.niem.cmf.Property;
+import org.mitre.niem.json.ModelToJSONSchema;
 import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
@@ -48,14 +51,20 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
 @Parameters(commandDescription = "generate a JSON message schema from CMF")
     
 public class CmdCMFtoJSONSchema implements JCCommand {
-
-    @Parameter(order = 1, names = "-o", description = "name of output file")
+    
+    @Parameter(order = 1, names = {"-p", "--messageProp"}, description = "message property QName")
+    private List<String> msgQA = new ArrayList<>();
+    
+    @Parameter(order = 2, names = {"-c", "--context"}, description = "context URI")
+    private String contextU = null;
+    
+    @Parameter(order = 3, names = "-o", description = "name of output file")
     private String modelFN = null;
      
-    @Parameter(order = 2, names = {"-h","--help"}, description = "display this usage message", help = true)
+    @Parameter(order = 4, names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "modelFile.cmf...")
+    @Parameter(description = "modelFile.cmf [map.sssom]")
     private List<String> mainArgs;
     
     CmdCMFtoJSONSchema () {
@@ -74,14 +83,14 @@ public class CmdCMFtoJSONSchema implements JCCommand {
         var jc = new JCommander(this);
         var uf = new JCUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("m2m");
+        jc.setProgramName("m2jmsg");
         jc.parse(args);
         run(jc);
     }
     
     @Override
     public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool m2m");
+        cob.setProgramName("cmftool m2jmsg");
         run(cob);
     }    
     
@@ -105,7 +114,11 @@ public class CmdCMFtoJSONSchema implements JCCommand {
                 cob.usage();
                 System.exit(1);
             }
-        }       
+        }
+        if (mainArgs.isEmpty() || mainArgs.size() > 2) {
+            cob.usage();
+            System.exit(1);            
+        }
         // Make sure the Xerces parsers can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
@@ -122,17 +135,38 @@ public class CmdCMFtoJSONSchema implements JCCommand {
             System.err.println(String.format("Can't write to output file %s: %s", modelFN, ex.getMessage()));
             System.exit(1);            
         }       
-        // Read the model object from the model instance file
-        // Read the model object from the model file(s)
+        // Read the model object from the model instance file (mainArg[0])
         var mr = new ModelXMLReader();  
-        var fileL = new ArrayList<File>();
-        for (var str : mainArgs) fileL.add(new File(str));
-        var model = mr.readFiles(fileL);
+        var model = mr.readFiles(new File(mainArgs.get(0)));
         
+        // Read the mapping file if one was provided
+        Mapping map = null;
+        if (mainArgs.size() > 1) {
+            try {
+                map = Mapping.readFile(new File(mainArgs.get(1)));
+            } catch (IOException | MappingException ex) {
+                System.err.println(String.format("Can't read mapping file %s: %s", mainArgs.get(1), ex.getMessage()));
+                System.exit(1);
+            }
+        }
+        // Get message property object (if specified)
+        List<Property> msgPropA = new ArrayList<>();
+        for (var msgQ : msgQA) {
+            var p = model.qnToProperty(msgQ);
+            if (null == p) {
+                System.err.println("Property " + msgQ + " is not in model");
+                System.exit(1);
+            }
+            msgPropA.add(p);
+        }
         // Generate JSON Schema
         try {
-            var js = new ModelToJSON(model);
-            js.writeJSON(ow);
+            var js = new ModelToJSONSchema(model);
+            js.setMessageProperties(msgPropA);
+            js.setContextURI(contextU);
+            js.setMapping(map);
+            js.writeSchema(ow);
+            ow.write("\n");
             ow.close();
         }
         catch (IOException ex) {}

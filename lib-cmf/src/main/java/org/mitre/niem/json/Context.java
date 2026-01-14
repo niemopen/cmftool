@@ -79,7 +79,7 @@ public class Context {
         var needP  = false;
         var lnameS = new HashSet<String>();
         for (var c : m.componentList()) {           // model component; eg. nc:PersonSurName
-            var mcQ = map.qnToQ(c.qname());         // mapped QN for component; eg. foo:lname
+            var mcQ = map.qnToN(c.qname());         // mapped QN for component; eg. foo:lname
             if (null == mcQ) continue;
             var mln = qnToName(mcQ);                // local name of mapped QN; eg. lname
             var err = "";
@@ -93,7 +93,7 @@ public class Context {
         }
         // Now add context entries for each mapped component
         for (var c : m.componentList()) {
-            var mcQ = map.qnToQ(c.qname());         // mapped QN for component; eg. foo:lname
+            var mcQ = map.qnToN(c.qname());         // mapped QN for component; eg. foo:lname
             if (null == mcQ) continue;
             var mlp = qnToPrefix(mcQ);              // prefix of mapped QN; eg. foo
             var mln = qnToName(mcQ);                // local name of mapped QN; eg. lname            

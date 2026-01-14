@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,14 @@ package org.mitre.niem.cmf;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -42,36 +43,77 @@ import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import static org.mitre.niem.xsd.NIEMConstants.OWL_NS_URI;
 
 /**
- * A class for representing same-as mappings between data component URIs.
- * Used to specify component names for simple (vs. canonical) message formats; 
- * for example, using "msg:lname" instead of "nc:PersonSurName".
- * It might be good for something else.
+ * A class for representing same-as mappings from a data model component QName
+ * to a simple synonym QName or local name.  Used to specify component names 
+ * for simple (vs. canonical) message formats; for example, a simple format
+ * might have "msg:lname" or just "lname" instead of "nc:PersonSurName".
  * 
  * You can create an empty Mapping object and set all your mappings one by one.
- * Mappings are always a bijection.  That is, URI A maps to at most one B, 
- * and that B always maps to only that A.
+ * URI A maps to at most one B, and only A maps to that B.
+ * You get an exception if you try anything else.
+ * 
+ * Suppose all of your mapping targets have the same namespace.  Then you
+ * may set the "noPrefix" property.  When you ask for the mapping of,
+ * for example, "nc:PersonSurName", you will get "lname" instead of "msg:lname".
+ * This is useful for single-namespace simple XML formats.
  * 
  * Reads and writes in SSSOM (Simple Standard for Sharing Ontology Mappings) format
- * for persistent store.
+ * for persistent store.  There are two convenience methods for generating a mapping
+ * template in this format, which you then edit elsewhere.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Mapping {
 
-    private final NamespaceMap nsmap       = new NamespaceMap();    // prefix/URI pairs known in mapping
-    private final Map<String,String> qn2Q  = new HashMap<>();       // QName -> mapped QName
-    private final Map<String,String> uri2U = new HashMap<>();       // URI -> mapped URI
+    private final NamespaceMap nsmap          = new NamespaceMap(); // prefix/URI pairs known in mapping
+    private final Map<String,String> qn2mapQ  = new HashMap<>();    // QName -> mapped QName
+    private final Map<String,String> mapQ2qn  = new HashMap<>();    // mapped QName -> component QName
+    private final Set<String> toPrefixS       = new HashSet<>();    // set of target prefixes
+    private boolean noPrefix = false;                               // mapping returns name part by default     
     
     public Mapping () { }
     
-    public String uriToU (String fromU)  { return uri2U.get(fromU); }
-    public String qnToQ (String fromQ)   { return qn2Q.get(fromQ); }
+    /**
+     * Sets the "noPrefix" property for this mapping.  When noPrefix is true,
+     * every mapping must be to a single namespace.
+     * @param noPrefix
+     * @throws MappingException 
+     */
+    public void setNoPrefix (boolean noPrefix) throws MappingException {
+        this.noPrefix = noPrefix;
+        if (!noPrefix) return;
+        if (toPrefixS.size() > 1)
+            throw new MappingException("Can't set noPrefix; map has more than one target namespace");
+    }
+    
+    /**
+     * Returns the QName mapping for the argument QName.  Returns the argument
+     * QName if it is not mapped.  Not affected by the noPrefix property.
+     * @param fromQ
+     * @return 
+     */
+    public String qnToQ (String fromQ) { return qn2mapQ.getOrDefault(fromQ, fromQ); }
+    
+    /**
+     * Returns the name mapped to the argument QName.  This could be a QName, or
+     * just the local name (no prefix) if noPrefix is set.  Returns the argument 
+     * QName if not mapped.
+     * @param fromQ
+     * @return 
+     */
+    public String qnToN (String fromQ)   { 
+        var res = qn2mapQ.get(fromQ);
+        if (null == res) return fromQ;
+        if (noPrefix) return qnToName(res);
+        return res;
+    }
     
     /**
      * Suppose you want a simple message format with a single namespace.  This method
-     * accepts a default namespace URI, and creates a mapping from every component URI
-     * in the model to a URI with that default URI base plus the property name.
+     * accepts a default namespace prefix and URI, and creates a mapping from 
+     * every component URI in the model to a URI with that default URI base plus 
+     * the property name.
      * 
      * For example, https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/PersonSurName
      * might be mapped to http://my.default/PersonSurName.
@@ -88,9 +130,9 @@ public class Mapping {
         var map = new Mapping();
         for (var ns : m.namespaceList()) {
             if (ns.isModelNS())
-                map.addPrefixMapping(ns.prefix(), ns.uri());
+                map.assignPrefix(ns.prefix(), ns.uri());
         }
-        map.addPrefixMapping(defaultPrefix, defaultURI);
+        map.assignPrefix(defaultPrefix, defaultURI);
         
         // How many times does a local name appear in the model?
         var lnct = new HashMap<String,Integer>();
@@ -109,6 +151,7 @@ public class Mapping {
             }
             else map.addQNameMapping(c.qname(), defaultPrefix + ":" + c.name());
         }
+        map.setNoPrefix(true);
         return map;
     }
 
@@ -120,9 +163,9 @@ public class Mapping {
         var map   = new Mapping();
         for (var ns : m.namespaceList()) {
             if (ns.isModelNS())
-                map.addPrefixMapping(ns.prefix(), ns.uri());
+                map.assignPrefix(ns.prefix(), ns.uri());
         }
-        var tPre = map.addPrefixMapping("T", "http://example.com/YourTargetNamespace");   
+        var tPre = map.assignPrefix("T", "http://example.com/YourTargetNamespace");   
         var num = 0;
         for (var c : m.componentList()) {
             if (c.namespace().isModelNS())
@@ -143,12 +186,13 @@ public class Mapping {
             if (!nsmap.isReserved(prefix))
                 w.write(String.format("#   %s: %s\n", prefix, nsmap.getURI(prefix)));
         }
+        if (noPrefix) w.write("# NoPrefix: true\n");
         w.write("subject_id\tpredicate_id\tobject_id\n");
-        var srcList = qn2Q.keySet().stream()
+        var srcList = qn2mapQ.keySet().stream()
             .sorted(new NaturalOrderIgnoreCaseComparator())
             .collect(Collectors.toList());
         for (String srcQ : srcList) {
-            w.write(String.format("%s\t%s:sameAs\t%s\n", srcQ, owlP, qn2Q.get(srcQ)));
+            w.write(String.format("%s\t%s:sameAs\t%s\n", srcQ, owlP, qn2mapQ.get(srcQ)));
         }
     }
     
@@ -194,7 +238,8 @@ public class Mapping {
             // Handle comment line
             if (line.startsWith("#")) {
                 var comment = line.substring(1).trim();
-                if (comment.startsWith("curie_map:")) {
+                if ("# NoPrefix: true".equals(line)) m.noPrefix = true;
+                else if (comment.startsWith("curie_map:")) {
                     inMap = true;
                     mapF = true;
                 }
@@ -206,7 +251,7 @@ public class Mapping {
                         var opre   = m.nsmap.getPrefix(uri);
                         if (null != opre && !prefix.equals(opre))
                             throw new MappingException("line " + lnum + ": conflicting assignment for prefix " + prefix);
-                        m.addPrefixMapping(prefix, uri);
+                        m.assignPrefix(prefix, uri);
                     }
                     else inMap = false;
                 }
@@ -258,7 +303,7 @@ public class Mapping {
      * @param uri -- URI for prefix
      * @return the assigned prefix (possibly munged)
      */
-    public String addPrefixMapping (String prefix, String uri) {
+    public String assignPrefix (String prefix, String uri) {
         return nsmap.assignPrefix(prefix, uri);
     }
     
@@ -266,34 +311,51 @@ public class Mapping {
      * Adds a mapping from the subject QName to the object QName, and vice versa.
      * Subject and object prefixes must be known.  Subject and object must be 
      * either unmapped, or already mapped to each other.
-     * @param subQ
-     * @param objQ
+     * @param fromQ
+     * @param toQ
      * @throws MappingException 
      */
-    public void addQNameMapping (String subQ, String objQ) throws MappingException {
-        var subU = makeResourceU(subQ);
-        var objU = makeResourceU(objQ);
-        var sub2U = uri2U.get(subU);
-        var obj2U = uri2U.get(objU);
-        if (null != sub2U && !sub2U.equals(objU))
-            throw new MappingException(subU + " already mapped to " + sub2U);
-        if (null != obj2U && !obj2U.equals(subU))
-            throw new MappingException(objU + " already mapped to " + obj2U);
-        qn2Q.put(subQ, objQ);
-        uri2U.put(subU, objU);
-        qn2Q.put(objQ, subQ);
-        uri2U.put(objU, subU);
+    public void addQNameMapping (String fromQ, String toQ) throws MappingException {
+        var fpre = getPrefix(fromQ);
+        var tpre = getPrefix(toQ);
+        var fm2  = qn2mapQ.get(fromQ);
+        var tm2  = mapQ2qn.get(toQ);
+        if (null != fm2 && !fm2.equals(toQ))
+            throw new MappingException(
+                String.format("Can't map %s to %s (%s already mapped to %s)", fromQ, toQ, fromQ, fm2));
+        if (null != tm2 && !tm2.equals(fromQ))
+            throw new MappingException(
+                String.format("Can't map %s to %s (%s already mapped to %s", fromQ, toQ, tm2, toQ));
+        qn2mapQ.put(fromQ, toQ);
+        mapQ2qn.put(toQ, fromQ);
+        toPrefixS.add(tpre);
+        if (noPrefix && toPrefixS.size() > 1)
+            throw new MappingException(
+                String.format("Can't map %s to %s (too many target prefixes", fromQ, toQ));
     }
     
-    private String makeResourceU (String qname) throws MappingException {
-        var prefix = qnToPrefix(qname);
-        var lname  = qnToName(qname);
+    // Make sure the argument is a QName and that the prefix is known to the mapping.
+    public String getPrefix (String qn) throws MappingException {
+        var prefix = qnToPrefix(qn);
+        var lname  = qnToName(qn);
+        var baseU  = nsmap.getURI(prefix);
+        if (null == prefix)
+            throw new MappingException("bad QName \"" + qn + "\" (not a QName)");
+        if (null == baseU)
+            throw new MappingException("bad QName \"" + qn + "\" (prefix not defined)");     
+        return prefix;
+    }
+    
+    // Turn a QName into a URI
+    private String makeResourceU (String qn) throws MappingException {
+        var prefix = qnToPrefix(qn);
+        var lname  = qnToName(qn);
         var base   = nsmap.getURI(prefix);
         if (null == prefix)
-            throw new MappingException("bad resource ID \"" + qname + "\" (not a QName)");
+            throw new MappingException("bad resource ID \"" + qn + "\" (not a QName)");
         if (null == base)
-            throw new MappingException("bad resource ID \"" + qname + "\" (prefix not defined)");
+            throw new MappingException("bad resource ID \"" + qn + "\" (prefix not defined)");
         return makeURI(base, lname);
-    }
+    }    
 
 }

@@ -85,7 +85,10 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 import org.xml.sax.SAXException;
 
 /**
- * A class for writing the XSD representation of a model
+ * A class for writing the XSD representation of a particular model.  In theory,
+ * you can use one instance of this class to write the same model to many
+ * schema document piles, perhaps with a differnt architecture version, catalog
+ * path, and/or root namespace.  Not sure anyone wants to do that...
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -165,7 +168,6 @@ public class ModelToXSDModel {
             catW.writeCatalog(namespaceU2Path, catP, outW);
             outW.close();
         }
-            
     }
 
     // Examine all the namespaces to collect all the NIEM versions.  If the version

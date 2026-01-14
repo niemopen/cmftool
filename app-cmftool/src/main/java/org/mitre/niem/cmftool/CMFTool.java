@@ -48,8 +48,9 @@ public class CMFTool {
 
         // Uncomment arguments for debugging:
 //        String res = "../app-niemtran/src/test/resources/";
-//        String res = "../../../NIEM/CrashDriver/";
+        String res = "../../../NIEM/CrashDriver/";
         if (0 == args.length) {
+//            args = new String[]{"m2jmsg", "-o", res+"foo", res+"model.cmf"};
 //          args = new String[]{"x2m", "-o", res+"augSCwE.cmf", res+"augSCwE.xsd"};
 //            args = new String[]{"mval", res+"model.cmf"};
         }

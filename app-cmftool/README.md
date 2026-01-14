@@ -1,6 +1,6 @@
 <img src="https://github.com/niemopen/oasis-open-project/blob/main/artwork/NIEM-NO-Logo-v5.png" width="200">
 
-# Common Model Format Tool (CMFTool), version 1.0
+# Common Model Format Tool (CMFTool), version 1.1
 
 This subproject is part of the CMFTool project repository.  It contains the NIEMOpen Common Model Format Tool (CMF). 
 
@@ -12,6 +12,8 @@ The NIEM [*Common Model Format (CMF)*](https://github.com/niemopen/common-model-
 *  [*m2jmsg*](#generate-a-json-message-schema-from-cmf) -- generate a JSON message chema from CMF
 *  [*m2m*](#canonicalize-cmf-or-extract-namespaces-from-cmf) -- canonicalize or extract CMF from CMF
 *  [*m2r*](#generate-model-rdf-from-cmf-experimental) -- generate model RDF from CMF (Experimental)
+*  [*m2map*](#create-a-mapping-template-file) -- create a mapping template from CMF
+*  [*m2context*](#create-a-json-ld-context) -- create a JSON-LD context from a model and mapping
 *  [*mval*](#validate-a-cmf-model-file) -- validate a CMF model file
 *  [*xval*](#validate-xml-documents) -- validate XML documents
 *  [*xcanon*](#canonicalize-an-xml-schema-document) -- canonicalize an XML Schema document
@@ -106,6 +108,52 @@ This subcommand creates an RDF file (in Turtle syntax) containing the triples en
 Options:
 
 * `-o` *file* -- RDF output file; for example, `-o model.ttl`
+
+### Create a mapping template file
+
+*Usage:* **cmftool m2map** *[options]* *modelFile.cmf*
+
+CMFTool uses the [Simple Standard for Sharing Ontology Mappings (SSSOM)](https://github.com/mapping-commons/sssom) format to represent mappings from a NIEM model component to a synonym.  These mappings are used to define non-canonical message formats.  For example, consider the canonical and non-canonical JSON messages below:
+
+```
+"msg:Request": {                          | "request": {
+  "msg:RequestID": "R012",                |   "id": "R012",
+  "msg:RequestedItem": {                  |   "item": {
+    "nc:ItemName": "Wrench",              |     "name": "Wrench",
+    "nc:ItemQuantity": 1                  |     "quantity": 1
+  }                                       |   }
+}                                         | }
+```
+
+The following SSSOM file defines the mappings between NIEM model components and the synonyms in the non-canonical message:
+
+```
+# curie_map:
+#   msg: http://example.com/ReqRes/1.0/
+#   nc: https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/
+#   owl: http://www.w3.org/2002/07/owl#
+#   sj: http://exmaple.com/ReqRes/1.0/simpleJSON
+subject_id      predicate_id    object_id
+msg:Request     owl:sameAs      sj:request
+msg:RequestedItem       owl:sameAs      sj:item
+msg:RequestID   owl:sameAs      sj:id
+nc:ItemName     owl:sameAs      sj:name
+nc:ItemQuantity owl:sameAs      sj:quantity
+```
+
+The *m2map* subcommand generates a mapping template from a model.  This template is then edited by the message designer to define the desired mappings.
+
+When given the `-s` or `--single` option, *m2map* produces a template that maps every component in the model to a synonym in a single namespace with the same local name.  For example, `-s msg=http://example.com/my/msg/` produces a template in which `nc:Person` is mapped to `msg:Person`.
+
+Options:
+
+* `-o` *file* -- mapping output file; for example, `-o map.sssom`
+* `-s` *prefix=URI*,\
+ `--single` *prefix=URI* -- create template mapping all components to a single namespace
+
+### Create a JSON-LD context
+
+*Usage:* **cmftool m2context** *[options]* *model.cmf* *[map.sssom]*
 
 ### Validate a CMF model file
 

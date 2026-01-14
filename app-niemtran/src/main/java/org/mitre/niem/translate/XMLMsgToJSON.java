@@ -32,6 +32,7 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
+import java.util.regex.Pattern;
 import javax.xml.parsers.ParserConfigurationException;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 import org.apache.logging.log4j.LogManager;
@@ -59,7 +60,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class XMLMsgToJSON {
     static final Logger LOG = LogManager.getLogger(XMLMsgToJSON.class);
     
-    private Model model;
+    private final Model model;
     private int status = CONVERT_OK;
  
     /**
@@ -79,10 +80,14 @@ public class XMLMsgToJSON {
     
     /**
      * Creates a NIEM JSON message from a NIEM XML message, provided as an InputStream.
-     * The JSON message is written into the provided (usually empty) JsonObject.
+     * The JSON message is written into the provided (usually empty) JsonObject.  Doesn't
+     * add a @context pair; do that yourself later if you need it.  Returns CONVERT_WARN
+     * if any warning messages generated; capture those with a custom appender if you 
+     * want them.
+     * 
      * The XML message must conform to the NIEM model in this converter object.
      * This converter object may be reused to transform any number of XML messages
-     * of the specified message format.
+     * of the specified message format.  
      * 
      * @param xmlIS - InputStream with the XML message
      * @param json - JsonObject to receive the NIEM JSON message data
@@ -106,14 +111,18 @@ public class XMLMsgToJSON {
         private final Stack<String> langS = new Stack<>();          // current in-scope value of xml:lang
         private final Stack<ClassType> ctypeS = new Stack<>();      // class type of CCC element in model
         private final Stack<Boolean> adapterS = new Stack<>();      // are we within an adapter property?
+        private final Stack<Boolean> ignoreS  = new Stack<>();      // within an ignored not-in-model element?
         private final Stack<JsonObject> objS = new Stack<>();       // json object for XML element
         
         SAXHandler(JsonObject m) {   
             objS.push(m);
             adapterS.push(false);
+            ignoreS.push(false);
             ctypeS.push(null);
             langS.push("en-US");
         }
+        
+        private static final Pattern NAME_PAT = Pattern.compile("[:A-Za-z_][:A-Za-z0-9_.-]*");
         
         @Override
         public void startElement(String nsuri, String lname, String qName, Attributes atts) {
@@ -144,16 +153,19 @@ public class XMLMsgToJSON {
             adapterS.push(adaptF);
             
             // Get the class of the current object property; null for data properties
+            var ignoreF = ignoreS.peek();
             if (null != ns && ns.isAugmentation(lname)) {
                 ctypeS.push(null);
             }
-            else if (!adaptF && (null == p || null == ns)) {
+            else if (!ignoreF && !adaptF && (null == p || null == ns)) {
                 LOG.warn("unknown element {} at {} (ignored)", qName, locstr());
                 ctypeS.push(null);
                 status = CONVERT_WARN;
+                ignoreF = true;
             }
             else if (null == p) ctypeS.push(null);  // unknown property inside adapter element
             else ctypeS.push(p.classType());        // will be null if p is a data property
+            ignoreS.push(ignoreF);
             
             // Create the JSON object to be populated from current property
             var obj = new JsonObject();            
@@ -196,6 +208,11 @@ public class XMLMsgToJSON {
                         status = CONVERT_WARN;
                         continue;
                     }
+                    if (!rP.isRefAttribute()) {
+                        LOG.warn("attribute {} at {} is not a reference attribute (ignored)", aQ, locstr());
+                        status = CONVERT_WARN;
+                        continue;
+                    }
                     if (aval.isBlank()) {
                         LOG.warn("empty reference attribute {} at {}", aQ, locstr());
                         status = CONVERT_WARN;
@@ -205,6 +222,11 @@ public class XMLMsgToJSON {
                     var refs = aval.split("\\s+");
                     for (int ri = 0; ri < refs.length; ri++) {
                         var ref = refs[ri];
+                        if (!NAME_PAT.matcher(ref).matches()) {
+                            LOG.warn("invalid value {} in reference attribute {} at {} (ignored)", ref, rpQ, locstr());
+                            status = CONVERT_WARN;
+                            continue;
+                        }
                         var rO  = new JsonObject();
                         rO.addProperty("@id", base + "#" + ref);
                         refA.add(rO);
@@ -225,9 +247,7 @@ public class XMLMsgToJSON {
                     obj.addProperty(aQ, aval);
                 }
             }
-            
             chars = new StringBuilder();
-            
         }
 
         @Override
@@ -237,12 +257,17 @@ public class XMLMsgToJSON {
             var otype  = ctypeS.pop();
             var ptype  = ctypeS.peek();
             var adaptF = adapterS.pop();
+            var ignorF = ignoreS.pop();
             var lang   = langS.pop();
             var pU     = makeURI(nsuri, lname);
             var p      = model.uriToProperty(pU);
             var ns     = model.namespaceObj(nsuri);
             var key    = qName;
             var cval   = chars.toString().trim();
+            
+            // An unknown element outside of an adapter is ignored, along with all
+            // its descendents.
+            if (ignorF) return;
             
             // For an augmentation element, just copy all the pairs into the parent.
             // But ignore any pairs from reference attributes.
@@ -252,8 +277,7 @@ public class XMLMsgToJSON {
                         parent.add(ks, obj.get(ks));
                 }
                 return;
-            }
-            
+            }  
             // Use model prefix for key when element is defined in model; ie. use
             // "nc:PersonName" even if message uses "funkyPrefix:PersonName".
             if (null != p) key = p.qname();

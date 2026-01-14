@@ -172,8 +172,7 @@ public class ModelToXMLSchema {
             else catP = catP.getParent();
             catW.writeCatalog(namespaceU2Path, catP, outW);
             outW.close();
-        }
-            
+        }  
     }
 
     // Examine all the namespaces to collect all the NIEM versions.  If the version

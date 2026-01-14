@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ReferenceSchemaDocument"
+  version="ps02"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>NIEM core test skeleton schema document.</xs:documentation>
+  </xs:annotation>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/" schemaLocation="utility/structures.xsd"/>
+  <xs:complexType name="LocationType">
+    <xs:annotation>
+      <xs:documentation>A data type for geospatial location.</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="structures:ObjectType">
+        <xs:sequence>
+          <xs:element ref="nc:LocationGeospatialCoordinateAbstract" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="nc:LocationAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="AreaRegionAbstract" abstract="true">
+    <xs:annotation>
+      <xs:documentation>A data concept for a location identified by geographic boundaries.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="LocationAugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for LocationType.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="LocationGeospatialCoordinateAbstract" abstract="true">
+    <xs:annotation>
+      <xs:documentation>A data concept for a geospatial location.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+</xs:schema>
