@@ -43,7 +43,6 @@ import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FilenameUtils;
-import static org.apache.commons.io.FilenameUtils.getPathNoEndSeparator;
 import static org.apache.commons.io.FilenameUtils.separatorsToUnix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

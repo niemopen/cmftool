@@ -59,6 +59,7 @@ import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
 import org.mitre.niem.utility.MapToList;
 import org.mitre.niem.utility.MapToSet;
+import static org.mitre.niem.xsd.NIEMConstants.hasMetadata;
 
 /**
  * A class for generating JSON Schema to validate a JSON object, known as the
@@ -85,18 +86,19 @@ import org.mitre.niem.utility.MapToSet;
 public class ModelToJSONSchema {
     static final Logger LOG = LogManager.getLogger(ModelToJSONSchema.class);
     
-    protected final Model m;
-    protected Mapping map = new Mapping();
-    protected List<Property> msgPropL = null;
-    protected String contextU = null;
-    protected boolean fullContext = false;
-    protected boolean inclDesc = true;
+    private final Model m;
+    private Mapping map = new Mapping();
+    private List<Property> metadataPL = new ArrayList<>();          // list of NIEM 3,4,5 metadata properties
+    private Datatype xsStringDT = null;                             // xs:string Datatype object
+    private List<Property> msgPropL = null;
+    private String contextU = null;
+    private boolean fullContext = false;
+    private boolean inclDesc = true;
     
     private MapToList<String,PropertyAssociation> augList = null;   // classQ -> list of augmentation propQs for class
     private MapToSet<Property,Property> subPropS = null;            // property -> set of substitutable property objs
     private Deque<Component> doTypes = null;                        // class and datatype schemas remaining
     private Map<Component,JsonObject> typeSch = null;               // type -> schema json object
-    private Datatype xsStringDT = null;                             // xs:string Datatype object
     private boolean needID = false;                                 // true if any class is referenceable
     
     private static final String XS_STRING_U = W3C_XML_SCHEMA_NS_URI + "/xs:string";
@@ -109,10 +111,18 @@ public class ModelToJSONSchema {
      */
     public ModelToJSONSchema (Model model) {
         m = model;
-        xsStringDT = m.uriToDatatype(XS_STRING_U);
-        if (null == xsStringDT) {                     // are you kidding me?
+        xsStringDT = m.uriToDatatype(XS_STRING_U);      // make sure model has xs:string
+        if (null == xsStringDT) {                       // are you kidding me? bung it in.
             var xsns = m.namespaceObj(W3C_XML_SCHEMA_NS_URI);
             xsStringDT = new Datatype(xsns, "string");
+        }
+        // Get metadata properties from NIEM 3,4,5 namespaces
+        for (var p : m.propertyL()) {
+            var ns = p.namespace();
+            if (hasMetadata.contains(ns.archVersion())) {
+                if (p.name().endsWith("Metadata"))
+                    metadataPL.add(p);
+            }
         }
     }
     
@@ -168,6 +178,25 @@ public class ModelToJSONSchema {
     private final static JsonObject IDREF_PATTERN_OBJ = 
         makeObject("pattern", "\"[4][-._A-Za-z0-9]*\"");
     
+    private final static JsonElement ID_OBJECT_ARRAY_SCHEMA =
+        makeElement(
+            "{"
+            + "  \"type\": \"array\","
+            + "  \"items\": {"
+            + "    \"type\": \"object\","
+            + "    \"properties\": {"
+            + "      \"@id\": {"
+            + "        \"type\": \"string\","
+            + "        \"format\": \"uri-reference\""
+            + "      }"
+            + "    },"
+            + "    \"required\": [\"@id\"],"
+            + "    \"additionalProperties\": false"
+            + "  }"
+            + "}"
+        );
+
+
     /**
      * Generates a JSON schema from the model and the specified options, writing
      * the schema pairs into the (presumably empty) JsonObject provided.
@@ -319,6 +348,10 @@ public class ModelToJSONSchema {
             if (!tp.isClassType())
                 defVal.add(tp.qname(), typeSch.get(tp)); 
         }
+        // Add definition for @id object array if there are metadata properties\
+        if (!metadataPL.isEmpty()) {
+            defVal.add("idObjectArray", ID_OBJECT_ARRAY_SCHEMA);                
+        }
         root.add("definitions", defVal);
     }
     
@@ -421,6 +454,13 @@ public class ModelToJSONSchema {
                 LOG.warn(String.format("Schema does not enforce maxOccurs=%d on %s in %s",
                     pa.maxOccursVal(), p.qname(), ct.qname()));
             }
+        }
+        // Add metadata properties (if any) for NIEM 2,3,4,5
+        for (var p : metadataPL) {
+            var key = map.qnToN(p.qname());
+            var ref = new JsonObject();
+            ref.addProperty("$ref", "#/definitions/idObjectArray");
+            propO.add(key, ref);
         }
         // Done with properties; add @id if this class can be referenced
         if (!"NONE".equals(ct.effectiveReferenceCode())) {
@@ -615,7 +655,7 @@ public class ModelToJSONSchema {
             }
             case "duration" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^[-+]?P(([0-9]+Y)|([0-9]+M)|([0-9]+D)|(T([0-9]+H)|([0-9]+M)|([0-9]+([.][0-9]{1,6})?S)))$");
+                defO.addProperty("pattern", "^[-+]?^P(?!$)(\\\\d+(?:\\\\.\\\\d+)?Y)?(\\\\d+(?:\\\\.\\\\d+)?M)?(\\\\d+(?:\\\\.\\\\d+)?W)?(\\\\d+(?:\\\\.\\\\d+)?D)?(T(?=\\\\d)(\\\\d+(?:\\\\.\\\\d+)?H)?(\\\\d+(?:\\\\.\\\\d+)?M)?(\\\\d+(?:\\\\.\\\\d+)?S)?)?$");
             }
             case "gDay" -> {
                 defO.addProperty("type", "string");
@@ -639,16 +679,16 @@ public class ModelToJSONSchema {
             }
             case "token" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^\\S*$"); // Non-whitespace characters
+                defO.addProperty("pattern", "^(?! )[\\S ]*(?<! )$");
             }
             case "normalizedString" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^\\s?(\\S+\\s?)+\\s?$"); // Non-empty string with optional leading/trailing whitespace
+                defO.addProperty("pattern", "^[^\\t\\n\\r]*$"); // Non-empty string with optional leading/trailing whitespace
             }
             case "string" -> defO.addProperty("type", "string");
             case "anyURI" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "uri");                
+                defO.addProperty("format", "uri-reference");                
             }
             case "IDREF", "ENTITIY" -> { 
                 defO.addProperty("type", "string");

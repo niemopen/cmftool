@@ -78,6 +78,7 @@ import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import org.mitre.niem.xml.XSDWriter;
 import static org.mitre.niem.xsd.ModelFromXSD.replaceSuffix;
+import static org.mitre.niem.xsd.NIEMConstants.hasMetadata;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_APPINFO;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_CLSA;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_UNKNOWN;
@@ -609,7 +610,7 @@ public class ModelToXMLSchema {
     // Create a complex type with complex content from a non-literal class object
     private static final Set<String> needURIcodes  = Set.of("ANY", "ANYURI", "INTERNAL", "RELURI");
     private static final Set<String> needRefcodes  = Set.of("ANY", "INTERNAL", "IDREF");
-    private static final Set<String> needMetadata  = Set.of("NIEM2.0", "NIEM3.0", "NIEM4.0", "NIEM5.0");
+
     protected void createCCCType (Document doc, 
         List<Element> defEL,                // add typedef elements to this list
         List<Element> decEL,                // add augmentation point elements to this list
@@ -778,7 +779,7 @@ public class ModelToXMLSchema {
             addStructuresAttribute(doc, attParentE, "uri", refnsUs, structuresPre, structuresU);
         if (needRef)
             addStructuresAttribute(doc, attParentE, "ref", refnsUs, structuresPre, structuresU);
-        if (!extendF && needMetadata.contains(ver))
+        if (!extendF && hasMetadata.contains(ver))
             addStructuresAttribute(doc, attParentE, "metadata", refnsUs, structuresPre, structuresU);
         defEL.add(ctE);
         
@@ -888,7 +889,7 @@ public class ModelToXMLSchema {
             addStructuresAttribute(doc, exE, "uri", refnsUs, structuresPre, structuresU);
         if (needRef)
             addStructuresAttribute(doc, exE, "ref", refnsUs, structuresPre, structuresU);
-        if (!extendF && needMetadata.contains(ver))
+        if (!extendF && hasMetadata.contains(ver))
             addStructuresAttribute(doc, exE, "metadata", refnsUs, structuresPre, structuresU);
             
         // Extension base may be a simple type

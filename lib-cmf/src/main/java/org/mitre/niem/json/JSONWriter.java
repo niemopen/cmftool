@@ -24,6 +24,7 @@
 package org.mitre.niem.json;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -43,7 +44,7 @@ import java.util.Map;
 
 public class JSONWriter {
 
-    private static final Gson GSON = new Gson();
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final String INDENT_UNIT = "  ";
 
     /**

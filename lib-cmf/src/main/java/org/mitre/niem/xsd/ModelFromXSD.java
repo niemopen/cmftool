@@ -199,10 +199,10 @@ public class ModelFromXSD {
     // is added later on demand.
     private void createNamespaces () throws CMFException {
         for (var sd : sch.schemaDocL()) {
+            var nsU = sd.targetNamespace();
             var kind = sch.namespaceKind(sd);
             var kcode = kindToCode(kind);
             if (!isModelKind(kind) && NSK_EXTERNAL != kind) continue;
-            var nsU = sd.targetNamespace();
             var pre = sch.namespaceMap().getPrefix(nsU);
             var ns  = new Namespace(pre, nsU);
             ns.setDocumentFilePath(sch.docFilePath(sd));
