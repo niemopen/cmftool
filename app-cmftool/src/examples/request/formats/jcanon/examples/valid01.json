@@ -1,0 +1,21 @@
+{
+  "@context": "http://example.com/Request/1.0/@context",
+  "msg:Request": {
+    "msg:RequestID": "R012",
+    "msg:RequestedItem": [
+      {
+        "nc:ItemName": "Wrench",
+        "nc:ItemQuantity": {
+          "nc:QuantityLiteral": 1
+        }
+      },
+      {
+        "nc:ItemName": "Screw",
+        "nc:ItemQuantity": {
+          "nc:quantityUnitText": "dozen",
+          "nc:QuantityLiteral": 5
+        }
+      }
+    ]
+  }
+}

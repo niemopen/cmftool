@@ -71,7 +71,6 @@ public class CMFTool {
 //        var cmfToOwlCmd    = new CmdCMFtoOWL(jc);
 //        var n5To6Cmd       = new CmdN5To6(jc);
         var xsdToCmfCmd    = new CmdXSDtoCMF(jc);       
-//        var xsdCanon       = new CmdXSDcanonicalize(jc);
 //        var xsdCmpCmd      = new CmdXSDcmp(jc);
         var cmfValCmd      = new CmdCMFValidate(jc);
         var xsValCmd       = new CmdXSDValidate(jc);

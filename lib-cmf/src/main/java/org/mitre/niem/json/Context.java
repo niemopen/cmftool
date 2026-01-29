@@ -24,7 +24,6 @@
 package org.mitre.niem.json;
 
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import java.io.Writer;
 import java.util.HashSet;
@@ -78,7 +77,7 @@ public class Context {
         // with the prefix of a model namespace
         var needP  = false;
         var lnameS = new HashSet<String>();
-        for (var c : m.componentList()) {           // model component; eg. nc:PersonSurName
+        for (var c : m.propertyL()) {           // model component; eg. nc:PersonSurName
             var mcQ = map.qnToN(c.qname());         // mapped QN for component; eg. foo:lname
             if (null == mcQ) continue;
             var mln = qnToName(mcQ);                // local name of mapped QN; eg. lname
@@ -92,7 +91,7 @@ public class Context {
             lnameS.add(mln);
         }
         // Now add context entries for each mapped component
-        for (var c : m.componentList()) {
+        for (var c : m.propertyL()) {
             var mcQ = map.qnToN(c.qname());         // mapped QN for component; eg. foo:lname
             if (null == mcQ) continue;
             var mlp = qnToPrefix(mcQ);              // prefix of mapped QN; eg. foo

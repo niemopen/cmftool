@@ -4,6 +4,11 @@ plugins {
     //id 'org.cyclonedx.bom' version '3.0.0-alpha-1'
 }
 
+// Documentation source and destination
+def exSrc   = file('src/examples')
+def docSrc  = file('src/doc')
+def docDist = layout.buildDirectory.dir('doc')
+
 repositories {
     mavenCentral()
 }
@@ -34,10 +39,12 @@ application {
 distributions {
     main {
         distributionBaseName = 'cmftool'
+        contents {
+          into('doc')      { from(docDist) }
+          into('examples') { from(exSrc) }
+        }
     }
 }
-
-
 
 jar {
     manifest {
@@ -49,3 +56,39 @@ jar {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.register('generateDocs') {
+  description = 'Generate HTML from markdown'
+  group = 'documentation'
+
+  inputs.files fileTree(docSrc) { include '**/*.md' }
+  outputs.dir docDist
+
+  doLast {
+    def outDir = docDist.get().asFile
+    outDir.mkdirs()
+
+    fileTree(docSrc) { include '**/*.md' }.files.each { File md ->
+      // Preserve relative paths under src/docs, just change extension
+      def relPath  = docSrc.toPath().relativize(md.toPath()).toString()
+      def htmlPath = relPath.replaceAll(/\.md$/, '.html')
+      def htmlFile = new File(outDir, htmlPath)
+      htmlFile.parentFile.mkdirs()
+
+      println "Converting ${md} -> ${htmlFile}"
+
+      project.exec {
+        commandLine 'pandoc',
+          '-f', 'gfm',
+          '-t', 'html',
+          md.absolutePath,
+          '-o', htmlFile.absolutePath
+        }
+      }
+  }
+}
+
+tasks.named('installDist') { dependsOn 'generateDocs' }
+tasks.named('distZip')     { dependsOn 'generateDocs' }
+tasks.named('distTar')     { dependsOn 'generateDocs' }
+    

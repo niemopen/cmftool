@@ -29,6 +29,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import static java.lang.Integer.max;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -136,27 +139,29 @@ public class Mapping {
         
         // How many times does a local name appear in the model?
         var lnct = new HashMap<String,Integer>();
-        for (var c : m.componentList()) {
-            if (!c.namespace().isModelNS()) continue;
-            var lct = lnct.getOrDefault(c.name(), 0);
-            lnct.put(c.name(), lct + 1);
+        for (var p : m.propertyL()) {
+            if (!p.namespace().isModelNS()) continue;
+            if (p.isAbstract()) continue;
+            var lct = lnct.getOrDefault(p.name(), 0);
+            lnct.put(p.name(), lct + 1);
         }
         // Add mappings; munged mapping when a local name appears more than once.
-        for (var c : m.componentList()) {
-            if (!c.namespace().isModelNS()) continue;
-            var lct = lnct.get(c.name());
+        for (var p : m.propertyL()) {
+            if (!p.namespace().isModelNS()) continue;
+            if (p.isAbstract()) continue;
+            var lct = lnct.get(p.name());
             if (lct > 1) {
-                var prefix = qnToPrefix(c.qname());
-                map.addQNameMapping(c.qname(), defaultPrefix + ":" + prefix + c.name());
+                var prefix = qnToPrefix(p.qname());
+                map.addQNameMapping(p.qname(), defaultPrefix + ":" + prefix + p.name());
             }
-            else map.addQNameMapping(c.qname(), defaultPrefix + ":" + c.name());
+            else map.addQNameMapping(p.qname(), defaultPrefix + ":" + p.name());
         }
         map.setNoPrefix(true);
         return map;
     }
 
     /**
-     * Creates a mapping object with a dummy "to" URI for each component in a model.
+     * Creates a mapping object with a dummy "to" URI for each property in a model.
      * @param m
      */
     public static Mapping createTemplate (Model m) throws MappingException {
@@ -167,9 +172,11 @@ public class Mapping {
         }
         var tPre = map.assignPrefix("T", "http://example.com/YourTargetNamespace");   
         var num = 0;
-        for (var c : m.componentList()) {
-            if (c.namespace().isModelNS())
-                map.addQNameMapping(c.qname(), String.format("%s:TEMP%04d", tPre, num++));
+        var spL = new ArrayList<>(m.propertyL());
+        Collections.sort(spL);
+        for (var p : spL) {
+            if (p.namespace().isModelNS() && !p.isAbstract())
+                map.addQNameMapping(p.qname(), String.format("%s:TEMP%04d", tPre, num++));
         }
         return map;
     }
@@ -191,8 +198,10 @@ public class Mapping {
         var srcList = qn2mapQ.keySet().stream()
             .sorted(new NaturalOrderIgnoreCaseComparator())
             .collect(Collectors.toList());
+        int maxlen = 0;
+        for (String srcQ : srcList) maxlen = max(maxlen, srcQ.length());
         for (String srcQ : srcList) {
-            w.write(String.format("%s\t%s:sameAs\t%s\n", srcQ, owlP, qn2mapQ.get(srcQ)));
+            w.write(String.format("%-" + maxlen + "s %s:sameAs %s\n", srcQ, owlP, qn2mapQ.get(srcQ)));
         }
     }
     
@@ -259,7 +268,7 @@ public class Mapping {
             }
             // First non-comment line must be the header.
             if (!hdrF) {
-                var cols = line.split("\t", -1);
+                var cols = line.split("\\s+", -1);
                 for (int i = 0; i < cols.length; i++) {
                     var hdr = cols[i].trim();
                     if ("subject_id".equals(hdr)) subI = i;
@@ -272,7 +281,7 @@ public class Mapping {
             }
             // Other non-comment lines are data rows
             else {
-                var cols = line.split("\t", -1);
+                var cols = line.split("\\s+", -1);
                 if (0 == cols.length) continue;     // blank line
                 if (NumberUtils.max(subI, prdI, objI) >= cols.length)
                     throw new MappingException("line " + lnum + ": bad data line (not enough columns)");

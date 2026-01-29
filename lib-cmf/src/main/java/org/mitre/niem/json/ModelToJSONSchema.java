@@ -74,8 +74,8 @@ import static org.mitre.niem.xsd.NIEMConstants.hasMetadata;
  *   <li>Validate messages of a set of message types</li>
  *   <li>Validate message components against the model but not against any
  *       particular message type</li>
- *   <li>Require a @context pair with a URI value, or a full @context object,  
- *       or either</li>
+ *   <li>Validate messages with canonical property QNames (e.g. nc:Person), or
+ *       with replacement property names from a Mapping.</li>
  * </ul>
  * A single instance may be used to generate different schemas by providing
  * different options between createSchema and writeSchema calls.
@@ -125,16 +125,34 @@ public class ModelToJSONSchema {
             }
         }
     }
-    
+    /**
+     * Provides a Mapping object which will be used to replace model property
+     * QNames in the schema; for example, msg:lname or lname instead of
+     * nc:PersonSurName.
+     * @param map 
+     */
     public void setMapping (Mapping map) {
         if (null == map) this.map = new Mapping();
         else this.map = map;
     }
     
+    public void setNoPrefix (boolean noPrefix) {
+    }
+    
+    /**
+     * When the message property is set, the generated schema will require the
+     * root object to contain two keys: this property's qname, and @context.
+     * @param mprop 
+     */
     public void setMessageProperty (Property mprop) {
         msgPropL = List.of(mprop);
     }
     
+    /**
+     * The generated schema will require the root object to contain two keys:
+     * the qname of exactly one of these properties, and @context.
+     * @param mpropL 
+     */
     public void setMessageProperties (List<Property> mpropL) {
         if (null == mpropL) msgPropL = null;
         else msgPropL = mpropL;
@@ -142,22 +160,19 @@ public class ModelToJSONSchema {
     
     /**
      * Documents conforming to the generated schema must have a @context key,
-     * which may have a URI value.
-     * @param contextU 
+     * which may be an object or a string.  When this method is called, the
+     * generated schema will use the supplied URI as the required value for the
+     * string.
+     * @param contextU
      */
     public void setContextURI (String contextU) {
         this.contextU = contextU;
     }
     
     /**
-     * Documents conforming to the generated schema must have a @context key,
-     * which may have an object value.
-     * @param fullContext 
+     * When set, the generated schema will include model component documentation.
+     * @param inclDesc 
      */
-    public void setFullContext (boolean fullContext) {
-        this.fullContext = fullContext;
-    }
-    
     public void setIncludeDescription (boolean inclDesc) {
         this.inclDesc = inclDesc;
     }

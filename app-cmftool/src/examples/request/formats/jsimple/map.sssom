@@ -1,0 +1,13 @@
+# curie_map:
+#   msg: http://example.com/ReqRes/1.0/
+#   nc: https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/
+#   owl: http://www.w3.org/2002/07/owl#
+#   sj: http://exmaple.com/ReqRes/1.0/simpleJSON
+subject_id  predicate_id object_id
+msg:Request              owl:sameAs sj:request
+msg:RequestedItem        owl:sameAs sj:item
+msg:RequestID            owl:sameAs sj:id
+nc:ItemName              owl:sameAs sj:name
+nc:ItemQuantity          owl:sameAs sj:quantity
+nc:QuantityLiteral       owl:sameAs sj:number
+nc:quantityUnitText      owl:sameAs sj:units

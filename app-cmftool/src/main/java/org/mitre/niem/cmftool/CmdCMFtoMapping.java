@@ -51,13 +51,13 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
 
 public class CmdCMFtoMapping implements JCCommand {
 
-    @Parameter(order = 1, names = "-s,--single", description = "prefix=URI of single target namespace")
+    @Parameter(order = 1, names = {"-s","--single"}, description = "prefix=URI of single target namespace")
     private String targetMap = null;
          
-    @Parameter(order = 1, names = "-o", description = "name of output mapping file")
+    @Parameter(order = 2, names = "-o", description = "name of output mapping file")
     private String mapFN = null;
 
-    @Parameter(order = 2, names = {"-h","--help"}, description = "display this usage message", help = true)
+    @Parameter(order = 3, names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
     @Parameter(description = "model.cmf ...")
@@ -79,7 +79,7 @@ public class CmdCMFtoMapping implements JCCommand {
         var jc = new JCommander(this);
         var uf = new JCUsageFormatter(jc); 
         jc.setUsageFormatter(uf);
-        jc.setProgramName("compile");
+        jc.setProgramName("m2map");
         jc.parse(args);
         run(jc);
     }
@@ -131,7 +131,7 @@ public class CmdCMFtoMapping implements JCCommand {
             URI u = null;
             try { u = new URI(targetU); } catch (Exception ex) {}
             if (null == u || !u.isAbsolute()) {
-                System.err.println("--single " + targetMap + ": not an absolute URI");
+                System.err.println("--single " + targetMap + ": " + targetU + " is not an absolute URI");
                 System.exit(1);
             }
         }       
