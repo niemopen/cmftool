@@ -1,7 +1,7 @@
-@prefix msg: http://example.com/ReqRes/1.0/ .
-@prefix nc:  https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/ .
-@prefix owl: http://www.w3.org/2002/07/owl# .
-@prefix sj:  http://exmaple.com/ReqRes/1.0/simpleJSON .
+@prefix msg: <http://example.com/ReqRes/1.0/> .
+@prefix nc:  <https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix sj:  <http://example.com/ReqRes/1.0/simpleJSON> .
 
 msg:Request         owl:equivalentProperty sj:request .
 msg:RequestedItem   owl:equivalentProperty sj:item .

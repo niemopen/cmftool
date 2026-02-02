@@ -199,35 +199,52 @@ The steps are the same, with one addition:  defining the mappings from canonical
 
 ### 3.1 Defining the property mappings
 
-CMFTool uses the [Simple Standard for Sharing Ontological Mappings (SSSOM)](https://mapping-commons.github.io/sssom/spec-intro/) to record property mappings in a file.  The mapping file for the simple message format illustrated in [example 4](#ex4) is shown below.
+CMFTool uses RDF/Turtle to record property mappings in a file.  The mapping file for the simple message format illustrated in [example 4](#ex4) is shown below.
 
 ```
-# curie_map:
-#   msg: http://example.com/ReqRes/1.0/
-#   nc: https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/
-#   owl: http://www.w3.org/2002/07/owl#
-#   sj: http://exmaple.com/ReqRes/1.0/simpleJSON
-subject_id  predicate_id object_id
-msg:Request              owl:sameAs sj:request
-msg:RequestedItem        owl:sameAs sj:item
-msg:RequestID            owl:sameAs sj:id
-nc:ItemName              owl:sameAs sj:name
-nc:ItemQuantity          owl:sameAs sj:quantity
-nc:QuantityLiteral       owl:sameAs sj:number
-nc:quantityUnitText      owl:sameAs sj:units
+@prefix msg: <http://example.com/ReqRes/1.0/> .
+@prefix nc:  <https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix sj:  <http://example.com/ReqRes/1.0/simpleJSON> .
+
+msg:Request         owl:equivalentProperty sj:request .
+msg:RequestedItem   owl:equivalentProperty sj:item .
+msg:RequestID       owl:equivalentProperty sj:id .
+nc:ItemName         owl:equivalentProperty sj:name .
+nc:ItemQuantity     owl:equivalentProperty sj:quantity .
+nc:QuantityLiteral  owl:equivalentProperty sj:number .
+nc:quantityUnitText owl:equivalentProperty sj:units .
 ```
 <figcaption><a name="ex5">Example 5:  Simple property mappings in SSSOM</a></figcaption>
 
+A mapping file must satisfy the following constraints:
 
-SSSOM files are capable of recording a wide variety of mappings.  The mappings used by CMFTool are constrained in the following ways:
-
-1. The mapping predicate is always `owl:sameAs`.
+1. The predicate is always `owl:equivalentProperty`.
 2. Every mapping has a subject ID that is a QName of a model property.
 3. The object IDs in every mapping have the same QName prefix.
 4. No two mappings have an object ID with the same local name.
 
+By convention, the URI of the target namespace is the URI of the simple message format (`http://example.com/ReqRes/1.0/simpleJSON`); however, that URI is not used for anything in a JSON format.
 
+For convenience, CMFTool will generate a template mapping file from a message model, which you can then edit.
 
+```
+$ ct m2map model.cmf
+@prefix msg: <http://example.com/ReqRes/1.0/> .
+@prefix nc : <https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+msg:Request         owl:equivalentProperty T:TEMP0000 .
+msg:RequestID       owl:equivalentProperty T:TEMP0002 .
+msg:RequestedItem   owl:equivalentProperty T:TEMP0001 .
+nc:ItemName         owl:equivalentProperty T:TEMP0003 .
+nc:ItemQuantity     owl:equivalentProperty T:TEMP0004 .
+nc:QuantityLiteral  owl:equivalentProperty T:TEMP0005 .
+nc:quantityUnitText owl:equivalentProperty T:TEMP0006 .
+```
+
+### 3.2 Building the JSON-LD context file
+
+The **cmftool m2context** command accepts a mapping file as a parameter.  The resulting context includes 
 
 
 

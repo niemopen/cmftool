@@ -263,7 +263,7 @@ public class Mapping {
             if (nsmap.isReserved(pre)) continue;         // skip reserved prefixes
             maxLen = Math.max(maxLen, pre.length());
         }
-        var fmt = "@prefix %-" + maxLen + "s <%s> .\n";
+        var fmt = "@prefix %-" + maxLen + "s: <%s> .\n";
         for (var pre : prefixL) {
             if (nsmap.isReserved(pre)) continue;     // do not emit reserved prefixes
             w.write(String.format(fmt, pre, nsmap.getURI(pre)));
