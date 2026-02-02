@@ -50,8 +50,8 @@ public class JSONWriter {
     /**
      * Pretty-print a JsonElement to the given Writer, starting at indent level 0.
      */
-    public static void write(JsonElement element, Writer writer) throws IOException {
-        write(element, writer, 0);
+    public static void write(JsonElement element, Writer w) throws IOException {
+        write(element, w, 0);
     }
 
     /**
@@ -60,40 +60,40 @@ public class JSONWriter {
      *  - arrays of only scalars on one line: [ "f1", "v2", "v3" ]
      *  - objects with a single scalar value on one line: { "foo": "bar" }
      */
-    private static void write(JsonElement el, Writer writer, int level) throws IOException {
+    private static void write(JsonElement el, Writer w, int level) throws IOException {
         if (el == null || el.isJsonNull() || el.isJsonPrimitive()) {
-            writer.write(GSON.toJson(el));
+            w.write(GSON.toJson(el));
         } else if (el.isJsonArray()) {
             JsonArray arr = el.getAsJsonArray();
             if (arr.size() == 0) {
-                writer.write("[]");
+                w.write("[]");
                 return;
             }
 
             boolean allScalars = isAllScalars(arr);
 
             if (allScalars) {
-                writer.write("[ ");
+                w.write("[ ");
                 for (int i = 0; i < arr.size(); i++) {
-                    if (i > 0) writer.write(", ");
-                    writer.write(GSON.toJson(arr.get(i)));
+                    if (i > 0) w.write(", ");
+                    w.write(GSON.toJson(arr.get(i)));
                 }
-                writer.write(" ]");
+                w.write(" ]");
             } else {
-                writer.write("[\n");
+                w.write("[\n");
                 for (int i = 0; i < arr.size(); i++) {
-                    indent(writer, level + 1);
-                    write(arr.get(i), writer, level + 1);
-                    if (i < arr.size() - 1) writer.write(",");
-                    writer.write("\n");
+                    indent(w, level + 1);
+                    write(arr.get(i), w, level + 1);
+                    if (i < arr.size() - 1) w.write(",");
+                    w.write("\n");
                 }
-                indent(writer, level);
-                writer.write("]");
+                indent(w, level);
+                w.write("]");
             }
         } else if (el.isJsonObject()) {
             JsonObject obj = el.getAsJsonObject();
             if (obj.size() == 0) {
-                writer.write("{}");
+                w.write("{}");
                 return;
             }
 
@@ -110,30 +110,30 @@ public class JSONWriter {
                 boolean scalarArray = val != null && val.isJsonArray() && isAllScalars(val.getAsJsonArray());
 
                 if (scalar || scalarArray) {
-                    writer.write("{ ");
-                    writer.write(GSON.toJson(entry.getKey()));
-                    writer.write(": ");
+                    w.write("{ ");
+                    w.write(GSON.toJson(entry.getKey()));
+                    w.write(": ");
                     // For scalar array, write() will already render it on one line
-                    write(val, writer, level);
-                    writer.write(" }");
+                    write(val, w, level);
+                    w.write(" }");
                     return;
                 }
             }
 
-            writer.write("{\n");
+            w.write("{\n");
             int i = 0;
             int size = obj.entrySet().size();
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                indent(writer, level + 1);
-                writer.write(GSON.toJson(entry.getKey()));
-                writer.write(": ");
-                write(entry.getValue(), writer, level + 1);
-                if (i < size - 1) writer.write(",");
-                writer.write("\n");
+                indent(w, level + 1);
+                w.write(GSON.toJson(entry.getKey()));
+                w.write(": ");
+                write(entry.getValue(), w, level + 1);
+                if (i < size - 1) w.write(",");
+                w.write("\n");
                 i++;
             }
-            indent(writer, level);
-            writer.write("}");
+            indent(w, level);
+            w.write("}");
         }
     }
 

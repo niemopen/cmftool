@@ -34,7 +34,6 @@ import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Mapping;
-import org.mitre.niem.cmf.MappingException;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.json.Context;
 import org.mitre.niem.utility.JCUsageFormatter;
@@ -138,7 +137,7 @@ public class CmdCMFtoContext implements JCCommand {
         if (mainArgs.size() > 1) {
             try {
                 map = Mapping.readFile(new File(mainArgs.get(1)));
-            } catch (IOException | MappingException ex) {
+            } catch (IOException | CMFException ex) {
                 System.err.println(String.format("Can't read mapping file %s: %s", mainArgs.get(1), ex.getMessage()));
                 System.exit(1);
             }
@@ -148,6 +147,7 @@ public class CmdCMFtoContext implements JCCommand {
             if (null == map) Context.createTo(ow, model);
             else if (!noPrefix) Context.createTo(ow, model, map);
             else Context.createTo(ow, model, map, true);
+            ow.write("\n");
             ow.close();
         } catch (RuntimeException | IOException ex) {
             System.err.println("Can't write context: " + ex.getMessage());

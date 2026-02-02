@@ -167,7 +167,7 @@ public class CmdCMFtoMapping implements JCCommand {
             map.write(ow);
             ow.close();
         } catch (Exception ex) {
-            System.err.println("can't create mapping template: " + ex.getMessage());
+            System.err.println("Can't create mapping template: " + ex.getMessage());
             System.exit(1);
         }
         System.exit(0);       

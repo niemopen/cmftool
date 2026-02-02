@@ -33,8 +33,8 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
+import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Mapping;
-import org.mitre.niem.cmf.MappingException;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.json.ModelToJSONSchema;
@@ -144,7 +144,7 @@ public class CmdCMFtoJSONSchema implements JCCommand {
         if (mainArgs.size() > 1) {
             try {
                 map = Mapping.readFile(new File(mainArgs.get(1)));
-            } catch (IOException | MappingException ex) {
+            } catch (IOException | CMFException ex) {
                 System.err.println(String.format("Can't read mapping file %s: %s", mainArgs.get(1), ex.getMessage()));
                 System.exit(1);
             }
