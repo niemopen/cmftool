@@ -24,6 +24,7 @@
 package org.mitre.niem.json;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.io.Writer;
 import java.util.HashSet;

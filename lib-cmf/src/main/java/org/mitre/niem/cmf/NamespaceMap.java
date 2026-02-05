@@ -103,22 +103,7 @@ public class NamespaceMap {
         // Desired prefix is already assigned to a different namespace
         // So they get a munged prefix; eg. "foo_1" instead of "foo"
         // First, get the munging base, to void twice-munged prefix; eg. "foo_1_2"
-        var mungBase = prefix;
-        var mungP    = prefix;
-        var m = mungPat.matcher(nsuri);
-        if (m.matches()) {
-            mungBase = m.group(1);
-        }
-        // If the URI has a known version, or seems to end in a version number, 
-        // try eg. "nc_4" for version 4.0
-        var vm = versPat.matcher(nsuri);
-        if (vm.matches()) {
-            mungP = mungBase + "_" + vm.group(1);
-        }
-        int mct = 0;
-        while (prefix2URI.containsKey(mungP)) {
-            mungP = String.format("%s_%d", mungBase, ++mct);
-        }
+        var mungP = mungedPrefix(prefix, nsuri);
         prefix2URI.put(mungP, nsuri);
         uri2Prefix.put(nsuri, mungP);
         return mungP;
@@ -137,6 +122,39 @@ public class NamespaceMap {
         var oldURI = prefix2URI.get(prefix);
         prefix2URI.remove(prefix);
         uri2Prefix.remove(oldURI);
+    }
+    
+    /**
+     * Returns the prefix that would be bound to a namespace, without changing
+     * the namespace map.  Returns a munged prefix ("foo_1" instead of "foo") 
+     * if prefix is already bound.
+     * @param prefix
+     * @param nsuri
+     * @return 
+     */
+    public String mungedPrefix (String prefix, String nsuri) {
+        if (uri2Prefix.containsKey(nsuri)) return prefix;   // already assigned       
+        if (!prefix2URI.containsKey(prefix)) return prefix; // available
+        // Desired prefix is already assigned to a different namespace
+        // So they get a munged prefix; eg. "foo_1" instead of "foo"
+        // First, get the munging base, to void twice-munged prefix; eg. "foo_1_2"
+        var mungBase = prefix;
+        var mungP    = prefix;
+        var m = mungPat.matcher(nsuri);
+        if (m.matches()) {
+            mungBase = m.group(1);
+        }
+        // If the URI has a known version, or seems to end in a version number, 
+        // try eg. "nc_4" for version 4.0
+        var vm = versPat.matcher(nsuri);
+        if (vm.matches()) {
+            mungP = mungBase + "_" + vm.group(1);
+        }
+        int mct = 0;
+        while (prefix2URI.containsKey(mungP)) {
+            mungP = String.format("%s_%d", mungBase, ++mct);
+        }
+        return mungP;
     }
     
 }

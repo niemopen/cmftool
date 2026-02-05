@@ -57,9 +57,11 @@ public class NIEMTran {
         jc.setProgramName("niemtran");
 
         var xml2jsonCmd    = new CmdXMLtoJSON(jc);
+        var json2rdfCmd    = new CmdJSONtoRDF(jc);
         var helpCmd        = new CommandHelp(jc); 
         
         jc.addCommand("x2j", xml2jsonCmd);
+        jc.addCommand("j2r", json2rdfCmd);
         jc.addCommand("help", helpCmd);
 
         if (args.length < 1) {

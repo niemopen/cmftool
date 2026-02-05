@@ -104,6 +104,7 @@ public class Model extends CMFObject {
         return prefixToNamespaceObj(preOrURI);
     }
     public Set<Namespace> namespaceSet ()               { return nsS; }
+    public NamespaceMap nsmap ()                        { return nsmap; }
     
     
     /**

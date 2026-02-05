@@ -1,0 +1,7 @@
+<configuration>
+  <logger name="org.apache.jena.riot.system.stream.JenaIOEnvironment" level="WARN"/>
+  <!-- or turn off all Jena logs -->
+  <!-- <logger name="org.apache.jena" level="WARN"/> -->
+  <root level="INFO"/>
+</configuration>
+

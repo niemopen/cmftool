@@ -53,7 +53,8 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- *
+ * A class for transforming NIEM XML to NIEM JSON messages.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
@@ -69,7 +70,7 @@ public class XMLMsgToJSON {
      * by the Model object.  You need a separate transformer object for each 
      * NIEM message type.  You can reuse a transformer object on any number of
      * messages of that type.
-     * @param m - NIEM message type model
+     * @param m - NIEM message model
      */
     public XMLMsgToJSON (Model m) {
         model = m;

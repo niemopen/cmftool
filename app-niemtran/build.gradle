@@ -24,6 +24,8 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.17.0'
     implementation 'org.apache.logging.log4j:log4j-core:2.24.3'
     implementation 'com.google.code.gson:gson:2.13.1'
+    implementation 'org.apache.jena:jena-arq:5.6.0'
+    runtimeOnly 'ch.qos.logback:logback-classic:1.5.16' 
 
     testImplementation libs.junit.jupiter
     testImplementation 'org.assertj:assertj-core:3.26.0'
