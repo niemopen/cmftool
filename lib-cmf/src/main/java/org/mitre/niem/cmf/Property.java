@@ -23,12 +23,14 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * An abstract class for a Property object in a CMF model.
+ * A class for a Property object in a CMF model.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -38,6 +40,11 @@ public class Property extends Component {
     public Property () { super(); }
     public Property (String outsideURI) { super(outsideURI); }
     public Property (Namespace ns, String name) { super(ns, name); }
+
+    @Override
+    public int getType ()               { return CMF_PROPERTY; }
+    @Override
+    public String cmfElement ()         { return "Property"; }
     
     @Override
     public boolean isProperty ()                { return true; }
@@ -47,7 +54,10 @@ public class Property extends Component {
     private boolean isAbstract = false;         // cmf:AbstractIndicator
     private boolean isOrdered = false;          // cmf:OrderedPropertyIndicator
     private boolean isRelationship = false;     // cmf:RelationshipIndicator
-    private Property subprop = null;            // cmf:SubPropertyOf
+    private boolean isChoice = false;           // cmf:XSDChoiceIndicator
+//    private Property subprop = null;            // cmf:SubPropertyOf
+    
+    private final List<Property> subpropL = new ArrayList<>();
     
     public ClassType classType ()               { return null; }
     public Datatype datatype ()                 { return null; }
@@ -61,12 +71,36 @@ public class Property extends Component {
     @Override
     public boolean isOrdered ()                 { return isOrdered; }
     public boolean isRelationship ()            { return isRelationship; }
-    public Property subPropertyOf ()            { return subprop; }
+    public boolean isChoice ()                  { return isChoice; }
     
     public void setIsAbstract (boolean f)       { isAbstract = f; }
     public void setIsOrdered (boolean f)        { isOrdered = f; }
     public void setIsRelationship (boolean f)   { isRelationship = f; }
-    public void setSubproperty (Property p)     { subprop = p; }
+    public void setIsChoice (boolean f)         { isChoice = f; }
+    
+    // Returns the single "proper" subpropertyOf value; that is, a value
+    // suitable for a @substitutionGroup attribute in XSD, and not any 
+    // of the values corresponding to xs:choice in XSD.
+    public Property subPropertyOf () {
+        for (var subp : subpropL) {
+            if (!subp.isChoice()) return subp;
+        }
+        return null;
+    }
+
+    // Returns the list of all subpropertyOf values, including those 
+    // corresponding to xs:choice in XSD model.
+    public List<Property> subPropL ()           { return subpropL; }
+    
+    public void addSubPropertyOf (Property p) {
+        if (subpropL.contains(p)) return;
+        subpropL.add(p);
+    }
+    
+    public void removeSubPropertyOf (Property p) {
+        subpropL.remove(p);
+    }
+    
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {
@@ -80,10 +114,16 @@ public class Property extends Component {
         ar.setProperty(this);
         return true;
     }
-        
+    
+    @Override
+    public boolean addToModel (String eln, String loc, Model m) {
+        m.addProperty(this);
+        return true;
+    }
+    
     @Override
     public boolean addToProperty (String eln, String loc, Property p) {
-        p.setSubproperty(this);
+        p.addSubPropertyOf(this);
         return true;           
     }
     
@@ -99,5 +139,4 @@ public class Property extends Component {
         w.addPropertyChildren(doc, c, this, nsS);
     }
            
-    
 }

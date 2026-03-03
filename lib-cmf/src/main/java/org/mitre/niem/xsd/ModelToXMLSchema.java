@@ -108,7 +108,6 @@ public class ModelToXMLSchema {
     protected final Map<String,String> namespaceU2Path  = new HashMap<>();      // nsU -> file path in outD
     protected final Map<String,Integer> namespaceU2Kind = new HashMap<>();      // nsU -> namespace kind
     protected final Set<String> extNSs                  = new HashSet<>();      // URIs of external namespaces
-    protected final MapToSet<String,String> subGroupL   = new MapToSet<>();     // propU -> set of substitutable propUs
     protected final Set<String> refNSs                  = new HashSet<>();      // URIs of referenced namespaces
     
     public ModelToXMLSchema (Model m) {
@@ -299,12 +298,32 @@ public class ModelToXMLSchema {
         }
     }
     
-    // Update the substitution map with properties and subproperties
+    // Construct a map from a property URI to the set of its direct 
+    // subproperties; that is, Y is in the set for X if Y has
+    // subPropertyOf X.  Indirect subproperties (Z -> Y ->X) will be
+    // worked out when needed.
+    protected final MapToSet<String,String> subGroupS   = new MapToSet<>();     // prop U -> set of subprop Us
     protected void buildSubstitutionMap () {
-        for (var subp : m.propertyL()) {
-            var p = subp.subPropertyOf();
-            if (null != p) subGroupL.add(p.uri(), subp.uri());
+        for (var p : m.propertyL()) {
+            for (var spof : p.subPropL()) {
+                var puri = p.uri();
+                var suri = spof.uri();
+                subGroupS.add(spof.uri(), p.uri());
+            }
         }
+    }
+    
+    protected Set<String> collectSubprops (Property p) {
+        var res  = new HashSet<String>();
+        var todo = new Stack<String>();
+        todo.addAll(subGroupS.get(p.uri()));
+        while (!todo.empty()) {
+            var subU = todo.removeFirst();
+            if (res.contains(subU)) continue;
+            res.add(subU);
+            todo.addAll(subGroupS.get(subU));
+        }
+        return res;
     }
 
     // Augmentation records, indexed by augmenting namespace URI, then class URI.
@@ -356,7 +375,7 @@ public class ModelToXMLSchema {
                     if (!"Literal".equals(actU) && !p.isAttribute() && arec.index().isEmpty()) {
                         var apU = replaceSuffix(actU, "Type", "");      // http://BarNS/Bar or Object
                         apU = apU + "AugmentationPoint";                // http://BarNS/BarAugmentationPoint
-                        subGroupL.add(apU, p.uri());                    // or ObjectAugmentationPoint
+                        subGroupS.add(apU, p.uri());                    // or ObjectAugmentationPoint
                     }
                     // See if this property already augments this class or global.
                     // Only keep one augmentation record, with smallest minoccurs
@@ -394,7 +413,7 @@ public class ModelToXMLSchema {
                 }
                 var aeU = makeURI(nsU, actN);               // http://SomeNS/Bar or http://SomeNS/Object
                 aeU = aeU + "Augmentation";                 // http://SomeNS/BarAugmentation or http://SomeNS/ObjectAugmentation
-                subGroupL.add(aptU, aeU);                   // augmentation element substitutes for augmentation point
+                subGroupS.add(aptU, aeU);                   // augmentation element substitutes for augmentation point
             }
         }
         // Create global augmentation points, but don't add to model.
@@ -702,7 +721,7 @@ public class ModelToXMLSchema {
             while (!subUs.empty()) {
                 var subU = subUs.pop();
                 var subp = m.uriToProperty(subU);
-                var subS = subGroupL.get(subU);
+                var subS = subGroupS.get(subU);
                 for (var sU : subS) subUs.push(sU);
                 if (subU.endsWith("Augmentation") || (null != subp && !subp.isAbstract()))
                     choiceUs.add(subU);

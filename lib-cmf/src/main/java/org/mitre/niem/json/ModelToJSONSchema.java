@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.apache.logging.log4j.LogManager;
@@ -56,6 +57,7 @@ import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Restriction;
+import org.mitre.niem.cmf.SubPropSets;
 import org.mitre.niem.cmf.Union;
 import org.mitre.niem.utility.MapToList;
 import org.mitre.niem.utility.MapToSet;
@@ -87,16 +89,15 @@ public class ModelToJSONSchema {
     static final Logger LOG = LogManager.getLogger(ModelToJSONSchema.class);
     
     private final Model m;
-    private Mapping map = new Mapping();
-    private List<Property> metadataPL = new ArrayList<>();          // list of NIEM 3,4,5 metadata properties
+    private final List<Property> metadataPL = new ArrayList<>();    // list of NIEM 3,4,5 metadata properties
+    private Mapping map = new Mapping();                            // canonical to simple name map, if provided
     private Datatype xsStringDT = null;                             // xs:string Datatype object
-    private List<Property> msgPropL = null;
-    private String contextU = null;
-    private boolean fullContext = false;
-    private boolean inclDesc = true;
+    private List<Property> msgPropL = null;                         // message property objects, if provided
+    private String contextU = null;                                 // @context URI, if provided
+    private boolean inclDesc = true;                                // include component definitions in schema
     
     private MapToList<String,PropertyAssociation> augList = null;   // classQ -> list of augmentation propQs for class
-    private MapToSet<Property,Property> subPropS = null;            // property -> set of substitutable property objs
+    private SubPropSets subprop = null;                             // direct and indirect subproperties in model
     private Deque<Component> doTypes = null;                        // class and datatype schemas remaining
     private Map<Component,JsonObject> typeSch = null;               // type -> schema json object
     private boolean needID = false;                                 // true if any class is referenceable
@@ -111,6 +112,7 @@ public class ModelToJSONSchema {
      */
     public ModelToJSONSchema (Model model) {
         m = model;
+        subprop = new SubPropSets(m);
         xsStringDT = m.uriToDatatype(XS_STRING_U);      // make sure model has xs:string
         if (null == xsStringDT) {                       // are you kidding me? bung it in.
             var xsns = m.namespaceObj(W3C_XML_SCHEMA_NS_URI);
@@ -211,7 +213,6 @@ public class ModelToJSONSchema {
             + "}"
         );
 
-
     /**
      * Generates a JSON schema from the model and the specified options, writing
      * the schema pairs into the (presumably empty) JsonObject provided.
@@ -230,17 +231,6 @@ public class ModelToJSONSchema {
                     for (var gcode : arec.codeS()) augList.add(gcode, arec);
                 }
             } 
-        }
-        // Create set of subproperties for each property
-        if (null == subPropS) {
-            subPropS = new MapToSet<>();
-            for (var subp : m.propertyL()) {
-                var p = subp.subPropertyOf();
-                while (null != p) {
-                    subPropS.add(p, subp);
-                    p = p.subPropertyOf();
-                }
-            }            
         }
         // Start of schema object.
         root.addProperty("$schema", "http://json-schema.org/draft-07/schema#");
@@ -408,15 +398,12 @@ public class ModelToJSONSchema {
         // Adjust cardinality for properties occuring more than once TODO
         // Should include subproperties
         
-        // Handle each property in the association list.
+        // Handle each property in the property association list.
         // Start by making a set of the choices.
         for (var pa : paL) {
             var p    = pa.property();
-            var choS = new HashSet<Property>();
-            if (!p.isAbstract()) choS.add(p);
-            for (var subp : subPropS.get(p)) {
-                if (!subp.isAbstract()) choS.add(subp);
-            }
+            var choS = subprop.all(p);
+
             // Create a "properties" entry for each choice
             if (choS.isEmpty()) continue;
             for (var chp : choS) {
@@ -550,16 +537,21 @@ public class ModelToJSONSchema {
                 }
             }
         }
+        // Determine base type.  Code type primitive is always string
+        var refName = bt.qname();
+        if (r.name().endsWith("CodeType") && W3C_XML_SCHEMA_NS_URI.equals(bt.namespaceURI()))
+            refName = "xs:string";
+            
         if (!enumA.isEmpty()) facO.add("enum", enumA);
         if (!facO.isEmpty()) {
             var allA = new JsonArray();
             var refO = new JsonObject();
-            refO.addProperty("$ref", "#/definitions/" + bt.qname());
+            refO.addProperty("$ref", "#/definitions/" + refName);
             allA.add(refO);
             allA.add(facO);
             defO.add("allOf", allA);
         }
-        else defO.addProperty("$ref", "#/definitions/" + bt.qname());
+        else defO.addProperty("$ref", "#/definitions/" + refName);
     }
     
     
@@ -578,6 +570,7 @@ public class ModelToJSONSchema {
             var refO = new JsonObject();
             refO.addProperty("$ref", "#/definitions/" + mdt.qname());
             anyA.add(refO);
+            if (!typeSch.containsKey(mdt)) doTypes.add(mdt);
         }
         defO.add("anyOf", anyA);
     }
@@ -660,7 +653,11 @@ public class ModelToJSONSchema {
                 defO.addProperty("multipleOf", 1.0);
                 defO.addProperty("minimum", 1D);
             }
-            case "date", "dateTime" -> {
+            case "date" -> {
+                defO.addProperty("type", "string");
+                defO.addProperty("format", "date");                
+            }
+            case "dateTime" -> {
                 defO.addProperty("type", "string");
                 defO.addProperty("format", "date-time");
             }

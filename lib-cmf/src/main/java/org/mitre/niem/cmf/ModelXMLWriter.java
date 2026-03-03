@@ -185,9 +185,11 @@ public class ModelXMLWriter {
     void addPropertyChildren (Document doc, Element c, Property x, Set<Namespace>nsS) {
         if (null == x) return;
         appendOptionalIndicator(doc, c, "AbstractIndicator", x.isAbstract());
-        appendComponentReference(doc, c, "SubPropertyOf", x.subPropertyOf(), nsS);
+        for (var subp : x.subPropL()) appendComponentReference(doc, c, "SubPropertyOf", subp, nsS);
+//        appendComponentReference(doc, c, "SubPropertyOf", x.subPropertyOf(), nsS);-
         appendOptionalIndicator(doc, c, "RelationshipIndicator", x.isRelationship());
         appendOptionalIndicator(doc, c, "OrderedPropertyIndicator", x.isOrdered());
+        appendOptionalIndicator(doc, c, "XSDChoiceIndicator", x.isChoice());
     }
     
     void addRestrictionChildren (Document doc, Element c, Restriction x, Set<Namespace>nsS) {

@@ -42,7 +42,6 @@ import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 import org.w3c.dom.NodeList;
 import org.xml.sax.Attributes;
@@ -293,6 +292,10 @@ public class XMLSchemaDocument {
     public static NodeList evalForNodes (Element e, XPathExpression xpr) {
         try {
             var res = (NodeList)xpr.evaluate(e, XPathConstants.NODESET);
+            for (int i = 0; i < res.getLength(); i++) {
+                var n = res.item(i);
+                if (ELEMENT_NODE != n.getNodeType()) continue;
+            }
             return res;
         } catch (XPathExpressionException ex) {
             LOG.error("Invalid XPath expression {}: {}", xpr.toString(), ex.getMessage());            

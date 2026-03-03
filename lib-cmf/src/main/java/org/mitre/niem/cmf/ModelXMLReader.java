@@ -39,6 +39,7 @@ import static org.mitre.niem.cmf.CMFObject.CMF_DATAPROP;
 import static org.mitre.niem.cmf.CMFObject.CMF_LIST;
 import static org.mitre.niem.cmf.CMFObject.CMF_NAMESPACE;
 import static org.mitre.niem.cmf.CMFObject.CMF_OBJECTPROP;
+import static org.mitre.niem.cmf.CMFObject.CMF_PROPERTY;
 import static org.mitre.niem.cmf.CMFObject.CMF_RESTRICTION;
 import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
 import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
@@ -189,6 +190,7 @@ public class ModelXMLReader {
             case "Datatype":        obj = new Datatype(); break;
             case "List":            obj = new ListType(); break;
             case "ObjectProperty":  obj = new ObjectProperty(); break;
+            case "Property":        obj = new Property(); break;
             case "Restriction":     obj = new Restriction(); break;
             case "Union":           obj = new Union(); break;
             
@@ -221,6 +223,7 @@ public class ModelXMLReader {
             case "DataProperty":
             case "Datatype":
             case "List":
+            case "Property":
             case "ObjectProperty":
             case "Restriction":
             case "Union":
@@ -283,6 +286,7 @@ public class ModelXMLReader {
             case "List":
             case "ListItemDatatype":
             case "ObjectProperty":
+            case "Property":
             case "Restriction":
             case "RestrictionBase":
             case "SubClassOf":
@@ -301,6 +305,7 @@ public class ModelXMLReader {
                     case "Datatype":            obj = new Datatype(uri); break;
                     case "List":                obj = new ListType(uri); break;
                     case "ListItemDatatype":    obj = new Datatype(uri); break;
+                    case "Property":            obj = new Property(uri); break;
                     case "ObjectProperty":      obj = new ObjectProperty(uri); break;
                     case "Restriction":         obj = new Restriction(uri); break;
                     case "RestrictionBase":     obj = new Datatype(uri); break;
@@ -319,6 +324,7 @@ public class ModelXMLReader {
                     case "List":                if (CMF_LIST != obj.getType()) fail("reference %s is not a List", id); break;
                     case "ListItemDatatype":    if (!obj.isDatatype()) fail("reference %s is not a Datatype", id); break;
                     case "ObjectProperty":      if (CMF_OBJECTPROP != obj.getType()) fail("reference %s is not an ObjectProperty", id); break;
+                    case "Property":            if (CMF_PROPERTY != obj.getType()) fail("reference %s is not a Property", id); break;
                     case "Restriction":         if (CMF_RESTRICTION != obj.getType()) fail("reference %s is not a Restriction", id); break;
                     case "RestrictionBase":     if (!obj.isDatatype()) fail("reference %s is not a Datatype", id); break;
                     case "SubClassOf":          if (CMF_CLASS != obj.getType()) fail("reference %s is not a Class", id); break;
@@ -387,6 +393,7 @@ public class ModelXMLReader {
                 case "TermLiteralText":
                 case "TermName":
                 case "WhiteSpaceValueCode":
+                case "XSDChoiceIndicator":
                     obj = new SimpleContent(eln, lang);
                     break;
                 default:

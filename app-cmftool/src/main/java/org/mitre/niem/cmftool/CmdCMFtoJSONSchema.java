@@ -64,7 +64,7 @@ public class CmdCMFtoJSONSchema implements JCCommand {
     @Parameter(order = 4, names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "modelFile.cmf [map.sssom]")
+    @Parameter(description = "modelFile.cmf [map.ttl]")
     private List<String> mainArgs;
     
     CmdCMFtoJSONSchema () {
@@ -102,7 +102,7 @@ public class CmdCMFtoJSONSchema implements JCCommand {
         }
         if (mainArgs == null || mainArgs.isEmpty()) {
             cob.usage();
-            System.exit(1);
+            System.exit(2);
         }
         // Argument of "-" signals end of arguments, allows "-foo" filenames
         String na = mainArgs.get(0);
@@ -112,12 +112,12 @@ public class CmdCMFtoJSONSchema implements JCCommand {
             } else {
                 System.err.println("Unknown option: " + na);
                 cob.usage();
-                System.exit(1);
+                System.exit(2);
             }
         }
         if (mainArgs.isEmpty() || mainArgs.size() > 2) {
             cob.usage();
-            System.exit(1);            
+            System.exit(2);            
         }
         // Make sure the Xerces parsers can be initialized
         try {
@@ -170,7 +170,6 @@ public class CmdCMFtoJSONSchema implements JCCommand {
             ow.close();
         }
         catch (IOException ex) {}
-
         System.exit(0);
     }    
 }

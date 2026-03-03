@@ -61,6 +61,7 @@ public class ModelToXSDModelTest {
         testRoundTrip(new File(resDN, "xsd6/archVersions.xsd"));
         testRoundTrip(new File(resDN, "xsd6/attAugment.xsd"));
         testRoundTrip(new File(resDN, "xsd6/augment.xsd"));
+//        testRoundTrip(new File(resDN, "xsd6/choice.xsd"));                // CAN'T ROUNDTRIP
         testRoundTrip(new File(resDN, "xsd6/class.xsd"));
         testRoundTrip(new File(resDN, "xsd6/codeListBinding.xsd"));
         testRoundTrip(new File(resDN, "xsd6/component.xsd"));

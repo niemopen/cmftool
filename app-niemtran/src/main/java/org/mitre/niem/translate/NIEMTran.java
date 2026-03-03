@@ -88,7 +88,7 @@ public class NIEMTran {
 
     }
     
-    @Parameters(commandDescription = "this list of cmftool commands")
+    @Parameters(commandDescription = "this list of niemtran commands")
     private class CommandHelp implements JCCommand {
         
         @Parameter(description = "display help for this command")

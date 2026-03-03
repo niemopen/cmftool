@@ -64,6 +64,7 @@ public class Datatype extends Component {
     
     public Datatype baseXS () {
         if (W3C_XML_SCHEMA_NS_URI.equals(namespaceURI())) return this;
+        else if (null == base()) return null;
         else return base().baseXS();
     }
     

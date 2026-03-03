@@ -37,10 +37,11 @@ public abstract class CMFObject {
     public static final int CMF_MODEL = 5;
     public static final int CMF_NAMESPACE = 6;
     public static final int CMF_OBJECTPROP = 7;
-    public static final int CMF_RESTRICTION = 8;
-    public static final int CMF_UNION = 9;   
-    public static final int CMF_ANYPROP = 10;
-    public static final int CMF_IMPORT_DOCUMENTATION = 11;
+    public static final int CMF_PROPERTY = 8;
+    public static final int CMF_RESTRICTION = 9;
+    public static final int CMF_UNION = 10;   
+    public static final int CMF_ANYPROP = 11;
+    public static final int CMF_IMPORT_DOCUMENTATION = 12;
     
     // Override these functions in subclasses
     public String uri ()            { return ""; }

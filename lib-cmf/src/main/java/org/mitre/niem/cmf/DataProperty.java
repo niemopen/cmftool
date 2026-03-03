@@ -79,7 +79,7 @@ public class DataProperty extends Property {
     
     @Override
     public boolean addToModel (String eln, String loc, Model m) {
-        m.addDataProperty(this);
+        m.addProperty(this);
         return true;
     }
     

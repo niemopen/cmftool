@@ -45,7 +45,7 @@ public class ModelToJSONSchemaTest {
     @Test
     public void test () throws Exception {
         var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File("src/test/resources/json/augment.cmf"));
+        var model = rdr.readFiles(new File("src/test/resources/json/itl.cmf"));
         var js    = new ModelToJSONSchema(model);
         var w     = new StringWriter();
         List<Property> msgPL = Arrays.asList(model.qnToProperty("ms"));
@@ -106,6 +106,10 @@ public class ModelToJSONSchemaTest {
 
     @Test
     public void testMakeElement() {
+    }
+
+    @Test
+    public void testSetNoPrefix() {
     }
     
 }

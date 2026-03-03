@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
@@ -150,6 +151,7 @@ public class ModelToXSDModel {
         collectNamespaceKinds();
         establishFilePaths();
         identifySimpleTypes();
+        buildSubstitutionMap();
         for (var ns : m.namespaceSet())
             if (ns.isExternal()) extNSs.add(ns.uri());
         for (var ns : m.namespaceSet()) 
@@ -288,6 +290,34 @@ public class ModelToXSDModel {
             if (!dt.isModelComponent()) continue;
             simpleTypes.add(dt);        
         }
+    }
+    
+    // Construct a map from a property URI to the set of its direct 
+    // subproperties; that is, Y is in the set for X if Y has
+    // subPropertyOf X.  Indirect subproperties (Z -> Y ->X) will be
+    // worked out when needed.
+    protected final MapToSet<String,String> subGroupS   = new MapToSet<>();     // prop U -> set of subprop Us
+    protected void buildSubstitutionMap () {
+        for (var p : m.propertyL()) {
+            for (var spof : p.subPropL()) {
+                var puri = p.uri();
+                var suri = spof.uri();
+                subGroupS.add(spof.uri(), p.uri());
+            }
+        }
+    }
+    
+    protected Set<String> collectSubprops (Property p) {
+        var res  = new HashSet<String>();
+        var todo = new Stack<String>();
+        todo.addAll(subGroupS.get(p.uri()));
+        while (!todo.empty()) {
+            var subU = todo.removeFirst();
+            if (res.contains(subU)) continue;
+            res.add(subU);
+            todo.addAll(subGroupS.get(subU));
+        }
+        return res;
     }
 
     
@@ -562,8 +592,23 @@ public class ModelToXSDModel {
         for (var pa : ct.propL()) {
             var p = pa.property();
             if (p.isAttribute()) continue;
-            var elE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
-            elE.setAttribute("ref", p.qname());
+            
+            Element elE;
+            if (p.isChoice()) {
+                var chUS = collectSubprops(p);
+                elE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:choice");
+                for (var chU : chUS) {
+                    var chp = m.uriToProperty(chU);
+                    var chE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
+                    chE.setAttribute("ref", chp.qname());
+                    refnsUs.add(chp.namespaceURI());
+                    elE.appendChild(chE);
+                }
+            }
+            else {
+                elE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
+                elE.setAttribute("ref", p.qname());
+            }
             if (!"1".equals(pa.minOccurs())) elE.setAttribute("minOccurs", pa.minOccurs());
             if (!"1".equals(pa.maxOccurs())) elE.setAttribute("maxOccurs", pa.maxOccurs());
             refnsUs.add(p.namespaceURI());
@@ -589,7 +634,7 @@ public class ModelToXSDModel {
             var apE    = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
             apE.setAttribute("name", apname);
             apE.setAttribute("abstract", "true");
-            addAnnotationDoc(doc, apE, "An augmentation point for " + ct.qname() + ".");
+            addAnnotationDoc(doc, apE, "An augmentation point for " + ct.name() + ".");
             decEL.add(apE);
         }
         for (var pa : ct.propL()) {
@@ -775,6 +820,7 @@ public class ModelToXSDModel {
         if (W3C_XML_SCHEMA_NS_URI.equals(p.namespaceURI())) return;
         if (XML_NS_URI.equals(p.namespaceURI())) return;
         if (p.name().endsWith("Literal")) return;
+        if (p.isChoice()) return;
 
         var appinfoPre = bc2pre.get("APPINFO");
         var appinfoU   = bc2U.get("APPINFO");      
@@ -800,8 +846,12 @@ public class ModelToXSDModel {
         }
         decE.setAttribute("name", p.name());
         setAttribute(decE, "type", ptQ);
-        if (p.isAbstract())        decE.setAttribute("abstract", "true");
-        else if (!p.isAttribute()) decE.setAttribute("nillable", "true");
+        if (p.isAbstract()) {
+            decE.setAttribute("abstract", "true");
+        }
+        if (!p.isAttribute() && !p.isAbstract()) {
+            decE.setAttribute("nillable", "true");
+        }
         if (p.isDeprecated()) {
             setAttribute(decE, appinfoU, appinfoPre + ":" + "deprecated", "true");
             refnsUs.add(appinfoU);

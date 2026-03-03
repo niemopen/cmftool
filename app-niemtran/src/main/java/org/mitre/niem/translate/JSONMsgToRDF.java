@@ -64,14 +64,33 @@ public class JSONMsgToRDF {
     
     public JSONMsgToRDF () { }
     
+    /**
+     * Sets the model for the messages to be converted.  Bad things will happen
+     * if the model and message do not correspond.
+     * @param m NIEM model object 
+     */
     public void setModel (Model m)          { nModel = m; }
+    
+    /**
+     * The converter will produce readable RDF if pretty-printing is true.  
+     * @param p pretty-printing flag
+     */
     public void setPrettyPrint (boolean p)  { prettyPrint = p; }
+    
+    /**
+     * Supplies a context object for messages that do not contain a full context.
+     * The parameter can either be a <code>{ "@context": { ... } }</code> object,
+     * or can be the object value of such a pair.
+     * @param o 
+     */
     public void setContext (JsonObject o)   { context = o; }  
     
     public void setContext (String s) throws NIEMTranException { 
         if (null == s) { context = null; return; } 
         try {
             context = JsonParser.parseString(s).getAsJsonObject();
+            if (context.has("@context")) 
+                context = context.get("@context").getAsJsonObject();
         }
         catch (JsonSyntaxException ex) { 
             throw new NIEMTranException("Can't parse context JSON: " + jsonSyntaxExMsg(ex));
@@ -98,8 +117,9 @@ public class JSONMsgToRDF {
     }
     
     public void convert (JsonObject msg, Writer w) throws IOException, NIEMTranException {
-        if (msg == null) throw new NIEMTranException("JSONMsgToRDF.convert: Message is null");
-        if (w == null) throw new NIEMTranException("JSONMsgToRDF.convert: Writer is null");
+        if (null == nModel) throw new NIEMTranException("JSONMsgToRDF.convert: Message model is null");
+        if (null == msg)    throw new NIEMTranException("JSONMsgToRDF.convert: Message is null");
+        if (null == w)      throw new NIEMTranException("JSONMsgToRDF.convert: Writer is null");
         
         // Make sure we have a context object; use converter's context if setContext was used.
         // Make sure there's a rdf entry in the context if we have a NIEM model.

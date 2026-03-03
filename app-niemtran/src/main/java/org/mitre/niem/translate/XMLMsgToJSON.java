@@ -127,7 +127,7 @@ public class XMLMsgToJSON {
         
         @Override
         public void startElement(String nsuri, String lname, String qName, Attributes atts) {
-            
+            System.err.println("startElement: " + qName);
             // Handle xml:base in the message element; reject it elsewhere
             // If set, all reference URIs become absolute; otherwise are relative
             var baseAtt = atts.getValue("xml:base");
@@ -253,6 +253,7 @@ public class XMLMsgToJSON {
 
         @Override
         public void endElement(String nsuri, String lname, String qName) throws SAXException {
+            System.err.println("endElement: " + qName);
             var obj    = objS.pop();
             var parent = objS.peek();
             var otype  = ctypeS.pop();
@@ -305,18 +306,25 @@ public class XMLMsgToJSON {
             if (isPrim && null != otype && otype.hasXmlLang() && !"en-US".equals(lang)) {
                 obj.addProperty("@language", lang);
             }
-            // If obj is empty at this point, then this element is a number, string, or boolean.
+            // If obj is empty at this point, then this element is a number, string, boolean,
+            // or an object with no content.
             // Create a primitive if this is a data property (or an unknown element)
             // Create an object with a FooLiteral pair if this is an object property.
+            // Do nothing for an empty object (eg. <biom:DNALaboratoryProcessingCountry/>)
             JsonElement value = obj;
             if (obj.entrySet().isEmpty()) {
-                if (null == p) value = valuePrimitive(null, cval);
-                else if (p.isDataProperty()) value = valuePrimitive(p.datatype(), cval);
+                if (null == p) value = new JsonPrimitive(cval); // unknown; it's a string
+                else if (p.isDataProperty()) 
+                    value = valuePrimitive(p.datatype(), cval); // decide from base type
+                
+                // Check for a literal data property
                 else {
                     var ct = p.classType();
-                    while (null != ct.subClassOf()) ct = ct.subClassOf();
+                    while (null != ct.subClassOf()) 
+                        ct = ct.subClassOf();
                     var lp = ct.literalDataProperty();
-                    var lv = valuePrimitive(lp.datatype(), cval);
+                    if (null == lp) return;                         // empty element; do nothing
+                    var lv = valuePrimitive(lp.datatype(), cval);   // add literal data property
                     obj.add(lp.qname(), lv);
                 }            
             }
@@ -400,14 +408,19 @@ public class XMLMsgToJSON {
                     "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "positiveInteger"));
 
         // Returns the appropriate primitive for the datatype XS base type.
+        // * string for all code types
         // * boolean for xs:boolean
         // * number for xs:double, xs:float, xs:decimal and derived types
         // * string for everything else
         public JsonPrimitive valuePrimitive (Datatype dt, String val) {
+            System.err.println("valuePrimitive; " + dt.qname());
             var bname = "string";
             if (null != dt) { 
                 var xsbase = dt.baseXS();
-                bname = xsbase.name();
+                if (null != xsbase) bname = xsbase.name();
+            }
+            if (dt.name().endsWith("CodeType")) {       // codes are strings
+                return new JsonPrimitive(val);
             }
             if (numbers.contains(bname)) {
                 var number = new BigDecimal(val);

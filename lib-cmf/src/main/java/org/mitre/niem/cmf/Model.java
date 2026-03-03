@@ -214,13 +214,13 @@ public class Model extends CMFObject {
         c.setModel(this);
     }
     
-    public void addDataProperty (DataProperty c) {
-        if (null == c) return;
-        compMap.put(c.uri(), c); 
-        propMap.put(c.uri(), c);
-        dpropMap.put(c.uri(), c);
+    public void addProperty (DataProperty p) {
+        if (null == p) return;
+        compMap.put(p.uri(), p); 
+        propMap.put(p.uri(), p);
+        dpropMap.put(p.uri(), p);
         ordComp = null;       
-        c.setModel(this);
+        p.setModel(this);
     }
     
     public void addDatatype (Datatype c) {
@@ -231,18 +231,20 @@ public class Model extends CMFObject {
         c.setModel(this);
     }
     
-    public void addObjectProperty (ObjectProperty c) {
-        if (null == c) return;
-        compMap.put(c.uri(), c); 
-        propMap.put(c.uri(), c);
-        opropMap.put(c.uri(), c);
+    public void addProperty (ObjectProperty p) {
+        if (null == p) return;
+        compMap.put(p.uri(), p); 
+        propMap.put(p.uri(), p);
+        opropMap.put(p.uri(), p);
         ordComp = null;        
-        c.setModel(this);
+        p.setModel(this);
     }
     
     public void addProperty (Property p) {
-        if (p.isDataProperty()) addDataProperty((DataProperty) p);
-        else addObjectProperty((ObjectProperty)p);
+        compMap.put(p.uri(), p);
+        propMap.put(p.uri(), p);
+        ordComp = null;
+        p.setModel(this);
     }
     
     public void removeClassType (ClassType ct) {

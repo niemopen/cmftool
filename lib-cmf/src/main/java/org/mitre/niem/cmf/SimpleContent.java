@@ -196,6 +196,7 @@ public class SimpleContent extends CMFObject {
         case "AbstractIndicator":           p.setIsAbstract("true".equals(this.content())); break;
         case "OrderedPropertyIndicator":    p.setIsOrdered("true".equals(this.content())); break;
         case "RelationshipIndicator":       p.setIsRelationship("true".equals(this.content())); break;
+        case "XSDChoiceIndicator":          p.setIsChoice("true".equals(this.content())); break;
         default: return false;
         }
         return true;

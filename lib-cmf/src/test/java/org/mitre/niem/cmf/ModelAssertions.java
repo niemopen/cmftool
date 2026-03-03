@@ -150,6 +150,34 @@ public class ModelAssertions {
         assertThat(tns.augL().get(0).codeS().isEmpty());
     }
     
+    public static void checkChoice (Model m) {
+        var cp1 = m.qnToProperty("t:ChoiceAbstract_1");
+        var cp2 = m.qnToProperty("t:ChoiceAbstract_2");
+        var p1  = m.qnToDataProperty("t:Prop1");
+        var p2  = m.qnToDataProperty("t:Prop2");
+        var p3  = m.qnToDataProperty("t:Prop3");
+        var c1  = m.qnToClassType("t:T1Type");
+        var c2  = m.qnToClassType("t:T2Type");
+        var c3  = m.qnToClassType("t:T3Type");
+        var c4  = m.qnToClassType("t:T4Type");
+        var c5  = m.qnToClassType("t:T5Type");
+                
+        assertTrue(cp1.isAbstract());
+        assertTrue(cp1.isChoice());
+        assertTrue(cp2.isAbstract());
+        assertTrue(cp2.isChoice());
+        
+        assertThat(p1.subPropL()).containsExactlyInAnyOrder(cp1, cp2);
+        assertThat(p2.subPropL()).containsExactlyInAnyOrder(cp1, cp2);
+        assertThat(p3.subPropL()).containsExactlyInAnyOrder(cp2);
+
+        assertEquals(c1.propL().get(0).property(), p1);        
+        assertEquals(c2.propL().get(0).property(), p1);        
+        assertEquals(c3.propL().get(0).property(), cp1);        
+        assertEquals(c4.propL().get(0).property(), cp1);
+        assertEquals(c5.propL().get(0).property(), cp2);       
+    }
+    
     public static void checkComponent (Model m) {
         var ct = m.qnToClassType("t:OneClassType");
         var dt = m.qnToDatatype("t:TwoDataType");
@@ -866,6 +894,17 @@ public class ModelAssertions {
         assertEquals("xs:string", oneDt.base().qname());
         assertEquals("t:OneType", twoDt.base().qname());
         assertEquals("xs:integer", fooDt.base().qname());       
+    }
+    
+    public static void checkSubProps (Model m) {
+        var oneP = m.qnToProperty("test:AnElement");
+        var twoP = m.qnToProperty("test:AnotherElement");
+        var threeP = m.qnToProperty("test:AThirdElement");
+        assertTrue(oneP.isChoice());
+        assertFalse(twoP.isChoice());
+        assertThat(twoP.subPropL()).isEmpty();;
+        assertThat(threeP.subPropL())
+            .containsExactlyInAnyOrder(oneP, twoP);
     }
     
     public static void checkUnion (Model m) {
