@@ -77,8 +77,8 @@ public class ModelXMLWriter {
         var nsS = new HashSet<Namespace>();
         for (var s : nsparam) {
             Namespace ns = null;
-            if (s.contains(":")) ns = m.nsUToNamespaceObj(s);
-            else ns = m.prefixToNamespaceObj(s);
+            if (s.contains(":")) ns = m.namespaceObj(s);
+            else ns = m.namespaceObj(s);
             if (null ==  ns) {
                 LOG.error("{}: no such namespace in model", s);
                 return false;
@@ -185,8 +185,9 @@ public class ModelXMLWriter {
     void addPropertyChildren (Document doc, Element c, Property x, Set<Namespace>nsS) {
         if (null == x) return;
         appendOptionalIndicator(doc, c, "AbstractIndicator", x.isAbstract());
-        for (var subp : x.subPropL()) appendComponentReference(doc, c, "SubPropertyOf", subp, nsS);
-//        appendComponentReference(doc, c, "SubPropertyOf", x.subPropertyOf(), nsS);-
+        x.subPropertyOfS().stream().sorted().forEach((subp) -> {
+            appendComponentReference(doc, c, "SubPropertyOf", subp, nsS);
+        });
         appendOptionalIndicator(doc, c, "RelationshipIndicator", x.isRelationship());
         appendOptionalIndicator(doc, c, "OrderedPropertyIndicator", x.isOrdered());
         appendOptionalIndicator(doc, c, "XSDChoiceIndicator", x.isChoice());

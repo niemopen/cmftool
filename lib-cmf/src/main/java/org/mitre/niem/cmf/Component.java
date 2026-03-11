@@ -26,7 +26,6 @@ package org.mitre.niem.cmf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.mitre.niem.utility.NaturalOrderIgnoreCaseComparator;
@@ -71,8 +70,8 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     public String definition ()                 { return docL.isEmpty() ? null : docL.get(0).text(); }
     
     public void setModel (Model m)              { model = m; }
-    public void setNamespace (Namespace ns)     { namespace = ns; change(); }
-    public void setName (String n)              { name = n; change(); }
+    public void setNamespace (Namespace ns)     { namespace = ns; if (null != model()) model().changeComponent(); }
+    public void setName (String n)              { name = n;       if (null != model()) model().changeComponent(); }
     public void setOutsideURI (String u)        { outsideURI = u; }
     public void setIsDeprecated (boolean f)     { isDeprecated = f; }
     
@@ -135,7 +134,7 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     // Notify the model object that the name or namespace of one of 
     // its components has changed.
     private void change () {
-        if (null != model) model.componentUpdate();
+        if (null != model) model.changeComponent();
     }
     
     
@@ -147,13 +146,13 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     // Dispatch to Component's proper ModelXMLWriter method
     public void addComponentCMFChildren (ModelXMLWriter w, Document doc, Element c, Set<Namespace>nsS)  { }
 
+    // Components are ordered first by namespace prefix, then by case-insensitive
+    // natural order; eg. "Foo7Type" comes before "Foo11Type".
     @Override
     public int compareTo(Component o) {
         int rv = this.namespace().compareTo(o.namespace());
         if (rv != 0) return rv;
-        var thisName = StringUtils.lowerCase(name);
-        var oName    = StringUtils.lowerCase(o.name());
-        return NaturalOrderIgnoreCaseComparator.comp(thisName, oName);
+        return NaturalOrderIgnoreCaseComparator.comp(name, o.name);
     }
         
 }

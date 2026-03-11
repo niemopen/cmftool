@@ -37,11 +37,14 @@ public class NIEMXSDWriter extends XSDWriter {
     
     public NIEMXSDWriter () { }
     
-    public NIEMXSDWriter (Map<String,String> bc2pre) {
+    // Customize XSDWriter with attribute reorderings for NIEM XSD.
+    // The appinfo namespace might have a funky prefix (supplied as aPre).
+    // <appinfo:LocalTerm>:    order is @term, then others
+    // <appinfo:Augmentation>: order is @class, @property, @use, @globalClassCode
+    public NIEMXSDWriter (String aPre) {
         super();
-        var aPre = bc2pre.get("APPINFO");
-        var ltQ  = makeQN(aPre, "LocalTerm");
-        var augQ = makeQN(aPre, "Augmentation");
+        var ltQ  = makeQN(aPre, "LocalTerm");       // appinfo:LocalTerm
+        var augQ = makeQN(aPre, "Augmentation");    // appinfo:Augmentation
         reorderMap.add(ltQ, "term");
         reorderMap.addAll(augQ, List.of("class", "property", "use", "globalClassCode"));
     }

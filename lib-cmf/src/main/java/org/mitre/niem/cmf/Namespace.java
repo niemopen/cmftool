@@ -172,6 +172,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
             throw new CMFException(String.format(
                 "can't change prefix of URI %s to %s (already assigned to %s)",
                 uri, p, model.prefixToNSU(p)));
+        model().changeNamespace();
     }
     
     public void setURI (String u) throws CMFException {
@@ -184,6 +185,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
                 prefix, u, model.nsUToPrefix(u)));    
     }
     
+    // Following routines are used to build model from CMF-XML.
     
     @Override
     public boolean addChild(String eln, String loc, CMFObject child) throws CMFException {
@@ -222,6 +224,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
         return addToDatatype(eln, loc, u);
     }
 
+    // Namespaces are ordered by prefix, ignoring case.
     @Override
     public int compareTo(Namespace o) {
         return this.prefix.compareToIgnoreCase(o.prefix);

@@ -54,6 +54,7 @@ public abstract class CMFObject {
 
     public void setContent (String text) { }
     
+    // Routines for reading a model from CMF-XML.
     // Every object asks its parent class to add the child object.  If the parent
     // doesn't know how, then the object does it.
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException { return false; }

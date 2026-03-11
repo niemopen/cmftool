@@ -30,31 +30,37 @@ import org.mitre.niem.utility.MapToSet;
 
 /**
  * A class for computing the set of direct and indirect subproperties for
- * the properties in a model.
+ * the properties in a model.  CMF records subproperties in the other direction;
+ * that is, subPropertyOf.  Lazy evaluation, results not computed until
+ * needed, then cached.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class SubPropSets {
     
-    private final MapToSet<Property,Property> direct = new MapToSet<>();
-    private final MapToSet<Property,Property> all = new MapToSet<>();
+    private final Model m;
+    private MapToSet<Property,Property> direct = null;
+    private MapToSet<Property,Property> all    = null;
     
-    private SubPropSets () { }
+    private SubPropSets ()       { m = null; }
     
-    public SubPropSets (Model m) { 
-        for (var p : m.propertyL()) {
-            for (var spof : p.subPropL()) {
-                direct.add(spof, p);
-            }
-        }
-    }
+    public SubPropSets (Model m) { this.m = m; }
     
     public Set<Property> direct (Property p) {
+        if (null == direct) {
+            direct = new MapToSet<>();
+            for (var pp : m.propertyL()) {
+                for (var spof : pp.subPropertyOfS()) {
+                    direct.add(spof, pp);
+                }
+            }
+        }
         return direct.get(p);
     }
     
     public Set<Property> all (Property p) {
+        if (null == all) all = new MapToSet<>();
         if (all.containsKey(p)) return all.get(p);
         var res  = all.get(p);
         var seen = new HashSet<Property>();
@@ -65,7 +71,7 @@ public class SubPropSets {
             if (seen.contains(np)) continue;
             if (!np.isChoice()) res.add(np);
             seen.add(np);
-            todo.addAll(direct.get(np));
+            todo.addAll(direct(np));
         }
         return res;
     }

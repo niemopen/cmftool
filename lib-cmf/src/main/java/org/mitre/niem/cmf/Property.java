@@ -23,8 +23,7 @@
  */
 package org.mitre.niem.cmf;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -51,13 +50,11 @@ public class Property extends Component {
     public boolean isDataProperty ()            { return false; }
     public boolean isObjectProperty ()          { return false; }
    
-    private boolean isAbstract = false;         // cmf:AbstractIndicator
-    private boolean isOrdered = false;          // cmf:OrderedPropertyIndicator
-    private boolean isRelationship = false;     // cmf:RelationshipIndicator
-    private boolean isChoice = false;           // cmf:XSDChoiceIndicator
-//    private Property subprop = null;            // cmf:SubPropertyOf
-    
-    private final List<Property> subpropL = new ArrayList<>();
+    private boolean isAbstract = false;                         // cmf:AbstractIndicator
+    private boolean isOrdered = false;                          // cmf:OrderedPropertyIndicator
+    private boolean isRelationship = false;                     // cmf:RelationshipIndicator
+    private boolean isChoice = false;                           // cmf:XSDChoiceIndicator   
+    private final Set<Property> subpropOfS = new HashSet<>();   // cmf:SubPropertyOf
     
     public ClassType classType ()               { return null; }
     public Datatype datatype ()                 { return null; }
@@ -78,27 +75,31 @@ public class Property extends Component {
     public void setIsRelationship (boolean f)   { isRelationship = f; }
     public void setIsChoice (boolean f)         { isChoice = f; }
     
-    // Returns the single "proper" subpropertyOf value; that is, a value
-    // suitable for a @substitutionGroup attribute in XSD, and not any 
-    // of the values corresponding to xs:choice in XSD.
-    public Property subPropertyOf () {
-        for (var subp : subpropL) {
-            if (!subp.isChoice()) return subp;
-        }
-        return null;
-    }
+    
+    // Subproperties are complicated, because CMF only records SubPropertyOf
+    // (which we get from @substitutionGroup in XSD).  So a Property object
+    // knows that Y is subproperty of X.  But often we instead want to know 
+    // all of the subproperties of X.  We can only get that from the complete model.
 
-    // Returns the list of all subpropertyOf values, including those 
-    // corresponding to xs:choice in XSD model.
-    public List<Property> subPropL ()           { return subpropL; }
+    public Set<Property> subPropertyOfS ()     { return subpropOfS; }
     
     public void addSubPropertyOf (Property p) {
-        if (subpropL.contains(p)) return;
-        subpropL.add(p);
+        if (subpropOfS.contains(p)) return;
+        subpropOfS.add(p);
+        model().changeSubProps();
     }
     
     public void removeSubPropertyOf (Property p) {
-        subpropL.remove(p);
+        subpropOfS.remove(p);
+        model().changeSubProps();
+    }
+    
+    public Set<Property> directSubProps () {
+        return model().directSubProps(this);
+    }
+    
+    public Set<Property> allSubProps () {
+        return model().allSubProps(this);
     }
     
     

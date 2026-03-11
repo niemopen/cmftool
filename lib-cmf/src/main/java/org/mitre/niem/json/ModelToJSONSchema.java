@@ -39,7 +39,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.apache.logging.log4j.LogManager;
@@ -57,10 +56,8 @@ import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Restriction;
-import org.mitre.niem.cmf.SubPropSets;
 import org.mitre.niem.cmf.Union;
 import org.mitre.niem.utility.MapToList;
-import org.mitre.niem.utility.MapToSet;
 import static org.mitre.niem.xsd.NIEMConstants.hasMetadata;
 
 /**
@@ -97,7 +94,6 @@ public class ModelToJSONSchema {
     private boolean inclDesc = true;                                // include component definitions in schema
     
     private MapToList<String,PropertyAssociation> augList = null;   // classQ -> list of augmentation propQs for class
-    private SubPropSets subprop = null;                             // direct and indirect subproperties in model
     private Deque<Component> doTypes = null;                        // class and datatype schemas remaining
     private Map<Component,JsonObject> typeSch = null;               // type -> schema json object
     private boolean needID = false;                                 // true if any class is referenceable
@@ -112,7 +108,6 @@ public class ModelToJSONSchema {
      */
     public ModelToJSONSchema (Model model) {
         m = model;
-        subprop = new SubPropSets(m);
         xsStringDT = m.uriToDatatype(XS_STRING_U);      // make sure model has xs:string
         if (null == xsStringDT) {                       // are you kidding me? bung it in.
             var xsns = m.namespaceObj(W3C_XML_SCHEMA_NS_URI);
@@ -402,7 +397,7 @@ public class ModelToJSONSchema {
         // Start by making a set of the choices.
         for (var pa : paL) {
             var p    = pa.property();
-            var choS = subprop.all(p);
+            var choS = p.allSubProps();
 
             // Create a "properties" entry for each choice
             if (choS.isEmpty()) continue;

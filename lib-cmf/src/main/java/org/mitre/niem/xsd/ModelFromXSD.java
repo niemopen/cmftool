@@ -1021,7 +1021,7 @@ public class ModelFromXSD {
     // (FooAugmentation, FooAugmentationPoint, FooAugmentationType) from the model.
     private static Set VALID_CODES = Set.of("ASSOCIATION", "OBJECT", "LITERAL");
     private void createAugmentRecords () {
-        for (var aprop : augPropL) {
+        for (var aprop : augPropL) {                    // augmentation properties
             ClassType atype = null;
             String gcode = null;          
             var augt   = aprop.classType();             // augmentation type; eg. j:EducationAugmentationType
@@ -1032,7 +1032,12 @@ public class ModelFromXSD {
                 if (name.startsWith("Association")) gcode = "ASSOCIATION";
             }
             else {
-                var augp = aprop.subPropertyOf();       // augmentation point property
+                var subS = aprop.subPropertyOfS();
+                if (subS.size() != 1) {
+                    LOG.error(aprop.qname() + "must have exactly one @substitutionGroup value");
+                    continue;
+                }
+                var augp = subS.iterator().next();      // augmentation point Property
                 var augU = augp.uri();                  // augmentation point URI; eg. nc:EducationAugmentationPoint
                 var augmtU = replaceSuffix(augU, "AugmentationPoint", "Type"); // augmented class URI
                 atype  = m.uriToClassType(augmtU);      // augmented ClassType object                
@@ -1051,19 +1056,19 @@ public class ModelFromXSD {
         }
         // Handle elements with augmentation point substitutionGroup
         for (var p : m.propertyL()) {
-            var apoint = p.subPropertyOf();
-            if (null == apoint) continue;
-            if (!apoint.name().endsWith("AugmentationPoint")) continue;
-            var augmtU = replaceSuffix(apoint.uri(), "AugmentationPoint", "Type");
-            var atype  = m.uriToClassType(augmtU);
-            var augns = p.namespace();
-            var arec = new AugmentRecord();
-            arec.setClassType(atype);
-            arec.setProperty(p);
-            arec.setMinOccurs("0");
-            arec.setMaxOccurs("unbounded");
-            augns.addAugmentRecord(arec);
-            p.removeSubPropertyOf(apoint);
+            for (var apoint : p.subPropertyOfS()) {
+                if (!apoint.name().endsWith("AugmentationPoint")) continue;
+                var augmtU = replaceSuffix(apoint.uri(), "AugmentationPoint", "Type");
+                var atype  = m.uriToClassType(augmtU);
+                var augns = p.namespace();
+                var arec = new AugmentRecord();
+                arec.setClassType(atype);
+                arec.setProperty(p);
+                arec.setMinOccurs("0");
+                arec.setMaxOccurs("unbounded");
+                augns.addAugmentRecord(arec);
+                p.removeSubPropertyOf(apoint);
+            }
         }
         for (var op: augPointL) m.removeObjectProperty(op);
         for (var ct: m.classTypeL())

@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.StringJoiner;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
@@ -151,7 +152,6 @@ public class ModelToXSDModel {
         collectNamespaceKinds();
         establishFilePaths();
         identifySimpleTypes();
-        buildSubstitutionMap();
         for (var ns : m.namespaceSet())
             if (ns.isExternal()) extNSs.add(ns.uri());
         for (var ns : m.namespaceSet()) 
@@ -291,35 +291,6 @@ public class ModelToXSDModel {
             simpleTypes.add(dt);        
         }
     }
-    
-    // Construct a map from a property URI to the set of its direct 
-    // subproperties; that is, Y is in the set for X if Y has
-    // subPropertyOf X.  Indirect subproperties (Z -> Y ->X) will be
-    // worked out when needed.
-    protected final MapToSet<String,String> subGroupS   = new MapToSet<>();     // prop U -> set of subprop Us
-    protected void buildSubstitutionMap () {
-        for (var p : m.propertyL()) {
-            for (var spof : p.subPropL()) {
-                var puri = p.uri();
-                var suri = spof.uri();
-                subGroupS.add(spof.uri(), p.uri());
-            }
-        }
-    }
-    
-    protected Set<String> collectSubprops (Property p) {
-        var res  = new HashSet<String>();
-        var todo = new Stack<String>();
-        todo.addAll(subGroupS.get(p.uri()));
-        while (!todo.empty()) {
-            var subU = todo.removeFirst();
-            if (res.contains(subU)) continue;
-            res.add(subU);
-            todo.addAll(subGroupS.get(subU));
-        }
-        return res;
-    }
-
     
     protected void writeModelDocument (Namespace ns, File outD) throws ParserConfigurationException, IOException {       
         // Initialize the document and xs:schema root element
@@ -475,7 +446,7 @@ public class ModelToXSDModel {
         for (var e : defEL) root.appendChild(e);
         for (var e : decEL) root.appendChild(e);        
 
-        writeXSD(doc, outF, bc2pre);
+        writeXSD(doc, outF, appinfoPre);
     }
     
     protected void createAugmentationComponents (Document doc, 
@@ -595,10 +566,9 @@ public class ModelToXSDModel {
             
             Element elE;
             if (p.isChoice()) {
-                var chUS = collectSubprops(p);
+                var chPS = p.allSubProps();
                 elE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:choice");
-                for (var chU : chUS) {
-                    var chp = m.uriToProperty(chU);
+                for (var chp : chPS) {
                     var chE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
                     chE.setAttribute("ref", chp.qname());
                     refnsUs.add(chp.namespaceURI());
@@ -873,16 +843,25 @@ public class ModelToXSDModel {
             refnsUs.add(appinfoU);
         }
         addAnnotationDoc(doc, decE, p.docL());
-        
-        var subU = "";
-        if (null != p.subPropertyOf()) subU = p.subPropertyOf().uri();
-        else subU = pU2subU.getOrDefault(p.uri(), "");
-        if (!subU.isEmpty() && !p.isAttribute()) {
-            var subnsU = m.uriToNSU(subU);
-            var subQ = m.uriToQN(subU);
-            setAttribute(decE, "substitutionGroup", subQ);
-            refnsUs.add(subnsU);
+
+        var subQL = new StringJoiner(" ");
+        var subL  = new ArrayList<>(p.subPropertyOfS());
+        var apU   = pU2subU.get(p.uri());
+        Collections.sort(subL);
+        for (var subp : subL) {
+            if (!subp.isChoice()) {
+                subQL.add(subp.qname());
+                refnsUs.add(subp.namespaceURI());
+            }
         }
+        if (null != apU && !p.isAttribute()) {
+            var apnsU = m.uriToNSU(apU);
+            var apQ   = m.uriToQN(apU);
+            subQL.add(apQ);
+            refnsUs.add(apnsU);
+        }
+        var subQ = subQL.toString();
+        if (!subQ.isEmpty()) setAttribute(decE, "substitutionGroup", subQ);
         eL.add(decE);        
     }
     
@@ -1162,12 +1141,14 @@ public class ModelToXSDModel {
         xw.writeXML(dom, outF);        
     }
     
-    protected void writeXSD (Document doc, File outF, Map<String,String> bc2pre) throws IOException {
+    // Write a NIEM schema document to a file.  
+    // Reorder attributes in a pleasing way.
+    protected void writeXSD (Document doc, File outF, String appinfoPre) throws IOException {
         var pF   = outF.getParentFile();
         pF.mkdirs();
         var os = new FileOutputStream(outF);
         var ow = new OutputStreamWriter(os, "UTF-8");
-        var xsdW = new NIEMXSDWriter(bc2pre);
+        var xsdW = new NIEMXSDWriter(appinfoPre);
         xsdW.writeXML(doc, ow);
         ow.close();
     }
