@@ -126,7 +126,7 @@ public class ModelXMLWriter {
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", x.prefix());
         appendSimpleChild(doc, e, "NamespaceURI", x.uri());
         appendSimpleChild(doc, e, "NamespacePrefixText", x.prefix());
-        if (NSK_XML != NamespaceKind.namespaceToKind(x.uri()))
+        if (NSK_XML != NamespaceKind.namespaceToKindValue(x.uri()))
             for (var dls : x.docL()) appendDocumentation(doc, e, dls);
         for (var cta : x.ctargL()) appendSimpleChild(doc, e, "ConformanceTargetURI", cta);
         appendSimpleChild(doc, e, "DocumentFilePathText", x.documentFilePath());
@@ -223,7 +223,8 @@ public class ModelXMLWriter {
         appendComponentReference(doc, c, x.property(), nsS);
         appendSimpleChild(doc, c, "MinOccursQuantity", x.minOccurs());
         appendSimpleChild(doc, c, "MaxOccursQuantity", x.maxOccurs());
-        appendSimpleChild(doc, c, "AugmentationIndex", x.index());
+        if (x.index() >= 0)
+            appendSimpleChild(doc, c, "AugmentationIndex", ""+x.index());
         var gccL = new ArrayList<>(x.codeS());
         Collections.sort(gccL);
         for (var code : gccL) appendSimpleChild(doc, c, "GlobalClassCode", code);

@@ -79,6 +79,8 @@ import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
 import org.mitre.niem.utility.MapToList;
+import org.mitre.niem.utility.MapToSet;
+import static org.mitre.niem.utility.StringUtils.replaceSuffix;
 import static org.mitre.niem.xml.XMLSchemaDocument.evalForNodes;
 import static org.mitre.niem.xml.XMLSchemaDocument.evalForString;
 import static org.mitre.niem.xml.XMLSchemaDocument.getDocumentation;
@@ -309,7 +311,7 @@ public class ModelFromXSD {
     private final Set<String> litClassUs                        = new HashSet<>();  // literal class URIs
     private final Set<String> simpleDtUs                        = new HashSet<>();  // FooSimpleType datatypes
     private final Map<String,String> baseTypeU                  = new HashMap<>();  // base of this type
-    private final Map<String,Set<String>> hasBaseUs             = new HashMap<>();  // types with this base
+    private final MapToSet<String,String> hasBaseUs             = new MapToSet<>();  // types with this base
     private final Map<String,String> litPropTypeU               = new HashMap<>();  // literal prop uri -> datatype uri
 
     private void processTypeDefinitions () {
@@ -328,7 +330,7 @@ public class ModelFromXSD {
                 var baseU = qnToURI(schE, baseQ);
                 tU2XS.put(tU, xtype);
                 baseTypeU.put(tU, baseU);
-                if (sch.isModelComponentU(baseU)) addToStringSetMap(hasBaseUs, baseU, tU);
+                if (sch.isModelComponentU(baseU)) hasBaseUs.add(baseU, tU);
                 if ("simpleType".equals(schE.getLocalName())) {
                     sTUs.add(tU);
                     dtU2xstype.put(tU, (XSSimpleTypeDefinition)xtype);
@@ -374,7 +376,7 @@ public class ModelFromXSD {
             var cscU  = replaceSuffix(stU, "SimpleType", "Type");
             var wrapU = "";
             var stnsU = sch.uriToNamespaceU(stU);
-            var hbUs  = hasBaseUs.getOrDefault(stU, EMPTY_STRING_SET);
+            var hbUs  = hasBaseUs.get(stU);
             for (var hbU : hbUs) {
                 if (!datatypeUs.contains(hbU)) continue;
                 var hbnsU = sch.uriToNamespaceU(hbU);
@@ -766,7 +768,7 @@ public class ModelFromXSD {
                 if (!subQ.isEmpty()) {
                     var subU   = schemaQNToURI(schE, subQ);
                     var subnsU = m.uriToNSU(subU);
-                    if (NSK_STRUCTURES == NamespaceKind.namespaceToKind(subnsU)) {
+                    if (NSK_STRUCTURES == NamespaceKind.namespaceToKindValue(subnsU)) {
                         globalAugS.add((ObjectProperty)p);
                     }
                     else {
@@ -1209,7 +1211,7 @@ public class ModelFromXSD {
             var xattu = (XSAttributeUse)xobjL.item(i);
             var xatt  = xattu.getAttrDeclaration();
             var nsuri = xatt.getNamespace();
-            if (NSK_STRUCTURES != NamespaceKind.namespaceToKind(nsuri)) return true;        
+            if (NSK_STRUCTURES != NamespaceKind.namespaceToKindValue(nsuri)) return true;        
         }
         return false;
     }
@@ -1297,21 +1299,7 @@ public class ModelFromXSD {
     private XSComplexTypeDefinition uriToXSCType (String uri) {
         return (XSComplexTypeDefinition)uriToXSType(uri);
     }
-    
-    public static void addToStringSetMap (Map<String,Set<String>> map, String key, String val) {
-        var set = map.get(key);
-        if (null == set) {
-            set = new HashSet<>();
-            map.put(key, set);
-        }
-        set.add(val);        
-    }
-    
-    public static String replaceSuffix (String s, String oSuf, String nSuf) {
-        if (s.endsWith(oSuf))
-            return s.substring(0, s.length() - oSuf.length()) + nSuf;
-        return s;
-    }
+
     
     private void dumpXSD () {
         var nsmap = sch.namespaceMap();

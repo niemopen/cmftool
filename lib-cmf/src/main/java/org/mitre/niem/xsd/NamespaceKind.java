@@ -331,7 +331,7 @@ public class NamespaceKind {
      * @param ns - namespace URI string
      * @return namespace kind
      */    
-    public static int namespaceToKind (String ns) {
+    public static int namespaceToKindValue (String ns) {
         return codeToKind(namespaceToKindCode(ns));
     }
     

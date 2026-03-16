@@ -76,6 +76,8 @@ public class Model extends CMFObject {
     private MapToSet<Property,Property> dirSubS         = null;             // all direct subproperties
     private MapToSet<Property,Property> allSubS         = null;             // all direct and indirect subproperties
     
+    public NamespaceMap nsmap()                         { return nsmap; }
+    
     // Returns a list of model objects.
     // In general you must not modify collections returned by CMF objects.
     public List<ClassType> classTypeL ()                { return new ArrayList<>(classMap.values()); }

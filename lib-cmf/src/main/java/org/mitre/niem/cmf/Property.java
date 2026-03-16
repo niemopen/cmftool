@@ -81,6 +81,11 @@ public class Property extends Component {
     // knows that Y is subproperty of X.  But often we instead want to know 
     // all of the subproperties of X.  We can only get that from the complete model.
 
+    // This property is a subProperty of zero or more other properties.
+    // Returns that set.  Doesn't include augmentation points (because those
+    // aren't model objects).  Substitution for other components is possible 
+    // but unusual in NIEM XSD.  So these are usually the result of xs:choice
+    // elements in an extension schema document.
     public Set<Property> subPropertyOfS ()     { return subpropOfS; }
     
     public void addSubPropertyOf (Property p) {
@@ -94,14 +99,19 @@ public class Property extends Component {
         model().changeSubProps();
     }
     
+    // Returns a set of all properties that have this property in their
+    // subPropertyOf set.
     public Set<Property> directSubProps () {
         return model().directSubProps(this);
     }
     
+    // Returns a set of all direct and indirect subproperties of this object.
     public Set<Property> allSubProps () {
         return model().allSubProps(this);
     }
     
+    
+    // Routines for creating model objects from CMF-XML
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

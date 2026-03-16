@@ -67,6 +67,7 @@ public class NamespaceMap {
         uri2Prefix.put(XML_NS_URI, "xml");
     }
     
+    // Copy constructor
     public NamespaceMap (NamespaceMap nm) {
         prefix2URI = new HashMap<>(nm.prefix2URI);
         uri2Prefix = new HashMap<>(nm.uri2Prefix);

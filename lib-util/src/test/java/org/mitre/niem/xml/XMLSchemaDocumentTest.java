@@ -26,6 +26,7 @@ package org.mitre.niem.xml;
 import java.io.File;
 import org.assertj.core.api.Assertions;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mitre.niem.xml.XMLSchemaDocument.getDocumentation;
@@ -137,33 +138,15 @@ public class XMLSchemaDocumentTest {
         var xsd = new XMLSchemaDocument(xsDocF);
         var nsd = xsd.namespaceDeclarations();
         assertThat(nsd)
-                .hasSize(4)
-                .satisfiesExactlyInAnyOrder(
-                    obj -> {
-                        assertThat(obj.prefix().equals("ct"));
-                        assertThat(obj.ns().equals("https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"));
-                        assertThat(obj.line() == 4);
-                        assertThat(obj.depth() == 0);                        
-                    },
-                    obj -> {
-                        assertThat(obj.prefix().equals("xs"));
-                        assertThat(obj.ns().equals("http://www.w3.org/2001/XMLSchema"));
-                        assertThat(obj.line() == 5);
-                        assertThat(obj.depth() == 0);                        
-                    },
-                    obj -> {
-                        assertThat(obj.prefix().equals("ct"));
-                        assertThat(obj.ns().equals("https://example.com/bogus-ct/"));
-                        assertThat(obj.line() == 13);
-                        assertThat(obj.depth() == 1);                        
-                    },
-                    obj -> {
-                        assertThat(obj.prefix().equals("foo"));
-                        assertThat(obj.ns().equals("http://example.com/foo/"));
-                        assertThat(obj.line() == 13);
-                        assertThat(obj.depth() == 1);                        
-                    }
-                );
+            .extracting(XMLNamespaceDeclaration::prefix, 
+                XMLNamespaceDeclaration::ns, 
+                XMLNamespaceDeclaration::depth)
+            .containsExactlyInAnyOrder(
+                tuple("ct", "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/", 0),
+                tuple("xs","http://www.w3.org/2001/XMLSchema", 0),
+                tuple("ct", "https://example.com/bogus-ct/", 1),
+                tuple("foo", "http://example.com/foo/", 1)
+            );
     }
     
     @Test

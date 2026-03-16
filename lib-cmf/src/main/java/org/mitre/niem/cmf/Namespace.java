@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import static org.mitre.niem.utility.StringUtils.replaceSuffix;
 import org.mitre.niem.xml.LanguageString;
-import static org.mitre.niem.xsd.ModelFromXSD.replaceSuffix;
 import org.mitre.niem.xsd.NamespaceKind;
 
 /**

@@ -21,39 +21,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mitre.niem.json;
-
-import java.io.File;
-import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.List;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import org.mitre.niem.cmf.ModelXMLReader;
-import org.mitre.niem.cmf.Property;
+package org.mitre.niem.utility;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class ModelToJSONSchemaTest {
+public class StringUtils {
     
-    public ModelToJSONSchemaTest() {
-    }
-
-//    @Test
-    public void test () throws Exception {
-        var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File("src/test/resources/json/itl.cmf"));
-        var js    = new ModelToJSONSchema(model);
-        var w     = new StringWriter();
-        List<Property> msgPL = Arrays.asList(model.qnToProperty("ms"));
-//        js.setMessageProperties(msgPL);
-        js.setContextURI("http://example.com/Request/JSON");
-        js.writeSchema(w);
-        var s     = w.toString();
-        int x = 0;
+    public static String replaceSuffix (String s, String oSuf, String nSuf) {
+        if (s.endsWith(oSuf))
+            return s.substring(0, s.length() - oSuf.length()) + nSuf;
+        return s;
     }
     
 }
