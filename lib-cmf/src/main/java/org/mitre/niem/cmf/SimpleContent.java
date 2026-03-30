@@ -65,7 +65,14 @@ public class SimpleContent extends CMFObject {
     @Override
     public boolean addToAugmentRecord (String eln, String loc, AugmentRecord ar) {
         switch (eln) {
-        case "AugmentationIndex":       ar.setIndex(this.content()); break;
+        case "AugmentationIndex":
+            try {
+                ar.setIndex(Integer.parseInt(this.content().trim())); 
+            }
+            catch (NumberFormatException ex) {
+                LOG.error("{}: Invalid AugmentationIndex (not a number)", loc);
+            }
+            break;
         case "GlobalClassCode":         ar.addCode(this.content()); break;
         case "MaxOccursQuantity":       ar.setMaxOccurs(this.content()); break;
         case "MinOccursQuantity":       ar.setMinOccurs(this.content()); break;

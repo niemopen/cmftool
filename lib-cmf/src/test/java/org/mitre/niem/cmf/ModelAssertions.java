@@ -43,11 +43,11 @@ import org.mitre.niem.xml.LanguageString;
 public class ModelAssertions {
     
     public static void checkAny (Model model) {
-        var ct1 = model.qnToClassType("test:Test1Type");
-        var ct2 = model.qnToClassType("test:Test2Type");
-        var ct3 = model.qnToClassType("test:Test3Type");
-        var ct4 = model.qnToClassType("test:Test4Type");
-        var ct5 = model.qnToClassType("test:Test5Type");
+        var ct1 = model.qnToClassType("t:Test1Type");
+        var ct2 = model.qnToClassType("t:Test2Type");
+        var ct3 = model.qnToClassType("t:Test3Type");
+        var ct4 = model.qnToClassType("t:Test4Type");
+        var ct5 = model.qnToClassType("t:Test5Type");
         
         var ap = ct1.anyL().get(0);
         assertThat(ct1.anyL()).hasSize(1);
@@ -74,27 +74,27 @@ public class ModelAssertions {
     }
         
     public static void checkAttAugment (Model m) {
-        var tns = m.namespaceObj("test");
-        var op = m.qnToProperty("test:ObjProp");
+        var tns = m.namespaceObj("t");
+        var op = m.qnToProperty("t:ObjProp");
         assertThat(tns.augL())
             .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
                 AugmentRecord::maxOccurs, AugmentRecord::index)
             .containsExactlyInAnyOrder(
                 Assertions.tuple(
-                    m.qnToClassType("test:CCOneType"),
-                    m.qnToProperty("test:attProp"),
+                    m.qnToClassType("t:CCOneType"),
+                    m.qnToProperty("t:attProp"),
                     "0", "1", -1),
                 Assertions.tuple(
-                    m.qnToClassType("test:CCTwoType"),
-                    m.qnToProperty("test:attProp"),
+                    m.qnToClassType("t:CCTwoType"),
+                    m.qnToProperty("t:attProp"),
                     "1", "1", -1),
                 Assertions.tuple(
-                    m.qnToClassType("test:SCOneType"),
-                    m.qnToProperty("test:attProp"),
+                    m.qnToClassType("t:SCOneType"),
+                    m.qnToProperty("t:attProp"),
                     "0", "1", -1),
                  Assertions.tuple(
-                    m.qnToClassType("test:SCTwoType"),
-                    m.qnToProperty("test:ObjProp"),
+                    m.qnToClassType("t:SCTwoType"),
+                    m.qnToProperty("t:ObjProp"),
                     "0", "1", -1)
                  );  
     }
@@ -102,11 +102,11 @@ public class ModelAssertions {
     public static void checkAugment (Model m) {
         var jns = m.namespaceObj("j");
         var ncns = m.namespaceObj("nc");
-        var tns = m.namespaceObj("test");
+        var tns = m.namespaceObj("t");
         
         assertThat(m.namespaceList())
             .extracting(Namespace::prefix)
-            .containsExactly("j", "nc", "test", "xml", "xs");
+            .containsExactly("j", "nc", "t", "xml", "xs");
 
         assertThat(jns.augL())
             .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
@@ -124,10 +124,10 @@ public class ModelAssertions {
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("nc:personNameCommentText"),
-                    "0", "1", -1, ""),
+                    "0", "1", 3, ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
-                    m.qnToProperty("test:CommentDestinationText"),
+                    m.qnToProperty("t:CommentDestinationText"),
                     "1", "1", 0, ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
@@ -139,11 +139,11 @@ public class ModelAssertions {
                     "1", "1", 2, ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
-                    m.qnToProperty("test:TestAugElement"),
+                    m.qnToProperty("t:TestAugElement"),
                     "0", "unbounded", -1, ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:CommentType"),
-                    m.qnToProperty("test:CommentDestinationText"),
+                    m.qnToProperty("t:CommentDestinationText"),
                     "0", "unbounded", -1, "")           
             );            
         assertTrue(jns.augL().get(0).codeS().isEmpty());
@@ -874,8 +874,8 @@ public class ModelAssertions {
         assertEquals("INTERNAL", t4.referenceCode());
         assertEquals("INTERNAL", t4.effectiveReferenceCode());
         
-        assertEquals("", t5.referenceCode());
-        assertEquals("INTERNAL", t5.effectiveReferenceCode());
+        assertEquals("NONE", t5.referenceCode());
+        assertEquals("NONE", t5.effectiveReferenceCode());
         
         var p3 = m.qnToObjectProperty("t:ThreeProp");
         var p4 = m.qnToObjectProperty("t:FourProp");

@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema
-  targetNamespace="http://example.com/refCode/"
-  xmlns:appinfo="https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/"
+  targetNamespace="http://example.com/test/"
   xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
   xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
-  xmlns:t="http://example.com/refCode/"
+  xmlns:t="http://example.com/test/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument"
   version="1"
   xml:lang="en-US">
   <xs:annotation>
     <xs:documentation>
-      Test reference code for xs:choice.
+      Test for xs:choice.
     </xs:documentation>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
@@ -21,9 +20,8 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:choice>
-            <xs:element ref="t:Prop1"/>
-          </xs:choice>
+          <xs:element ref="t:Prop1"/>
+          <xs:element ref="t:T1AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -31,9 +29,10 @@
   <xs:complexType name="T2Type">
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
-        <xs:choice minOccurs="0">
-          <xs:element ref="t:Prop1"/>
-        </xs:choice>
+        <xs:sequence>
+          <xs:element ref="t:Prop1" minOccurs="0"/>
+          <xs:element ref="t:T2AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -45,6 +44,7 @@
             <xs:element ref="t:Prop1"/>
             <xs:element ref="t:Prop2"/>
           </xs:choice>
+          <xs:element ref="t:T3AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -57,6 +57,7 @@
             <xs:element ref="t:Prop1"/>
             <xs:element ref="t:Prop2"/>
           </xs:choice>
+          <xs:element ref="t:T4AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -70,11 +71,37 @@
             <xs:element ref="t:Prop2"/>
             <xs:element ref="t:Prop3"/>
           </xs:choice>
+          <xs:element ref="t:T5AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:element name="Prop1" type="niem-xs:string"/>
-  <xs:element name="Prop2" type="niem-xs:string"/>
-  <xs:element name="Prop3" type="niem-xs:string"/>
+  <xs:element name="Prop1" type="niem-xs:string" nillable="true"/>
+  <xs:element name="Prop2" type="niem-xs:string" nillable="true"/>
+  <xs:element name="Prop3" type="niem-xs:string" nillable="true"/>
+  <xs:element name="T1AugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for T1Type.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="T2AugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for T2Type.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="T3AugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for T3Type.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="T4AugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for T4Type.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="T5AugmentationPoint" abstract="true">
+    <xs:annotation>
+      <xs:documentation>An augmentation point for T5Type.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
 </xs:schema>

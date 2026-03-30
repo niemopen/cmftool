@@ -53,15 +53,16 @@ public class ModelToXSDModelTest {
     
     @Test
     public void testOne () throws Exception {
-        testRoundTrip(new File(resDN, "xsd6/literalProps.xsd"));        
+        testRoundTrip(new File(resDN, "xsd6/gaObjObj.xsd"));        
     }
 
     @Test
     public void testWriteModelXSD () throws Exception {
+        testRoundTrip(new File(resDN, "xsd6/any.xsd"));
         testRoundTrip(new File(resDN, "xsd6/archVersions.xsd"));
         testRoundTrip(new File(resDN, "xsd6/attAugment.xsd"));
         testRoundTrip(new File(resDN, "xsd6/augment.xsd"));
-//        testRoundTrip(new File(resDN, "xsd6/choice.xsd"));                // CAN'T ROUNDTRIP
+        testRoundTrip(new File(resDN, "xsd6/choice.xsd")); 
         testRoundTrip(new File(resDN, "xsd6/class.xsd"));
         testRoundTrip(new File(resDN, "xsd6/codeListBinding.xsd"));
         testRoundTrip(new File(resDN, "xsd6/component.xsd"));
@@ -104,9 +105,9 @@ public class ModelToXSDModelTest {
         
         // Create a new XSD pile from CMF
         var mtxsd = new ModelToXSDModel(model);
-        if (null != model.namespaceObj("test")) mtxsd.setRootNamespace("test");
-        else if (null != model.namespaceObj("t")) mtxsd.setRootNamespace("t");
-        mtxsd.setCatalogPath("xml-catalog.xml");
+//        if (null != model.namespaceObj("test")) mtxsd.setRootNamespace("test");
+//        else if (null != model.namespaceObj("t")) mtxsd.setRootNamespace("t");
+//        mtxsd.setCatalogPath("xml-catalog.xml");
         mtxsd.writeModelXSD(xsdD);
         var xsdOneF = new File(xsdD, xsdName);
         var schOne  = new NIEMSchema(xsdOneF);

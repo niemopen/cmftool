@@ -147,6 +147,7 @@ public class ParserBootstrap {
      */
     public static DocumentBuilder docBuilder () throws ParserConfigurationException {
         init(BOOTSTRAP_DOCUMENTBUILDER);
+        var db = Holder.instance.db;
         Holder.instance.db.reset();
         return Holder.instance.db;
     }
@@ -165,7 +166,7 @@ public class ParserBootstrap {
      * @throws ParserConfigurationException 
      */
     public static DocumentBuilderFactory docBuilderFactory () throws ParserConfigurationException {
-        var dbf = DocumentBuilderFactory.newInstance();
+        var dbf = DocumentBuilderFactory.newDefaultNSInstance();
         dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
         dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);

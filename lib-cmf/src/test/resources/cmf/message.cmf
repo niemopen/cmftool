@@ -94,6 +94,21 @@
     <Namespace structures:ref="t" xsi:nil="true"/>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
+  <ObjectProperty structures:id="t.T1Prop">
+    <Name>T1Prop</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.T1Type" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="t.T2Prop">
+    <Name>T2Prop</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.T2Type" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="t.T3Prop">
+    <Name>T3Prop</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.T3Type" xsi:nil="true"/>
+  </ObjectProperty>
   <Class structures:id="t.T1Type">
     <Name>T1Type</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>

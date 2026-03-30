@@ -5,9 +5,9 @@
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xml:lang="en-US">
-  <Namespace structures:id="test">
+  <Namespace structures:id="t">
     <NamespaceURI>http://example.com/test/</NamespaceURI>
-    <NamespacePrefixText>test</NamespacePrefixText>
+    <NamespacePrefixText>t</NamespacePrefixText>
     <DocumentationText>Class test schema. Test xs:any, xs:anyAttribute</DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>any.xsd</DocumentFilePathText>
@@ -21,27 +21,27 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
-  <DataProperty structures:id="test.AnElement">
+  <DataProperty structures:id="t.AnElement">
     <Name>AnElement</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>AnElement doc string #1</DocumentationText>
     <DeprecatedIndicator>true</DeprecatedIndicator>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <DataProperty structures:id="test.AnotherElement">
+  <DataProperty structures:id="t.AnotherElement">
     <Name>AnotherElement</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>AnotherElement doc string #1</DocumentationText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <Class structures:id="test.Test1Type">
+  <Class structures:id="t.Test1Type">
     <Name>Test1Type</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>Test1Type doc string #1</DocumentationText>
     <DocumentationText>Test1Type doc string #2</DocumentationText>
     <AbstractIndicator>true</AbstractIndicator>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.AnElement" xsi:nil="true"/>
+      <DataProperty structures:ref="t.AnElement" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <DocumentationText>AnElement property of Test1Type</DocumentationText>
@@ -53,12 +53,12 @@
       <ProcessingCode>lax</ProcessingCode>
     </AnyPropertyAssociation>
   </Class>
-  <Class structures:id="test.Test2Type">
+  <Class structures:id="t.Test2Type">
     <Name>Test2Type</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>Test2Type doc string</DocumentationText>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.AnElement" xsi:nil="true"/>
+      <DataProperty structures:ref="t.AnElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
@@ -69,33 +69,33 @@
       <ProcessingCode>strict</ProcessingCode>
     </AnyPropertyAssociation>
   </Class>
-  <Class structures:id="test.Test3Type">
+  <Class structures:id="t.Test3Type">
     <Name>Test3Type</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>Test3Type extends Test1Type</DocumentationText>
-    <SubClassOf structures:ref="test.Test1Type" xsi:nil="true"/>
+    <SubClassOf structures:ref="t.Test1Type" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.AnotherElement" xsi:nil="true"/>
+      <DataProperty structures:ref="t.AnotherElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Class structures:id="test.Test4Type">
+  <Class structures:id="t.Test4Type">
     <Name>Test4Type</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <SubClassOf structures:ref="test.Test1Type" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <SubClassOf structures:ref="t.Test1Type" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.AnotherElement" xsi:nil="true"/>
+      <DataProperty structures:ref="t.AnotherElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Class structures:id="test.Test5Type">
+  <Class structures:id="t.Test5Type">
     <Name>Test5Type</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <SubClassOf structures:ref="test.Test1Type" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <SubClassOf structures:ref="t.Test1Type" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.AnotherElement" xsi:nil="true"/>
+      <DataProperty structures:ref="t.AnotherElement" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>

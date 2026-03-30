@@ -53,7 +53,10 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="FiveType">
+  <xs:complexType name="FiveType" appinfo:referenceCode="NONE">
+    <xs:annotation>
+      <xs:documentation>Can't inherit; incompatible refCode</xs:documentation>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="t:FourType">
         <xs:sequence>

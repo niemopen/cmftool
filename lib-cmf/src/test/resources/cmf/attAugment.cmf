@@ -5,9 +5,9 @@
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xml:lang="en-US">
-  <Namespace structures:id="test">
+  <Namespace structures:id="t">
     <NamespaceURI>http://example.com/test/</NamespaceURI>
-    <NamespacePrefixText>test</NamespacePrefixText>
+    <NamespacePrefixText>t</NamespacePrefixText>
     <DocumentationText>
       Attribute augmentation appinfo test
     </DocumentationText>
@@ -18,26 +18,26 @@
     <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
-      <Class structures:ref="test.CCOneType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
+      <Class structures:ref="t.CCOneType" xsi:nil="true"/>
+      <DataProperty structures:ref="t.attProp" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </AugmentationRecord>
     <AugmentationRecord>
-      <Class structures:ref="test.CCTwoType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
+      <Class structures:ref="t.CCTwoType" xsi:nil="true"/>
+      <DataProperty structures:ref="t.attProp" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </AugmentationRecord>
     <AugmentationRecord>
-      <Class structures:ref="test.SCOneType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.attProp" xsi:nil="true"/>
+      <Class structures:ref="t.SCOneType" xsi:nil="true"/>
+      <DataProperty structures:ref="t.attProp" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </AugmentationRecord>
     <AugmentationRecord>
-      <Class structures:ref="test.SCTwoType" xsi:nil="true"/>
-      <ObjectProperty structures:ref="test.ObjProp" xsi:nil="true"/>
+      <Class structures:ref="t.SCTwoType" xsi:nil="true"/>
+      <ObjectProperty structures:ref="t.ObjProp" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </AugmentationRecord>
@@ -47,73 +47,73 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
-  <DataProperty structures:id="test.attProp">
+  <DataProperty structures:id="t.attProp">
     <Name>attProp</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <Datatype structures:ref="xs.token" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </DataProperty>
-  <DataProperty structures:id="test.DataProp">
+  <DataProperty structures:id="t.DataProp">
     <Name>DataProp</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <ObjectProperty structures:id="test.ObjProp">
+  <ObjectProperty structures:id="t.ObjProp">
     <Name>ObjProp</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
-    <Class structures:ref="test.ObjType" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.ObjType" xsi:nil="true"/>
   </ObjectProperty>
-  <DataProperty structures:id="test.SCOneLiteral">
+  <DataProperty structures:id="t.SCOneLiteral">
     <Name>SCOneLiteral</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <DataProperty structures:id="test.SCTwoLiteral">
+  <DataProperty structures:id="t.SCTwoLiteral">
     <Name>SCTwoLiteral</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <Class structures:id="test.CCOneType">
+  <Class structures:id="t.CCOneType">
     <Name>CCOneType</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Class structures:id="test.CCTwoType">
+  <Class structures:id="t.CCTwoType">
     <Name>CCTwoType</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Class structures:id="test.ObjType">
+  <Class structures:id="t.ObjType">
     <Name>ObjType</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.DataProp" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Class structures:id="test.SCOneType">
+  <Class structures:id="t.SCOneType">
     <Name>SCOneType</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.SCOneLiteral" xsi:nil="true"/>
+      <DataProperty structures:ref="t.SCOneLiteral" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Class structures:id="test.SCTwoType">
+  <Class structures:id="t.SCTwoType">
     <Name>SCTwoType</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="test.SCTwoLiteral" xsi:nil="true"/>
+      <DataProperty structures:ref="t.SCTwoLiteral" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>

@@ -23,6 +23,9 @@
  */
 package org.mitre.niem.utility;
 
+import java.util.List;
+import java.util.Set;
+
 /**
  *
  * @author Scott Renner
@@ -36,4 +39,23 @@ public class StringUtils {
         return s;
     }
     
+    public static String listToString (List<String> sL) {
+        var res = "";
+        var sep = "";
+        for (var s : sL) {
+            res = res + sep + s;
+            sep = " ";
+        }
+        return res;
+    }
+    
+    public static String setToString (Set<String> sL) {
+        var res = "";
+        var sep = "";
+        for (var s : sL) {
+            res = res + sep + s;
+            sep = " ";
+        }
+        return res;
+    }    
 }

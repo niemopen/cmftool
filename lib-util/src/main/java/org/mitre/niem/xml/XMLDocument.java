@@ -177,6 +177,7 @@ public class XMLDocument {
     public static boolean evalForBoolean (Element e, String xpath) {
         xp.reset();
         try {
+            var xpe = xp.compile(xpath);
             return (Boolean) xp.evaluate(xpath, e, XPathConstants.BOOLEAN);
         } catch (XPathExpressionException ex) {
             LOG.error("Invalid XPath expression {}: {}", xpath, ex.getMessage());

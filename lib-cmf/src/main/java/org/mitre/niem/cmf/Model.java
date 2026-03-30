@@ -331,6 +331,7 @@ public class Model extends CMFObject {
             seen.add(np);
             todo.addAll(directSubProps(np));
         }
+        res.remove(p);
         return res;
     }
     

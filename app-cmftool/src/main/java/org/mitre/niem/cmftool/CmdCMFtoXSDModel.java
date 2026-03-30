@@ -38,8 +38,8 @@ import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
-import org.mitre.niem.xsd.ModelToXSDModel;
 import org.mitre.niem.xsd.NamespaceKind;
+import org.mitre.niem.xsd.ModelToXSDModel;
 
 /**
  *

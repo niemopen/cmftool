@@ -26,7 +26,6 @@ package org.mitre.niem.cmf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -115,6 +114,7 @@ public class ClassType extends Component {
     }
     
     public boolean hasSimpleContent () {
+        var ctn = name(); // DEBUG
         if (null != literalDatatype()) return true;
         else if (null == subClassOf()) return false;
         else return subClassOf().hasSimpleContent();

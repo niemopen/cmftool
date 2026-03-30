@@ -6,10 +6,10 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xml:lang="en-US">
   <Namespace structures:id="t">
-    <NamespaceURI>http://example.com/refCode/</NamespaceURI>
+    <NamespaceURI>http://example.com/test/</NamespaceURI>
     <NamespacePrefixText>t</NamespacePrefixText>
     <DocumentationText>
-      Test reference code for xs:choice.
+      Test for xs:choice.
     </DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>choice.xsd</DocumentFilePathText>

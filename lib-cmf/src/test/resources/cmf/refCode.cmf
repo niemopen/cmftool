@@ -58,7 +58,9 @@
   <Class structures:id="t.FiveType">
     <Name>FiveType</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>Can't inherit; incompatible refCode</DocumentationText>
     <SubClassOf structures:ref="t.FourType" xsi:nil="true"/>
+    <ReferenceCode>NONE</ReferenceCode>
     <ChildPropertyAssociation>
       <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>

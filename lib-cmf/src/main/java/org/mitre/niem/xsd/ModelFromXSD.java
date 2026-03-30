@@ -1050,8 +1050,7 @@ public class ModelFromXSD {
                 var arec = new AugmentRecord(cpa);
                 arec.setClassType(atype);
                 arec.addCode(gcode);
-                if (cpa.property().isAttribute()) arec.setIndex("-1");
-                else arec.setIndex(Integer.toString(index++));
+                arec.setIndex(index++);
                 augns.addAugmentRecord(arec);
             }
             m.removeObjectProperty(aprop);
@@ -1115,6 +1114,7 @@ public class ModelFromXSD {
                 arec.setProperty(p);
                 arec.setMaxOccurs("1");
                 arec.setMinOccurs("required".equals(use) ? "1" : "0");
+                arec.setIndex(-1);
                 if (!codes.isEmpty())
                     for (int i = 0; i < codeL.length; i++) arec.addCode(codeL[i]);
                 ns.addAugmentRecord(arec);

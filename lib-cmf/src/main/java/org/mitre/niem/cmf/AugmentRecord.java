@@ -46,9 +46,11 @@ public class AugmentRecord extends PropertyAssociation implements Comparable<Aug
     }
     
     private ClassType classType = null;                 // cmf:Class
-    private int index = -1;                             // cmf:AugmentationIndex
     private Set<String> codeS = new HashSet<>();        // cmf:GlobalClassCode
-    
+    private int index = -1;                             // cmf:AugmentationIndex
+                                                        // >0 for attribute in augmentation type
+                                                        // -1 for element substituting for aug point
+                                                        // -2 for property in appinfo:Augmentation
     @Override
     public ClassType classType ()                   { return classType; }
     @Override
@@ -63,10 +65,20 @@ public class AugmentRecord extends PropertyAssociation implements Comparable<Aug
     
     public void setClassType (ClassType ct)         { classType = ct; }
     public void setIndex (int s)                    { index = s; }
-    public void setIndex (String s)                 { index = NumberUtils.toInt(s, -3); }
     public void addCode (String s)                  { if (null != s) codeS.add(s); }
     public void removeCode (String s)               { codeS.remove(s); }
     public void clearCodes ()                       { codeS.clear(); }
+    
+    @Override
+    public String toString () {
+        var res = new StringBuilder();
+        res.append("AR[");
+        res.append(property().qname());
+        if (null != classType) res.append(","+classType.qname());
+        else res.append("GLOB");
+        res.append("]");
+        return res.toString();
+    }
         
     
     

@@ -34,9 +34,9 @@
     <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
   </Namespace>
-  <Namespace structures:id="test">
+  <Namespace structures:id="t">
     <NamespaceURI>http://example.com/test/</NamespaceURI>
-    <NamespacePrefixText>test</NamespacePrefixText>
+    <NamespacePrefixText>t</NamespacePrefixText>
     <DocumentationText>Test schema for element augmentations.</DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ExtensionSchemaDocument</ConformanceTargetURI>
     <DocumentFilePathText>augment.xsd</DocumentFilePathText>
@@ -46,13 +46,13 @@
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
       <Class structures:ref="nc.CommentType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.CommentDestinationText" xsi:nil="true"/>
+      <DataProperty structures:ref="t.CommentDestinationText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </AugmentationRecord>
     <AugmentationRecord>
       <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.CommentDestinationText" xsi:nil="true"/>
+      <DataProperty structures:ref="t.CommentDestinationText" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
       <AugmentationIndex>0</AugmentationIndex>
@@ -76,10 +76,11 @@
       <DataProperty structures:ref="nc.personNameCommentText" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
+      <AugmentationIndex>3</AugmentationIndex>
     </AugmentationRecord>
     <AugmentationRecord>
       <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-      <DataProperty structures:ref="test.TestAugElement" xsi:nil="true"/>
+      <DataProperty structures:ref="t.TestAugElement" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </AugmentationRecord>
@@ -163,15 +164,15 @@
     <DocumentationText>A data type for a character string.</DocumentationText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <DataProperty structures:id="test.CommentDestinationText">
+  <DataProperty structures:id="t.CommentDestinationText">
     <Name>CommentDestinationText</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>An intended recipient of the comment.</DocumentationText>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
-  <DataProperty structures:id="test.TestAugElement">
+  <DataProperty structures:id="t.TestAugElement">
     <Name>TestAugElement</Name>
-    <Namespace structures:ref="test" xsi:nil="true"/>
+    <Namespace structures:ref="t" xsi:nil="true"/>
     <DocumentationText>An augmentation element not part of an augmentation type.</DocumentationText>
     <Datatype structures:ref="xs.token" xsi:nil="true"/>
   </DataProperty>
