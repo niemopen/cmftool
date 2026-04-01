@@ -86,20 +86,22 @@ public class ModelToJSONSchema {
     static final Logger LOG = LogManager.getLogger(ModelToJSONSchema.class);
     
     private final Model m;
+    
     private final List<Property> metadataPL = new ArrayList<>();    // list of NIEM 3,4,5 metadata properties
     private Mapping map = new Mapping();                            // canonical to simple name map, if provided
-    private Datatype xsStringDT = null;                             // xs:string Datatype object
     private List<Property> msgPropL = null;                         // message property objects, if provided
     private String contextU = null;                                 // @context URI, if provided
-    private boolean inclDesc = true;                                // include component definitions in schema
+    private boolean inclDesc = true;                                // include component definitions in schema?
+    private boolean inclMinMax = false;                             // XSD atomic types test min & max values?
+    private boolean inclPattern = false;                            // XSD atomic types include pattern tests?
     
-    private MapToList<String,PropertyAssociation> augList = null;   // classQ -> list of augmentation propQs for class
+    private MapToList<String,PropertyAssociation> ctU2augL = null;  // classQ -> list of augmentation propQs for class
     private Deque<Component> doTypes = null;                        // class and datatype schemas remaining
     private Map<Component,JsonObject> typeSch = null;               // type -> schema json object
     private boolean needID = false;                                 // true if any class is referenceable
     
-    private static final String XS_STRING_U = W3C_XML_SCHEMA_NS_URI + "/xs:string";
-    
+    private Datatype xsStringDT = null;                             // xs:string Datatype object
+    private static final String XS_STRING_U = W3C_XML_SCHEMA_NS_URI + "/xs:string"; // xs:string URI
     
     /**
      * Creates a new converter for generating JSON Schema based on the 
@@ -108,38 +110,32 @@ public class ModelToJSONSchema {
      */
     public ModelToJSONSchema (Model model) {
         m = model;
-        xsStringDT = m.uriToDatatype(XS_STRING_U);      // make sure model has xs:string
-        if (null == xsStringDT) {                       // are you kidding me? bung it in.
-            var xsns = m.namespaceObj(W3C_XML_SCHEMA_NS_URI);
-            xsStringDT = new Datatype(xsns, "string");
-        }
-        // Get metadata properties from NIEM 3,4,5 namespaces
-        for (var p : m.propertyL()) {
-            var ns = p.namespace();
-            if (hasMetadata.contains(ns.archVersion())) {
-                if (p.name().endsWith("Metadata"))
-                    metadataPL.add(p);
-            }
-        }
     }
+    
     /**
      * Provides a Mapping object which will be used to replace model property
      * QNames in the schema; for example, msg:lname or lname instead of
-     * nc:PersonSurName.
-     * @param map 
+     * nc:PersonSurName.  A null parameter clears any existing map.
+     * @param map Mapping object
      */
     public void setMapping (Mapping map) {
         if (null == map) this.map = new Mapping();
         else this.map = map;
     }
     
+    /**
+     * When set true, the generated schema will not include namespace prefixes
+     * in property QNames.  Requires all properties in the model to have the
+     * same prefix after mapping. TODO
+     * @param noPrefix 
+     */
     public void setNoPrefix (boolean noPrefix) {
     }
     
     /**
      * When the message property is set, the generated schema will require the
      * root object to contain two keys: this property's qname, and @context.
-     * @param mprop 
+     * @param mprop message property's QName
      */
     public void setMessageProperty (Property mprop) {
         msgPropL = List.of(mprop);
@@ -180,33 +176,31 @@ public class ModelToJSONSchema {
         JSONWriter.write(sch, w);
     }
     
-    private final static String CARDINALITY_TEMPLATE =
-        "[ " + 
-          " { \"$ref\": \"#/definitions/%s\" }," +
-          " {" +
-              "\"type\": \"array\"," +
-              "\"items\": { \"$ref\": \"#/definitions/%s\" } } ]";
-    
-    private final static JsonObject IDREF_PATTERN_OBJ = 
+    private static final String CARDINALITY_TEMPLATE = """
+          [
+            { "$ref": "#/definitions/%s" },
+            { "type": "array", "items": { "$ref": "#/definitions/%s" } }
+          ]""";
+
+    private static final JsonObject IDREF_PATTERN_OBJ = 
         makeObject("pattern", "\"[4][-._A-Za-z0-9]*\"");
     
-    private final static JsonElement ID_OBJECT_ARRAY_SCHEMA =
-        makeElement(
-            "{"
-            + "  \"type\": \"array\","
-            + "  \"items\": {"
-            + "    \"type\": \"object\","
-            + "    \"properties\": {"
-            + "      \"@id\": {"
-            + "        \"type\": \"string\","
-            + "        \"format\": \"uri-reference\""
-            + "      }"
-            + "    },"
-            + "    \"required\": [\"@id\"],"
-            + "    \"additionalProperties\": false"
-            + "  }"
-            + "}"
-        );
+    private static final JsonElement ID_OBJECT_ARRAY_SCHEMA = makeElement("""
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "@id": {
+                "type": "string",
+                "format": "uri-reference"
+              }
+            },
+            "required": ["@id"],
+            "additionalProperties": false
+          }
+        }
+        """);
 
     /**
      * Generates a JSON schema from the model and the specified options, writing
@@ -214,19 +208,30 @@ public class ModelToJSONSchema {
      * @param root 
      */
     public void createSchema (JsonObject root) {
-        
+        // Get xs:string datatype from model
+        xsStringDT = m.uriToDatatype(XS_STRING_U);
+        if (null == xsStringDT) {                       // are you kidding me?
+            var xsns = m.namespaceObj(W3C_XML_SCHEMA_NS_URI);
+            xsStringDT = new Datatype(xsns, "string");
+        }
+        // Get metadata properties from NIEM 3,4,5 namespaces
+        for (var p : m.propertyL()) {
+            var ns = p.namespace();
+            if (hasMetadata.contains(ns.archVersion())) {
+                if (p.name().endsWith("Metadata"))
+                    metadataPL.add(p);
+            }
+        }        
         // Organize all the augmentation records by the augmented class
         // (including global augmentation codes "OBJECT", etc.)
-        if (null == augList) {
-            augList = new MapToList<>();
-            for (var ns : m.namespaceSet()) {
-                for (var arec : ns.augL()) {
-                    var ct = arec.classType();
-                    if (null != ct) augList.add(ct.qname(), arec);
-                    for (var gcode : arec.codeS()) augList.add(gcode, arec);
-                }
-            } 
-        }
+        ctU2augL = new MapToList<>();
+        for (var ns : m.namespaceSet()) {
+            for (var arec : ns.augL()) {
+                var ct = arec.classType();
+                if (null != ct) ctU2augL.add(ct.qname(), arec);
+                for (var gcode : arec.codeS()) ctU2augL.add(gcode, arec);
+            }
+        } 
         // Start of schema object.
         root.addProperty("$schema", "http://json-schema.org/draft-07/schema#");
         root.addProperty("type", "object");
@@ -242,23 +247,23 @@ public class ModelToJSONSchema {
             if (msgPropL.size() > 1) {
                 var oneOfA = new JsonArray();
                 for (var mprop : msgPropL) {
-                    var mkey = map.qnToN(mprop.qname());
+                    var mkey = qnToKey(mprop.qname());
                     var reqO = makeObject("required", makeStringArray("@context", mkey));
                     oneOfA.add(reqO);                    
                 }
                 root.add("oneOf", oneOfA);
             }
-            // If exactly one message property specified, generate schema like
-            // "required": [ "@context", "msg:Requet" ]
+            // Otherwise, if exactly one message property specified, generate 
+            // schema like "required": [ "@context", "msg:Request" ]
             else {
-                var mkey = map.qnToN(msgPropL.get(0).qname());
+                var mkey = qnToKey(msgPropL.get(0).qname());
                 var reqA = makeStringArray("@context", mkey);
                 root.add("required", reqA);
             }
             // Validating a message? That's always a context pair plus one property:value pair
             root.addProperty("additionalProperties", false);
         }
-        // Not validating messages?  We don't need "additionalProperties".
+        // Not validating messages?  Then we don't need "additionalProperties".
         // Generate schema:  "required": [ "@context" ]
         else {
             root.add("required", makeStringArray("@context"));
@@ -269,10 +274,10 @@ public class ModelToJSONSchema {
         // plus the @context key.  When validating components against the model, 
         // that will be all the properties in the model.  Keep track of the classes
         // and datatypes seen -- need to generate schema for those, later.
-        var propVal = new JsonObject();            // value of "properties" key
-        var typeS   = new HashSet<Component>();
-        var propL   = msgPropL;
-        if (null == propL || propL.isEmpty()) {
+        var propVal = new JsonObject();             // value of "properties" key in schema
+        var typeS   = new HashSet<Component>();     // set of classes and datatypes to create
+        var propL   = msgPropL;                     // list of message properties
+        if (null == propL || propL.isEmpty()) {     // all properties in the model, if none
             propL = m.propertyL();
             Collections.sort(propL);
         }
@@ -280,20 +285,21 @@ public class ModelToJSONSchema {
             var pt = p.type();
             if (p.isAbstract()) continue;
             if (null == pt) pt = xsStringDT;    // externals, xml:lang, xml:base
-            var key  = map.qnToN(p.qname());
-            var refQ = pt.qname();
+            var key  = qnToKey(p.qname());      // property QName, possibly mapped
+            var refQ = pt.qname();              // type QNames are not mapped
             var prO  = new JsonObject();
             typeS.add(pt);
             if (inclDesc && null != p.definition()) prO.addProperty("description", p.definition());
             
             // Validating a message?  Message properties are never repeated
-            if (null != msgPropL) {
+            if (null != msgPropL && !msgPropL.isEmpty()) {
                 prO.addProperty("$ref", "#/definitions/" + refQ);
             }
             // Validating components? Those can be repeated.
             else {
                 var card = String.format(CARDINALITY_TEMPLATE, refQ, refQ);
-                prO.add("anyOf", makeElement(card).getAsJsonArray());
+                var cardA = makeElement(card);
+                prO.add("oneOf", cardA);
             }
             propVal.add(key, prO);
         } 
@@ -318,7 +324,7 @@ public class ModelToJSONSchema {
         // of each property from each class.
         doTypes = new ArrayDeque<>(typeS);      // class and datatypes left to process
         typeSch = new HashMap<>();              // map of type QN -> schema object
-        needID  = false;                        // any referencable class?
+        needID  = false;                        // any referencable class in model?
         while (!doTypes.isEmpty()) {
             var type = doTypes.removeFirst();
             var tq = type.qname();
@@ -326,6 +332,7 @@ public class ModelToJSONSchema {
             else createDatatype((Datatype)type);
         }
         // Make sure we have xs:anyURI definition if any class is referencable
+        // Make sure we have an xs:string definition
         if (needID) {
             var xsns = m.namespaceObj(W3C_XML_SCHEMA_NS_URI);
             var dtU  = W3C_XML_SCHEMA_NS_URI + "/anyURI";
@@ -378,8 +385,8 @@ public class ModelToJSONSchema {
         var wildF  = false;
         var classS = new Stack<ClassType>();
         var xct    = ct;
-        if (ct.name().endsWith("Association")) paL.addAll(augList.get("ASSOCIATION"));
-        else paL.addAll(augList.get("OBJECT"));
+        if (ct.name().endsWith("Association")) paL.addAll(ctU2augL.get("ASSOCIATION"));
+        else paL.addAll(ctU2augL.get("OBJECT"));
         while (null != xct) {
             classS.add(xct);
             xct = xct.subClassOf();
@@ -387,17 +394,20 @@ public class ModelToJSONSchema {
         while (!classS.isEmpty()) {
             xct = classS.pop();
             paL.addAll(xct.propL());
-            paL.addAll(augList.get(xct.qname()));
+            paL.addAll(ctU2augL.get(xct.qname()));
             if (!xct.anyL().isEmpty()) wildF = true;    // should handle wildcards better TODO
         }
         // Adjust cardinality for properties occuring more than once TODO
         // Should include subproperties
         
         // Handle each property in the property association list.
-        // Start by making a set of the choices.
+        // Start by making a set of the non-abstract choices for a property.
         for (var pa : paL) {
+            var choS = new HashSet<Property>();
             var p    = pa.property();
-            var choS = p.allSubProps();
+            for (var subp : p.allSubProps())
+                if (!subp.isAbstract()) choS.add(subp);
+            if (!p.isAbstract()) choS.add(p);
 
             // Create a "properties" entry for each choice
             if (choS.isEmpty()) continue;
@@ -405,7 +415,7 @@ public class ModelToJSONSchema {
                 var cct  = chp.type();
                 if (null == cct) cct = xsStringDT;          // externals, xml:lang, xml:base
                 var rstr = "#/definitions/" + cct.qname();
-                var key  = map.qnToN(chp.qname());
+                var key  = qnToKey(chp.qname());
                 var schO = new JsonObject();
                 propO.add(key, schO);
                 if (inclDesc) {
@@ -432,7 +442,7 @@ public class ModelToJSONSchema {
                 JsonArray anyA  = null;     // array of { "required": [ "foo" ] } objects
                 JsonObject anyO = null;     // the { "anyOf": array } object
                 for (var chp : choS) {
-                    var key = map.qnToN(chp.qname());
+                    var key = qnToKey(chp.qname());
                     if (1 == choS.size()) reqA.add(key);    // top-level "required" array
                     else {
                         var rO = makeObject("required", makeStringArray(key));
@@ -454,7 +464,7 @@ public class ModelToJSONSchema {
         }
         // Add metadata properties (if any) for NIEM 2,3,4,5
         for (var p : metadataPL) {
-            var key = map.qnToN(p.qname());
+            var key = qnToKey(p.qname());
             var ref = new JsonObject();
             ref.addProperty("$ref", "#/definitions/idObjectArray");
             propO.add(key, ref);
@@ -483,6 +493,9 @@ public class ModelToJSONSchema {
     }
     
     
+    // Stores a schema object for a datatype in the typeSch map.  Later on
+    // that object will become the value of a "datatypeQN": {...} pair in 
+    // the top-level "definitions" object.
     private void createDatatype (Datatype dt) {
         if (typeSch.containsKey(dt)) return;
         var defO  = new JsonObject();       // will be value for dt.qname key
@@ -572,142 +585,257 @@ public class ModelToJSONSchema {
     
     private void createXSDPrimitive(String name, JsonObject defO) {
         switch (name) {
-            case "boolean" ->
+            case "anyAtomicType" -> {
+                defO.addProperty("type", "string");
+            }
+            case "anySimpleType" -> {
+                defO.addProperty("type", "string");
+            }
+            case "anyURI" -> {
+                defO.addProperty("type", "string");
+                defO.addProperty("format", "uri");
+                if (inclPattern) defO.addProperty("pattern", "^[^\\s]+$");
+            }   
+            // Based on the XSD 1.1 regexp for the lexical space; modified to
+            // allow any single whitespace character where a space is allowed.
+            case "base64Binary" -> {
+                defO.addProperty("type", "string");
+                defO.addProperty("format", "byte");
+                if (inclPattern) defO.addProperty("pattern",
+                    "^(?:"
+                    + "(?:(?:[A-Za-z0-9+/][ \\t\\r\\n]?){4})*"
+                    + "(?:"
+                    + "(?:[A-Za-z0-9+/][ \\t\\r\\n]?){3}[A-Za-z0-9+/]"
+                    + "|(?:[A-Za-z0-9+/][ \\t\\r\\n]?){2}[AEIMQUYcgkosw048][ \\t\\r\\n]?="
+                    + "|[A-Za-z0-9+/][ \\t\\r\\n]?[AQgw][ \\t\\r\\n]?=[ \\t\\r\\n]?="
+                    + ")?"
+                    + ")?$");
+            }
+            case "boolean" -> {
                 defO.addProperty("type", "boolean");
-            case "decimal", "double", "float" ->
-                defO.addProperty("type", "number");
-            case "int" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", -2147483648D);
-                defO.addProperty("maximum", 2147483647D);
-            }
-            case "integer" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-            }
-            case "long" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", -9223372036854775808D);
-                defO.addProperty("maximum", 9223372036854775807D);
-            }
-            case "unsignedLong" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", 0D);
-                defO.addProperty("maximum", 9223372036854775807D);
-            }
-            case "unsignedInt" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", 0D);
-                defO.addProperty("maximum", 4294967295D);
-            }
-            case "short" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", -32768D);
-                defO.addProperty("maximum", 32767D);
-            }
-            case "unsignedShort" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", 0D);
-                defO.addProperty("maximum", 65535D);
+                // If you need lexical validation instead:
+                // defO.addProperty("type", "string");
+                // defO.addProperty("pattern", "^(?:true|false|1|0)$");
             }
             case "byte" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", -128D);
-                defO.addProperty("maximum", 127D);
-            }
-            case "unsignedByte" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", 0D);
-                defO.addProperty("maximum", 255D);
-            }
-            case "negativeInteger" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("maximum", -1D);
-            }
-            case "nonNegativeInteger" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", 0D);
-            }
-            case "nonPositiveInteger" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("maximum", 0D);
-            }
-            case "positiveInteger" -> {
-                defO.addProperty("type", "number");
-                defO.addProperty("multipleOf", 1.0);
-                defO.addProperty("minimum", 1D);
+                defO.addProperty("type", "integer");
+                defO.addProperty("format", "int8");
+                if (inclMinMax) defO.addProperty("minimum", -128);
+                if (inclMinMax) defO.addProperty("maximum", 127);
             }
             case "date" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "date");                
+                defO.addProperty("format", "date");
+                if (inclPattern) defO.addProperty("pattern", "^-?\\d{4,}-\\d{2}-\\d{2}(?:Z|[+-]\\d{2}:\\d{2})?$");
             }
             case "dateTime" -> {
                 defO.addProperty("type", "string");
                 defO.addProperty("format", "date-time");
+                if (inclPattern) defO.addProperty("pattern", "^-?\\d{4,}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?$");
             }
-            case "time" -> {
+            case "dateTimeStamp" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^([0-9]{2}):([0-9]{2}):([0-9]{2}([.][0-9]{1,6})?)([+-]([0-9]{2}):([0-9]{2}))?$");
+                defO.addProperty("format", "date-time");
+                if (inclPattern) defO.addProperty("pattern", "^-?\\d{4,}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$");
+            }
+            case "dayTimeDuration" -> {
+                defO.addProperty("type", "string");
+                defO.addProperty("format", "duration");
+                if (inclPattern) defO.addProperty("pattern", "^-?P(?=.+)(?:\\d+D)?(?:T(?:\\d+H)?(?:\\d+M)?(?:\\d+(?:\\.\\d+)?S)?)?$");
+            }
+            case "decimal" -> {
+                defO.addProperty("type", "number");
+                defO.addProperty("format", "decimal");
+                // If you must enforce XSD lexical form:
+                // defO.addProperty("type", "string");
+                // if (inclPattern) defO.addProperty("pattern", "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)$");
+            }
+            case "double" -> {
+                defO.addProperty("type", "number");
+                defO.addProperty("format", "double");
             }
             case "duration" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^[-+]?^P(?!$)(\\\\d+(?:\\\\.\\\\d+)?Y)?(\\\\d+(?:\\\\.\\\\d+)?M)?(\\\\d+(?:\\\\.\\\\d+)?W)?(\\\\d+(?:\\\\.\\\\d+)?D)?(T(?=\\\\d)(\\\\d+(?:\\\\.\\\\d+)?H)?(\\\\d+(?:\\\\.\\\\d+)?M)?(\\\\d+(?:\\\\.\\\\d+)?S)?)?$");
+                defO.addProperty("format", "duration");
+                if (inclPattern) defO.addProperty("pattern", "^-?P(?=.+)(?:\\d+Y)?(?:\\d+M)?(?:\\d+D)?(?:T(?:\\d+H)?(?:\\d+M)?(?:\\d+(?:\\.\\d+)?S)?)?$");
+            }
+            case "ENTITIES" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[A-Za-z_][A-Za-z0-9_.-]*(?:\\s+[A-Za-z_][A-Za-z0-9_.-]*)*$");
+            }
+            case "ENTITY" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[A-Za-z_][A-Za-z0-9_.-]*$");
+            }
+            case "float" -> {
+                defO.addProperty("type", "number");
+                defO.addProperty("format", "float");
             }
             case "gDay" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^---[0-3][0-9]$");
+                if (inclPattern) defO.addProperty("pattern", "^---\\d{2}(?:Z|[+-]\\d{2}:\\d{2})?$");
             }
             case "gMonth" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^--[0-1][0-9]$");
+                if (inclPattern) defO.addProperty("pattern", "^--\\d{2}(?:Z|[+-]\\d{2}:\\d{2})?$");
             }
             case "gMonthDay" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^--[0-1][0-9]-[0-3][0-9]$");
+                if (inclPattern) defO.addProperty("pattern", "^--\\d{2}-\\d{2}(?:Z|[+-]\\d{2}:\\d{2})?$");
             }
             case "gYear" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^[0-9]{4}$");
+                if (inclPattern) defO.addProperty("pattern", "^-?\\d{4,}(?:Z|[+-]\\d{2}:\\d{2})?$");
             }
             case "gYearMonth" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^[0-9]{4}-[0-1][0-9]$");
+                if (inclPattern) defO.addProperty("pattern", "^-?\\d{4,}-\\d{2}(?:Z|[+-]\\d{2}:\\d{2})?$");
             }
-            case "token" -> {
+            case "hexBinary" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^(?! )[\\S ]*(?<! )$");
+                defO.addProperty("format", "hex");
+                if (inclPattern) defO.addProperty("pattern", "^(?:[0-9A-Fa-f]{2})*$");
+            }
+            case "ID" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[A-Za-z_][A-Za-z0-9_.-]*$");
+            }
+            case "IDREF" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[A-Za-z_][A-Za-z0-9_.-]*$");
+            }
+            case "IDREFS" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[A-Za-z_][A-Za-z0-9_.-]*(?:\\s+[A-Za-z_][A-Za-z0-9_.-]*)*$");
+            }
+            case "int" -> {
+                defO.addProperty("type", "integer");
+                defO.addProperty("format", "int32");
+                if (inclMinMax) if (inclMinMax) defO.addProperty("minimum", -2147483648L);
+                if (inclMinMax) defO.addProperty("maximum", 2147483647L);
+            }
+            case "integer" -> {
+                defO.addProperty("type", "integer");
+            }
+            case "language" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[a-zA-Z]{1,8}(?:-[a-zA-Z0-9]{1,8})*$");
+            }
+            case "long" -> {
+                defO.addProperty("type", "integer");
+                defO.addProperty("format", "int64");
+                if (inclMinMax) defO.addProperty("minimum", new java.math.BigInteger("-9223372036854775808"));
+                if (inclMinMax) defO.addProperty("maximum", new java.math.BigInteger("9223372036854775807"));
+            }
+            case "Name" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[A-Za-z_][A-Za-z0-9_.:-]*$");
+            }
+            case "NCName" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[A-Za-z_][A-Za-z0-9_.-]*$");
+            }
+            case "negativeInteger" -> {
+                defO.addProperty("type", "integer");
+                if (inclMinMax) defO.addProperty("maximum", -1);
+            }
+            case "NMTOKEN" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[A-Za-z0-9_.:-]+$");
+            }
+            case "NMTOKENS" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^[A-Za-z0-9_.:-]+(?:\\s+[A-Za-z0-9_.:-]+)*$");
+            }
+            case "nonNegativeInteger" -> {
+                defO.addProperty("type", "integer");
+                if (inclMinMax) defO.addProperty("minimum", 0);
+            }
+            case "nonPositiveInteger" -> {
+                defO.addProperty("type", "integer");
+                if (inclMinMax) defO.addProperty("maximum", 0);
             }
             case "normalizedString" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "^[^\\t\\n\\r]*$"); // Non-empty string with optional leading/trailing whitespace
+                if (inclPattern) defO.addProperty("pattern", "^[^\\r\\n\\t]*$");
             }
-            case "string" -> defO.addProperty("type", "string");
-            case "anyURI" -> {
+            case "NOTATION", "notation" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "uri-reference");                
+                if (inclPattern) defO.addProperty("pattern", "^(?:[A-Za-z_][A-Za-z0-9_.-]*:)?[A-Za-z_][A-Za-z0-9_.-]*$");
             }
-            case "IDREF", "ENTITIY" -> { 
+            case "positiveInteger" -> {
+                defO.addProperty("type", "integer");
+                if (inclMinMax) defO.addProperty("minimum", 1);
+            }
+            case "precisionDecimal" -> {
+                defO.addProperty("type", "number");
+                defO.addProperty("format", "decimal");
+            }
+            case "QName" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("pattern", "[4][-._A-Za-z0-9]*");
+                if (inclPattern) defO.addProperty("pattern", "^(?:[A-Za-z_][A-Za-z0-9_.-]*:)?[A-Za-z_][A-Za-z0-9_.-]*$");
             }
-            case "IDREFS", "ENTITIES" -> { 
-                defO.addProperty("type", "array");
-                defO.add("items", IDREF_PATTERN_OBJ);
+            case "short" -> {
+                defO.addProperty("type", "integer");
+                defO.addProperty("format", "int16");
+                if (inclMinMax) defO.addProperty("minimum", -32768);
+                if (inclMinMax) defO.addProperty("maximum", 32767);
             }
-        }
+            case "string" -> {
+                defO.addProperty("type", "string");
+            }
+            case "time" -> {
+                defO.addProperty("type", "string");
+                defO.addProperty("format", "time");
+                if (inclPattern) defO.addProperty("pattern", "^\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?$");
+            }
+            case "token" -> {
+                defO.addProperty("type", "string");
+                if (inclPattern) defO.addProperty("pattern", "^(?:$|\\S+(?: \\S+)*)$");
+            }
+            case "unsignedByte" -> {
+                defO.addProperty("type", "integer");
+                defO.addProperty("format", "uint8");
+                if (inclMinMax) defO.addProperty("minimum", 0);
+                if (inclMinMax) defO.addProperty("maximum", 255);
+            }
+            case "unsignedInt" -> {
+                defO.addProperty("type", "integer");
+                defO.addProperty("format", "uint32");
+                if (inclMinMax) defO.addProperty("minimum", 0);
+                if (inclMinMax) defO.addProperty("maximum", 4294967295L);
+            }
+            case "unsignedLong" -> {
+                defO.addProperty("type", "integer");
+                defO.addProperty("format", "uint64");
+                if (inclMinMax) defO.addProperty("minimum", java.math.BigInteger.ZERO);
+                if (inclMinMax) defO.addProperty("maximum", new java.math.BigInteger("18446744073709551615"));
+            }
+            case "unsignedShort" -> {
+                defO.addProperty("type", "integer");
+                defO.addProperty("format", "uint16");
+                if (inclMinMax) defO.addProperty("minimum", 0);
+                if (inclMinMax) defO.addProperty("maximum", 65535);
+            }
+            case "untypedAtomic" -> {
+                defO.addProperty("type", "string");
+            }
+            case "yearMonthDuration" -> {
+                defO.addProperty("type", "string");
+                defO.addProperty("format", "duration");
+                if (inclPattern) defO.addProperty("pattern", "^-?P(?=.+)(?:\\d+Y)?(?:\\d+M)?$");
+            }
+            default -> {
+                defO.addProperty("type", "string");
+            }
+        } 
     }
     
+    
+    // Returns 
+    public String qnToKey (String qn) {
+        return map.qnToN(qn);
+    }
     
     // Parses JSON text to create a JsonObject containing a pair
     // "key": having the value of the parsed text.

@@ -21,6 +21,11 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
+  <DataProperty structures:id="t.BarToken">
+    <Name>BarToken</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
   <ObjectProperty structures:id="t.FooAbstract">
     <Name>FooAbstract</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>
@@ -50,6 +55,11 @@
       <ObjectProperty structures:ref="t.FooAbstract" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>10</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.BarToken" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
   <Datatype structures:id="xs.string">

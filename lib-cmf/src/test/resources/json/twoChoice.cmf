@@ -38,6 +38,11 @@
     <SubPropertyOf structures:ref="t.BarAbstract" xsi:nil="true"/>
     <Datatype structures:ref="xs.token" xsi:nil="true"/>
   </DataProperty>
+  <DataProperty structures:id="t.BugToken">
+    <Name>BugToken</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
   <ObjectProperty structures:id="t.FooAbstract">
     <Name>FooAbstract</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>
@@ -60,6 +65,11 @@
     <Namespace structures:ref="t" xsi:nil="true"/>
     <Class structures:ref="t.MessageType" xsi:nil="true"/>
   </ObjectProperty>
+  <DataProperty structures:id="t.OptToken">
+    <Name>OptToken</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
   <Class structures:id="t.MessageType">
     <Name>MessageType</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>
@@ -71,6 +81,16 @@
     <ChildPropertyAssociation>
       <ObjectProperty structures:ref="t.BarAbstract" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.BugToken" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.OptToken" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>

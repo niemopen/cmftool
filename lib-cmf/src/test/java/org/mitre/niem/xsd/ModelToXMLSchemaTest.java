@@ -45,6 +45,7 @@ import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.cmf.ModelXMLWriter;
 import org.mitre.niem.xml.XMLDocument;
 import org.w3c.dom.Element;
+import static org.w3c.dom.Node.ELEMENT_NODE;
 import org.w3c.dom.NodeList;
 
 /**
@@ -73,6 +74,7 @@ public class ModelToXMLSchemaTest {
             case "t"    -> "http://example.com/test/";
             case "test" -> "http://example.com/test/";
             case "structures" -> "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/";
+            case "structures5" -> "http://release.niem.gov/niem/structures/5.0/";
             default     -> XMLConstants.NULL_NS_URI;
         };
       }
@@ -120,6 +122,9 @@ public class ModelToXMLSchemaTest {
         isTrue("boolean(namespace::*[name()='nc5' and string(.)='http://release.niem.gov/niem/niem-core/5.0/'])", doc);
         isTrue("count(//xs:complexType[@name='OneTestType']//xs:element[@ref='nc:PersonName']) = 1", doc);
         isTrue("count(//xs:complexType[@name='OneTestType']//xs:element[@ref='nc5:CommentText']) = 1", doc);
+        
+        doc = makeDoc(pile, "niem5/niem-core5-skel");        
+        isTrue("//xs:complexType[@name='PersonNameType']/xs:attribute[@ref='structures:metadata']", doc);
     }
     
     @Test

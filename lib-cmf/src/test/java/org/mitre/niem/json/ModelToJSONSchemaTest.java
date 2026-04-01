@@ -23,6 +23,13 @@
  */
 package org.mitre.niem.json;
 
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.spi.json.GsonJsonProvider;
+import com.jayway.jsonpath.spi.mapper.GsonMappingProvider;
 import java.io.File;
 import java.io.StringWriter;
 import java.util.Arrays;
@@ -39,13 +46,19 @@ import org.mitre.niem.cmf.Property;
  */
 public class ModelToJSONSchemaTest {
     
+    private static final String RDIR = "src/test/resources";
+    private static final Configuration JSG = Configuration.builder()
+        .jsonProvider(new GsonJsonProvider())
+        .mappingProvider(new GsonMappingProvider())
+        .build();
+    
     public ModelToJSONSchemaTest() {
     }
-
-//    @Test
+ 
+    @Test
     public void test () throws Exception {
         var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File("src/test/resources/json/itl.cmf"));
+        var model = rdr.readFiles(new File("src/test/resources/json/oneChoice.cmf"));
         var js    = new ModelToJSONSchema(model);
         var w     = new StringWriter();
         List<Property> msgPL = Arrays.asList(model.qnToProperty("ms"));
@@ -54,6 +67,51 @@ public class ModelToJSONSchemaTest {
         js.writeSchema(w);
         var s     = w.toString();
         int x = 0;
+    }
+    
+    @Test
+    public void testTwoChoice () {
+        var sch  = makeSchema("json/twoChoice.cmf");
+        var defs = sch.getAsJsonObject("definitions");
+        var msgT = defs.getAsJsonObject("t:MessageType");
+        var prop = msgT.getAsJsonObject("properties");
+        var ctx  = JsonPath.using(JSG).parse(prop);
+        
+        assertEquals("array", ctx.read("$.t:FooString.type", String.class));
+        assertEquals("array", ctx.read("$.t:FooToken.type", String.class));
+        assertEquals("#/definitions/xs:string", ctx.read("$.t:FooString.items.$ref", String.class));
+        assertEquals("#/definitions/xs:token", ctx.read("$.t:FooToken.items.$ref", String.class));    
+        assertEquals(10, ctx.read("$.t:FooString.maxItems", Integer.class).intValue());
+        assertEquals(10, ctx.read("$.t:FooToken.maxItems", Integer.class).intValue());
+        
+        assertEquals("#/definitions/xs:string", ctx.read("$.t:BarString.$ref", String.class));
+        assertEquals("#/definitions/xs:token", ctx.read("$.t:BarToken.$ref", String.class));
+        assertEquals("#/definitions/xs:token", ctx.read("$.t:BugToken.$ref", String.class));
+        assertEquals("#/definitions/xs:token", ctx.read("$.t:OptToken.$ref", String.class));       
+        
+        JsonArray res;
+        ctx = JsonPath.using(JSG).parse(msgT);
+        assertEquals(2, msgT.getAsJsonArray("allOf").size());
+        res = ctx.read("$.allOf[?('t:BarToken' in @.anyOf[*].required[0] && 't:BarString' in @.anyOf[*].required[0])]");
+        assertEquals(1, res.size());
+        res = ctx.read("$.allOf[?('t:FooToken' in @.anyOf[*].required[0] && 't:FooString' in @.anyOf[*].required[0])]");
+        assertEquals(1, res.size());
+        
+        res = ctx.read("$.required");
+        assertEquals(1, res.size());
+        
+        assertFalse(msgT.get("additionalProperties").getAsBoolean());
+    }
+    
+    
+    public JsonObject makeSchema (String fname) {
+        var cmfF  = new File(RDIR, fname);
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(cmfF);
+        var js    = new ModelToJSONSchema(model);
+        var sch   = new JsonObject();
+        js.createSchema(sch);
+        return sch;        
     }
     
 }

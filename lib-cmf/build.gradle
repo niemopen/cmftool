@@ -27,7 +27,9 @@ dependencies {
 
     testImplementation libs.junit.jupiter
     testImplementation 'org.assertj:assertj-core:3.26.0'
-    testImplementation 'io.github.hakky54:logcaptor:2.9.3'
+    testImplementation 'io.github.hakky54:logcaptor:2.9.3'  
+    testImplementation 'com.jayway.jsonpath:json-path:3.0.0'
+    testImplementation 'com.jayway.jsonpath:json-path-assert:3.0.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

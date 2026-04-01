@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model 
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="msg">
+    <NamespaceURI>http://example.com/ReqRes/1.0/</NamespaceURI>
+    <NamespacePrefixText>msg</NamespacePrefixText>
+    <DocumentationText>
+      This is the extension schema for the Request message specification,
+      which appears in some examples in NDR 6.
+    </DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ExtensionSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>request.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DocumentationText>NIEM Core.</DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>niem/niem-core.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
+    <NamespaceVersionText>psd01</NamespaceVersionText>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <DataProperty structures:id="msg.ItemConditionCode">
+    <Name>ItemConditionCode</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <DocumentationText>A condition of an item.</DocumentationText>
+    <SubPropertyOf structures:ref="nc.ItemConditionAbstract" xsi:nil="true"/>
+    <Datatype structures:ref="msg.ItemConditionCodeType" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="msg.Request">
+    <Name>Request</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <DocumentationText>A request for one or more items.</DocumentationText>
+    <Class structures:ref="msg.RequestType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="msg.RequestedItem">
+    <Name>RequestedItem</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <DocumentationText>A request for a specified quantity of an item.</DocumentationText>
+    <Class structures:ref="nc.ItemType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="msg.RequestID">
+    <Name>RequestID</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <DocumentationText>An identifier for a request.</DocumentationText>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="nc.CommentText">
+    <Name>CommentText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A comment, note, or remark providing additional information.</DocumentationText>
+    <Datatype structures:ref="nc.TextType" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.ItemConditionAbstract">
+    <Name>ItemConditionAbstract</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data concept for a state or appearance of an item.</DocumentationText>
+    <AbstractIndicator>true</AbstractIndicator>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.ItemConditionText">
+    <Name>ItemConditionText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A state or appearance of an item.</DocumentationText>
+    <SubPropertyOf structures:ref="nc.ItemConditionAbstract" xsi:nil="true"/>
+    <Datatype structures:ref="nc.TextType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="nc.ItemName">
+    <Name>ItemName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A name of an item.</DocumentationText>
+    <Datatype structures:ref="nc.TextType" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.ItemQuantity">
+    <Name>ItemQuantity</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A count of the individual units which make up an item.</DocumentationText>
+    <Class structures:ref="nc.QuantityType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.QuantityLiteral">
+    <Name>QuantityLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a count or tally.</DocumentationText>
+    <Datatype structures:ref="nc.NumericType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="nc.quantityUnitText">
+    <Name>quantityUnitText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A unit of counting or tallying for a quantity.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <Class structures:id="msg.RequestType">
+    <Name>RequestType</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <DocumentationText>A data type for a request of one or more items.</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="msg.RequestID" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="msg.RequestedItem" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.ItemType">
+    <Name>ItemType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for an article or thing.</DocumentationText>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.ItemConditionAbstract" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="nc.ItemName" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.ItemQuantity" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.QuantityType">
+    <Name>QuantityType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a count or tally.</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="nc.QuantityLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="nc.quantityUnitText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Restriction structures:id="msg.ItemConditionCodeType">
+    <Name>ItemConditionCodeType</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <DocumentationText>A data type for the condition of an item.</DocumentationText>
+    <RestrictionBase structures:ref="xs.token" xsi:nil="true"/>
+    <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>NEW</FacetValue>
+    </Facet>
+    <Facet>
+      <FacetCategoryCode>enumeration</FacetCategoryCode>
+      <FacetValue>USED</FacetValue>
+    </Facet>
+  </Restriction>
+  <Restriction structures:id="nc.NumericType">
+    <Name>NumericType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a number value.</DocumentationText>
+    <RestrictionBase structures:ref="xs.decimal" xsi:nil="true"/>
+  </Restriction>
+  <Restriction structures:id="nc.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <RestrictionBase structures:ref="xs.string" xsi:nil="true"/>
+  </Restriction>
+  <Datatype structures:id="xs.decimal">
+    <Name>decimal</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>
