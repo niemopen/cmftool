@@ -94,6 +94,7 @@ public class ModelToJSONSchema {
     private boolean inclDesc = true;                                // include component definitions in schema?
     private boolean inclMinMax = false;                             // XSD atomic types test min & max values?
     private boolean inclPattern = false;                            // XSD atomic types include pattern tests?
+    private boolean allDefs = false;                                // create definition for all model types?
     
     private MapToList<String,PropertyAssociation> ctU2augL = null;  // classQ -> list of augmentation propQs for class
     private Deque<Component> doTypes = null;                        // class and datatype schemas remaining
@@ -168,6 +169,10 @@ public class ModelToJSONSchema {
      */
     public void setIncludeDescription (boolean inclDesc) {
         this.inclDesc = inclDesc;
+    }
+    
+    public void setAllDefinitions (boolean all) {
+        this.allDefs = all;
     }
     
     public void writeSchema (Writer w) throws IOException {
@@ -325,6 +330,10 @@ public class ModelToJSONSchema {
         doTypes = new ArrayDeque<>(typeS);      // class and datatypes left to process
         typeSch = new HashMap<>();              // map of type QN -> schema object
         needID  = false;                        // any referencable class in model?
+        if (allDefs) {
+            doTypes.addAll(m.classTypeL());
+            doTypes.addAll(m.datatypeL());
+        }
         while (!doTypes.isEmpty()) {
             var type = doTypes.removeFirst();
             var tq = type.qname();
@@ -385,8 +394,9 @@ public class ModelToJSONSchema {
         var wildF  = false;
         var classS = new Stack<ClassType>();
         var xct    = ct;
-        if (ct.name().endsWith("Association")) paL.addAll(ctU2augL.get("ASSOCIATION"));
-        else paL.addAll(ctU2augL.get("OBJECT"));
+        if (ct.isAssociationClass()) paL.addAll(ctU2augL.get("ASSOCIATION"));
+        if (ct.isLiteralClass())     paL.addAll(ctU2augL.get("LITERAL"));
+        if (ct.isObjectClass())      paL.addAll(ctU2augL.get("OBJECT"));
         while (null != xct) {
             classS.add(xct);
             xct = xct.subClassOf();

@@ -60,6 +60,9 @@ public class CmdCMFtoJSONSchema implements JCCommand {
     
     @Parameter(order = 3, names = "-o", description = "name of output file")
     private String modelFN = null;
+    
+    @Parameter(names = {"-a","--alldefs"}, description = "generate definition for all model classes and datatypes")
+    private boolean allDefs = false;
      
     @Parameter(order = 4, names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
@@ -165,6 +168,7 @@ public class CmdCMFtoJSONSchema implements JCCommand {
             js.setMessageProperties(msgPropA);
             js.setContextURI(contextU);
             js.setMapping(map);
+            js.setAllDefinitions(allDefs);
             js.writeSchema(ow);
             ow.write("\n");
             ow.close();

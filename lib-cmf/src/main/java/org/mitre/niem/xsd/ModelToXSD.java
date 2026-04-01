@@ -103,7 +103,7 @@ public abstract class ModelToXSD {
     protected Map<String,MapToList<String,AugmentRecord>> nsU2classU2augL;
 
     // Set of augmentation property URIs for each augmentation point URI
-    protected MapToSet<String,String> augPtU2augUs = new MapToSet<>();    
+//    protected MapToSet<String,String> augPtU2augUs = new MapToSet<>();    
 
     // Augmentations that are not part of an augmentation type are tracked here.
     // They are turned into augmentation point QName values in xs:element @substitutionGroup 
