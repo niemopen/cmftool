@@ -1,206 +1,211 @@
+/*--------------------------------------------------------------------
+ *  MappingTest.java
+ *
+ *  Revised JUnit 5 test suite for org.mitre.niem.cmf.Mapping
+ *
+ *  Copyright 2020‑2026 The MITRE Corporation.
+ *--------------------------------------------------------------------*/
 package org.mitre.niem.cmf;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * JUnit‑5 tests for {@link Mapping}.
+ * Unit tests for {@link Mapping}.
  *
- * <p>These tests exercise the public API only; they do not depend on the
- * full NIEM model implementation.  For the few tests that need a {@code Model}
- * we provide a very small in‑memory stub (see {@link FakeModel}) that mimics
- * the methods used by {@code Mapping}.
+ * <p>These tests verify:
+ * <ul>
+ *   <li>prefix assignment (including munging when a prefix is already used)</li>
+ *   <li>basic mapping addition and lookup</li>
+ *   <li>the {@code noPrefix} flag behaviour</li>
+ *   <li>that a mapping can be written to Turtle and read back unchanged</li>
+ *   <li>error handling for duplicate or conflicting mappings</li>
+ * </ul>
  */
 class MappingTest {
 
-    /* --------------------------------------------------------------------- */
-    /*  Helper stub for the Model interface used by Mapping.create*()      */
-    /* --------------------------------------------------------------------- */
-    /**
-     * Very small fake implementation of the {@code Model} contract that
-     * {@link Mapping#createDefault} and {@link Mapping#createTemplate} rely on.
-     *
-     * <p>Only the methods that the Mapping class calls are implemented:
-     * <ul>
-     *   <li>{@code namespaceList()}</li>
-     *   <li>{@code propertyL()}</li>
-     * </ul>
-     *
-     * <p>The stub uses simple POJOs for {@code Namespace} and {@code Property}
-     * that expose the subset of getters needed by the Mapping code.
-     */
-//    private static class FakeModel implements Model {
-//
-//        /** Simple namespace representation */
-//        static final class Ns {
-//            private final String prefix;
-//            private final String uri;
-//            private final boolean modelNS;
-//
-//            Ns(String prefix, String uri, boolean modelNS) {
-//                this.prefix = prefix;
-//                this.uri = uri;
-//                this.modelNS = modelNS;
-//            }
-//
-//            String prefix() { return prefix; }
-//            String uri()    { return uri; }
-//            boolean isModelNS() { return modelNS; }
-//        }
-//
-//        /** Simple property representation */
-//        static final class Prop implements Comparable<Prop> {
-//            private final Ns ns;
-//            private final String name;
-//            private final boolean abstractProp;
-//
-//            Prop(Ns ns, String name, boolean abstractProp) {
-//                this.ns = ns;
-//                this.name = name;
-//                this.abstractProp = abstractProp;
-//            }
-//
-//            Ns namespace() { return ns; }
-//            String name()   { return name; }
-//            boolean isAbstract() { return abstractProp; }
-//            String qname() { return ns.prefix() + ":" + name; }
-//            @Override public int compareTo(Prop o) { return qname().compareTo(o.qname()); }
-//        }
-//
-//        private final List<Ns> namespaces = new ArrayList<>();
-//        private final List<Prop> properties = new ArrayList<>();
-//
-//        void addNamespace(String prefix, String uri, boolean modelNS) {
-//            namespaces.add(new Ns(prefix, uri, modelNS));
-//        }
-//
-//        void addProperty(Ns ns, String name, boolean abstractProp) {
-//            properties.add(new Prop(ns, name, abstractProp));
-//        }
-//
-//        @Override public List<?> namespaceList() { return namespaces; }
-//        @Override public List<?> propertyL()    { return properties; }
-//    }
+    private Mapping mapping;
 
-    /* --------------------------------------------------------------------- */
-    /*  1. Basic prefix handling                                            */
-    /* --------------------------------------------------------------------- */
+    @BeforeEach
+    void setUp() {
+        mapping = new Mapping();
+    }
+
+    /* -----------------------------------------------------------------
+     *  Prefix handling
+     * ----------------------------------------------------------------- */
     @Test
-    @DisplayName("assignPrefix returns the requested prefix when free and munges when taken")
-    void testAssignPrefixAndReserved() throws CMFException {
-        Mapping map = new Mapping();
+    @DisplayName("assignPrefix returns the requested prefix when unused")
+    void assignPrefixSimple() {
+        String p = mapping.assignPrefix("ex", "http://example.org/");
+        assertEquals("ex", p);
+        assertEquals("http://example.org/", mapping.nsmap.getURI("ex"));
+    }
 
-        // Assign a fresh prefix – should be returned unchanged
-        String p1 = map.assignPrefix("ex", "http://example.org/");
-        assertEquals("ex", p1);
-
-        // Assign the same prefix for a different URI – should be munged (ex_1)
-        String p2 = map.assignPrefix("ex", "http://other.org/");
+    @Test
+    @DisplayName("assignPrefix munges a duplicate prefix")
+    void assignPrefixMunge() {
+        mapping.assignPrefix("ex", "http://example.org/1");
+        String p2 = mapping.assignPrefix("ex", "http://example.org/2");
+        // The second call must not return the original "ex"
         assertNotEquals("ex", p2);
-        assertTrue(p2.startsWith("ex_"));
-
-        // Reserved prefixes are allowed to be added; they are later skipped in write()
-        String owl = map.assignPrefix("owl", "http://www.w3.org/2002/07/owl#");
-        assertEquals("owl", owl);
+        // The munged prefix must be unique and map to the second URI
+        assertEquals("http://example.org/2", mapping.nsmap.getURI(p2));
     }
 
-    /* --------------------------------------------------------------------- */
-    /*  2. Name‑only mapping                                                */
-    /* --------------------------------------------------------------------- */
+    /* -----------------------------------------------------------------
+     *  Basic mapping operations
+     * ----------------------------------------------------------------- */
     @Test
-    @DisplayName("addNameMapping stores and retrieves a simple local‑name mapping")
-    void testAddNameMappingAndLookup() throws CMFException {
-        Mapping map = new Mapping();
-        map.setTargetNS("tgt", "http://target.org/");
+    @DisplayName("addMapping stores and retrieves a simple mapping")
+    void addAndLookupMapping() throws CMFException {
+        mapping.assignPrefix("src", "http://src/");
+        mapping.assignPrefix("tgt", "http://tgt/");
 
-        map.addNameMapping("src:prop", "myProp");
+        String srcQN = "src:propA";
+        String tgtQN = "tgt:propB";
 
-        // qnToN returns the local name (no prefix)
-        assertEquals("myProp", map.qnToN("src:prop"));
+        mapping.addMapping(srcQN, tgtQN);
 
-        // qnToQ returns a qualified name using the target prefix
-        assertEquals("tgt:myProp", map.qnToQ("src:prop"));
+        // qnToQ returns the full target QN
+        assertEquals(tgtQN, mapping.qnToQ(srcQN));
+
+        // qnToN returns the full target QN when noPrefix == false
+        assertEquals(tgtQN, mapping.qnToN(srcQN));
     }
 
-    /* --------------------------------------------------------------------- */
-    /*  3. Full QName mapping                                               */
-    /* --------------------------------------------------------------------- */
     @Test
-    @DisplayName("addQNmapping sets target namespace automatically and resolves correctly")
-    void testAddQNmappingAndLookup() throws CMFException {
-        Mapping map = new Mapping();
-        
-        map.assignPrefix("src", "http://example.com/Source/");
-        map.assignPrefix("tgt", "http://example.com/Target/");
-        
-        // First mapping defines the target namespace/prefix
-        map.addQNmapping("src:age", "tgt:Age");
-        assertEquals("tgt", map.qnToQ("src:age").split(":")[0]);
+    @DisplayName("qnToN returns only the local name when noPrefix is true")
+    void noPrefixBehaviour() throws CMFException {
+        mapping.assignPrefix("src", "http://src/");
+        mapping.assignPrefix("tgt", "http://tgt/");
 
-        // Subsequent mapping must use the same target prefix
-        map.addQNmapping("src:name", "tgt:Name");
+        String srcQN = "src:propA";
+        String tgtQN = "tgt:propB";
 
-        // Look‑ups
-        assertEquals("Age", map.qnToN("src:age"));
-        assertEquals("tgt:Age", map.qnToQ("src:age"));
+        mapping.addMapping(srcQN, tgtQN);
+        mapping.setNoPrefix(true);
+
+        // The target QN uses only the local name part
+        assertEquals("propB", mapping.qnToN(srcQN));
     }
 
-    /* --------------------------------------------------------------------- */
-    /*  4. Duplicate mapping detection                                      */
-    /* --------------------------------------------------------------------- */
     @Test
-    @DisplayName("adding a duplicate source or duplicate target throws CMFException")
-    void testDuplicateMappingsThrow() throws CMFException {
-        Mapping map = new Mapping();
-        map.assignPrefix("src", "http://example.com/Source/");
-        map.setTargetNS("t", "http://t.org/");
+    @DisplayName("setNoPrefix throws when more than one target prefix exists")
+    void setNoPrefixTooManyPrefixes() throws CMFException {
+        mapping.assignPrefix("src", "http://src/");
+        mapping.assignPrefix("tgt1", "http://tgt1/");
+        mapping.assignPrefix("tgt2", "http://tgt2/");
 
-        map.addNameMapping("src:a", "A");
+        mapping.addMapping("src:propA", "tgt1:propB");
+        mapping.addMapping("src:propC", "tgt2:propD");
 
-        // Duplicate source with same target – should be a no‑op (allowed)
-        map.addNameMapping("src:a", "A");
-
-        // Duplicate source with *different* target – error
-        CMFException ex1 = assertThrows(CMFException.class,
-                () -> map.addNameMapping("src:a", "B"));
-        assertTrue(ex1.getMessage().contains("already mapped"));
-
-        // Duplicate target with a *different* source – error
-        CMFException ex2 = assertThrows(CMFException.class,
-                () -> map.addNameMapping("src:b", "A"));
-        assertTrue(ex2.getMessage().contains("already mapped"));
+        CMFException ex = assertThrows(CMFException.class,
+                () -> mapping.setNoPrefix(true));
+        assertTrue(ex.getMessage().contains("Can't set noPrefix"));
     }
 
-    /* --------------------------------------------------------------------- */
-    /*  5. Write → read round‑trip                                          */
-    /* --------------------------------------------------------------------- */
     @Test
-    @DisplayName("write() produces valid Turtle that read() can parse back")
-    void testWriteAndReadRoundTrip() throws Exception {
-        Mapping original = new Mapping();
-        original.assignPrefix("src", "http://src.org/");
-        original.assignPrefix("tgt", "http://tgt.org/");
-        original.setTargetNS("tgt", "http://tgt.org/");
-        original.addNameMapping("src:one", "One");
-        original.addNameMapping("src:two", "Two");
+    @DisplayName("addMapping rejects duplicate source with different target")
+    void duplicateSourceConflict() throws CMFException {
+        mapping.assignPrefix("src", "http://src/");
+        mapping.assignPrefix("tgt", "http://tgt/");
 
-        // Serialize to a string
-        StringWriter sw = new StringWriter();
-        original.write(sw);
-        String turtle = sw.toString();
+        mapping.addMapping("src:propA", "tgt:propB");
 
-        // Parse back
-        Mapping parsed = Mapping.read(new StringReader(turtle));
+        CMFException ex = assertThrows(CMFException.class,
+                () -> mapping.addMapping("src:propA", "tgt:propC"));
+        assertTrue(ex.getMessage().contains("already mapped"));
+    }
 
-        // Verify that the parsed mapping behaves the same
-        assertEquals(original.qnToN("src:one"), parsed.qnToN("src:one"));
-        assertEquals(original.qnToQ("src:two"), parsed.qnToQ("src:two"));
-        assertEquals(original.qnToQ("src:one"), parsed.qnToQ("src:one"));
+    @Test
+    @DisplayName("addMapping rejects duplicate target with different source")
+    void duplicateTargetConflict() throws CMFException {
+        mapping.assignPrefix("src", "http://src/");
+        mapping.assignPrefix("tgt", "http://tgt/");
+
+        mapping.addMapping("src:propA", "tgt:propB");
+
+        CMFException ex = assertThrows(CMFException.class,
+                () -> mapping.addMapping("src:propC", "tgt:propB"));
+        assertTrue(ex.getMessage().contains("already mapped"));
+    }
+
+    /* -----------------------------------------------------------------
+     *  Turtle write / read round‑trip
+     * ----------------------------------------------------------------- */
+    @Nested
+    @DisplayName("Turtle serialization")
+    class TurtleRoundTrip {
+
+        private final String srcPrefix = "src";
+        private final String tgtPrefix = "tgt";
+
+        @BeforeEach
+        void initPrefixes() {
+            mapping.assignPrefix(srcPrefix, "http://src/");
+            mapping.assignPrefix(tgtPrefix, "http://tgt/");
+        }
+
+        @Test
+        @DisplayName("write produces valid Turtle and read restores the mapping")
+        void writeReadRoundTrip() throws IOException, CMFException {
+            // create a few mappings
+            mapping.addMapping(srcPrefix + ":a", tgtPrefix + ":A");
+            mapping.addMapping(srcPrefix + ":b", tgtPrefix + ":B");
+            mapping.addMapping(srcPrefix + ":c", tgtPrefix + ":C");
+
+            // write to a StringWriter
+            StringWriter sw = new StringWriter();
+            mapping.write(sw);
+            String turtle = sw.toString();
+
+            // sanity‑check that the Turtle contains the expected prefixes
+            assertAll(
+                () -> assertTrue(turtle.contains("@prefix src: <http://src/>")),
+                () -> assertTrue(turtle.contains("@prefix tgt: <http://tgt/>")),
+                () -> assertTrue(turtle.contains("@prefix owl:"))
+            );
+
+            // read the Turtle back into a new Mapping instance
+            Reader r = new StringReader(turtle);
+            Mapping readBack = Mapping.read(r);
+
+            // verify that every mapping survived the round‑trip
+            List<String> srcs = List.of(srcPrefix + ":a", srcPrefix + ":b", srcPrefix + ":c");
+            for (String srcQN : srcs) {
+                assertEquals(mapping.qnToQ(srcQN), readBack.qnToQ(srcQN),
+                        "Round‑trip mapping for " + srcQN);
+            }
+
+            // verify that the prefixes were also restored
+            assertEquals("http://src/", readBack.nsmap.getURI(srcPrefix));
+            assertEquals("http://tgt/", readBack.nsmap.getURI(tgtPrefix));
+        }
+
+        @Test
+        @DisplayName("read fails on malformed Turtle line")
+        void readMalformedTurtle() {
+            String badTurtle = """
+                @prefix src: <http://src/> .
+                src:a owl:equivalentProperty tgt:B .
+                NOT A VALID TRIPLE .
+                """;
+
+            Reader r = new StringReader(badTurtle);
+            CMFException ex = assertThrows(CMFException.class,
+                    () -> Mapping.read(r));
+            assertTrue(ex.getMessage().contains("Invalid mapping file"));
+        }
     }
 }
