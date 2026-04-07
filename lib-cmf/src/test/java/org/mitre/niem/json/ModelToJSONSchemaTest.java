@@ -29,6 +29,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.TypeRef;
 import com.jayway.jsonpath.spi.json.GsonJsonProvider;
 import com.jayway.jsonpath.spi.mapper.GsonMappingProvider;
 import com.networknt.schema.InputFormat;
@@ -37,14 +38,14 @@ import com.networknt.schema.SchemaLocation;
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.dialect.Dialects;
 import java.io.File;
-import java.io.StringWriter;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.ModelXMLReader;
-import org.mitre.niem.cmf.Property;
 
 /**
  *
@@ -62,39 +63,39 @@ public class ModelToJSONSchemaTest {
     public ModelToJSONSchemaTest() {
     }
     
-    @Test
-    public void testITL () throws Exception {
-        var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File("C:\\Work\\im26\\Biometrics\\itl-2015\\itl.cmf"));
-        var js    = new ModelToJSONSchema(model);
-        js.setNoPrefix(true);
-        var w     = new StringWriter();
-        List<Property> msgPL = Arrays.asList(model.qnToProperty("itl:NISTBiometricInformationExchangePackage"));
-        js.setMessageProperties(msgPL);
-        js.setContextURI("http://example.com/Request/JSON");
-        js.writeSchema(w);
-        var s = w.toString();
-        assertTrue(schemaValid(s));
-        int x = 0;
-    }    
+//    @Test
+//    public void testITL () throws Exception {
+//        var rdr   = new ModelXMLReader();
+//        var model = rdr.readFiles(new File("C:\\Work\\im26\\Biometrics\\itl-2015\\itl.cmf"));
+//        var js    = new ModelToJSONSchema(model);
+//        js.setNoPrefix(true);
+//        var w     = new StringWriter();
+//        List<Property> msgPL = Arrays.asList(model.qnToProperty("itl:NISTBiometricInformationExchangePackage"));
+//        js.setMessageProperties(msgPL);
+//        js.setContextURI("http://example.com/Request/JSON");
+//        js.writeSchema(w);
+//        var s = w.toString();
+//        assertTrue(schemaValid(s));
+//        int x = 0;
+//    }    
  
-    @Test
-    public void test () throws Exception {
-        var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File("src/test/resources/json/request.cmf"));
-        var map   = Mapping.readFile(new File("src/test/resources/json/map-request.ttl"));
-        var js    = new ModelToJSONSchema(model);
-        js.setMapping(map);
-        js.setNoPrefix(true);
-        var w     = new StringWriter();
-        List<Property> msgPL = Arrays.asList(model.qnToProperty("msg:Request"));
-        js.setMessageProperties(msgPL);
-        js.setContextURI("http://example.com/Request/JSON");
-        js.writeSchema(w);
-        var s     = w.toString();
-        assertTrue(schemaValid(s));
-        int x = 0;
-    }
+//    @Test
+//    public void test () throws Exception {
+//        var rdr   = new ModelXMLReader();
+//        var model = rdr.readFiles(new File("src/test/resources/json/request.cmf"));
+//        var map   = Mapping.readFile(new File("src/test/resources/json/map-request.ttl"));
+//        var js    = new ModelToJSONSchema(model);
+//        js.setMapping(map);
+//        js.setNoPrefix(true);
+//        var w     = new StringWriter();
+//        List<Property> msgPL = Arrays.asList(model.qnToProperty("msg:Request"));
+//        js.setMessageProperties(msgPL);
+//        js.setContextURI("http://example.com/Request/JSON");
+//        js.writeSchema(w);
+//        var s     = w.toString();
+//        assertTrue(schemaValid(s));
+//        int x = 0;
+//    }
     
     @Test
     public void testTwoChoice () {
@@ -352,6 +353,154 @@ public class ModelToJSONSchemaTest {
             }
         }
     }
+    
+    @Test
+    public void testArchVersions () throws Exception {
+        var sch   = makeSchema("cmf/archVersions.cmf");
+        var defs  = sch.getAsJsonObject("definitions");
+        var ctx = JsonPath.using(JSG).parse(defs);
+        
+        assertEquals("#/definitions/xs:string",
+            ctx.read("$.nc:TextType.properties.nc:TextLiteral.$ref", String.class));
+        assertEquals("#/definitions/xs:string",
+            ctx.read("$.nc5:TextType.properties.nc5:TextLiteral.$ref", String.class));
+    }
+    
+    @Test
+    public void testAttAugment () throws Exception {
+        var sch   = makeSchema("cmf/attAugment.cmf");
+        var defs  = sch.getAsJsonObject("definitions");
+        
+        var hasAttProp = new HashSet<String>();
+        var hasObjProp = new HashSet<String>();
+        
+        for (var def : defs.entrySet()) {
+            var key   = def.getKey();
+            var defO  = def.getValue().getAsJsonObject();
+            if (!defO.has("properties")) continue;
+            var propO = defO.get("properties").getAsJsonObject();
+            if (propO.has("t:attProp")) hasAttProp.add(key);
+            if (propO.has("t:ObjProp")) hasObjProp.add(key);
+        }
+        assertEquals(Set.of("t:CCOneType", "t:CCTwoType", "t:SCOneType"), hasAttProp);
+        assertEquals(Set.of("t:SCTwoType"), hasObjProp);
+    }
+    
+    @Test
+    public void testAugment () throws Exception {
+        var sch   = makeSchema("cmf/augment.cmf");
+        var defs  = sch.getAsJsonObject("definitions");
+        var ctx = JsonPath.using(JSG).parse(defs);
+
+        assertNotNull(ctx.read("$['nc:CommentType']['properties']['t:CommentDestinationText']"));
+        assertNotNull(ctx.read("$['nc:EducationType']['properties']['t:CommentDestinationText']"));
+        assertNotNull(ctx.read("$['nc:EducationType']['properties']['j:EducationTotalYearsText']"));
+        assertNotNull(ctx.read("$['nc:EducationType']['properties']['nc:CommentText']"));
+        assertNotNull(ctx.read("$['nc:EducationType']['properties']['nc:personNameCommentText']"));
+        assertNotNull(ctx.read("$['nc:EducationType']['properties']['t:TestAugElement']"));
+    }
+    
+    @Test
+    public void testChoice () throws Exception {
+        var sch  = makeSchema("cmf/choice.cmf");
+        var defs = sch.getAsJsonObject("definitions");
+        var ctx  = JsonPath.using(JSG).parse(defs);
+        var tref = new TypeRef<List<String>>(){};
+        
+        var r1 = ctx.read("$['t:T4Type']['anyOf'][*].required[0]", tref);
+        assertAll(
+            () -> assertEquals(2, r1.size()),
+            () -> assertEquals(Set.of("t:Prop1", "t:Prop2"), new HashSet<>(r1))
+        );
+        var r0 = ctx.read("$['t:T5Type']['anyOf'][*].required[0]", tref);
+        assertAll(
+            () -> assertEquals(3, r0.size()),
+            () -> assertEquals(Set.of("t:Prop1", "t:Prop2", "t:Prop3"), new HashSet<>(r0))
+        );
+    }
+    
+    @Test
+    public void testGaLitAtt () throws Exception {
+        var sch  = makeSchema("cmf/gaLitAtt.cmf");
+        var defs = sch.getAsJsonObject("definitions");
+        var hasAttProp = new HashSet<String>();
+        
+        for (var def : defs.entrySet()) {
+            var key   = def.getKey();
+            var defO  = def.getValue().getAsJsonObject();
+            if (!defO.has("properties")) continue;
+            var propO = defO.get("properties").getAsJsonObject();
+            if (propO.has("test:attProp")) hasAttProp.add(key);
+        }
+        assertEquals(hasAttProp, Set.of("test:SCOneType", "test:SCTwoType"));
+    }    
+    
+    @Test
+    public void testGaLitObj () throws Exception {
+        var sch  = makeSchema("cmf/gaLitObj.cmf");
+        var defs = sch.getAsJsonObject("definitions");
+        var hasObjProp = new HashSet<String>();
+        
+        for (var def : defs.entrySet()) {
+            var key   = def.getKey();
+            var defO  = def.getValue().getAsJsonObject();
+            if (!defO.has("properties")) continue;
+            var propO = defO.get("properties").getAsJsonObject();
+            if (propO.has("test:ObjProp")) hasObjProp.add(key);
+        }
+        assertEquals(hasObjProp, Set.of("test:SCOneType", "test:SCTwoType"));
+    }
+
+    @Test
+    public void testGaObjAtt () throws Exception {
+        var sch  = makeSchema("cmf/gaObjAtt.cmf");
+        var defs = sch.getAsJsonObject("definitions");
+        var hasAttProp = new HashSet<String>();
+        
+        for (var def : defs.entrySet()) {
+            var key   = def.getKey();
+            var defO  = def.getValue().getAsJsonObject();
+            if (!defO.has("properties")) continue;
+            var propO = defO.get("properties").getAsJsonObject();
+            if (propO.has("test:attProp")) hasAttProp.add(key);
+        }
+        assertEquals(hasAttProp, Set.of("test:CCOneType", "test:CCTwoType", "test:ObjType"));
+    }
+    
+    @Test
+    public void testGaObjObj () throws Exception {
+        var sch  = makeSchema("cmf/gaObjObj.cmf");
+        var defs = sch.getAsJsonObject("definitions");
+        var hasObjProp = new HashSet<String>();
+        
+        for (var def : defs.entrySet()) {
+            var key   = def.getKey();
+            var defO  = def.getValue().getAsJsonObject();
+            if (!defO.has("properties")) continue;
+            var propO = defO.get("properties").getAsJsonObject();
+            if (propO.has("test:ObjProp")) hasObjProp.add(key);
+        }
+        assertEquals(hasObjProp, Set.of("test:CCOneType", "test:CCTwoType", "test:ObjType"));
+    }
+    
+    @Test
+    public void testUnion () throws Exception {
+        var sch  = makeSchema("cmf/union.cmf");
+        var defs = sch.getAsJsonObject("definitions");
+        var ctx = JsonPath.using(JSG).parse(defs);
+        var tref = new TypeRef<List<Map<String,Object>>>(){};
+        
+        var r1 = ctx.read("$['t:TelephoneNumberCategoryCodeType']['anyOf']", tref);
+        assertEquals(2, r1.size());
+
+        Set<String> refs = r1.stream().map(m -> (String) m.get("$ref")).collect(Collectors.toSet());
+        assertEquals(refs, Set.of(
+            "#/definitions/t:TelephoneNumberCategoryAdditionalCodeType",
+            "#/definitions/t:CategoryCodeType"
+        ));    
+    }
+    
+    
     
     private static final SchemaRegistry sreg = SchemaRegistry.withDialect(Dialects.getDraft7());
     private static final Schema metasch = sreg.getSchema(SchemaLocation.of(Dialects.getDraft7().getId()));

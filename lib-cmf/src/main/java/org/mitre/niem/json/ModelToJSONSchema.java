@@ -649,10 +649,8 @@ public class ModelToJSONSchema {
         var bt   = r.base();
         if (!typeSch.containsKey(bt)) doTypes.add(bt);
 
-        // Determine base type.  Code type primitive is always string
+        // Determine base type. 
         var refName = bt.qname();
-        if (r.name().endsWith("CodeType") && W3C_XML_SCHEMA_NS_URI.equals(bt.namespaceURI()))
-            refName = "xs:string";
             
         // Now handle restriction facets.  Some base types have funky lengths!
         var facO  = new JsonObject();
