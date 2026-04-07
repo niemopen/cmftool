@@ -121,6 +121,7 @@ public class ClassType extends Component {
     }    
     
     public boolean hasXmlLang () {
+        if (null != subClassOf() && subClassOf().hasXmlLang()) return true;
         for (var pa : propL()) {
             var p = pa.property();
             if (XML_NS_URI.equals(p.namespaceURI()) && "lang".equals(p.name()))
@@ -130,14 +131,17 @@ public class ClassType extends Component {
     }
     
     public boolean isRepeatableProperty (Property p) {
+        if (null != subClassOf() && subClassOf().isRepeatableProperty(p)) return true;
         for (var pa : propL()) {
-            if (p == pa.property()) {
+            var subpS = pa.property().allSubProps();
+            if (p == pa.property() || subpS.contains(p)) {
                 if (pa.maxOccursVal() > 1 || pa.isMaxUnbounded())
                     return true;
             }
         }
         return false;
     }
+    
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.mitre.niem.xml.XMLDocument;
 import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
@@ -91,7 +92,7 @@ public class Mapping {
      * @param fromQ
      * @return mapped QName
      */
-    public String qnToQ (String fromQ) { 
+    public String qnToMappedQN (String fromQ) { 
         var mapQ = qn2mapQ.get(fromQ);
         if (null == mapQ) return fromQ;
         return mapQ;
@@ -99,22 +100,30 @@ public class Mapping {
     
     /**
      * Returns the name mapped to the argument QName.  This could be a QName, or
-     * just the local name (no prefix) if noPrefix is set.  Returns the argument 
+     * just the local name (without prefix) if noPrefix is set.  Returns the argument 
      * QName if not mapped.
      * @param fromQ
-     * @return 
+     * @return mapped local name or QName
      */
-    public String qnToN (String fromQ)   { 
+    public String qnToMappedName (String fromQ)   { 
         var mapQ = qn2mapQ.get(fromQ);
         if (null == mapQ) return fromQ;
-        if (noPrefix) return qnToName(mapQ);
+        if (noPrefix) return XMLDocument.qnToName(mapQ);
         return mapQ;
     }
     
-    public void setNoPrefix (boolean val) throws CMFException {
-        if (val && tprefixS.size() > 1)
-            throw new CMFException("Can't set noPrefix when map contains >1 target prefix");
+    public boolean noPrefix () { return noPrefix; }
+    
+    /**
+     * When set true, mapping targets will return the local name without prefix.
+     * Sets and returns false if the map has more than one target namespace.
+     * @param val
+     * @return new value of noPrefix
+     */
+    public boolean setNoPrefix (boolean val) {
+        if (val && tprefixS.size() > 1) val = false;
         noPrefix = val;
+        return val;
     }
     
     /**
@@ -136,11 +145,7 @@ public class Mapping {
      */
     public void addMapping (String fromQ, String toQ) throws CMFException {
         var prefix = qnToPrefix(toQ);
-        var lname  = qnToName(toQ);
-        if (noPrefix && !tprefixS.contains(prefix)) {
-            throw new CMFException(String.format(
-                "Can't add mapping %s -> %s (noPrefix is true and map already has another prefix", fromQ, toQ));
-        }
+        var lname  = XMLDocument.qnToName(toQ);
         var cToQ   = qn2mapQ.get(fromQ);
         var cFromQ = mapQ2qn.get(toQ);
         if (null != cToQ && !cToQ.equals(toQ)) {
@@ -154,6 +159,7 @@ public class Mapping {
         qn2mapQ.put(fromQ, toQ);
         mapQ2qn.put(toQ, fromQ);
         tprefixS.add(prefix);
+        if (tprefixS.size() > 1) noPrefix = false;
     }
     
     /**
@@ -253,10 +259,11 @@ public class Mapping {
             if (nsmap.isReserved(pre)) continue;         // skip reserved prefixes
             maxLen = Math.max(maxLen, pre.length());
         }
-        var fmt = "@prefix %-" + maxLen + "s: <%s> .\n";
+        maxLen += 1;
+        var fmt = "@prefix %-" + maxLen + "s <%s> .\n";
         for (var pre : prefixL) {
             if (nsmap.isReserved(pre)) continue;     // do not emit reserved prefixes
-            w.write(String.format(fmt, pre, nsmap.getURI(pre)));
+            w.write(String.format(fmt, pre + ":", nsmap.getURI(pre)));
         }        
         var srcL = new ArrayList<>(qn2mapQ.keySet());
         maxLen   = 0;

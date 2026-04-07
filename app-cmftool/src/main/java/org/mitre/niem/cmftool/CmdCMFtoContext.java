@@ -50,6 +50,9 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
 
 public class CmdCMFtoContext implements JCCommand {
     
+    @Parameter(order = 1, names = {"-m", "--map"}, description = "mapping file for property keys")
+    File mapF = null;
+    
     @Parameter(order = 1, names = {"-s","--single"}, description = "map to single namespace with no prefixes")
     private boolean noPrefix = false;
          
@@ -94,7 +97,7 @@ public class CmdCMFtoContext implements JCCommand {
             cob.usage();
             System.exit(0);
         }
-        if (mainArgs == null || mainArgs.isEmpty() || mainArgs.size() > 2) {
+        if (mainArgs == null || mainArgs.isEmpty() || mainArgs.size() > 1) {
             cob.usage();
             System.exit(1);
         }
@@ -134,19 +137,21 @@ public class CmdCMFtoContext implements JCCommand {
         }
         // Read the mapping file if one was provided
         Mapping map = null;
-        if (mainArgs.size() > 1) {
+        if (null != mapF) {
             try {
-                map = Mapping.readFile(new File(mainArgs.get(1)));
+                map = Mapping.readFile(mapF);
             } catch (IOException | CMFException ex) {
-                System.err.println(String.format("Can't read mapping file %s: %s", mainArgs.get(1), ex.getMessage()));
+                System.err.println(String.format("Can't read mapping file %s: %s", mapF.toString(), ex.getMessage()));
                 System.exit(1);
             }
         }
         // Create context and write to output stream
         try {
             if (null == map) Context.createTo(ow, model);
-            else if (!noPrefix) Context.createTo(ow, model, map);
-            else Context.createTo(ow, model, map, true);
+            else {
+                map.setNoPrefix(noPrefix);
+                Context.createTo(ow, model, map);
+            }
             ow.write("\n");
             ow.close();
         } catch (RuntimeException | IOException ex) {

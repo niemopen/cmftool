@@ -30,6 +30,8 @@ dependencies {
     testImplementation 'io.github.hakky54:logcaptor:2.9.3'  
     testImplementation 'com.jayway.jsonpath:json-path:3.0.0'
     testImplementation 'com.jayway.jsonpath:json-path-assert:3.0.0'
+    testImplementation 'com.networknt:json-schema-validator:3.0.1'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

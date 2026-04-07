@@ -48,6 +48,19 @@ public class XMLMsgToJSONTest {
     }
     
     @Test
+    public void testITL () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "itl.cmf"));         
+        var xmlF   = new File(resDN, "msg.xml");
+        var xmlIS  = new InputSource(new FileInputStream(xmlF));
+        var jsonW  = new StringWriter();
+        var tran   = new XMLMsgToJSON(model);
+        var jobj   = new JsonObject();
+        var status = tran.convert(xmlIS, jobj);
+        var jmsg   = gson.toJson(jobj);
+    }
+    
+    @Test
     public void testAugCCwA () throws Exception {
         var rdr   = new ModelXMLReader();
         var model = rdr.readFiles(new File(resDN, "augCCwA.cmf"));        

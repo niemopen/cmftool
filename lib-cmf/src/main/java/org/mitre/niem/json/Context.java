@@ -67,38 +67,30 @@ public class Context {
         return res;        
     }
     
-    public static JsonObject create (Model m, Mapping map) {
-        try { return create(m, map, false); } catch (CMFException ex) { return null; } // CAN'T HAPPEN
-    }
-    
-    public static JsonObject create (Model m, Mapping map, boolean noPrefix) throws CMFException {
+    public static JsonObject create (Model m, Mapping map) throws CMFException {
         var res = create(m);
         
         // Check mapped compnents for duplicate local name, or a match
         // with the prefix of a model namespace
         var needP  = false;
         var lnameS = new HashSet<String>();
-        for (var c : m.propertyL()) {           // model component; eg. nc:PersonSurName
-            var mcQ = map.qnToN(c.qname());         // mapped QN for component; eg. foo:lname
-            if (null == mcQ) continue;
-            var mln = qnToName(mcQ);                // local name of mapped QN; eg. lname
+        for (var p : m.propertyL()) {           // model component; eg. nc:PersonSurName
+            var pQ  = p.qname();
+            var mcQ = map.qnToMappedQN(pQ);     // mapped QN for property; eg. foo:lname
+            if (mcQ.equals(pQ)) continue;       // no mapping for this property
+            var mln = qnToName(mcQ);            // local name of mapped QN; eg. lname
             var err = "";
             if (null != m.namespaceObj(mln)) err = "mapped local name matches namespace prefix " + mln;
             else if (lnameS.contains(mln))   err = "multiple mappings with local name " + mln;
-            if (!err.isEmpty()) {
-                if (noPrefix) throw new CMFException(err);
-                else needP = true;
-            }
+            if (!err.isEmpty() && map.noPrefix()) throw new CMFException(err);
             lnameS.add(mln);
         }
         // Now add context entries for each mapped component
-        for (var c : m.propertyL()) {
-            var mcQ = map.qnToN(c.qname());         // mapped QN for component; eg. foo:lname
-            if (null == mcQ) continue;
-            var mlp = qnToPrefix(mcQ);              // prefix of mapped QN; eg. foo
-            var mln = qnToName(mcQ);                // local name of mapped QN; eg. lname            
-            if (needP) res.addProperty(mcQ, c.qname());
-            else res.addProperty(mln, c.qname());
+        for (var p : m.propertyL()) {
+            var pQ  = p.qname();
+            var mcN = map.qnToMappedName(pQ);       // mapped QN or local name for component; eg. foo:lname
+            if (mcN.equals(pQ)) continue;           // no mapping for this property
+            res.addProperty(mcN, pQ);
         }
         return res;
     }
@@ -107,12 +99,8 @@ public class Context {
         write(create(m), w);
     }
     
-    public static void createTo (Writer w, Model m, Mapping map) {
+    public static void createTo (Writer w, Model m, Mapping map) throws CMFException {
         write(create(m, map), w);
-    }
-    
-    public static void createTo (Writer w, Model m, Mapping map, boolean noPrefix) throws CMFException {
-        write(create(m, map, noPrefix), w);
     }
     
     public static void write (JsonObject res, Writer w) {

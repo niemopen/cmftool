@@ -52,22 +52,43 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
     
 public class CmdCMFtoJSONSchema implements JCCommand {
     
-    @Parameter(order = 1, names = {"-p", "--messageProp"}, description = "message property QName")
-    private List<String> msgQA = new ArrayList<>();
+    @Parameter(order = 1, names = {"-p", "--msgProp"}, description = "message property QNames")
+    private List<String> msgQA = null;
     
     @Parameter(order = 2, names = {"-c", "--context"}, description = "context URI")
     private String contextU = null;
     
-    @Parameter(order = 3, names = "-o", description = "name of output file")
-    private String modelFN = null;
+    @Parameter(order = 3, names = {"-m", "--map"}, description = "mapping file for property keys")
+    private File mapF = null;
     
-    @Parameter(names = {"-a","--alldefs"}, description = "generate definition for all model classes and datatypes")
+    @Parameter(order = 4, names = {"-a","--alldefs"}, description = "generate definition for all model classes and datatypes")
     private boolean allDefs = false;
-     
-    @Parameter(order = 4, names = {"-h","--help"}, description = "display this usage message", help = true)
+    
+    @Parameter(order = 5, names = "-o", description = "name of output file")
+    private String modelFN = null;
+
+    @Parameter(order = 6, names = "--noprefix", description = "don't use prefix in property keys")
+    private boolean noPrefix = false;
+    
+    @Parameter(order = 6, names = "--noformat", description = "don't include format properties in built-in types")
+    private boolean noFormat = false;
+    
+    @Parameter(order = 6, names = "--nopattern", description = "don't include pattern properties in built-in types")
+    private boolean noPattern = false;
+    
+    @Parameter(order = 6, names = "--nominmax", description = "don't include minimum/maximum properties in built-in types")
+    private boolean noMinMax = false;
+
+    @Parameter(order = 7, names = "--version", description = "schema version {draft-07,2019-09,2020-12}")
+    private String version = "draft-07";
+    
+    @Parameter(order = 7, names = "--versionURI", description = "schema version URI")
+    private String versionURI = null;
+
+    @Parameter(order = 8, names = {"-h","--help"}, description = "display this usage message", help = true)
     boolean help = false;
         
-    @Parameter(description = "modelFile.cmf [map.ttl]")
+    @Parameter(description = "modelFile.cmf")
     private List<String> mainArgs;
     
     CmdCMFtoJSONSchema () {
@@ -118,7 +139,7 @@ public class CmdCMFtoJSONSchema implements JCCommand {
                 System.exit(2);
             }
         }
-        if (mainArgs.isEmpty() || mainArgs.size() > 2) {
+        if (mainArgs.isEmpty() || mainArgs.size() > 1) {
             cob.usage();
             System.exit(2);            
         }
@@ -144,23 +165,25 @@ public class CmdCMFtoJSONSchema implements JCCommand {
         
         // Read the mapping file if one was provided
         Mapping map = null;
-        if (mainArgs.size() > 1) {
+        if (null != mapF) {
             try {
-                map = Mapping.readFile(new File(mainArgs.get(1)));
+                map = Mapping.readFile(mapF);
             } catch (IOException | CMFException ex) {
-                System.err.println(String.format("Can't read mapping file %s: %s", mainArgs.get(1), ex.getMessage()));
+                System.err.println(String.format("Can't read mapping file %s: %s", mapF.toString(), ex.getMessage()));
                 System.exit(1);
             }
         }
         // Get message property object (if specified)
         List<Property> msgPropA = new ArrayList<>();
-        for (var msgQ : msgQA) {
-            var p = model.qnToProperty(msgQ);
-            if (null == p) {
-                System.err.println("Property " + msgQ + " is not in model");
-                System.exit(1);
+        if (null != msgQA) {
+            for (var msgQ : msgQA) {
+                var p = model.qnToProperty(msgQ);
+                if (null == p) {
+                    System.err.println("Property " + msgQ + " is not in model");
+                    System.exit(1);
+                }
+                msgPropA.add(p);
             }
-            msgPropA.add(p);
         }
         // Generate JSON Schema
         try {
@@ -168,12 +191,21 @@ public class CmdCMFtoJSONSchema implements JCCommand {
             js.setMessageProperties(msgPropA);
             js.setContextURI(contextU);
             js.setMapping(map);
+            js.setNoPrefix(noPrefix);
             js.setAllDefinitions(allDefs);
+            js.setNoFormat(noFormat);
+            js.setNoPattern(noPattern);
+            js.setNoMinMax(noMinMax);
+            if (null != versionURI) js.setSchemaURI(versionURI);
+            else js.setSchemaVersion(version);
             js.writeSchema(ow);
             ow.write("\n");
             ow.close();
         }
-        catch (IOException ex) {}
+        catch (CMFException | IOException ex) {
+            System.err.println(ex.getMessage());
+            System.exit(1);
+        }
         System.exit(0);
     }    
 }

@@ -51,6 +51,11 @@ public class NIEMTran {
 
     public void run (String[] args) {
 
+        String res = "src/test/resources/";
+        if (0 == args.length) {
+            args = new String[]{"x2j", "-f", res+"itl.cmf", res+"msg.xml"}; 
+        }
+            
         var jc = new JCommander();
         var uf = new JCUsageFormatter(jc);
         jc.setUsageFormatter(uf);

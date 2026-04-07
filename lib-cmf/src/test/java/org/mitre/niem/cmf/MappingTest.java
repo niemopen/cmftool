@@ -7,6 +7,7 @@
  *--------------------------------------------------------------------*/
 package org.mitre.niem.cmf;
 
+import java.io.File;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
@@ -39,6 +40,21 @@ class MappingTest {
     @BeforeEach
     void setUp() {
         mapping = new Mapping();
+    }
+    
+    @Test
+    void readFile () throws Exception {
+        var map = Mapping.readFile(new File("src/test/resources/json/map-request.ttl"));
+    }
+    
+    @Test
+    void testCreateTemplate () throws Exception {
+        var rdr = new ModelXMLReader();
+        var m   = rdr.readFiles(new File("src/test/resources/json/request.cmf"));
+        var map = Mapping.createTemplate(m, "sj", "http://example.com/ReqRes/1.0/simpleJSON");
+        var ow  = new StringWriter();
+        map.write(ow);
+        var s = ow.toString();
     }
 
     /* -----------------------------------------------------------------
@@ -78,10 +94,10 @@ class MappingTest {
         mapping.addMapping(srcQN, tgtQN);
 
         // qnToQ returns the full target QN
-        assertEquals(tgtQN, mapping.qnToQ(srcQN));
+        assertEquals(tgtQN, mapping.qnToMappedQN(srcQN));
 
         // qnToN returns the full target QN when noPrefix == false
-        assertEquals(tgtQN, mapping.qnToN(srcQN));
+        assertEquals(tgtQN, mapping.qnToMappedName(srcQN));
     }
 
     @Test
@@ -97,11 +113,11 @@ class MappingTest {
         mapping.setNoPrefix(true);
 
         // The target QN uses only the local name part
-        assertEquals("propB", mapping.qnToN(srcQN));
+        assertEquals("propB", mapping.qnToMappedName(srcQN));
     }
 
     @Test
-    @DisplayName("setNoPrefix throws when more than one target prefix exists")
+    @DisplayName("setNoPrefix returns false when more than one target prefix exists")
     void setNoPrefixTooManyPrefixes() throws CMFException {
         mapping.assignPrefix("src", "http://src/");
         mapping.assignPrefix("tgt1", "http://tgt1/");
@@ -110,9 +126,21 @@ class MappingTest {
         mapping.addMapping("src:propA", "tgt1:propB");
         mapping.addMapping("src:propC", "tgt2:propD");
 
-        CMFException ex = assertThrows(CMFException.class,
-                () -> mapping.setNoPrefix(true));
-        assertTrue(ex.getMessage().contains("Can't set noPrefix"));
+        assertFalse(mapping.setNoPrefix(true));
+    }
+
+    @Test
+    @DisplayName("setNoPrefix becomes false when more than one target prefix exists")
+    void setNoPrefixBecomesFalse() throws CMFException {
+        mapping.setNoPrefix(true);
+        mapping.assignPrefix("src", "http://src/");
+        mapping.assignPrefix("tgt1", "http://tgt1/");
+        mapping.assignPrefix("tgt2", "http://tgt2/");
+
+        mapping.addMapping("src:propA", "tgt1:propB");
+        mapping.addMapping("src:propC", "tgt2:propD");
+        var res = mapping.noPrefix();
+        assertFalse(res);
     }
 
     @Test
@@ -184,7 +212,7 @@ class MappingTest {
             // verify that every mapping survived the round‑trip
             List<String> srcs = List.of(srcPrefix + ":a", srcPrefix + ":b", srcPrefix + ":c");
             for (String srcQN : srcs) {
-                assertEquals(mapping.qnToQ(srcQN), readBack.qnToQ(srcQN),
+                assertEquals(mapping.qnToMappedQN(srcQN), readBack.qnToMappedQN(srcQN),
                         "Round‑trip mapping for " + srcQN);
             }
 

@@ -37,14 +37,16 @@ import javax.xml.parsers.ParserConfigurationException;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.Union;
 import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.XMLSchemaDocument.makeURI;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_STRUCTURES;
-import static org.mitre.niem.xsd.NamespaceKind.namespaceToKind;
+import static org.mitre.niem.xsd.NamespaceKind.namespaceToKindValue;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
@@ -153,7 +155,8 @@ public class XMLMsgToJSON {
             if (null != p && null != p.classType() && p.classType().isAdapterClass()) adaptF = true;
             adapterS.push(adaptF);
             
-            // Get the class of the current object property; null for data properties
+            // Get the class of the current object property,
+            // It's null for data properties, augmentation elements, and unknown elements.
             var ignoreF = ignoreS.peek();
             if (null != ns && ns.isAugmentation(lname)) {
                 ctypeS.push(null);
@@ -169,6 +172,7 @@ public class XMLMsgToJSON {
             ignoreS.push(ignoreF);
             
             // Create the JSON object to be populated from current property
+            // (even if we know it's going to be ignored).
             var obj = new JsonObject();            
             objS.push(obj);
             
@@ -182,7 +186,7 @@ public class XMLMsgToJSON {
                 var aP   = model.uriToProperty(aU);     // attribute property
                 
                 // Handle @id, @ref, @uri from a structures namespace
-                if (NSK_STRUCTURES == namespaceToKind(ansU)) {
+                if (NSK_STRUCTURES == namespaceToKindValue(ansU)) {
                     switch (anam) {
                         case "id":
                         case "ref":
@@ -413,23 +417,62 @@ public class XMLMsgToJSON {
         // * number for xs:double, xs:float, xs:decimal and derived types
         // * string for everything else
         public JsonPrimitive valuePrimitive (Datatype dt, String val) {
-            System.err.println("valuePrimitive; " + dt.qname());
+            
+            // If we don't know the datatype, then the value is the character content
+            if (null == dt) return new JsonPrimitive(val);
+                
+            // String values are always collapsed unless there is a whitespace
+            // facet directing a different normalization
+            var sval = val.replaceAll("[ \\t\\n\\r]+", " ").trim();
+            if (null != dt.facetL()) {
+                for (var f : dt.facetL()) {
+                    if ("whiteSpace".equals(f.category())) {
+                        switch (f.value()) {
+                        case "preserve": sval = val; break;
+                        case "replace":  sval = val.replaceAll("[\\t\\n\\r]+", " "); break;
+                        }
+                    }
+                }
+            }
+            // A code is always a string
+            if (dt.name().endsWith("CodeType")) return new JsonPrimitive(sval);
+
+            // Unions are funky
+            if (CMF_UNION == dt.getType()) return unionPrimitive((Union)dt, sval);
+                
+            // Get name of XSD base type
             var bname = "string";
-            if (null != dt) { 
-                var xsbase = dt.baseXS();
-                if (null != xsbase) bname = xsbase.name();
-            }
-            if (dt.name().endsWith("CodeType")) {       // codes are strings
-                return new JsonPrimitive(val);
-            }
+            var xbase = dt.baseXS();
+            if (null != xbase) bname = xbase.name();                        
             if (numbers.contains(bname)) {
-                var number = new BigDecimal(val);
+                var number = new BigDecimal(sval);
                 return new JsonPrimitive(number);
             }
             else if ("boolean".equals(bname))
-                return new JsonPrimitive("true".equals(val));
+                return new JsonPrimitive("true".equals(sval));
             else 
-                return new JsonPrimitive(val);
-        }        
+                return new JsonPrimitive(sval);
+        }
+
+        // Should the value be a number or a string?  We aren't going to 
+        // reproduce XSD facet checking here.  Instead, the heuristic is:
+        // if the string value is a number, and there is a numeric type in
+        // the union, return a number; otherwise a string.
+        
+        private static final Pattern NUMBER = Pattern.compile(
+            "[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?");        
+        
+        public JsonPrimitive unionPrimitive (Union dt, String sval) {
+            var dtQ = dt.qname();
+            var hasNumber = false;
+            for (var ut : dt.memberL()) {
+                var bname = ut.baseXS().name();
+                if (numbers.contains(bname)) hasNumber = true;                
+            }
+            if (!hasNumber) return new JsonPrimitive(sval);
+            if (NUMBER.matcher(sval).matches()) return new JsonPrimitive(new BigDecimal(sval));
+            return new JsonPrimitive(sval);
+        }
     } 
+    
 }

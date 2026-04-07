@@ -31,12 +31,18 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.GsonJsonProvider;
 import com.jayway.jsonpath.spi.mapper.GsonMappingProvider;
+import com.networknt.schema.InputFormat;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaLocation;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Dialects;
 import java.io.File;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.cmf.Property;
 
@@ -55,18 +61,38 @@ public class ModelToJSONSchemaTest {
     
     public ModelToJSONSchemaTest() {
     }
+    
+    @Test
+    public void testITL () throws Exception {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File("C:\\Work\\im26\\Biometrics\\itl-2015\\itl.cmf"));
+        var js    = new ModelToJSONSchema(model);
+        js.setNoPrefix(true);
+        var w     = new StringWriter();
+        List<Property> msgPL = Arrays.asList(model.qnToProperty("itl:NISTBiometricInformationExchangePackage"));
+        js.setMessageProperties(msgPL);
+        js.setContextURI("http://example.com/Request/JSON");
+        js.writeSchema(w);
+        var s = w.toString();
+        assertTrue(schemaValid(s));
+        int x = 0;
+    }    
  
     @Test
     public void test () throws Exception {
         var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File("src/test/resources/cmf/refCode.cmf"));
+        var model = rdr.readFiles(new File("src/test/resources/json/request.cmf"));
+        var map   = Mapping.readFile(new File("src/test/resources/json/map-request.ttl"));
         var js    = new ModelToJSONSchema(model);
+        js.setMapping(map);
+        js.setNoPrefix(true);
         var w     = new StringWriter();
-        List<Property> msgPL = Arrays.asList(model.qnToProperty("ms"));
-        // js.setMessageProperties(msgPL);
+        List<Property> msgPL = Arrays.asList(model.qnToProperty("msg:Request"));
+        js.setMessageProperties(msgPL);
         js.setContextURI("http://example.com/Request/JSON");
         js.writeSchema(w);
         var s     = w.toString();
+        assertTrue(schemaValid(s));
         int x = 0;
     }
     
@@ -327,6 +353,16 @@ public class ModelToJSONSchemaTest {
         }
     }
     
+    private static final SchemaRegistry sreg = SchemaRegistry.withDialect(Dialects.getDraft7());
+    private static final Schema metasch = sreg.getSchema(SchemaLocation.of(Dialects.getDraft7().getId()));
+    
+    private boolean schemaValid (String s) {
+        List<com.networknt.schema.Error> errors = metasch.validate(s, InputFormat.JSON, executionContext -> {
+            executionContext.executionConfig(executionConfig -> executionConfig.formatAssertionsEnabled(true));
+        });
+        return errors.isEmpty();        
+    }
+    
     public JsonObject makeSchema (String fname) {
         var cmfF  = new File(RDIR, fname);
         var rdr   = new ModelXMLReader();
@@ -335,6 +371,8 @@ public class ModelToJSONSchemaTest {
         var sch   = new JsonObject();
         js.setAllDefinitions(true);
         js.createSchema(sch);
+        var s = sch.toString();
+        assertTrue(schemaValid(s));
         return sch;        
     }
     

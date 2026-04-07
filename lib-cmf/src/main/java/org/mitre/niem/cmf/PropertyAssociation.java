@@ -37,12 +37,21 @@ import org.mitre.niem.xml.LanguageString;
  */
 public class PropertyAssociation extends CMFObject  {
     
-    public PropertyAssociation () { }
+    public PropertyAssociation () { 
+        docL = new ArrayList<>();
+    }
+    
+    public PropertyAssociation (PropertyAssociation pa) {
+        property = pa.property;
+        minOccurs = pa.minOccurs;
+        maxOccurs = pa.maxOccurs;
+        docL = new ArrayList<>(pa.docL);
+    }
     
     private Property property = null;                               // cmf:Property
     private String minOccurs = "1";                                 // cmf:MinOccursQuantity
     private String maxOccurs = "1";                                 // cmf:MaxOccursQuantity
-    private final List<LanguageString> docL = new ArrayList<>();    // cmf:DocumentationText
+    private final List<LanguageString> docL;                        // cmf:DocumentationText
     
     public Property property ()         { return property; }
     public String minOccurs ()          { return minOccurs; }

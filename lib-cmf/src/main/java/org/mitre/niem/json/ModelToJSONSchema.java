@@ -43,6 +43,7 @@ import java.util.Stack;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.mitre.niem.cmf.CMFException;
 import static org.mitre.niem.cmf.CMFObject.CMF_DATATYPE;
 import static org.mitre.niem.cmf.CMFObject.CMF_LIST;
 import static org.mitre.niem.cmf.CMFObject.CMF_RESTRICTION;
@@ -92,10 +93,10 @@ public class ModelToJSONSchema {
     private List<Property> msgPropL = null;                         // message property objects, if provided
     private String contextU = null;                                 // @context URI, if provided
     private boolean inclDesc = true;                                // include component definitions in schema?
-    private boolean inclMinMax = false;                             // XSD atomic types test min & max values?
-    private boolean inclPattern = false;                            // XSD atomic types include pattern tests?
+    private boolean inclMinMax = true;                              // XSD atomic types test min & max properties?
+    private boolean inclPattern = true;                             // XSD atomic types include pattern tests?
+    private boolean inclFormat = true;                              // XSD atomic types include format properties?
     private boolean allDefs = false;                                // create definition for all model types?
-    
     private MapToList<String,PropertyAssociation> ctU2augL = null;  // classQ -> list of augmentation propQs for class
     private Deque<Component> doTypes = null;                        // class and datatype schemas remaining
     private Map<Component,JsonObject> typeSch = null;               // type -> schema json object
@@ -104,6 +105,8 @@ public class ModelToJSONSchema {
     private Datatype xsStringDT = null;                             // xs:string Datatype object
     private static final String XS_STRING_U = W3C_XML_SCHEMA_NS_URI + "/xs:string"; // xs:string URI
     
+    private String schemaVersionU = "http://json-schema.org/draft-07/schema#";
+
     /**
      * Creates a new converter for generating JSON Schema based on the 
      * supplied NIEM model.
@@ -131,6 +134,8 @@ public class ModelToJSONSchema {
      * @param noPrefix 
      */
     public void setNoPrefix (boolean noPrefix) {
+        var rv = map.setNoPrefix(noPrefix);
+        if (noPrefix && !rv) LOG.error("Can't set noPrefix when map has >1 target prefixes");
     }
     
     /**
@@ -141,7 +146,7 @@ public class ModelToJSONSchema {
     public void setMessageProperty (Property mprop) {
         msgPropL = List.of(mprop);
     }
-    
+        
     /**
      * The generated schema will require the root object to contain two keys:
      * the qname of exactly one of these properties, and @context.
@@ -171,6 +176,74 @@ public class ModelToJSONSchema {
         this.inclDesc = inclDesc;
     }
     
+    /**
+     * When set true, the definitions for built-in data types will not 
+     * include patterns.  For example, when true, you get
+     * <code>
+     *   "xs:token": {
+         "type": "string" }
+     *</code>
+     * instead of
+     * <code>
+     *   "xs:token": {
+         "type": "string",
+         "pattern": "^(?:$|\\S+(?: \\S+)*)$" }
+     *</code>     * 
+     * @param f 
+     */
+    public void setNoPattern (boolean f) {
+        inclPattern = !f;
+    }
+    
+    /**
+     * When set true, the definitions for built-in data types will not
+     * include minimum and maximum constraints.
+     * @param f 
+     */
+    public void setNoMinMax (boolean f) {
+        inclMinMax = !f;
+    }
+    
+    /**
+     * When set true, the definitions for built-in data types will not
+     * include format properties.
+     * @param f 
+     */
+    public void setNoFormat(boolean f) {
+        inclFormat = !f;
+    }
+    
+    private static final Map<String, String> schemaVersions = Map.ofEntries(
+      Map.entry("draft-07", "http://json-schema.org/draft-07/schema#"),
+      Map.entry("2019-09", "https://json-schema.org/draft/2019-09/schema"),
+      Map.entry("2020-12", "https://json-schema.org/draft/2020-12/schema"));
+      
+    /**
+     * Sets the version of JSON Schema in the generated schema.
+     * Valid values are: draft-07, 2019-09, 2020-12
+     * @param v
+     * @throws CMFException 
+     */
+    public void setSchemaVersion (String v) throws CMFException {
+        schemaVersionU = schemaVersions.get(v);
+        if (null == schemaVersionU)
+            throw new CMFException("Unknown JSON Schema version \"" + v + "\"");
+    }
+    
+    /**
+     * Sets the URI of the JSON Schema version in the generated schema.
+     * @param u 
+     */
+    public void setSchemaURI (String u) {
+        schemaVersionU = u;
+    }
+
+    /**
+     * When set true, the generated schema will include definitions for every
+     * class and datatype in the model, instead of only those referenced 
+     * through the message properties.
+     * @param all 
+     */
     public void setAllDefinitions (boolean all) {
         this.allDefs = all;
     }
@@ -238,7 +311,7 @@ public class ModelToJSONSchema {
             }
         } 
         // Start of schema object.
-        root.addProperty("$schema", "http://json-schema.org/draft-07/schema#");
+        root.addProperty("$schema", schemaVersionU);
         root.addProperty("type", "object");
         
         // Generate schema for required root-level keys in the message; could
@@ -376,10 +449,10 @@ public class ModelToJSONSchema {
     // the top-level "definitions" object.
     private void createClass (ClassType ct) {
         if (typeSch.containsKey(ct)) return;
-        var defO   = new JsonObject();       // will be value for ct.qname key in "definitions"
-        var propO  = new JsonObject();       // value of "properties" key
-        var reqA   = new JsonArray();        // value of "required" key
-        var allOfL = new ArrayList<JsonObject>();    // list of "allOf" array entries
+        var defO   = new JsonObject();              // will be value for ct.qname key in "definitions"
+        var propO  = new JsonObject();              // value of "properties" key
+        var reqQS  = new HashSet<String>();         // set of QNames for "required" key
+        var allOfL = new ArrayList<JsonObject>();   // list of "allOf" array entries
         typeSch.put(ct, defO);
         
         if (inclDesc && null != ct.definition())
@@ -401,59 +474,28 @@ public class ModelToJSONSchema {
             classS.add(xct);
             xct = xct.subClassOf();
         }
+        // Create property association list; process classes, deepest inherited first
         while (!classS.isEmpty()) {
             xct = classS.pop();
             paL.addAll(xct.propL());
-            paL.addAll(ctU2augL.get(xct.qname()));
+            paL.addAll(ctU2augL.get(xct.qname()));      // augmentation elements for this class
             if (!xct.anyL().isEmpty()) wildF = true;    // should handle wildcards better TODO
         }
-        // Adjust cardinality for properties occuring more than once TODO
-        // Should include subproperties
-        
-        // Handle each property in the property association list.
-        // Start by making a set of the non-abstract choices for a property.
+        // Handle required properties.  If no choices, add key to "required" array.
+        // If choices, create and remember an "anyOf":[] object for the choices.
+        // That may become an entry in an "allOf" array once all properties are done.
+        var minOcc = new HashMap<Property,Integer>();
         for (var pa : paL) {
-            var choS = new HashSet<Property>();
-            var p    = pa.property();
-            for (var subp : p.allSubProps())
-                if (!subp.isAbstract()) choS.add(subp);
-            if (!p.isAbstract()) choS.add(p);
-
-            // Create a "properties" entry for each choice
-            if (choS.isEmpty()) continue;
-            for (var chp : choS) {
-                var cct  = chp.type();
-                if (null == cct) cct = xsStringDT;          // externals, xml:lang, xml:base
-                var rstr = "#/definitions/" + cct.qname();
-                var key  = qnToKey(chp.qname());
-                var schO = new JsonObject();
-                propO.add(key, schO);
-                if (inclDesc) {
-                    if (null != chp.definition()) schO.addProperty("description", chp.definition());
-                    if (null != pa.definition())  schO.addProperty("associationDescription", pa.definition());
-                }
-                // A repeatable property is an array in the message.
-                // Can't enforce minItems if there are subproperty choices.
-                if (pa.maxOccursVal() > 1 || pa.isMaxUnbounded()) {
-                    var refO = new JsonObject();
-                    refO.addProperty("$ref", rstr);
-                    schO.addProperty("type", "array");
-                    schO.add("items", refO);
-                    if (pa.maxOccursVal() > 1) schO.addProperty("maxItems", pa.maxOccursVal());
-                    if (1 == choS.size() && pa.minOccursVal() > 0) schO.addProperty("minItems", pa.minOccursVal());
-                }
-                else schO.addProperty("$ref", rstr);
-                if (!typeSch.containsKey(cct)) doTypes.add(cct);
-            }
-            // Handle a required property.  If no choices, add key to "required" array.
-            // If choices, create and remember an "anyOf":[] object for the choices.
-            // That may become an entry in an "allOf" array once all properties are done.
+            var p = pa.property();
             if (pa.minOccursVal() > 0) {
                 JsonArray anyA  = null;     // array of { "required": [ "foo" ] } objects
                 JsonObject anyO = null;     // the { "anyOf": array } object
+                var choS = new HashSet<>(p.allSubProps());
+                choS.add(p);
                 for (var chp : choS) {
                     var key = qnToKey(chp.qname());
-                    if (1 == choS.size()) reqA.add(key);    // top-level "required" array
+                    if (chp.isAbstract()) continue;
+                    if (1 == choS.size()) reqQS.add(key);    // top-level "required" array
                     else {
                         var rO = makeObject("required", makeStringArray(key));
                         if (null == anyA) { 
@@ -465,12 +507,81 @@ public class ModelToJSONSchema {
                         anyA.add(rO);
                     }
                 }
+                // Remember minOccurs on properties without subproperties
+                if (choS.size() < 2 && pa.minOccursVal() > 0) {
+                    minOcc.put(p, pa.minOccursVal());
+                }
+                // Warn if schema doesn't check cardinality on property with choices
+                if (choS.size() > 1 && !pa.isMaxUnbounded()) {
+                    LOG.warn(String.format("Schema does not enforce maxOccurs=%d on %s in %s",
+                        pa.maxOccursVal(), p.qname(), ct.qname()));
+                }
+            }            
+        }
+        // Now build a new property association list, excluding all abstract
+        // properties, and including all subproperties.  Ensure each property
+        // occurs only once in the new list.  Adjust cardinality for properties 
+        // occuring more than once
+        var propL = new ArrayList<PropertyAssociation>();
+        var propM = new HashMap<Property,PropertyAssociation>();
+        for (var pa : paL) {
+            var p    = pa.property();
+            var subS = p.allSubProps();
+            subS.add(p);
+            
+            // Look at each property in the original list plus its subproperties
+            for (var pp : subS) {
+                var ppQ = pp.qname(); //DEBUG
+                if (pp.isAbstract()) continue;
+                var ppa = propM.get(p);    
+                if (null == ppa) {              // first time we've seen this property
+                    ppa = new PropertyAssociation(pa);
+                    ppa.setProperty(pp);
+                    propL.add(ppa);
+                    propM.put(pp, ppa);
+                }
+                // Seen it before? Don't add to new list, adjust cardinality if necessary
+                else {
+                    if ("unbounded".equals(pa.maxOccurs()))          ppa.setMaxOccurs("unbounded");
+                    else if (pa.maxOccursVal() > ppa.maxOccursVal()) ppa.setMaxOccurs(pa.maxOccurs());
+                    if (pa.minOccursVal() < ppa.minOccursVal())      ppa.setMinOccurs(pa.minOccurs());
+                }
             }
-            // Warn if schema doesn't check cardinality on property with choices TODO
-            if (choS.size() > 1 && !pa.isMaxUnbounded()) {
-                LOG.warn(String.format("Schema does not enforce maxOccurs=%d on %s in %s",
-                    pa.maxOccursVal(), p.qname(), ct.qname()));
+        }    
+        // Handle each property in the new property association list.
+        for (var pa : propL) {
+            var p    = pa.property();
+            var pQ = p.qname(); //DEBUG
+
+            // Create a "properties" entry for each choice
+            var pt = p.type();
+            if (null == pt) pt = xsStringDT;        // externals, xml:lang, xml:base
+            var rstr = "#/definitions/" + pt.qname();
+            var key = qnToKey(p.qname());
+            var schO = new JsonObject();
+            propO.add(key, schO);
+            if (inclDesc) {
+                if (null != p.definition())  schO.addProperty("description", p.definition());
+                if (null != pa.definition()) schO.addProperty("associationDescription", pa.definition());
             }
+            // A repeatable property is an array in the message.
+            // Can't enforce minItems if there are subproperty choices.
+            if (pa.maxOccursVal() > 1 || pa.isMaxUnbounded()) {
+                var refO = new JsonObject();
+                refO.addProperty("$ref", rstr);
+                schO.addProperty("type", "array");
+                schO.add("items", refO);
+                if (pa.maxOccursVal() > 1) {
+                    schO.addProperty("maxItems", pa.maxOccursVal());
+                }
+                if (null != minOcc.get(p)) {
+                    schO.addProperty("minItems", minOcc.get(p));
+                }
+
+            } else {
+                schO.addProperty("$ref", rstr);
+            }
+            if (!typeSch.containsKey(pt)) doTypes.add(pt);
         }
         // Add metadata properties (if any) for NIEM 2,3,4,5
         for (var p : metadataPL) {
@@ -498,7 +609,12 @@ public class ModelToJSONSchema {
             for (var ao : allOfL) allA.add(ao);
             defO.add("allOf", allA);
         }
-        if (!reqA.isEmpty()) defO.add("required", reqA);
+        // Handle "required" key if needed
+        if (!reqQS.isEmpty()) {
+            var reqA = new JsonArray();
+            for (var rQ : reqQS) reqA.add(rQ);
+            defO.add("required", reqA);
+        }
         if (!wildF) defO.addProperty("additionalProperties", false);
     }
     
@@ -533,33 +649,49 @@ public class ModelToJSONSchema {
         var bt   = r.base();
         if (!typeSch.containsKey(bt)) doTypes.add(bt);
 
-        var facO  = new JsonObject();
-        var enumA = new JsonArray();
-        for (var f : r.facetL()) {
-            JsonPrimitive fval;
-            switch (f.category()) {
-                case "enumeration" ->  { enumA.add(f.value()); }
-                case "length" ->       { facO.addProperty("maxLength", new BigDecimal(f.value()));
-                                         facO.addProperty("minLength", new BigDecimal(f.value())); }
-                case "maxExclusive" -> { facO.addProperty("exclusiveMaximum", new BigDecimal(f.value())); }
-                case "maxInclusive" -> { facO.addProperty("maximum", new BigDecimal(f.value())); }
-                case "maxLength" ->    { facO.addProperty("maxLength", new BigDecimal(f.value())); }
-                case "minExclusive" -> { facO.addProperty("exclusiveMinimum", new BigDecimal(f.value())); }
-                case "minInclusive" -> { facO.addProperty("minimum", new BigDecimal(f.value())); }
-                case "minLength" ->    { facO.addProperty("minLength", new BigDecimal(f.value())); }
-                case "pattern" ->      { facO.addProperty("pattern", f.value()); }
-                case "fractionDigits",
-                     "totalDigits",
-                     "whiteSpace" -> {
-                    LOG.warn(String.format("schema does not enforce %s facet on %s", f.category(), r.qname()));
-                }
-            }
-        }
         // Determine base type.  Code type primitive is always string
         var refName = bt.qname();
         if (r.name().endsWith("CodeType") && W3C_XML_SCHEMA_NS_URI.equals(bt.namespaceURI()))
             refName = "xs:string";
             
+        // Now handle restriction facets.  Some base types have funky lengths!
+        var facO  = new JsonObject();
+        var enumA = new JsonArray();
+        for (var f : r.facetL()) {
+            JsonPrimitive fval;
+            switch (refName) {
+            case "xs:hexBinary":
+            case "xs:base64Binary":
+                switch (f.category()) {
+                    case "enumeration" ->  { enumA.add(f.value()); }
+                    case "length" ->       { facO.addProperty("maxLength", doubleBigDecimal(f.value()));
+                                             facO.addProperty("minLength", doubleBigDecimal(f.value())); }                        
+                    case "maxLength" ->    { facO.addProperty("maxLength", doubleBigDecimal(f.value())); }
+                    case "minLength" ->    { facO.addProperty("minLength", doubleBigDecimal(f.value())); }
+                    case "pattern" ->      { if (inclPattern) facO.addProperty("pattern", f.value()); }
+                }
+                break;
+            default:
+                switch (f.category()) {
+                    case "enumeration" ->  { enumA.add(f.value()); }
+                    case "length" ->       { facO.addProperty("maxLength", new BigDecimal(f.value()));
+                                             facO.addProperty("minLength", new BigDecimal(f.value())); }
+                    case "maxExclusive" -> { facO.addProperty("exclusiveMaximum", new BigDecimal(f.value())); }
+                    case "maxInclusive" -> { if (inclMinMax) facO.addProperty("maximum", new BigDecimal(f.value())); }
+                    case "maxLength" ->    { facO.addProperty("maxLength", new BigDecimal(f.value())); }
+                    case "minExclusive" -> { facO.addProperty("exclusiveMinimum", new BigDecimal(f.value())); }
+                    case "minInclusive" -> { if (inclMinMax) facO.addProperty("minimum", new BigDecimal(f.value())); }
+                    case "minLength" ->    { facO.addProperty("minLength", new BigDecimal(f.value())); }
+                    case "pattern" ->      { if (inclPattern) facO.addProperty("pattern", f.value()); }
+                    case "fractionDigits",
+                         "totalDigits",
+                         "whiteSpace" -> {
+                        LOG.warn(String.format("schema does not enforce %s facet on %s", f.category(), r.qname()));
+                    }
+                }
+            }
+        }
+
         if (!enumA.isEmpty()) facO.add("enum", enumA);
         if (!facO.isEmpty()) {
             var allA = new JsonArray();
@@ -570,6 +702,10 @@ public class ModelToJSONSchema {
             defO.add("allOf", allA);
         }
         else defO.addProperty("$ref", "#/definitions/" + refName);
+    }
+    
+    private BigDecimal doubleBigDecimal (String val) {
+        return new BigDecimal(val).multiply(BigDecimal.valueOf(2));
     }
     
     
@@ -603,14 +739,14 @@ public class ModelToJSONSchema {
             }
             case "anyURI" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "uri");
+                if (inclFormat)  defO.addProperty("format", "uri");
                 if (inclPattern) defO.addProperty("pattern", "^[^\\s]+$");
             }   
             // Based on the XSD 1.1 regexp for the lexical space; modified to
             // allow any single whitespace character where a space is allowed.
             case "base64Binary" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "byte");
+                if (inclFormat)  defO.addProperty("format", "byte");
                 if (inclPattern) defO.addProperty("pattern",
                     "^(?:"
                     + "(?:(?:[A-Za-z0-9+/][ \\t\\r\\n]?){4})*"
@@ -629,44 +765,45 @@ public class ModelToJSONSchema {
             }
             case "byte" -> {
                 defO.addProperty("type", "integer");
-                defO.addProperty("format", "int8");
+                if (inclFormat) defO.addProperty("format", "int8");
                 if (inclMinMax) defO.addProperty("minimum", -128);
                 if (inclMinMax) defO.addProperty("maximum", 127);
             }
             case "date" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "date");
+                if (inclFormat)  defO.addProperty("format", "date");
                 if (inclPattern) defO.addProperty("pattern", "^-?\\d{4,}-\\d{2}-\\d{2}(?:Z|[+-]\\d{2}:\\d{2})?$");
             }
             case "dateTime" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "date-time");
-                if (inclPattern) defO.addProperty("pattern", "^-?\\d{4,}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?$");
+                if (inclPattern) defO.addProperty("pattern",
+                "^(-?\\d{4,})-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?|24:00:00(?:\\.0+)?)(?:Z|[+\\-](?:0\\d|1[0-3]):[0-5]\\d|[+\\-]14:00)?$");
+//                defO.addProperty("format", "date-time");  // Doesn't match xs:dateTime
             }
             case "dateTimeStamp" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "date-time");
+                if (inclFormat)  defO.addProperty("format", "date-time");
                 if (inclPattern) defO.addProperty("pattern", "^-?\\d{4,}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$");
             }
             case "dayTimeDuration" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "duration");
+                if (inclFormat)  defO.addProperty("format", "duration");
                 if (inclPattern) defO.addProperty("pattern", "^-?P(?=.+)(?:\\d+D)?(?:T(?:\\d+H)?(?:\\d+M)?(?:\\d+(?:\\.\\d+)?S)?)?$");
             }
             case "decimal" -> {
                 defO.addProperty("type", "number");
-                defO.addProperty("format", "decimal");
+                if (inclFormat) defO.addProperty("format", "decimal");
                 // If you must enforce XSD lexical form:
                 // defO.addProperty("type", "string");
                 // if (inclPattern) defO.addProperty("pattern", "^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)$");
             }
             case "double" -> {
                 defO.addProperty("type", "number");
-                defO.addProperty("format", "double");
+                if (inclFormat) defO.addProperty("format", "double");
             }
             case "duration" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "duration");
+                if (inclFormat)  defO.addProperty("format", "duration");
                 if (inclPattern) defO.addProperty("pattern", "^-?P(?=.+)(?:\\d+Y)?(?:\\d+M)?(?:\\d+D)?(?:T(?:\\d+H)?(?:\\d+M)?(?:\\d+(?:\\.\\d+)?S)?)?$");
             }
             case "ENTITIES" -> {
@@ -703,7 +840,7 @@ public class ModelToJSONSchema {
             }
             case "hexBinary" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "hex");
+                if (inclFormat)  defO.addProperty("format", "hex");
                 if (inclPattern) defO.addProperty("pattern", "^(?:[0-9A-Fa-f]{2})*$");
             }
             case "ID" -> {
@@ -720,8 +857,8 @@ public class ModelToJSONSchema {
             }
             case "int" -> {
                 defO.addProperty("type", "integer");
-                defO.addProperty("format", "int32");
-                if (inclMinMax) if (inclMinMax) defO.addProperty("minimum", -2147483648L);
+                if (inclFormat) defO.addProperty("format", "int32");
+                if (inclMinMax) defO.addProperty("minimum", -2147483648L);
                 if (inclMinMax) defO.addProperty("maximum", 2147483647L);
             }
             case "integer" -> {
@@ -733,7 +870,7 @@ public class ModelToJSONSchema {
             }
             case "long" -> {
                 defO.addProperty("type", "integer");
-                defO.addProperty("format", "int64");
+                if (inclFormat) defO.addProperty("format", "int64");
                 if (inclMinMax) defO.addProperty("minimum", new java.math.BigInteger("-9223372036854775808"));
                 if (inclMinMax) defO.addProperty("maximum", new java.math.BigInteger("9223372036854775807"));
             }
@@ -779,7 +916,7 @@ public class ModelToJSONSchema {
             }
             case "precisionDecimal" -> {
                 defO.addProperty("type", "number");
-                defO.addProperty("format", "decimal");
+                if (inclFormat) defO.addProperty("format", "decimal");
             }
             case "QName" -> {
                 defO.addProperty("type", "string");
@@ -787,7 +924,7 @@ public class ModelToJSONSchema {
             }
             case "short" -> {
                 defO.addProperty("type", "integer");
-                defO.addProperty("format", "int16");
+                if (inclFormat) defO.addProperty("format", "int16");
                 if (inclMinMax) defO.addProperty("minimum", -32768);
                 if (inclMinMax) defO.addProperty("maximum", 32767);
             }
@@ -796,8 +933,9 @@ public class ModelToJSONSchema {
             }
             case "time" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "time");
-                if (inclPattern) defO.addProperty("pattern", "^\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})?$");
+//                defO.addProperty("format", "time");  // Doesn't match xs:time
+                if (inclPattern) defO.addProperty("pattern", 
+                    "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d:(?:[0-5]\\d|60)(?:\\.\\d+)?|24:00:00(?:\\.0+)?)(?:Z|[+\\-](?:0\\d|1[0-3]):[0-5]\\d|[+\\-]14:00)?$");
             }
             case "token" -> {
                 defO.addProperty("type", "string");
@@ -805,25 +943,25 @@ public class ModelToJSONSchema {
             }
             case "unsignedByte" -> {
                 defO.addProperty("type", "integer");
-                defO.addProperty("format", "uint8");
+                if (inclFormat) defO.addProperty("format", "uint8");
                 if (inclMinMax) defO.addProperty("minimum", 0);
                 if (inclMinMax) defO.addProperty("maximum", 255);
             }
             case "unsignedInt" -> {
                 defO.addProperty("type", "integer");
-                defO.addProperty("format", "uint32");
+                if (inclFormat) defO.addProperty("format", "uint32");
                 if (inclMinMax) defO.addProperty("minimum", 0);
                 if (inclMinMax) defO.addProperty("maximum", 4294967295L);
             }
             case "unsignedLong" -> {
                 defO.addProperty("type", "integer");
-                defO.addProperty("format", "uint64");
+                if (inclFormat) defO.addProperty("format", "uint64");
                 if (inclMinMax) defO.addProperty("minimum", java.math.BigInteger.ZERO);
                 if (inclMinMax) defO.addProperty("maximum", new java.math.BigInteger("18446744073709551615"));
             }
             case "unsignedShort" -> {
                 defO.addProperty("type", "integer");
-                defO.addProperty("format", "uint16");
+                if (inclFormat) defO.addProperty("format", "uint16");
                 if (inclMinMax) defO.addProperty("minimum", 0);
                 if (inclMinMax) defO.addProperty("maximum", 65535);
             }
@@ -832,7 +970,7 @@ public class ModelToJSONSchema {
             }
             case "yearMonthDuration" -> {
                 defO.addProperty("type", "string");
-                defO.addProperty("format", "duration");
+                if (inclFormat)  defO.addProperty("format", "duration");
                 if (inclPattern) defO.addProperty("pattern", "^-?P(?=.+)(?:\\d+Y)?(?:\\d+M)?$");
             }
             default -> {
@@ -844,7 +982,7 @@ public class ModelToJSONSchema {
     
     // Returns 
     public String qnToKey (String qn) {
-        return map.qnToN(qn);
+        return map.qnToMappedName(qn);
     }
     
     // Parses JSON text to create a JsonObject containing a pair
