@@ -129,7 +129,7 @@ public class XMLMsgToJSON {
         
         @Override
         public void startElement(String nsuri, String lname, String qName, Attributes atts) {
-            System.err.println("startElement: " + qName);
+//            System.err.println("startElement: " + qName);
             // Handle xml:base in the message element; reject it elsewhere
             // If set, all reference URIs become absolute; otherwise are relative
             var baseAtt = atts.getValue("xml:base");
@@ -257,7 +257,7 @@ public class XMLMsgToJSON {
 
         @Override
         public void endElement(String nsuri, String lname, String qName) throws SAXException {
-            System.err.println("endElement: " + qName);
+//            System.err.println("endElement: " + qName);
             var obj    = objS.pop();
             var parent = objS.peek();
             var otype  = ctypeS.pop();
