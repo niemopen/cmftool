@@ -92,6 +92,7 @@ public class CMFTool {
         
         if (args.length < 1) {
             System.out.println("Version: " + CMFTool.class.getPackage().getImplementationVersion());
+            System.out.println("Suggestions and bug reports: https://github.com/niemopen/cmftool/issues");
             jc.usage();
             System.exit(2);
         }
@@ -132,6 +133,7 @@ public class CMFTool {
         @Override
         public void runCommand(JCommander helpOb) {
             System.out.println("Version: " + CMFTool.class.getPackage().getImplementationVersion());
+            System.out.println("Suggestions and bug reports: https://github.com/niemopen/cmftool/issues");
             if (helpArgs != null && !helpArgs.isEmpty()) {
                 String cmdName = helpArgs.get(0);
                 Map<String, JCommander> cmdMap = jc.getCommands();

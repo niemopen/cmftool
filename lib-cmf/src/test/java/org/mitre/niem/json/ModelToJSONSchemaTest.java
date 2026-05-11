@@ -97,6 +97,18 @@ public class ModelToJSONSchemaTest {
 //        int x = 0;
 //    }
     
+    // Code types are always a string type, even if the model says xs:integer, etc.
+    // But types derived from xs:string are retained.
+    @Test
+    public void testCodeType () {
+        var sch  = makeSchema("json/codeType.cmf");
+        var defs = sch.getAsJsonObject("definitions");
+        var ctx  = JsonPath.using(JSG).parse(defs);
+        
+        assertEquals("#/definitions/xs:string", ctx.read("$.t:IntegerCodeType.allOf[0]['$ref']", String.class));
+        assertEquals("#/definitions/xs:token", ctx.read("$.t:TokenCodeType.allOf[0]['$ref']", String.class));
+    }    
+    
     @Test
     public void testTwoChoice () {
         var sch  = makeSchema("json/twoChoice.cmf");

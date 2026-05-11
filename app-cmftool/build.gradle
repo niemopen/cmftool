@@ -17,10 +17,6 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-}
-
 dependencies {
     implementation project(':lib-cmf')
     implementation project(':lib-util')
@@ -58,34 +54,31 @@ tasks.named('test') {
 }
 
 tasks.register('generateDocs') {
-  description = 'Generate HTML from markdown'
-  group = 'documentation'
+    description = 'Generate HTML from markdown'
+    group = 'documentation'
 
-  inputs.files fileTree(docSrc) { include '**/*.md' }
-  outputs.dir docDist
+    inputs.files fileTree(docSrc) { include '**/*.md' }
+    outputs.dir docDist
 
-  doLast {
-    def outDir = docDist.get().asFile
-    outDir.mkdirs()
+    doLast {
+        def execOps = services.get(org.gradle.process.ExecOperations)
+        def outDir = docDist.get().asFile
+        outDir.mkdirs()
 
-    fileTree(docSrc) { include '**/*.md' }.files.each { File md ->
-      // Preserve relative paths under src/docs, just change extension
-      def relPath  = docSrc.toPath().relativize(md.toPath()).toString()
-      def htmlPath = relPath.replaceAll(/\.md$/, '.html')
-      def htmlFile = new File(outDir, htmlPath)
-      htmlFile.parentFile.mkdirs()
+        fileTree(docSrc) { include '**/*.md' }.each { File md ->
+            def relPath  = docSrc.toPath().relativize(md.toPath()).toString()
+            def htmlFile = new File(outDir, relPath.replaceAll(/\.md$/, '.html'))
 
-      println "Converting ${md} -> ${htmlFile}"
+            htmlFile.parentFile.mkdirs()
 
-      project.exec {
-        commandLine 'pandoc',
-          '-f', 'gfm',
-          '-t', 'html',
-          md.absolutePath,
-          '-o', htmlFile.absolutePath
+            println "Converting ${md.name} -> ${htmlFile.name}"
+
+            execOps.exec {
+                commandLine 'pandoc', '-f', 'gfm', '-t', 'html',
+                            md.absolutePath, '-o', htmlFile.absolutePath
+            }
         }
-      }
-  }
+    }
 }
 
 tasks.named('installDist') { dependsOn 'generateDocs' }

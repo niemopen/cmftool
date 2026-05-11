@@ -12,11 +12,6 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-}
-
-
 dependencies {
     implementation 'net.sf.saxon:Saxon-HE:12.5'
     implementation 'xerces:xercesImpl:2.12.2'
@@ -34,14 +29,6 @@ dependencies {
     testImplementation 'org.assertj:assertj-core:3.26.0'
     testImplementation 'io.github.hakky54:logcaptor:2.9.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
 }
 
 jar {

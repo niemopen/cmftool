@@ -36,13 +36,6 @@ dependencies {
 }
 
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
 jar {
     manifest {
         attributes 'Implementation-Version': String.format('%s (%tF)', project.version, java.time.LocalDateTime.now()),

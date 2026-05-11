@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.apache.logging.log4j.LogManager;
@@ -639,19 +640,28 @@ public class ModelToJSONSchema {
         }
     }
     
-      
+    // Complete the schema object def0 for a restriction datatype,
+    // setting the base type and adding facets.  Special handlng for code types.
+    
+    private static final Set STRING_TYPES = Set.of(
+        "xs:string", "xs:normalizedString", "xs:token", "xs:language", "xs:Name", "xs:NMTOKEN", "xs:NCName");
+    
     private void createRestriction (Restriction r, JsonObject defO) {
+        
+        // Datatypes in the XSD namespace are primitives
         if (W3C_XML_SCHEMA_NS_URI.equals(r.namespaceURI())) {
             createXSDPrimitive(r.name(), defO);
             return;
         }
-        // Restrictions not in XSD namespace must have a base type
+        // Restrictions not in XSD namespace must have a base type.
+        // Code types have a string base type no matter what the model says.
         var bt   = r.base();
-        if (!typeSch.containsKey(bt)) doTypes.add(bt);
-
-        // Determine base type. 
         var refName = bt.qname();
-            
+        if (r.name().endsWith("CodeType")) {
+            if (!STRING_TYPES.contains(refName)) refName = "xs:string";
+        }
+        if (!typeSch.containsKey(bt)) doTypes.add(bt);
+ 
         // Now handle restriction facets.  Some base types have funky lengths!
         var facO  = new JsonObject();
         var enumA = new JsonArray();
@@ -745,21 +755,26 @@ public class ModelToJSONSchema {
             case "base64Binary" -> {
                 defO.addProperty("type", "string");
                 if (inclFormat)  defO.addProperty("format", "byte");
-                if (inclPattern) defO.addProperty("pattern",
-                    "^(?:"
-                    + "(?:(?:[A-Za-z0-9+/][ \\t\\r\\n]?){4})*"
-                    + "(?:"
-                    + "(?:[A-Za-z0-9+/][ \\t\\r\\n]?){3}[A-Za-z0-9+/]"
-                    + "|(?:[A-Za-z0-9+/][ \\t\\r\\n]?){2}[AEIMQUYcgkosw048][ \\t\\r\\n]?="
-                    + "|[A-Za-z0-9+/][ \\t\\r\\n]?[AQgw][ \\t\\r\\n]?=[ \\t\\r\\n]?="
-                    + ")?"
-                    + ")?$");
+                if (inclPattern) defO.addProperty("pattern", """
+                    ^(?:
+                    (?:(?:[A-Za-z0-9+/][ \\t\\r\\n]?){4})*
+                    (?:
+                    (?:[A-Za-z0-9+/][ \\t\\r\\n]?){3}[A-Za-z0-9+/]
+                    |(?:[A-Za-z0-9+/][ \\t\\r\\n]?){2}[AEIMQUYcgkosw048][ \\t\\r\\n]?=
+                    |[A-Za-z0-9+/][ \\t\\r\\n]?[AQgw][ \\t\\r\\n]?=[ \\t\\r\\n]?=
+                    )?
+                    )?$
+                """.replace("\n", ""));
             }
             case "boolean" -> {
-                defO.addProperty("type", "boolean");
-                // If you need lexical validation instead:
-                // defO.addProperty("type", "string");
-                // defO.addProperty("pattern", "^(?:true|false|1|0)$");
+                var jstr = """
+                           [
+                             { "type": "boolean" },
+                             { "enum": [ 1, 0, "1", "0" ] }
+                           ]
+                           """;
+                var oneA = JsonParser.parseString(jstr).getAsJsonArray();
+                defO.add("oneOf", oneA);
             }
             case "byte" -> {
                 defO.addProperty("type", "integer");
@@ -814,7 +829,7 @@ public class ModelToJSONSchema {
             }
             case "float" -> {
                 defO.addProperty("type", "number");
-                defO.addProperty("format", "float");
+                if (inclFormat) defO.addProperty("format", "float");
             }
             case "gDay" -> {
                 defO.addProperty("type", "string");

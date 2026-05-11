@@ -12,11 +12,6 @@ compileJava {
     options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-}
-
-
 dependencies {
     implementation project(':lib-util')
     implementation 'net.sf.saxon:Saxon-HE:12.5'

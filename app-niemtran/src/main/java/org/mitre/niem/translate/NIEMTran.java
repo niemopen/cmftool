@@ -52,9 +52,9 @@ public class NIEMTran {
     public void run (String[] args) {
 
         String res = "src/test/resources/";
-        if (0 == args.length) {
-            args = new String[]{"x2j", "-f", res+"itl.cmf", res+"msg.xml"}; 
-        }
+//        if (0 == args.length) {
+//            args = new String[]{"x2j", "-f", res+"itl.cmf", res+"msg.xml"}; 
+//        }
             
         var jc = new JCommander();
         var uf = new JCUsageFormatter(jc);
@@ -71,6 +71,7 @@ public class NIEMTran {
 
         if (args.length < 1) {
             System.out.println("Version: " + NIEMTran.class.getPackage().getImplementationVersion());
+            System.out.println("Suggestions and bug reports: https://github.com/niemopen/cmftool/issues");
             jc.usage();
             System.exit(2);
         }
@@ -112,6 +113,7 @@ public class NIEMTran {
         @Override
         public void runCommand(JCommander helpOb) {
             System.out.println("Version: " + NIEMTran.class.getPackage().getImplementationVersion());
+            System.out.println("Suggestions and bug reports: https://github.com/niemopen/cmftool/issues");
             if (helpArgs != null && !helpArgs.isEmpty()) {
                 String cmdName = helpArgs.get(0);
                 Map<String, JCommander> cmdMap = jc.getCommands();
