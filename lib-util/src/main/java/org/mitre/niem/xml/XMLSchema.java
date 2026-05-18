@@ -31,6 +31,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -548,14 +549,12 @@ public class XMLSchema {
     // Xerces reports schema document location as file URIs that sometimes
     // include percent-encoded backslash characters as separators.  Who knew?
     private String xercesLocationURI (String locuri) {
-        var furi = locuri;
-        try {
-            furi = URLDecoder.decode(locuri, "UTF-8");
-        } catch (UnsupportedEncodingException ex) {
-            LOG.error("URLDecoder can't decode UTF-8 charset??: " + ex.getMessage());
-        }
-        furi = furi.replace('\\', '/');
-        return furi;
+        if (null == locuri || locuri.isBlank()) return locuri;
+        var fixed = locuri
+            .replace("%5C", "/")
+            .replace("%5c", "/")
+            .replace("\\", "/");
+        return fixed;
     }
     
     // Override this in a derived XMLSchema class to create a derived XMLSchemaDocument object.
