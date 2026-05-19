@@ -737,6 +737,16 @@ public class ModelToJSONSchema {
         defO.add("anyOf", anyA);
     }
     
+    private static final String BASE64_PATTERN =
+        "^[ \\t\\r\\n]*"
+            + "(?:(?:[A-Za-z0-9+/][ \\t\\r\\n]*){4})*"
+            + "(?:"
+            +     "(?:[A-Za-z0-9+/][ \\t\\r\\n]*){2}[AEIMQUYcgkosw048][ \\t\\r\\n]*="
+            +   "|"
+            +     "[A-Za-z0-9+/][ \\t\\r\\n]*[AQgw][ \\t\\r\\n]*=[ \\t\\r\\n]*="
+            + ")?"
+            + "$";
+    
     private void createXSDPrimitive(String name, JsonObject defO) {
         switch (name) {
             case "anyAtomicType" -> {
@@ -750,31 +760,13 @@ public class ModelToJSONSchema {
                 if (inclFormat)  defO.addProperty("format", "uri");
                 if (inclPattern) defO.addProperty("pattern", "^[^\\s]+$");
             }   
-            // Based on the XSD 1.1 regexp for the lexical space; modified to
-            // allow any single whitespace character where a space is allowed.
             case "base64Binary" -> {
                 defO.addProperty("type", "string");
-                if (inclFormat)  defO.addProperty("format", "byte");
-                if (inclPattern) defO.addProperty("pattern", """
-                    ^(?:
-                    (?:(?:[A-Za-z0-9+/][ \\t\\r\\n]?){4})*
-                    (?:
-                    (?:[A-Za-z0-9+/][ \\t\\r\\n]?){3}[A-Za-z0-9+/]
-                    |(?:[A-Za-z0-9+/][ \\t\\r\\n]?){2}[AEIMQUYcgkosw048][ \\t\\r\\n]?=
-                    |[A-Za-z0-9+/][ \\t\\r\\n]?[AQgw][ \\t\\r\\n]?=[ \\t\\r\\n]?=
-                    )?
-                    )?$
-                """.replace("\n", ""));
+                if (inclPattern) defO.addProperty("pattern", BASE64_PATTERN);
             }
             case "boolean" -> {
-                var jstr = """
-                           [
-                             { "type": "boolean" },
-                             { "enum": [ 1, 0, "1", "0" ] }
-                           ]
-                           """;
-                var oneA = JsonParser.parseString(jstr).getAsJsonArray();
-                defO.add("oneOf", oneA);
+                defO.addProperty("type", "boolean");
+
             }
             case "byte" -> {
                 defO.addProperty("type", "integer");

@@ -14,7 +14,7 @@ allprojects {
     }
 }
 
-project.version = '1.1-alpha.5'
+project.version = '1.1-alpha.6'
 
 subprojects {
     version = rootProject.version

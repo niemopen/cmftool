@@ -207,13 +207,13 @@ public class XMLMsgToJSON {
                     var rpln = capitalize(anam.substring(0, anam.length()-3)); // Foo from fooRef
                     var rpU  = makeURI(ansU, rpln);
                     var rpQ  = model.uriToQN(rpU);
-                    var rP   = model.uriToProperty(rpQ);
+                    var rP   = model.uriToProperty(rpU);
                     if (null == rP) {
                         LOG.warn("unknown reference attribute {} at {} (ignored)", aQ, locstr());
                         status = CONVERT_WARN;
                         continue;
                     }
-                    if (!rP.isRefAttribute()) {
+                    if (!aP.isRefAttribute()) {
                         LOG.warn("attribute {} at {} is not a reference attribute (ignored)", aQ, locstr());
                         status = CONVERT_WARN;
                         continue;
@@ -317,9 +317,9 @@ public class XMLMsgToJSON {
             // Do nothing for an empty object (eg. <biom:DNALaboratoryProcessingCountry/>)
             JsonElement value = obj;
             if (obj.entrySet().isEmpty()) {
-                if (null == p) value = new JsonPrimitive(cval); // unknown; it's a string
+                if (null == p) value = new JsonPrimitive(cval); // unknown property; it's a string
                 else if (p.isDataProperty()) 
-                    value = valuePrimitive(p.datatype(), cval); // decide from base type
+                    value = valuePrimitive(p.datatype(), cval); // decide from property base type
                 
                 // Check for a literal data property
                 else {
@@ -423,17 +423,21 @@ public class XMLMsgToJSON {
                 
             // String values are always collapsed unless there is a whitespace
             // facet directing a different normalization
-            var sval = val.replaceAll("[ \\t\\n\\r]+", " ").trim();
-            if (null != dt.facetL()) {
+            var whiteSpace = "collapse";
+            if (dt.facetL() != null) {
                 for (var f : dt.facetL()) {
                     if ("whiteSpace".equals(f.category())) {
-                        switch (f.value()) {
-                        case "preserve": sval = val; break;
-                        case "replace":  sval = val.replaceAll("[\\t\\n\\r]+", " "); break;
-                        }
+                        whiteSpace = f.value();
+                        break;
                     }
                 }
             }
+            var sval = switch (whiteSpace) {
+                case "preserve" -> val;
+                case "replace"  -> val.replaceAll("[\\t\\n\\r]+", " ");
+                default         -> val.replaceAll("[ \\t\\n\\r]+", " ").trim();
+            };
+            
             // A code is always a string
             if (dt.name().endsWith("CodeType")) return new JsonPrimitive(sval);
 
@@ -448,8 +452,18 @@ public class XMLMsgToJSON {
                 var number = new BigDecimal(sval);
                 return new JsonPrimitive(number);
             }
-            else if ("boolean".equals(bname))
-                return new JsonPrimitive("true".equals(sval));
+            else if ("boolean".equals(bname)) {
+                switch (sval) {
+                    case "true":  return new JsonPrimitive(true);
+                    case "false": return new JsonPrimitive(false);
+                    case "1":     return new JsonPrimitive(true);
+                    case "0":     return new JsonPrimitive(false);
+                    default:
+                        LOG.warn("\"{}\" is not a valid xs:boolean at {}", sval, locstr());
+                        status = CONVERT_WARN;
+                        return new JsonPrimitive(false);
+                }
+            }
             else 
                 return new JsonPrimitive(sval);
         }
