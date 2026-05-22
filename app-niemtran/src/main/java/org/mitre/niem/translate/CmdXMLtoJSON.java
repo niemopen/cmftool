@@ -42,6 +42,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.json.Context;
+import org.mitre.niem.json.JSONWriter;
 import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_SAX2;
@@ -109,7 +110,6 @@ public class CmdXMLtoJSON implements JCCommand {
             cob.usage();
             System.exit(1);
         }
-        
         // Check for parser config errors now
         try {
             ParserBootstrap.init(BOOTSTRAP_SAX2);
@@ -167,8 +167,10 @@ public class CmdXMLtoJSON implements JCCommand {
                 System.err.println("Parser configuration error: " + ex.getMessage());
                 System.exit(1);
             } catch (SAXException ex) {
+                System.exit(1);
                 System.err.println(String.format("Error parsing %s: %s", xmlFN, ex.getMessage()));
             } catch (IOException ex) {
+                System.exit(1);
                 System.err.println(String.format("Error reading %s: %s", xmlFN, ex.getMessage()));
             }     
             if (contextF) {
@@ -178,15 +180,13 @@ public class CmdXMLtoJSON implements JCCommand {
             else if (!contextU.isBlank()) {
                 jobj.addProperty("@context", contextU);
             }
-            
-            var jmsg = gson.toJson(jobj);
             try {
-                jsonW.write(jmsg);
+                JSONWriter.write(jobj, jsonW);
                 jsonW.close();
             } catch (IOException ex) {
                 System.err.println(String.format("Error writing %s: %s", jsonFN, ex.getMessage()));
-            }
-           
+                System.exit(1);
+            }           
         }
     }
     

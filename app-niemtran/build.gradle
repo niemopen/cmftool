@@ -26,6 +26,8 @@ dependencies {
     testImplementation libs.junit.jupiter
     testImplementation 'org.assertj:assertj-core:3.26.0'
     testImplementation 'io.github.hakky54:logcaptor:2.9.3'
+    testImplementation 'org.mockito:mockito-core:5.12.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -40,8 +42,6 @@ distributions {
     }
 }
 
-
-
 jar {
     manifest {
         attributes 'Implementation-Version': String.format('%s (%tF)', project.version, java.time.LocalDateTime.now()),
@@ -49,6 +49,8 @@ jar {
     }
 }
 
-tasks.named('test') {
+test {
     useJUnitPlatform()
+    jvmArgs '-XX:+EnableDynamicAgentLoading', '-Xshare:off'
 }
+

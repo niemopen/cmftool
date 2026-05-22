@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,6 @@ public class XMLMsgToJSON {
     static final Logger LOG = LogManager.getLogger(XMLMsgToJSON.class);
     
     private final Model model;
-    private int status = CONVERT_OK;
  
     /**
      * Constructs a new NIEM XML to NIEM JSON message transformer.
@@ -88,9 +87,11 @@ public class XMLMsgToJSON {
      * if any warning messages generated; capture those with a custom appender if you 
      * want them.
      * 
-     * The XML message must conform to the NIEM model in this converter object.
+     * The XML message must conform to the NIEM model in this converter object;
+     * if it doesn't, the JSON output may be invalid or incorrect.
+     * 
      * This converter object may be reused to transform any number of XML messages
-     * of the specified message format.  
+     * of the specified message format.
      * 
      * @param xmlIS - InputStream with the XML message
      * @param json - JsonObject to receive the NIEM JSON message data
@@ -103,7 +104,7 @@ public class XMLMsgToJSON {
         var h   = new SAXHandler(json);
         var p   = ParserBootstrap.sax2Parser();
         p.parse(xmlIS, h);
-        return(status);
+        return h.status();
     }
     
     private class SAXHandler extends DefaultHandler {
@@ -116,6 +117,7 @@ public class XMLMsgToJSON {
         private final Stack<Boolean> adapterS = new Stack<>();      // are we within an adapter property?
         private final Stack<Boolean> ignoreS  = new Stack<>();      // within an ignored not-in-model element?
         private final Stack<JsonObject> objS = new Stack<>();       // json object for XML element
+        private int status = CONVERT_OK;
         
         SAXHandler(JsonObject m) {   
             objS.push(m);
@@ -125,11 +127,13 @@ public class XMLMsgToJSON {
             langS.push("en-US");
         }
         
+        public int status () { return status; }
+        
         private static final Pattern NAME_PAT = Pattern.compile("[:A-Za-z_][:A-Za-z0-9_.-]*");
         
         @Override
         public void startElement(String nsuri, String lname, String qName, Attributes atts) {
-//            System.err.println("startElement: " + qName);
+            
             // Handle xml:base in the message element; reject it elsewhere
             // If set, all reference URIs become absolute; otherwise are relative
             var baseAtt = atts.getValue("xml:base");
@@ -213,7 +217,7 @@ public class XMLMsgToJSON {
                         status = CONVERT_WARN;
                         continue;
                     }
-                    if (!aP.isRefAttribute()) {
+                    if (null != aP && !aP.isRefAttribute()) {
                         LOG.warn("attribute {} at {} is not a reference attribute (ignored)", aQ, locstr());
                         status = CONVERT_WARN;
                         continue;
@@ -401,7 +405,10 @@ public class XMLMsgToJSON {
         private String locstr () {
             var res = "";
             var sid = loc.getSystemId();
-            if (null != sid) res = URIStringToFile(sid).getName() + ", ";
+            if (null != sid) {
+                var sf = URIStringToFile(sid);
+                if (null != sf) res = sf.getName() + ", ";
+            }
             res = res + "line " + loc.getLineNumber();
             return res;
         }
