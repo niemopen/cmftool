@@ -23,7 +23,6 @@
  */
 package org.mitre.niem.json;
 
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -45,89 +44,67 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
 
-/**
- *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
- */
 public class ModelToJSONSchemaTest {
     
     private static final String RDIR = "src/test/resources";
+    
     private static final Configuration JSG = Configuration.builder()
         .jsonProvider(new GsonJsonProvider())
         .mappingProvider(new GsonMappingProvider())
         .build();
     
-    public ModelToJSONSchemaTest() {
-    }
+    private static final SchemaRegistry SREG_D7 = SchemaRegistry.withDialect(Dialects.getDraft7());
+    private static final SchemaRegistry SREG_D201909 = SchemaRegistry.withDialect(Dialects.getDraft201909());
+    private static final SchemaRegistry SREG_D202012 = SchemaRegistry.withDialect(Dialects.getDraft202012());
     
-//    @Test
-//    public void testITL () throws Exception {
-//        var rdr   = new ModelXMLReader();
-//        var model = rdr.readFiles(new File("C:\\Work\\im26\\Biometrics\\itl-2015\\itl.cmf"));
-//        var js    = new ModelToJSONSchema(model);
-//        js.setNoPrefix(true);
-//        var w     = new StringWriter();
-//        List<Property> msgPL = Arrays.asList(model.qnToProperty("itl:NISTBiometricInformationExchangePackage"));
-//        js.setMessageProperties(msgPL);
-//        js.setContextURI("http://example.com/Request/JSON");
-//        js.writeSchema(w);
-//        var s = w.toString();
-//        assertTrue(schemaValid(s));
-//        int x = 0;
-//    }    
- 
-//    @Test
-//    public void test () throws Exception {
-//        var rdr   = new ModelXMLReader();
-//        var model = rdr.readFiles(new File("src/test/resources/json/request.cmf"));
-//        var map   = Mapping.readFile(new File("src/test/resources/json/map-request.ttl"));
-//        var js    = new ModelToJSONSchema(model);
-//        js.setMapping(map);
-//        js.setNoPrefix(true);
-//        var w     = new StringWriter();
-//        List<Property> msgPL = Arrays.asList(model.qnToProperty("msg:Request"));
-//        js.setMessageProperties(msgPL);
-//        js.setContextURI("http://example.com/Request/JSON");
-//        js.writeSchema(w);
-//        var s     = w.toString();
-//        assertTrue(schemaValid(s));
-//        int x = 0;
-//    }
+    private static final Schema METASCH_D7 =
+        SREG_D7.getSchema(SchemaLocation.of(Dialects.getDraft7().getId()));
+    private static final Schema METASCH_D201909 =
+        SREG_D201909.getSchema(SchemaLocation.of(Dialects.getDraft201909().getId()));
+    private static final Schema METASCH_D202012 =
+        SREG_D202012.getSchema(SchemaLocation.of(Dialects.getDraft202012().getId()));
     
-    // Code types are always a string type, even if the model says xs:integer, etc.
-    // But types derived from xs:string are retained.
     @Test
-    public void testCodeType () {
+    public void testCodeType () throws Exception {
         var sch  = makeSchema("json/codeType.cmf");
-        var defs = sch.getAsJsonObject("definitions");
+        var defs = getDefs(sch);
+        var refP = refPrefix(sch);
         var ctx  = JsonPath.using(JSG).parse(defs);
         
-        assertEquals("#/definitions/xs:string", ctx.read("$.t:IntegerCodeType.allOf[0]['$ref']", String.class));
-        assertEquals("#/definitions/xs:token", ctx.read("$.t:TokenCodeType.allOf[0]['$ref']", String.class));
-    }    
+        assertEquals(refP + "xs:string",
+            ctx.read("$['t:IntegerCodeType']['allOf'][0]['$ref']", String.class));
+        assertEquals(refP + "xs:token",
+            ctx.read("$['t:TokenCodeType']['allOf'][0]['$ref']", String.class));
+    }
     
     @Test
-    public void testTwoChoice () {
+    public void testTwoChoice () throws Exception {
         var sch  = makeSchema("json/twoChoice.cmf");
-        var defs = sch.getAsJsonObject("definitions");
+        var defs = getDefs(sch);
+        var refP = refPrefix(sch);
         var msgT = defs.getAsJsonObject("t:MessageType");
         var prop = msgT.getAsJsonObject("properties");
         var ctx  = JsonPath.using(JSG).parse(prop);
         
-        assertEquals("array", ctx.read("$.t:FooString.type", String.class));
-        assertEquals("array", ctx.read("$.t:FooToken.type", String.class));
-        assertEquals("#/definitions/xs:string", ctx.read("$.t:FooString.items.$ref", String.class));
-        assertEquals("#/definitions/xs:token", ctx.read("$.t:FooToken.items.$ref", String.class));    
-        assertEquals(10, ctx.read("$.t:FooString.maxItems", Integer.class).intValue());
-        assertEquals(10, ctx.read("$.t:FooToken.maxItems", Integer.class).intValue());
+        assertEquals(
+            Set.of("t:FooString", "t:FooToken", "t:BarString", "t:BarToken", "t:BugToken", "t:OptToken"),
+            prop.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toSet())
+        );
         
-        assertEquals("#/definitions/xs:string", ctx.read("$.t:BarString.$ref", String.class));
-        assertEquals("#/definitions/xs:token", ctx.read("$.t:BarToken.$ref", String.class));
-        assertEquals("#/definitions/xs:token", ctx.read("$.t:BugToken.$ref", String.class));
-        assertEquals("#/definitions/xs:token", ctx.read("$.t:OptToken.$ref", String.class));       
+        assertEquals("array", ctx.read("$['t:FooString']['type']", String.class));
+        assertEquals("array", ctx.read("$['t:FooToken']['type']", String.class));
+        assertEquals(refP + "xs:string", ctx.read("$['t:FooString']['items']['$ref']", String.class));
+        assertEquals(refP + "xs:token", ctx.read("$['t:FooToken']['items']['$ref']", String.class));
+        assertEquals(10, ctx.read("$['t:FooString']['maxItems']", Integer.class).intValue());
+        assertEquals(10, ctx.read("$['t:FooToken']['maxItems']", Integer.class).intValue());
+        
+        assertEquals(refP + "xs:string", ctx.read("$['t:BarString']['$ref']", String.class));
+        assertEquals(refP + "xs:token", ctx.read("$['t:BarToken']['$ref']", String.class));
+        assertEquals(refP + "xs:token", ctx.read("$['t:BugToken']['$ref']", String.class));
+        assertEquals(refP + "xs:token", ctx.read("$['t:OptToken']['$ref']", String.class));
         
         JsonArray res;
         ctx = JsonPath.using(JSG).parse(msgT);
@@ -143,90 +120,45 @@ public class ModelToJSONSchemaTest {
         assertFalse(msgT.get("additionalProperties").getAsBoolean());
     }
     
-    /**
-     * Validates the JSON‑Schema generated from {@code json/oneChoice.cmf}.
-     * The expected fragment (excerpt) is:
-     *
-     * <pre>
-     * "definitions": {
-     *   "t:MessageType": {
-     *     "type": "object",
-     *     "properties": {
-     *       "t:FooString": { "type":"array","items":{"$ref":"#/definitions/xs:string"},"maxItems":10 },
-     *       "t:FooToken":  { "type":"array","items":{"$ref":"#/definitions/xs:token"},"maxItems":10 },
-     *       "t:BarToken":  { "$ref":"#/definitions/xs:token" }
-     *     },
-     *     "anyOf": [
-     *       { "required":["t:FooString"] },
-     *       { "required":["t:FooToken"] }
-     *     ],
-     *     "required": ["t:BarToken"],
-     *     "additionalProperties": false
-     *   },
-     *   "xs:string": { "type":"string" },
-     *   "xs:token":  { "type":"string" }
-     * }
-     * </pre>
-     */
     @Test
-    public void testOneChoice () {
-        // -------------------------------------------------------------
-        // 1️⃣ Build the schema from the CMF model
-        // -------------------------------------------------------------
+    public void testOneChoice () throws Exception {
         var sch   = makeSchema("json/oneChoice.cmf");
-        var defs  = sch.getAsJsonObject("definitions");
+        var defs  = getDefs(sch);
+        var refP  = refPrefix(sch);
         var msgT  = defs.getAsJsonObject("t:MessageType");
         var props = msgT.getAsJsonObject("properties");
+        var ctx   = JsonPath.using(JSG).parse(props);
         
-        // -------------------------------------------------------------
-        // 2️⃣ Verify the three properties (FooString, FooToken, BarToken)
-        // -------------------------------------------------------------
-        var ctx = JsonPath.using(JSG).parse(props);
+        assertEquals("array", ctx.read("$['t:FooString']['type']", String.class));
+        assertEquals(refP + "xs:string",
+                     ctx.read("$['t:FooString']['items']['$ref']", String.class));
+        assertEquals(10, ctx.read("$['t:FooString']['maxItems']", Integer.class).intValue());
         
-        // FooString – array of xs:string, maxItems = 10
-        assertEquals("array", ctx.read("$.t:FooString.type", String.class));
-        assertEquals("#/definitions/xs:string",
-                     ctx.read("$.t:FooString.items.$ref", String.class));
-        assertEquals(10, ctx.read("$.t:FooString.maxItems", Integer.class).intValue());
+        assertEquals("array", ctx.read("$['t:FooToken']['type']", String.class));
+        assertEquals(refP + "xs:token",
+                     ctx.read("$['t:FooToken']['items']['$ref']", String.class));
+        assertEquals(10, ctx.read("$['t:FooToken']['maxItems']", Integer.class).intValue());
         
-        // FooToken – array of xs:token, maxItems = 10
-        assertEquals("array", ctx.read("$.t:FooToken.type", String.class));
-        assertEquals("#/definitions/xs:token",
-                     ctx.read("$.t:FooToken.items.$ref", String.class));
-        assertEquals(10, ctx.read("$.t:FooToken.maxItems", Integer.class).intValue());
+        assertEquals(refP + "xs:token",
+                     ctx.read("$['t:BarToken']['$ref']", String.class));
         
-        // BarToken – single reference to xs:token
-        assertEquals("#/definitions/xs:token",
-                     ctx.read("$.t:BarToken.$ref", String.class));
-        
-        // -------------------------------------------------------------
-        // 3️⃣ Verify the anyOf choice block (two alternatives, order‑independent)
-        // -------------------------------------------------------------
-        // now the whole MessageType object
         ctx = JsonPath.using(JSG).parse(msgT);
         JsonArray anyOf = msgT.getAsJsonArray("anyOf");
         assertEquals(2, anyOf.size(),
                 "The anyOf array should contain exactly two alternatives");
         
-        // Collect the required property name from each alternative
-        var requiredSet = new java.util.HashSet<String>();
+        var requiredSet = new HashSet<String>();
         for (var elem : anyOf) {
             var altObj = elem.getAsJsonObject();
             var reqArr = altObj.getAsJsonArray("required");
-            // Each alternative must require exactly one property
             assertEquals(1, reqArr.size(),
                     "Each anyOf alternative must have a single required property");
             requiredSet.add(reqArr.get(0).getAsString());
         }
         
-        // The two alternatives must be FooString and FooToken, order does not matter
-        var expected = java.util.Set.of("t:FooString", "t:FooToken");
-        assertEquals(expected, requiredSet,
-                "anyOf alternatives should require FooString and FooToken (order‑independent)");
+        assertEquals(Set.of("t:FooString", "t:FooToken"), requiredSet,
+                "anyOf alternatives should require FooString and FooToken");
         
-        // -------------------------------------------------------------
-        // 4️⃣ Verify top‑level required list and additionalProperties flag
-        // -------------------------------------------------------------
         JsonArray required = msgT.getAsJsonArray("required");
         assertEquals(1, required.size());
         assertEquals("t:BarToken", required.get(0).getAsString());
@@ -234,134 +166,70 @@ public class ModelToJSONSchemaTest {
         assertFalse(msgT.get("additionalProperties").getAsBoolean());
     }
     
-    /**
-     * Validates the JSON‑Schema generated from {@code json/noChoice.cmf}.
-     * The expected fragment (excerpt) is:
-     *
-     * <pre>
-     * "definitions": {
-     *   "t:MessageType": {
-     *     "type": "object",
-     *     "properties": {
-     *       "t:FooString": {
-     *         "type":"array",
-     *         "items":{"$ref":"#/definitions/xs:string"},
-     *         "maxItems":10,
-     *         "minItems":2
-     *       },
-     *       "t:BarString": { "$ref":"#/definitions/xs:string" }
-     *     },
-     *     "required": ["t:FooString","t:BarString"],
-     *     "additionalProperties": false
-     *   },
-     *   "xs:string": { "type":"string" },
-     *   "xs:token":  { "type":"string" }
-     * }
-     * </pre>
-     */
     @Test
-    public void testNoChoice () {
-        // -------------------------------------------------------------
-        // 1️⃣ Build the schema from the CMF model (json/noChoice.cmf)
-        // -------------------------------------------------------------
+    public void testNoChoice () throws Exception {
         var sch   = makeSchema("json/noChoice.cmf");
-        var defs  = sch.getAsJsonObject("definitions");
+        var defs  = getDefs(sch);
+        var refP  = refPrefix(sch);
         var msgT  = defs.getAsJsonObject("t:MessageType");
         var props = msgT.getAsJsonObject("properties");
+        var ctx   = JsonPath.using(JSG).parse(props);
         
-        // -------------------------------------------------------------
-        // 2️⃣ Verify the two properties (FooString and BarString)
-        // -------------------------------------------------------------
-        var ctx = JsonPath.using(JSG).parse(props);
+        assertEquals("array", ctx.read("$['t:FooString']['type']", String.class));
+        assertEquals(refP + "xs:string",
+                     ctx.read("$['t:FooString']['items']['$ref']", String.class));
+        assertEquals(10, ctx.read("$['t:FooString']['maxItems']", Integer.class).intValue());
+        assertEquals(2, ctx.read("$['t:FooString']['minItems']", Integer.class).intValue());
         
-        // FooString – array of xs:string, maxItems = 10, minItems = 2
-        assertEquals("array", ctx.read("$.t:FooString.type", String.class));
-        assertEquals("#/definitions/xs:string",
-                     ctx.read("$.t:FooString.items.$ref", String.class));
-        assertEquals(10, ctx.read("$.t:FooString.maxItems", Integer.class).intValue());
-        assertEquals(2,  ctx.read("$.t:FooString.minItems", Integer.class).intValue());
+        assertEquals(refP + "xs:string",
+                     ctx.read("$['t:BarString']['$ref']", String.class));
         
-        // BarString – single reference to xs:string
-        assertEquals("#/definitions/xs:string",
-                     ctx.read("$.t:BarString.$ref", String.class));
-        
-        // -------------------------------------------------------------
-        // 3️⃣ Verify required list and additionalProperties flag
-        // -------------------------------------------------------------
         JsonArray required = msgT.getAsJsonArray("required");
         assertEquals(2, required.size());
-        // Order is not guaranteed; ensure both required entries are present
         assertTrue(required.contains(new JsonPrimitive("t:FooString")));
         assertTrue(required.contains(new JsonPrimitive("t:BarString")));
         
         assertFalse(msgT.get("additionalProperties").getAsBoolean());
-        
-        // -------------------------------------------------------------
-        // 4️⃣ Verify primitive definitions exist (optional sanity check)
-        // -------------------------------------------------------------
         assertTrue(defs.has("xs:string"));
         assertTrue(defs.has("xs:token"));
     }
     
-    /**
-     * Validates that the reference‑code related definitions contain an {@code @id}
-     * property whose value is {@code {"$ref":"#/definitions/xs:anyURI"}} and that
-     * no other definitions have an {@code @id} property.
-     *
-     * The model file {@code json/refCode.cmf} defines three types that are
-     * referenceable:
-     *   - t:AnyRefType
-     *   - t:FourType
-     *   - t:URIRefType
-     *
-     * All other definitions (including primitive XSD types) must *not* have an
-     * {@code @id} property.
-     */
     @Test
-    public void testRefCode () {
-        // -------------------------------------------------------------
-        // 1️⃣ Build the schema from the CMF model that contains reference‑code types
-        // -------------------------------------------------------------
+    public void testRefCode () throws Exception {
         var sch   = makeSchema("cmf/refCode.cmf");
-        var defs  = sch.getAsJsonObject("definitions");
+        var defs  = getDefs(sch);
+        var refP  = refPrefix(sch);
 
-        // -------------------------------------------------------------
-        // 2️⃣ Set of definition names that are expected to have an "@id" property
-        // -------------------------------------------------------------
-        var withId = java.util.Set.of(
+        var withId = Set.of(
                 "t:AnyRefType",
                 "t:FourType",
                 "t:URIRefType"
         );
 
-        // -------------------------------------------------------------
-        // 3️⃣ Iterate over every definition and verify the presence/absence of "@id"
-        // -------------------------------------------------------------
+        assertTrue(defs.has("xs:anyURI"), "Referenceable classes require xs:anyURI definition");
+        assertTrue(defs.has("xs:string"), "Referenceable classes should also retain xs:string definition");
+
         for (var entry : defs.entrySet()) {
             String defName = entry.getKey();
             JsonObject defObj = entry.getValue().getAsJsonObject();
 
-            // The "@id" property is defined inside the "properties" object of the definition.
             JsonObject props = defObj.getAsJsonObject("properties");
             boolean hasId = props != null && props.has("@id");
 
             if (withId.contains(defName)) {
-                // The definition must contain an "@id" property
                 assertTrue(hasId,
-                        "Definition \"" + defName + "\" should contain an \"@id\" property inside its properties object");
+                        "Definition \"" + defName + "\" should contain an \"@id\" property");
 
-                // The value of "@id" must be an object with "$ref":"#/definitions/xs:anyURI"
                 JsonObject idObj = props.getAsJsonObject("@id");
                 assertNotNull(idObj, "\"@id\" value for " + defName + " should be a JSON object");
                 assertTrue(idObj.has("$ref"),
                         "\"@id\" object for " + defName + " must contain a \"$ref\" member");
-                assertEquals("#/definitions/xs:anyURI",
+                assertEquals(refP + "xs:anyURI",
                         idObj.get("$ref").getAsString(),
                         "\"@id\" $ref for " + defName + " is incorrect");
             } else {
-                // No other definition should have an "@id" property
                 assertFalse(hasId,
-                        "Definition \"" + defName + "\" should NOT contain an \"@id\" property inside its properties object");
+                        "Definition \"" + defName + "\" should NOT contain an \"@id\" property");
             }
         }
     }
@@ -369,19 +237,20 @@ public class ModelToJSONSchemaTest {
     @Test
     public void testArchVersions () throws Exception {
         var sch   = makeSchema("cmf/archVersions.cmf");
-        var defs  = sch.getAsJsonObject("definitions");
-        var ctx = JsonPath.using(JSG).parse(defs);
+        var defs  = getDefs(sch);
+        var refP  = refPrefix(sch);
+        var ctx   = JsonPath.using(JSG).parse(defs);
         
-        assertEquals("#/definitions/xs:string",
-            ctx.read("$.nc:TextType.properties.nc:TextLiteral.$ref", String.class));
-        assertEquals("#/definitions/xs:string",
-            ctx.read("$.nc5:TextType.properties.nc5:TextLiteral.$ref", String.class));
+        assertEquals(refP + "xs:string",
+            ctx.read("$['nc:TextType']['properties']['nc:TextLiteral']['$ref']", String.class));
+        assertEquals(refP + "xs:string",
+            ctx.read("$['nc5:TextType']['properties']['nc5:TextLiteral']['$ref']", String.class));
     }
     
     @Test
     public void testAttAugment () throws Exception {
         var sch   = makeSchema("cmf/attAugment.cmf");
-        var defs  = sch.getAsJsonObject("definitions");
+        var defs  = getDefs(sch);
         
         var hasAttProp = new HashSet<String>();
         var hasObjProp = new HashSet<String>();
@@ -401,8 +270,8 @@ public class ModelToJSONSchemaTest {
     @Test
     public void testAugment () throws Exception {
         var sch   = makeSchema("cmf/augment.cmf");
-        var defs  = sch.getAsJsonObject("definitions");
-        var ctx = JsonPath.using(JSG).parse(defs);
+        var defs  = getDefs(sch);
+        var ctx   = JsonPath.using(JSG).parse(defs);
 
         assertNotNull(ctx.read("$['nc:CommentType']['properties']['t:CommentDestinationText']"));
         assertNotNull(ctx.read("$['nc:EducationType']['properties']['t:CommentDestinationText']"));
@@ -415,7 +284,7 @@ public class ModelToJSONSchemaTest {
     @Test
     public void testChoice () throws Exception {
         var sch  = makeSchema("cmf/choice.cmf");
-        var defs = sch.getAsJsonObject("definitions");
+        var defs = getDefs(sch);
         var ctx  = JsonPath.using(JSG).parse(defs);
         var tref = new TypeRef<List<String>>(){};
         
@@ -434,7 +303,7 @@ public class ModelToJSONSchemaTest {
     @Test
     public void testGaLitAtt () throws Exception {
         var sch  = makeSchema("cmf/gaLitAtt.cmf");
-        var defs = sch.getAsJsonObject("definitions");
+        var defs = getDefs(sch);
         var hasAttProp = new HashSet<String>();
         
         for (var def : defs.entrySet()) {
@@ -444,13 +313,13 @@ public class ModelToJSONSchemaTest {
             var propO = defO.get("properties").getAsJsonObject();
             if (propO.has("test:attProp")) hasAttProp.add(key);
         }
-        assertEquals(hasAttProp, Set.of("test:SCOneType", "test:SCTwoType"));
-    }    
+        assertEquals(Set.of("test:SCOneType", "test:SCTwoType"), hasAttProp);
+    }
     
     @Test
     public void testGaLitObj () throws Exception {
         var sch  = makeSchema("cmf/gaLitObj.cmf");
-        var defs = sch.getAsJsonObject("definitions");
+        var defs = getDefs(sch);
         var hasObjProp = new HashSet<String>();
         
         for (var def : defs.entrySet()) {
@@ -460,13 +329,13 @@ public class ModelToJSONSchemaTest {
             var propO = defO.get("properties").getAsJsonObject();
             if (propO.has("test:ObjProp")) hasObjProp.add(key);
         }
-        assertEquals(hasObjProp, Set.of("test:SCOneType", "test:SCTwoType"));
+        assertEquals(Set.of("test:SCOneType", "test:SCTwoType"), hasObjProp);
     }
 
     @Test
     public void testGaObjAtt () throws Exception {
         var sch  = makeSchema("cmf/gaObjAtt.cmf");
-        var defs = sch.getAsJsonObject("definitions");
+        var defs = getDefs(sch);
         var hasAttProp = new HashSet<String>();
         
         for (var def : defs.entrySet()) {
@@ -476,13 +345,13 @@ public class ModelToJSONSchemaTest {
             var propO = defO.get("properties").getAsJsonObject();
             if (propO.has("test:attProp")) hasAttProp.add(key);
         }
-        assertEquals(hasAttProp, Set.of("test:CCOneType", "test:CCTwoType", "test:ObjType"));
+        assertEquals(Set.of("test:CCOneType", "test:CCTwoType", "test:ObjType"), hasAttProp);
     }
     
     @Test
     public void testGaObjObj () throws Exception {
         var sch  = makeSchema("cmf/gaObjObj.cmf");
-        var defs = sch.getAsJsonObject("definitions");
+        var defs = getDefs(sch);
         var hasObjProp = new HashSet<String>();
         
         for (var def : defs.entrySet()) {
@@ -492,49 +361,216 @@ public class ModelToJSONSchemaTest {
             var propO = defO.get("properties").getAsJsonObject();
             if (propO.has("test:ObjProp")) hasObjProp.add(key);
         }
-        assertEquals(hasObjProp, Set.of("test:CCOneType", "test:CCTwoType", "test:ObjType"));
+        assertEquals(Set.of("test:CCOneType", "test:CCTwoType", "test:ObjType"), hasObjProp);
     }
     
     @Test
     public void testUnion () throws Exception {
         var sch  = makeSchema("cmf/union.cmf");
-        var defs = sch.getAsJsonObject("definitions");
-        var ctx = JsonPath.using(JSG).parse(defs);
+        var defs = getDefs(sch);
+        var refP = refPrefix(sch);
+        var ctx  = JsonPath.using(JSG).parse(defs);
         var tref = new TypeRef<List<Map<String,Object>>>(){};
         
         var r1 = ctx.read("$['t:TelephoneNumberCategoryCodeType']['anyOf']", tref);
         assertEquals(2, r1.size());
 
         Set<String> refs = r1.stream().map(m -> (String) m.get("$ref")).collect(Collectors.toSet());
-        assertEquals(refs, Set.of(
-            "#/definitions/t:TelephoneNumberCategoryAdditionalCodeType",
-            "#/definitions/t:CategoryCodeType"
-        ));    
+        assertEquals(Set.of(
+            refP + "t:TelephoneNumberCategoryAdditionalCodeType",
+            refP + "t:CategoryCodeType"
+        ), refs);
     }
     
+    @Test
+    public void testContextAllowsOnlyObjectWhenNoContextURI() throws Exception {
+        var sch = makeSchema("cmf/choice.cmf");
+        var props = sch.getAsJsonObject("properties");
+        var cxtO = props.getAsJsonObject("@context");
+        var anyOf = cxtO.getAsJsonArray("anyOf");
+
+        assertEquals(1, anyOf.size());
+
+        var onlyAlt = anyOf.get(0).getAsJsonObject();
+        assertEquals("object", onlyAlt.get("type").getAsString());
+        assertFalse(onlyAlt.has("const"));
+    }
+
     
-    
-    private static final SchemaRegistry sreg = SchemaRegistry.withDialect(Dialects.getDraft7());
-    private static final Schema metasch = sreg.getSchema(SchemaLocation.of(Dialects.getDraft7().getId()));
-    
-    private boolean schemaValid (String s) {
-        List<com.networknt.schema.Error> errors = metasch.validate(s, InputFormat.JSON, executionContext -> {
-            executionContext.executionConfig(executionConfig -> executionConfig.formatAssertionsEnabled(true));
-        });
-        return errors.isEmpty();        
+    @Test
+    public void testContextURIAllowsObjectOrConstString () throws Exception {
+        var model = loadModel("cmf/choice.cmf");
+        var js    = new ModelToJSONSchema(model);
+        js.setAllDefinitions(true);
+        js.setContextURI("http://example.org/context");
+        
+        var sch = new JsonObject();
+        js.createSchema(sch);
+        assertTrue(schemaValid(sch));
+        
+        var props = sch.getAsJsonObject("properties");
+        var cxtO  = props.getAsJsonObject("@context");
+        var anyOf = cxtO.getAsJsonArray("anyOf");
+        
+        assertEquals(2, anyOf.size());
+        
+        JsonObject objAlt = null;
+        JsonObject strAlt = null;
+        for (var alt : anyOf) {
+            var altO = alt.getAsJsonObject();
+            if ("object".equals(altO.get("type").getAsString())) objAlt = altO;
+            if ("string".equals(altO.get("type").getAsString())) strAlt = altO;
+        }
+        
+        assertNotNull(objAlt);
+        assertNotNull(strAlt);
+        assertEquals("http://example.org/context", strAlt.get("const").getAsString());
     }
     
-    public JsonObject makeSchema (String fname) {
-        var cmfF  = new File(RDIR, fname);
-        var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(cmfF);
+    @Test
+    public void testSetMessagePropertyNullClearsMessageProperty () throws Exception {
+        var model = loadModel("json/request.cmf");
+        var js    = new ModelToJSONSchema(model);
+        js.setAllDefinitions(true);
+        
+        js.setMessageProperty(model.qnToProperty("msg:Request"));
+        js.setMessageProperty(null);
+        
+        var sch = new JsonObject();
+        js.createSchema(sch);
+        assertTrue(schemaValid(sch));
+        
+        var required = sch.getAsJsonArray("required");
+        assertEquals(1, required.size());
+        assertEquals("@context", required.get(0).getAsString());
+        assertFalse(sch.has("additionalProperties"));
+    }
+    
+    @Test
+    public void testGeneratorReusableProducesSameSchema () throws Exception {
+        var model = loadModel("cmf/choice.cmf");
+        var js    = new ModelToJSONSchema(model);
+        js.setAllDefinitions(true);
+        
+        var sch1 = new JsonObject();
+        js.createSchema(sch1);
+        
+        var sch2 = new JsonObject();
+        js.createSchema(sch2);
+        
+        assertTrue(schemaValid(sch1));
+        assertTrue(schemaValid(sch2));
+        assertEquals(sch1, sch2, "Reusing the same generator should not accumulate state");
+    }
+    
+    @Test
+    public void testDraft07UsesDefinitions () throws Exception {
+        var sch = makeSchema("json/noChoice.cmf", "draft-07");
+        assertEquals("http://json-schema.org/draft-07/schema#", sch.get("$schema").getAsString());
+        assertTrue(sch.has("definitions"));
+        assertFalse(sch.has("$defs"));
+        
+        var defs = getDefs(sch);
+        var msgT = defs.getAsJsonObject("t:MessageType");
+        var props = msgT.getAsJsonObject("properties");
+        var ctx = JsonPath.using(JSG).parse(props);
+        assertEquals("#/definitions/xs:string",
+            ctx.read("$['t:FooString']['items']['$ref']", String.class));
+        assertEquals("#/definitions/xs:string",
+            ctx.read("$['t:BarString']['$ref']", String.class));
+    }
+    
+    @Test
+    public void testDraft201909UsesDefs () throws Exception {
+        var sch = makeSchema("json/noChoice.cmf", "2019-09");
+        assertEquals("https://json-schema.org/draft/2019-09/schema", sch.get("$schema").getAsString());
+        assertTrue(sch.has("$defs"));
+        assertFalse(sch.has("definitions"));
+        
+        var defs = getDefs(sch);
+        var msgT = defs.getAsJsonObject("t:MessageType");
+        var props = msgT.getAsJsonObject("properties");
+        var ctx = JsonPath.using(JSG).parse(props);
+        assertEquals("#/$defs/xs:string",
+            ctx.read("$['t:FooString']['items']['$ref']", String.class));
+        assertEquals("#/$defs/xs:string",
+            ctx.read("$['t:BarString']['$ref']", String.class));
+    }
+    
+    @Test
+    public void testDraft202012UsesDefs () throws Exception {
+        var sch = makeSchema("json/oneChoice.cmf", "2020-12");
+        assertEquals("https://json-schema.org/draft/2020-12/schema", sch.get("$schema").getAsString());
+        assertTrue(sch.has("$defs"));
+        assertFalse(sch.has("definitions"));
+        
+        var defs = getDefs(sch);
+        var msgT = defs.getAsJsonObject("t:MessageType");
+        var props = msgT.getAsJsonObject("properties");
+        var ctx = JsonPath.using(JSG).parse(props);
+        assertEquals("#/$defs/xs:string",
+            ctx.read("$['t:FooString']['items']['$ref']", String.class));
+        assertEquals("#/$defs/xs:token",
+            ctx.read("$['t:FooToken']['items']['$ref']", String.class));
+        assertEquals("#/$defs/xs:token",
+            ctx.read("$['t:BarToken']['$ref']", String.class));
+    }
+    
+    private Model loadModel (String fname) {
+        var cmfF = new File(RDIR, fname);
+        var rdr  = new ModelXMLReader();
+        return rdr.readFiles(cmfF);
+    }
+    
+    private JsonObject makeSchema (String fname) throws Exception {
+        var model = loadModel(fname);
         var js    = new ModelToJSONSchema(model);
         var sch   = new JsonObject();
         js.setAllDefinitions(true);
         js.createSchema(sch);
-        var s = sch.toString();
-        assertTrue(schemaValid(s));
-        return sch;        
+        assertTrue(schemaValid(sch));
+        return sch;
     }
     
+    private JsonObject makeSchema (String fname, String version) throws Exception {
+        var model = loadModel(fname);
+        var js    = new ModelToJSONSchema(model);
+        var sch   = new JsonObject();
+        js.setAllDefinitions(true);
+        js.setSchemaVersion(version);
+        js.createSchema(sch);
+        assertTrue(schemaValid(sch));
+        return sch;
+    }
+    
+    private static JsonObject getDefs (JsonObject sch) {
+        if (sch.has("$defs")) return sch.getAsJsonObject("$defs");
+        return sch.getAsJsonObject("definitions");
+    }
+    
+    private static String refPrefix (JsonObject sch) {
+        return sch.has("$defs") ? "#/$defs/" : "#/definitions/";
+    }
+    
+    private boolean schemaValid (JsonObject sch) {
+        var metasch = metaSchemaFor(sch);
+        List<com.networknt.schema.Error> errors = metasch.validate(
+            sch.toString(),
+            InputFormat.JSON,
+            executionContext -> executionContext.executionConfig(
+                executionConfig -> executionConfig.formatAssertionsEnabled(true)
+            )
+        );
+        return errors.isEmpty();
+    }
+    
+    private Schema metaSchemaFor (JsonObject sch) {
+        var schemaUri = sch.get("$schema").getAsString();
+        return switch (schemaUri) {
+            case "http://json-schema.org/draft-07/schema#" -> METASCH_D7;
+            case "https://json-schema.org/draft/2019-09/schema" -> METASCH_D201909;
+            case "https://json-schema.org/draft/2020-12/schema" -> METASCH_D202012;
+            default -> throw new IllegalArgumentException("Unsupported JSON Schema dialect: " + schemaUri);
+        };
+    }
 }

@@ -36,6 +36,7 @@ import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.xerces.xs.XSAnnotation;
@@ -1121,7 +1122,7 @@ public class ModelFromXSD {
             }
         }
     }
-
+    
     // Turns a datatype URI into a Datatype object.  Proxy URIs are turned into
     // the XSD equivalent.  XSD and XML datatype objects aren't created in the 
     // model until they are referenced. The XML namespace isn't added to the model

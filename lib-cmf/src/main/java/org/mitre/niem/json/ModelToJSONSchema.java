@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class ModelToJSONSchema {
      * @param mprop message property's QName
      */
     public void setMessageProperty (Property mprop) {
-        msgPropL = List.of(mprop);
+        msgPropL = (mprop == null) ? null : List.of(mprop);
     }
         
     /**
@@ -159,10 +159,9 @@ public class ModelToJSONSchema {
     }
     
     /**
-     * Documents conforming to the generated schema must have a @context key,
-     * which may be an object or a string.  When this method is called, the
-     * generated schema will use the supplied URI as the required value for the
-     * string.
+     * Documents conforming to the generated schema must have a @context key.
+     * Its value may always be a context object.  When this method is called, 
+     * its value may also be the provided URI.
      * @param contextU
      */
     public void setContextURI (String contextU) {
@@ -218,7 +217,17 @@ public class ModelToJSONSchema {
       Map.entry("draft-07", "http://json-schema.org/draft-07/schema#"),
       Map.entry("2019-09", "https://json-schema.org/draft/2019-09/schema"),
       Map.entry("2020-12", "https://json-schema.org/draft/2020-12/schema"));
-      
+
+    private static final Map<String, String> defKey = Map.ofEntries(
+      Map.entry("http://json-schema.org/draft-07/schema#", "definitions"),
+      Map.entry("https://json-schema.org/draft/2019-09/schema", "$defs"),
+      Map.entry("https://json-schema.org/draft/2020-12/schema", "$defs"));
+    
+    private static final Map<String, String> defKeyStr = Map.ofEntries(
+      Map.entry("http://json-schema.org/draft-07/schema#", "#/definitions/"),
+      Map.entry("https://json-schema.org/draft/2019-09/schema", "#/$defs/"),
+      Map.entry("https://json-schema.org/draft/2020-12/schema", "#/$defs/"));
+     
     /**
      * Sets the version of JSON Schema in the generated schema.
      * Valid values are: draft-07, 2019-09, 2020-12
@@ -257,8 +266,8 @@ public class ModelToJSONSchema {
     
     private static final String CARDINALITY_TEMPLATE = """
           [
-            { "$ref": "#/definitions/%s" },
-            { "type": "array", "items": { "$ref": "#/definitions/%s" } }
+            { "$ref": "%s" },
+            { "type": "array", "items": { "$ref": "%s" } }
           ]""";
 
     private static final JsonObject IDREF_PATTERN_OBJ = 
@@ -287,6 +296,8 @@ public class ModelToJSONSchema {
      * @param root 
      */
     public void createSchema (JsonObject root) {
+        metadataPL.clear();
+        
         // Get xs:string datatype from model
         xsStringDT = m.uriToDatatype(XS_STRING_U);
         if (null == xsStringDT) {                       // are you kidding me?
@@ -357,7 +368,7 @@ public class ModelToJSONSchema {
         var typeS   = new HashSet<Component>();     // set of classes and datatypes to create
         var propL   = msgPropL;                     // list of message properties
         if (null == propL || propL.isEmpty()) {     // all properties in the model, if none
-            propL = m.propertyL();
+            propL = new ArrayList<>(m.propertyL());
             Collections.sort(propL);
         }
         for (var p : propL) {
@@ -372,11 +383,12 @@ public class ModelToJSONSchema {
             
             // Validating a message?  Message properties are never repeated
             if (null != msgPropL && !msgPropL.isEmpty()) {
-                prO.addProperty("$ref", "#/definitions/" + refQ);
+                prO.addProperty("$ref", defKeyStr.get(schemaVersionU) + refQ);
             }
             // Validating components? Those can be repeated.
             else {
-                var card = String.format(CARDINALITY_TEMPLATE, refQ, refQ);
+                var def  = defKeyStr.get(schemaVersionU) + refQ;
+                var card = String.format(CARDINALITY_TEMPLATE, def, def);
                 var cardA = makeElement(card);
                 prO.add("oneOf", cardA);
             }
@@ -424,7 +436,7 @@ public class ModelToJSONSchema {
                 dt = new Datatype(xsns, "anyURI");
             }
             if (!typeSch.containsKey(dt)) createDatatype(dt);
-            if (!typeSch.containsKey(xsStringDT.qname())) createDatatype(xsStringDT);
+            if (!typeSch.containsKey(xsStringDT)) createDatatype(xsStringDT);
         }
         // Sort the type objects; add class, then datatypes; add "definitions" key
         var defVal = new JsonObject();      // value of "definitions" key
@@ -438,11 +450,11 @@ public class ModelToJSONSchema {
             if (!tp.isClassType())
                 defVal.add(tp.qname(), typeSch.get(tp)); 
         }
-        // Add definition for @id object array if there are metadata properties\
+        // Add @id object array to definitions if there are metadata properties
         if (!metadataPL.isEmpty()) {
             defVal.add("idObjectArray", ID_OBJECT_ARRAY_SCHEMA);                
         }
-        root.add("definitions", defVal);
+        root.add(defKey.get(schemaVersionU), defVal);
     }
     
     // Stores a schema object for a class in the typeSch map.  Later on
@@ -534,7 +546,7 @@ public class ModelToJSONSchema {
             for (var pp : subS) {
                 var ppQ = pp.qname(); //DEBUG
                 if (pp.isAbstract()) continue;
-                var ppa = propM.get(p);    
+                var ppa = propM.get(pp);    
                 if (null == ppa) {              // first time we've seen this property
                     ppa = new PropertyAssociation(pa);
                     ppa.setProperty(pp);
@@ -557,7 +569,7 @@ public class ModelToJSONSchema {
             // Create a "properties" entry for each choice
             var pt = p.type();
             if (null == pt) pt = xsStringDT;        // externals, xml:lang, xml:base
-            var rstr = "#/definitions/" + pt.qname();
+            var rstr = defKeyStr.get(schemaVersionU) + pt.qname();
             var key = qnToKey(p.qname());
             var schO = new JsonObject();
             propO.add(key, schO);
@@ -643,7 +655,7 @@ public class ModelToJSONSchema {
     // Complete the schema object def0 for a restriction datatype,
     // setting the base type and adding facets.  Special handlng for code types.
     
-    private static final Set STRING_TYPES = Set.of(
+    private static final Set<String> STRING_TYPES = Set.of(
         "xs:string", "xs:normalizedString", "xs:token", "xs:language", "xs:Name", "xs:NMTOKEN", "xs:NCName");
     
     private void createRestriction (Restriction r, JsonObject defO) {
@@ -704,12 +716,12 @@ public class ModelToJSONSchema {
         if (!facO.isEmpty()) {
             var allA = new JsonArray();
             var refO = new JsonObject();
-            refO.addProperty("$ref", "#/definitions/" + refName);
+            refO.addProperty("$ref", defKeyStr.get(schemaVersionU) + refName);
             allA.add(refO);
             allA.add(facO);
             defO.add("allOf", allA);
         }
-        else defO.addProperty("$ref", "#/definitions/" + refName);
+        else defO.addProperty("$ref", defKeyStr.get(schemaVersionU) + refName);
     }
     
     private BigDecimal doubleBigDecimal (String val) {
@@ -720,7 +732,7 @@ public class ModelToJSONSchema {
     private void createList (ListType lt, JsonObject defO) {
         var itype = lt.itemType();
         var refO  = new JsonObject();
-        refO.addProperty("$ref", "#/definitions/" + itype.qname());
+        refO.addProperty("$ref", defKeyStr.get(schemaVersionU) + itype.qname());
         defO.addProperty("type", "array");
         defO.add("items", refO);
         if (!typeSch.containsKey(itype)) doTypes.add(itype);        
@@ -730,7 +742,7 @@ public class ModelToJSONSchema {
         var anyA = new JsonArray();
         for (var mdt : u.memberL()) {
             var refO = new JsonObject();
-            refO.addProperty("$ref", "#/definitions/" + mdt.qname());
+            refO.addProperty("$ref", defKeyStr.get(schemaVersionU) + mdt.qname());
             anyA.add(refO);
             if (!typeSch.containsKey(mdt)) doTypes.add(mdt);
         }
