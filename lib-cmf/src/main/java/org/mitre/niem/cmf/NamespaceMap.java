@@ -36,8 +36,10 @@ import static javax.xml.XMLConstants.XML_NS_URI;
 /**
  *
  * A class for the mappings from namespace prefix to namespace URI.
- * Ensures that each prefix has at most one corresponding URI. First mapping
- * wins, subsequent mappings of the same prefix are munged to ensure uniqueness.
+ * Ensures each URI has at most one corresponding prefix.
+ * Ensures that each prefix has at most one corresponding URI. 
+ * First mapping wins.  Second mapping to the same URI returns the first prefix.
+ * Second mapping of the same prefix is munged to ensure uniqueness.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -95,7 +97,8 @@ public class NamespaceMap {
      * @return assigned prefix
      */
     public String assignPrefix (String prefix, String nsuri) {
-        if (uri2Prefix.containsKey(nsuri)) return prefix;   // already assigned       
+        var cpre = uri2Prefix.get(nsuri);
+        if (null != cpre) return cpre;                      // already assigned cpre to nsuri 
         if (!prefix2URI.containsKey(prefix)) {              // this prefix is available
             prefix2URI.put(prefix, nsuri);
             uri2Prefix.put(nsuri, prefix);
@@ -134,8 +137,6 @@ public class NamespaceMap {
      * @return 
      */
     public String mungedPrefix (String prefix, String nsuri) {
-        if (uri2Prefix.containsKey(nsuri)) return prefix;   // already assigned       
-        if (!prefix2URI.containsKey(prefix)) return prefix; // available
         // Desired prefix is already assigned to a different namespace
         // So they get a munged prefix; eg. "foo_1" instead of "foo"
         // First, get the munging base, to void twice-munged prefix; eg. "foo_1_2"

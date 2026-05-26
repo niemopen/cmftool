@@ -997,7 +997,10 @@ public class ModelToJSONSchema {
     }
     
     
-    // Returns 
+    // Returns the correct key string for the input QName, which is:
+    // * the input QName, if not mapped
+    // * the mapped QName, if map.noPrefix() is false.
+    // * the mapped local name, if map.noPrefix() is true.
     public String qnToKey (String qn) {
         return map.qnToMappedName(qn);
     }
