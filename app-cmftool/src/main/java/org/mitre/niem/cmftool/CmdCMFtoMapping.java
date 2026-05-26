@@ -53,6 +53,9 @@ public class CmdCMFtoMapping implements JCCommand {
 
     @Parameter(order = 1, names = {"-s","--single"}, description = "prefix=URI of single target namespace")
     private String targetMap = null;
+    
+    @Parameter(order = 1, names = {"-t","--types"}, description = "also map class and datatype QNames")
+    private boolean includeTypes = false;
          
     @Parameter(order = 2, names = "-o", description = "name of output mapping file")
     private String mapFN = null;
@@ -162,8 +165,8 @@ public class CmdCMFtoMapping implements JCCommand {
         Mapping map;
         
         try {
-            if (null != targetMap) map = Mapping.createDefault(model, targetP, targetU);
-            else map = Mapping.createTemplate(model);
+            if (null != targetMap) map = Mapping.createDefault(model, targetP, targetU, includeTypes);
+            else map = Mapping.createTemplate(model, includeTypes);
             map.write(ow);
             ow.close();
         } catch (Exception ex) {

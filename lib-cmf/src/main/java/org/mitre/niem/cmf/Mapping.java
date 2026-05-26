@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -210,7 +211,23 @@ public class Mapping {
      * @param defURI 
      * @return new Mapping object
      */
-    public static Mapping createDefault (Model m, String defPrefix, String defURI) {
+    public static Mapping createPropertyDefault (Model m, String defPrefix, String defURI) {
+        return createDefault(m, defPrefix, defURI, false);
+    }
+    
+    /**
+     * Like createPropertyDefault, but also creates mappings for class and datatype
+     * QNames.
+     * @param m
+     * @param defPrefix
+     * @param defURI
+     * @return new Mapping object 
+     */
+    public static Mapping createComponentDefault (Model m, String defPrefix, String defURI) {
+        return createDefault(m, defPrefix, defURI, true);
+    }
+    
+    public static Mapping createDefault (Model m, String defPrefix, String defURI, boolean includeTypes) {
         var map = new Mapping();
         
         // Add mapping for each model namespace
@@ -246,35 +263,44 @@ public class Mapping {
         }        
         // How many times does a local name appear in the model?
         var lnct = new HashMap<String,Integer>();
-        for (var p : m.propertyL()) {
-            if (!p.namespace().isModelNS()) continue;
-            if (p.isAbstract()) continue;
-            var lct = lnct.getOrDefault(p.name(), 0);
-            lnct.put(p.name(), lct + 1);
+        for (var c : m.componentList()) {
+            if (!c.namespace().isModelNS()) continue;
+            if (c.isAbstract()) continue;
+            var lct = lnct.getOrDefault(c.name(), 0);
+            lnct.put(c.name(), lct + 1);
         }
-        // Add mappings; munged mapping when a local name appears more than once.
-        for (var p : m.propertyL()) {
-            if (!p.namespace().isModelNS()) continue;
-            if (p.isAbstract()) continue;
-            var pQ  = p.qname();
-            var lct = lnct.get(p.name());
+        // Add mappings; munged mapping when a local name appears more than once.      
+        for (var c : m.componentList()) {
+            if (!c.namespace().isModelNS()) continue;
+            if (c.isAbstract()) continue;
+            if (!c.isProperty() && !includeTypes) continue;
+            var cQ  = c.qname();
+            var lct = lnct.get(c.name());
             try {
                 if (lct > 1) {
-                    var toQ = makeQN(defPrefix, qnToPrefix(pQ) + "_" + p.name());
-                    map.addMapping(p.qname(), toQ);
+                    var toQ = makeQN(defPrefix, qnToPrefix(cQ) + "_" + c.name());
+                    map.addMapping(c.qname(), toQ);
                 } else {
-                    var toQ = makeQN(defPrefix, p.name());
-                    map.addMapping(p.qname(), toQ);
+                    var toQ = makeQN(defPrefix, c.name());
+                    map.addMapping(c.qname(), toQ);
                 }
             } catch (CMFException ex) {  // CAN'T HAPPEN
-                throw new IllegalStateException("Impossible addMapping exception happened");
+                throw new IllegalStateException("Impossible addMapping exception");
             }
         }
         return map;
     }
     
-    public static Mapping createTemplate (Model m) {
-        return createTemplate(m, "T", "http://example.com/YourNamespaceURIGoesHere/");
+    public static Mapping createPropertyTemplate (Model m) {
+        return createTemplate(m, "T", "http://example.com/YourNamespaceURIGoesHere/", false);
+    }
+    
+    public static Mapping createComponentTemplate (Model m) {
+        return createTemplate(m, "T", "http://example.com/YourNamespaceURIGoesHere/", true);
+    }
+    
+    public static Mapping createTemplate (Model m, boolean includeTypes) {
+        return createTemplate(m, "T", "http://example.com/YourNamespaceURIGoesHere/", includeTypes);
     }
 
     /**
@@ -284,7 +310,7 @@ public class Mapping {
      * @param defURI - URI for each mapping target
      * @return new Mapping object
      */
-    public static Mapping createTemplate (Model m, String defPrefix, String defURI) {
+    public static Mapping createTemplate (Model m, String defPrefix, String defURI, boolean includeTypes) {
         var map   = new Mapping();
         try {
             for (var ns : m.namespaceList()) {
@@ -296,15 +322,16 @@ public class Mapping {
         } catch (CMFException ex) { } // IGNORE
         
         var num = 0;
-        var spL = new ArrayList<>(m.propertyL());
+        var spL = new ArrayList<>(m.componentList());
         Collections.sort(spL);
-        for (var p : spL) {
-            if (p.namespace().isModelNS() && !p.isAbstract()) {
-                try {
-                    map.addMapping(p.qname(), String.format("%s:TEMP%04d", defPrefix, num++));
-                } catch (CMFException ex) {  // CAN'T HAPPEN
-                    throw new IllegalStateException("Impossible addMapping exception happened");
-                }
+        for (var c : spL) {
+            if (!c.namespace().isModelNS()) continue;
+            if (c.isAbstract()) continue;
+            if (!c.isProperty() && !includeTypes) continue;
+            try {
+                map.addMapping(c.qname(), String.format("%s:TEMP%04d", defPrefix, num++));
+            } catch (CMFException ex) {  // CAN'T HAPPEN
+                throw new IllegalStateException("Impossible addMapping exception happened");
             }
         }
         return map;
@@ -338,9 +365,15 @@ public class Mapping {
         }
         fmt = "%-" + maxLen + "s " + owlPre + ":equivalentProperty %s .\n";
         for (var srcQ : srcL) {
+            if (srcQ.endsWith("Type")) continue;
             var tQ = qn2mapQ.get(srcQ);
             w.write(String.format(fmt, srcQ, tQ));
         }        
+        for (var srcQ : srcL) {
+            if (!srcQ.endsWith("Type")) continue;
+            var tQ = qn2mapQ.get(srcQ);
+            w.write(String.format(fmt, srcQ, tQ));
+        } 
     }
     
     /**
