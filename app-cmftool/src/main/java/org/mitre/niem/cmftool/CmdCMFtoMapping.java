@@ -122,8 +122,8 @@ public class CmdCMFtoMapping implements JCCommand {
                 System.err.println("--single must have form prefix=URI");
                 System.exit(1);
             }
-            targetP = m.group(1).trim();
-            targetU = m.group(2).trim();
+            targetP = m.group(1).strip();
+            targetU = m.group(2).strip();
             if (!NCNAME.matcher(targetP).matches() || targetP.toLowerCase().startsWith("xml")) {
                 System.err.println("--single " + targetMap + ": invalid prefix");
                 System.exit(1);

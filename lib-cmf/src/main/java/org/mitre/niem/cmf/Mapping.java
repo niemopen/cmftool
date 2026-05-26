@@ -38,7 +38,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import org.mitre.niem.xml.XMLDocument;
 import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
-import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import static org.mitre.niem.xsd.NIEMConstants.OWL_NS_URI;
 
@@ -76,13 +75,7 @@ public class Mapping {
     private final Map<String,String> mapQ2qn  = new HashMap<>();    // mapped QN -> property QN
     private final Set<String> tprefixS        = new HashSet<>();    // set of all target prefixes
     private final Set<String> lnameS          = new HashSet<>();    // set of all mapped local names
-    private boolean noPrefix                  = false;              // return mapped name w/o prefix?
-
-    
-    
-//    private final Map<String,String> qn2mapQ  = new HashMap<>();    // QName -> mapped QName
-//    private final Map<String,String> mapQ2qn  = new HashMap<>();    // mapped QName -> component QName
-//    private boolean noPrefix = false;                               // mapping returns name part by default     
+    private boolean noPrefix                  = false;              // return mapped name w/o prefix?   
     
     public Mapping () { }
     
@@ -323,7 +316,7 @@ public class Mapping {
             if (line.length() > 0 && '\uFEFF' == line.charAt(0)) {
                 line = line.substring(1);
             }
-            line.trim();
+            line = line.strip();
             if (line.isBlank()) continue;
             if (line.startsWith("#")) continue;
             var preM = PREFIX_PAT.matcher(line);

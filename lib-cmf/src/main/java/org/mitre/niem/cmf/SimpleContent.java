@@ -41,10 +41,10 @@ public class SimpleContent extends CMFObject {
     private String content = "";
     private String lang = "";
 
-    public String name ()       { return name.trim(); }
-    public String content ()    { return content.trim(); }
+    public String name ()       { return name.strip(); }
+    public String content ()    { return content.strip(); }
     public String raw ()        { return content; }
-    public String lang ()       { return lang.trim(); }
+    public String lang ()       { return lang.strip(); }
     
     @Override
     public void setContent (String v) { content = v; }
@@ -67,7 +67,7 @@ public class SimpleContent extends CMFObject {
         switch (eln) {
         case "AugmentationIndex":
             try {
-                ar.setIndex(Integer.parseInt(this.content().trim())); 
+                ar.setIndex(Integer.parseInt(this.content().strip())); 
             }
             catch (NumberFormatException ex) {
                 LOG.error("{}: Invalid AugmentationIndex (not a number)", loc);

@@ -273,7 +273,7 @@ public class XMLMsgToJSON {
             var p      = model.uriToProperty(pU);
             var ns     = model.namespaceObj(nsuri);
             var key    = qName;
-            var cval   = chars.toString().trim();
+            var cval   = chars.toString().strip();
             
             // An unknown element outside of an adapter is ignored, along with all
             // its descendents.
@@ -442,7 +442,7 @@ public class XMLMsgToJSON {
             var sval = switch (whiteSpace) {
                 case "preserve" -> val;
                 case "replace"  -> val.replaceAll("[\\t\\n\\r]+", " ");
-                default         -> val.replaceAll("[ \\t\\n\\r]+", " ").trim();
+                default         -> val.replaceAll("[ \\t\\n\\r]+", " ").strip();
             };
             
             // A code is always a string

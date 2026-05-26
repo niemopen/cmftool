@@ -139,7 +139,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     }
     public void setConformanceTargets (String ctarg) {
         ctargL.clear();
-        for (var ct : ctarg.trim().split("\\s+")) addConformanceTarget(ct);
+        for (var ct : ctarg.strip().split("\\s+")) addConformanceTarget(ct);
     }
     public void setConformanceTargets (List<String> ctL) {
         ctargL.clear();

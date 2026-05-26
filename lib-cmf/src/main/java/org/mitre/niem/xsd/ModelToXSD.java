@@ -100,10 +100,7 @@ public abstract class ModelToXSD {
         
     // All augmentation records, indexed by augmenting namespace URI, then class URI.
     // Global augmentations have a fake class URI:  "Association", "Literal", or "Object".
-    protected Map<String,MapToList<String,AugmentRecord>> nsU2classU2augL;
-
-    // Set of augmentation property URIs for each augmentation point URI
-//    protected MapToSet<String,String> augPtU2augUs = new MapToSet<>();    
+    protected Map<String,MapToList<String,AugmentRecord>> nsU2classU2augL;   
 
     // Augmentations that are not part of an augmentation type are tracked here.
     // They are turned into augmentation point QName values in xs:element @substitutionGroup 

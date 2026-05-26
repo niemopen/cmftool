@@ -292,7 +292,7 @@ public class ModelFromXSD {
                     attAugTypeUS.add(typeU);
                 }
                 else {
-                    var codeL = codes.trim().split("\\s+");
+                    var codeL = codes.strip().split("\\s+");
                     for (var code : codeL) {
                         if ("LITERAL".equals(code)) anyGlobalLitAugF = true;
                     }
