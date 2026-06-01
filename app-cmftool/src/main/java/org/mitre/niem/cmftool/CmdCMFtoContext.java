@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,144 +23,266 @@
  */
 package org.mitre.niem.cmftool;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import java.io.File;
-import java.io.FileOutputStream;
+import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.List;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.concurrent.Callable;
 import javax.xml.parsers.ParserConfigurationException;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Mapping;
+import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.json.Context;
-import org.mitre.niem.utility.JCUsageFormatter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-
-@Parameters(commandDescription = "create a JSON-LD context from a model file and mapping")
-
-public class CmdCMFtoContext implements JCCommand {
+@Command(
+    name = "m2context",
+    description = "create a JSON-LD context from a model file and mapping",
+    mixinStandardHelpOptions = true
+)
+public class CmdCMFtoContext implements Callable<Integer> {
     
-    @Parameter(order = 1, names = {"-m", "--map"}, description = "mapping file for property keys")
-    File mapF = null;
-    
-    @Parameter(order = 1, names = {"-s","--single"}, description = "map to single namespace with no prefixes")
-    private boolean noPrefix = false;
+    @Option(
+        names = {"-m", "--map"},
+        paramLabel = "<path>",
+        description = "mapping file for property keys"
+    )
+    private Path mapF = null;
          
-    @Parameter(order = 1, names = "-o", description = "name of output mapping file")
-    private String mapFN = null;
+    @Option(
+        names = {"-o", "--output"},
+        paramLabel = "<path>",
+        description = "name of output context file; use '-' for stdout (the default)"
+    )
+    private String outName = null;
 
-    @Parameter(order = 2, names = {"-h","--help"}, description = "display this usage message", help = true)
-    private boolean help = false;
+    @Option(
+        names = "--force",
+        description = "overwrite output file if it already exists"
+    )
+    private boolean force = false;
+
+    @Option(
+        names = "--validate-only",
+        description = "validate model and mapping for context generation, but do not write output"
+    )
+    private boolean validateOnly = false;
         
-    @Parameter(description = "model.cmf [map.sssom]")
-    private List<String> mainArgs;        
+    @Parameters(
+        index = "0",
+        paramLabel = "model.cmf",
+        description = "model.cmf"
+    )
+    private Path modelF;
     
-    CmdCMFtoContext () {
-    }
-  
-    CmdCMFtoContext (JCommander jc) {
-    }
-
     public static void main (String[] args) {       
-        var obj = new CmdCMFtoMapping();
-        obj.runMain(args);
+        var cmd = new CommandLine(new CmdCMFtoContext());
+        cmd.setCommandName("m2context");
+        int exitCode = cmd.execute(args);
+        System.exit(exitCode);
     }
     
     @Override
-    public void runMain (String[] args) {
-        var jc = new JCommander(this);
-        var uf = new JCUsageFormatter(jc); 
-        jc.setUsageFormatter(uf);
-        jc.setProgramName("compile");
-        jc.parse(args);
-        run(jc);
-    }
-    
-    @Override
-    public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool m2context");
-        run(cob);
-    }     
-    
-    private void run (JCommander cob) {
-        if (help) {
-            cob.usage();
-            System.exit(0);
+    public Integer call () {
+        if (validateOnly && null != outName && !outName.isBlank()) {
+            System.err.println("--validate-only cannot be combined with --output");
+            return 1;
         }
-        if (mainArgs == null || mainArgs.isEmpty() || mainArgs.size() > 1) {
-            cob.usage();
-            System.exit(1);
+        if (validateOnly && force) {
+            System.err.println("--validate-only cannot be combined with --force");
+            return 1;
         }
-        // Argument of "-" signals end of arguments, allows "-foo" filenames
-        var na = mainArgs.get(0);
-        if (na.startsWith("-")) {
-            if (na.length() == 1) {
-                mainArgs.remove(0);
-            } else {
-                System.err.println("Unknown option: " + na);
-                cob.usage();
-                System.exit(1);
-            }
-        }     
-        // Make sure output mapping file is writable      
-        var ow = new OutputStreamWriter(System.out);
-        if (null != mapFN) try {
-            var os = new FileOutputStream(mapFN);
-            ow = new OutputStreamWriter(os, "UTF-8");
-        } catch (IOException ex) {
-            System.err.println(String.format("Can't write to output file %s: %s", mapFN, ex.getMessage()));
-            System.exit(1);            
-        }      
+
+        // Make sure output context file is writable
+        if (!validateOnly) {
+            int rc = validateOutputTarget();
+            if (0 != rc) return rc;
+        }
+        
         // Make sure the Xerces parsers can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
         } catch (ParserConfigurationException ex) {
             System.err.println("Internal parser error: " + ex.getMessage());
-            System.exit(1);
+            return 1;
         }
+        
         // Read the model object from the model file
-        var mr    = new ModelXMLReader();  
-        var model = mr.readFiles(new File(mainArgs.get(0)));
-        if (null == model) {
-            System.err.println("Could not read model from CMF file " + mainArgs.get(0));
-            System.exit(1);
+        if (null == modelF || !Files.exists(modelF) || !Files.isRegularFile(modelF) || !Files.isReadable(modelF)) {
+            System.err.println("Could not read model from CMF file " + modelF);
+            return 1;
         }
+
+        Model model;
+        try {
+            var mr = new ModelXMLReader();  
+            model = mr.readFiles(modelF.toFile());
+        } catch (Exception ex) {
+            System.err.println("Could not read model from CMF file " + modelF + ": " + ex.getMessage());
+            return 1;
+        }
+        if (null == model) {
+            System.err.println("Could not read model from CMF file " + modelF);
+            return 1;
+        }
+
         // Read the mapping file if one was provided
         Mapping map = null;
         if (null != mapF) {
+            if (!Files.exists(mapF) || !Files.isRegularFile(mapF) || !Files.isReadable(mapF)) {
+                System.err.println(String.format("Can't read mapping file %s", mapF));
+                return 1;
+            }
             try {
-                map = Mapping.readFile(mapF);
+                map = Mapping.readFile(mapF.toFile());
             } catch (IOException | CMFException ex) {
-                System.err.println(String.format("Can't read mapping file %s: %s", mapF.toString(), ex.getMessage()));
-                System.exit(1);
+                System.err.println(String.format("Can't read mapping file %s: %s", mapF, ex.getMessage()));
+                return 1;
             }
         }
-        // Create context and write to output stream
-        try {
-            if (null == map) Context.createTo(ow, model);
-            else {
-                map.setNoPrefix(noPrefix);
-                Context.createTo(ow, model, map);
+
+        // Validate mapping against the model if one was provided
+        if (null != map) {
+            try {
+                map.validateAgainstModel(model);
+            } catch (CMFException ex) {
+                System.err.println("Invalid mapping for model: " + ex.getMessage());
+                return 1;
             }
-            ow.write("\n");
-            ow.close();
-        } catch (RuntimeException | IOException ex) {
-            System.err.println("Can't write context: " + ex.getMessage());
-            System.exit(1);
+        }
+
+        // Create context
+        JsonObject cxt;
+        try {
+            cxt = Context.create(model, map);
         } catch (CMFException ex) {
             System.err.println("Can't create context: " + ex.getMessage());
-            System.exit(1);
+            return 1;
+        } catch (RuntimeException ex) {
+            System.err.println("Can't create context: " + ex.getMessage());
+            return 1;
         }
-        System.exit(0);            
-    }    
+
+        if (validateOnly) {
+            System.out.println("OK");
+            return 0;
+        }
+
+        // Create context and write to output stream
+        try {
+            if (isStdoutTarget()) {
+                return writeToStdout(cxt);
+            } else {
+                return writeToFileAtomically(cxt, Path.of(outName));
+            }
+        } catch (IOException | RuntimeException ex) {
+            System.err.println("Can't write context: " + ex.getMessage());
+            return 1;
+        }
+    }
+    
+    private int validateOutputTarget() {
+        if (isStdoutTarget()) return 0;
+        
+        Path outPath = Path.of(outName).toAbsolutePath().normalize();
+        if (Files.exists(outPath) && Files.isDirectory(outPath)) {
+            System.err.println("Can't write to output file " + outPath + ": is a directory");
+            return 1;
+        }
+        if (Files.exists(outPath) && !force) {
+            System.err.println("Can't write to output file " + outPath + ": file exists (use --force to overwrite)");
+            return 1;
+        }
+        Path parent = outPath.getParent();
+        if (null != parent) {
+            if (!Files.exists(parent)) {
+                System.err.println("Can't write to output file " + outPath + ": parent directory does not exist");
+                return 1;
+            }
+            if (!Files.isDirectory(parent)) {
+                System.err.println("Can't write to output file " + outPath + ": parent is not a directory");
+                return 1;
+            }
+            if (!Files.isWritable(parent)) {
+                System.err.println("Can't write to output file " + outPath + ": parent directory is not writable");
+                return 1;
+            }
+        }
+        return 0;
+    }
+    
+    private int writeToStdout(JsonObject cxt) throws IOException {
+        var ow = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
+        Context.write(cxt, ow);
+        ow.write("\n");
+        ow.flush();
+        return 0;
+    }
+    
+    private int writeToFileAtomically(JsonObject cxt, Path target) throws IOException {
+        Path absTarget = target.toAbsolutePath().normalize();
+        Path dir = absTarget.getParent();
+        if (null == dir) dir = Path.of(".").toAbsolutePath().normalize();
+        
+        Path tempFile = null;
+        try {
+            tempFile = Files.createTempFile(dir, absTarget.getFileName().toString() + ".", ".tmp");
+            try (Writer ow = Files.newBufferedWriter(tempFile, StandardCharsets.UTF_8)) {
+                Context.write(cxt, ow);
+                ow.write("\n");
+            }
+            moveIntoPlace(tempFile, absTarget);
+            tempFile = null;
+            return 0;
+        } finally {
+            if (null != tempFile) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException ex) {
+                    // ignore cleanup failure
+                }
+            }
+        }
+    }
+    
+    private void moveIntoPlace(Path source, Path target) throws IOException {
+        try {
+            if (force) {
+                Files.move(
+                    source,
+                    target,
+                    StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING
+                );
+            } else {
+                Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+            }
+        } catch (AtomicMoveNotSupportedException ex) {
+            if (force) {
+                Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Files.move(source, target);
+            }
+        }
+    }
+    
+    private boolean isStdoutTarget() {
+        return null == outName || outName.isBlank() || "-".equals(outName);
+    }
 }

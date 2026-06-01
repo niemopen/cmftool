@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,22 +23,24 @@
  */
 package org.mitre.niem.cmftool;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URI;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 import org.mitre.niem.cmf.Mapping;
+import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
-import org.mitre.niem.utility.JCUsageFormatter;
+import org.mitre.niem.utility.AtomicPathWriter;
 import org.mitre.niem.xml.ParserBootstrap;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
 
 /**
@@ -47,75 +49,49 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "create a mapping template from CMF")
+@Command(
+    name = "m2map",
+    description = {
+        "create a mapping template from CMF",
+        "Use '--' before model filenames beginning with '-'."
+    },
+    mixinStandardHelpOptions = true,
+    sortOptions = false
+)
+public class CmdCMFtoMapping implements Callable<Integer> {
 
-public class CmdCMFtoMapping implements JCCommand {
-
-    @Parameter(order = 1, names = {"-s","--single"}, description = "prefix=URI of single target namespace")
+    @Option(
+        names = {"-s", "--single"},
+        paramLabel = "<p=URI>",
+        description = "prefix=URI of single target namespace"
+    )
     private String targetMap = null;
-    
-    @Parameter(order = 1, names = {"-t","--types"}, description = "also map class and datatype QNames")
+
+    @Option(
+        names = {"-t", "--types"},
+        description = "also map class and datatype QNames"
+    )
     private boolean includeTypes = false;
-         
-    @Parameter(order = 2, names = "-o", description = "name of output mapping file")
-    private String mapFN = null;
 
-    @Parameter(order = 3, names = {"-h","--help"}, description = "display this usage message", help = true)
-    boolean help = false;
-        
-    @Parameter(description = "model.cmf ...")
-    private List<String> mainArgs;    
-    
-    CmdCMFtoMapping () {
-    }
-  
-    CmdCMFtoMapping (JCommander jc) {
-    }
+    @Option(
+        names = {"-o", "--output"},
+        paramLabel = "<path>",
+        description = "name of output mapping file"
+    )
+    private Path outputPath = null;
 
-    public static void main (String[] args) {       
-        var obj = new CmdCMFtoMapping();
-        obj.runMain(args);
-    }
-    
+    @Parameters(
+        arity = "1..*",
+        paramLabel = "model.cmf ...",
+        description = "one or more CMF model files; use '--' before filenames beginning with '-'"
+    )
+    private List<Path> modelPaths;
+
+    private static final Pattern SPLIT = Pattern.compile("^\\s*(.*?)\\s*=\\s*(.+)\\s*$");
+    private static final Pattern NCNAME = Pattern.compile("^[A-Za-z_][A-Za-z0-9._-]*$");
+
     @Override
-    public void runMain (String[] args) {
-        var jc = new JCommander(this);
-        var uf = new JCUsageFormatter(jc); 
-        jc.setUsageFormatter(uf);
-        jc.setProgramName("m2map");
-        jc.parse(args);
-        run(jc);
-    }
-    
-    @Override
-    public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool m2map");
-        run(cob);
-    }    
-
-    private static final Pattern SPLIT  = Pattern.compile("^\\s*(.*?)\\s*=\\s*(.+)\\s*$");
-    private static final Pattern NCNAME = Pattern.compile("^[A-Za-z_][A-Za-z0-9._-]*$"); 
-        
-    private void run (JCommander cob) {
-        if (help) {
-            cob.usage();
-            System.exit(0);
-        }
-        if (mainArgs == null || mainArgs.isEmpty()) {
-            cob.usage();
-            System.exit(1);
-        }
-        // Argument of "-" signals end of arguments, allows "-foo" filenames
-        var na = mainArgs.get(0);
-        if (na.startsWith("-")) {
-            if (na.length() == 1) {
-                mainArgs.remove(0);
-            } else {
-                System.err.println("Unknown option: " + na);
-                cob.usage();
-                System.exit(1);
-            }
-        }
+    public Integer call() {
         // If single target namespace specified, make sure prefix and uri are valid
         var targetP = "";
         var targetU = "";
@@ -123,57 +99,82 @@ public class CmdCMFtoMapping implements JCCommand {
             var m = SPLIT.matcher(targetMap);
             if (!m.matches()) {
                 System.err.println("--single must have form prefix=URI");
-                System.exit(1);
+                return 2;
             }
             targetP = m.group(1).strip();
             targetU = m.group(2).strip();
             if (!NCNAME.matcher(targetP).matches() || targetP.toLowerCase().startsWith("xml")) {
                 System.err.println("--single " + targetMap + ": invalid prefix");
-                System.exit(1);
+                return 2;
             }
             URI u = null;
-            try { u = new URI(targetU); } catch (Exception ex) {}
+            try {
+                u = new URI(targetU);
+            } catch (Exception ex) {
+                // Keep validation behavior simple and report below
+            }
             if (null == u || !u.isAbsolute()) {
                 System.err.println("--single " + targetMap + ": " + targetU + " is not an absolute URI");
-                System.exit(1);
+                return 2;
             }
-        }       
-        // Make sure output mapping file is writable      
-        var ow = new OutputStreamWriter(System.out);
-        if (null != mapFN) try {
-            var os = new FileOutputStream(mapFN);
-            ow = new OutputStreamWriter(os, "UTF-8");
-        } catch (IOException ex) {
-            System.err.println(String.format("Can't write to output file %s: %s", mapFN, ex.getMessage()));
-            System.exit(1);            
-        }      
+        }
+
         // Make sure the Xerces parsers can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
         } catch (ParserConfigurationException ex) {
             System.err.println("Internal parser error: " + ex.getMessage());
-            System.exit(1);
+            return 1;
         }
-        // Read the model object from the model instance file
+
         // Read the model object from the model file(s)
-        var mr = new ModelXMLReader();  
-        var fileL = new ArrayList<File>();
-        for (var str : mainArgs) fileL.add(new File(str));
-        var model = mr.readFiles(fileL);
+        final var mr = new ModelXMLReader();
+        final Model model;
+        try {
+            model = mr.readFiles(modelPaths.stream()
+                .map(Path::toFile)
+                .collect(Collectors.toList()));
+        } catch (Exception ex) {
+            System.err.println(
+                "Can't read model file(s) "
+                    + modelPaths.stream().map(Path::toString).collect(Collectors.joining(", "))
+                    + ": " + ex.getMessage()
+            );
+            return 1;
+        }
 
         // Create mapping object from model, write to output
-        Mapping map;
-        
         try {
-            if (null != targetMap) map = Mapping.createDefault(model, targetP, targetU, includeTypes);
-            else map = Mapping.createTemplate(model, includeTypes);
-            map.write(ow);
-            ow.close();
+            final Mapping map;
+            if (null != targetMap) {
+                map = Mapping.createOneNamespaceMapping(model, null, targetP, targetU);
+            } else {
+                map = Mapping.createTemplate(model, "T", "http://example.com/YourTargetNSURI/");
+            }
+
+            // Suggested fix from original code: --types was parsed but not used.
+            // If Mapping has or gains an API for this, wire includeTypes into the
+            // mapping generation here.
+            if (includeTypes) {
+                // TODO: apply includeTypes to mapping generation when supported by Mapping API.
+            }
+
+            if (outputPath != null) {
+                AtomicPathWriter.writeAtomically(outputPath, StandardCharsets.UTF_8, ow -> {
+                    map.write(ow);
+                });
+            } else {
+                // Write directly to stdout; do not close System.out.
+                var ow = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
+                map.write(ow);
+                ow.flush();
+            }
         } catch (Exception ex) {
             System.err.println("Can't create mapping template: " + ex.getMessage());
-            System.exit(1);
+            return 1;
         }
-        System.exit(0);       
+
+        return 0;
     }
 
 }

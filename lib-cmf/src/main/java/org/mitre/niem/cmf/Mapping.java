@@ -38,350 +38,383 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import static org.mitre.niem.xml.XMLDocument.qnToPrefix;
 import static org.mitre.niem.xml.XMLDocument.qnToName;
-import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
-import static org.mitre.niem.xsd.NIEMConstants.OWL_NS_URI;
+import static org.mitre.niem.xml.XMLDocument.makeQN;
+import static org.mitre.niem.xml.XMLDocument.makeURI;
+import org.mitre.niem.xsd.NamespaceKind;
 
 /**
  * A class for representing same-as mappings from a data model component QName
- * to a simple synonym QName.  Used to specify property names for simple 
+ * to a simple synonym QName. Used to specify property names for simple
  * (vs. canonical) message formats; for example, a simple format
  * might have "msg:lname" or just "lname" instead of "nc:PersonSurName".
- * 
- * A mapping file is a Turtle document, with "#" comment lines.
- * Best practice puts all of the @prefix lines before all of the triples.
- * Prefixes must be declared before they are used in a triple.
- * You cannot have two prefixes for the same namespace, or 
- * two namespaces for the same prefix.
- * 
- * You can create an empty Mapping object and set all your mappings one by one.
- * QName A maps to at most one B, and no other QName maps to that B.  You get an 
- * exception if you try anything else.
- * 
- * You can create and then edit a mapping template file.  The "createTemplate"
- * method writes a mapping file with a dummy mapping for every property in
- * a model.
- * 
- * Sometimes you are content with the property local names in the model, and
- * just want to squash everything into a single namespace.  (Can be handy 
- * for a simple XML message format.)  The "createDefault" method will do that.
- * You'll get mappings like:
- *   nc:PersonName owl:equivalentProperty target:PersonName .
- * 
- * If your model has two properties with the same local name, then both of them
- * will be munged in the createDefault output:
- *   nc:PersonName  owl:equivalentProperty target:nc_PersonName .
- *   foo:PersonName owl:equivalentProperty target:foo_PersonName .
- * 
- * If your model has a class that allows references, then the createDefault
- * output will have dummy mappings for structures:{id, ref, uri}.  You have
- * to edit the output to put in the correct prefix and URI for the structures
- * namespace(s) in your model.  Or, if you don't need XML messages, you can
- * just delete these lines.
- * 
+ * <p>
+ * Mappings whose source QName is in the XSD namespace are ignored.
+ * </p>
+ *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class Mapping {
 
-    final NamespaceMap nsmap                  = new NamespaceMap(); // prefix/URI pairs known in mapping
-    private final Map<String,String> qn2mapQ  = new HashMap<>();    // property QN -> mapped qn
-    private final Map<String,String> mapQ2qn  = new HashMap<>();    // mapped QN -> property QN
-    private final Map<String,String> toU2pre  = new HashMap<>();    // mapped URI -> its prefix
-    private final Set<String> toNSuriS        = new HashSet<>();    // set of all target namespace URIs
-    private boolean noPrefix                  = false;              // return mapped name w/o prefix?   
-    
+    private final Map<String,String> pre2uri  = new HashMap<>();    // namespace prefix -> URI
+    private final Map<String,String> uri2pre  = new HashMap<>();    // namespace URI -> prefix
+    private final Map<String,String> qn2mapQ  = new HashMap<>();    // component QN -> mapped qn
+    private final Map<String,String> mapQ2qn  = new HashMap<>();    // mapped QN -> component QN
+    private final Map<String,String> qn2mapU  = new HashMap<>();    // component QN -> mapped URI
+    private final Map<String,String> uri2mapU = new HashMap<>();    // component URI -> mapped URI
+    private final Map<String,String> mapU2uri = new HashMap<>();    // mapped URI -> component URI
+
     public Mapping () { }
-    
+
     /**
-     * Returns the QName mapping for the argument QName.  Returns the argument
-     * QName if it is not mapped.
-     * @param fromQ
-     * @return mapped QName
+     * Returns true if the argument QName is mapped to a target QName.
+     * @param fromQ source QName
+     * @return true if mapped
      */
-    public String qnToMappedQN (String fromQ) { 
-        var mapQ = qn2mapQ.get(fromQ);
-        if (null == mapQ) return fromQ;
-        return mapQ;
+    public boolean isMappedQ (String fromQ) {
+        return qn2mapQ.containsKey(fromQ);
     }
-    
+
     /**
-     * Returns the name mapped to the argument QName.  This could be a QName, or
-     * just the local name (without prefix) if noPrefix is set.  Returns the argument 
-     * QName if not mapped.
-     * @param fromQ
-     * @return mapped local name or QName
+     * Returns the QName mapping for the argument QName.
+     * Returns the argument QName unchanged if it is not mapped.
+     * @param fromQ source QName
+     * @return target QName mapping result
      */
-    public String qnToMappedName (String fromQ)   { 
-        var mapQ = qn2mapQ.get(fromQ);
-        if (null == mapQ) return fromQ;
-        if (noPrefix) return qnToName(mapQ);
-        return mapQ;
+    public String qnToMappedQ (String fromQ) {
+        var toQ = qn2mapQ.get(fromQ);
+        if (null == toQ) return fromQ;
+        return toQ;
     }
-    
-    public boolean noPrefix () { return noPrefix; }
-    
+
     /**
-     * When set true, mapping targets will return the local name without prefix.
-     * Sets and returns false if the map has more than one target namespace.
-     * @param val
-     * @return new value of noPrefix
+     * Returns the QName that is mapped to the argument QName.
+     * Returns null if nothing is mapped to the input.
+     * @param toQ mapping target QName
+     * @return source QName mapped to argument, or null
      */
-    public boolean setNoPrefix (boolean val) {
-        if (val && toU2pre.size() > 1) val = false;
-        noPrefix = val;
-        return val;
+    public String mappedQNtoQ (String toQ) {
+        return mapQ2qn.get(toQ);
     }
-    
+
     /**
-     * Adds a prefix/URI pair to the Mapping object.  The prefix may be munged
-     * if the desired prefix is already assigned.
-     * @param prefix -- desired prefix
-     * @param uri -- URI for prefix
-     * @return the assigned prefix (possibly munged)
+     * Returns the URI mapping for the argument URI.
+     * Returns the argument URI if it is not mapped.
+     * @param fromU source URI
+     * @return target URI mapping result
      */
-    public String assignPrefix (String prefix, String uri) throws CMFException {
-        var mpre = nsmap.getPrefix(uri);
+    public String uriToMappedU (String fromU) {
+        var toU = uri2mapU.get(fromU);
+        if (null == toU) return fromU;
+        return toU;
+    }
+
+    /**
+     * Returns the URI that is mapped to the argument URI.
+     * Returns null if nothing is mapped to the input.
+     * @param toU mapping target URI
+     * @return source URI mapped to argument, or null
+     */
+    public String mappedURItoU (String toU) {
+        return mapU2uri.get(toU);
+    }
+
+    /**
+     * Returns the namespace URI assigned to the namespace prefix.
+     * Returns null if prefix not assigned.
+     * @param prefix namespace prefix
+     * @return namespace URI
+     */
+    public String prefixToURI (String prefix) {
+        return pre2uri.get(prefix);
+    }
+
+    /**
+     * Adds a prefix/URI pair to the Mapping object.
+     * Throws an exception if the prefix or URI are already assigned inconsistently.
+     * @param prefix desired prefix
+     * @param uri URI for prefix
+     * @throws CMFException if the assignment is inconsistent with an existing one
+     */
+    public void assignPrefix (String prefix, String uri) throws CMFException {
+        var mpre = uri2pre.get(uri);
         if (null != mpre && !mpre.equals(prefix)) {
             throw new CMFException(String.format(
-                "Can't assign prefix %s to %s (prefix %s already assigned)", prefix, uri, mpre));
+                "Can't assign prefix %s to %s (uri already mapped to %s)", prefix, uri, mpre));
         }
-        return nsmap.assignPrefix(prefix, uri);
-    }    
-    
+        var muri = pre2uri.get(prefix);
+        if (null != muri && !muri.equals(uri)) {
+            throw new CMFException(String.format(
+                "Can't assign prefix %s to %s (prefix already assigned to %s)", prefix, uri, muri));
+        }
+        pre2uri.put(prefix, uri);
+        uri2pre.put(uri, prefix);
+    }
+
     /**
-     * Adds a mapping from the model property QName to a target QName.
-     * The prefixes of both QNames must already be mapped via assignPrefix.
-     * @param fromQ - model property QName
-     * @param toQ - target QName
-     * @throws CMFException 
+     * Adds a mapping from the model component QName to a target QName.
+     * The prefixes of both QNames must already be assigned via {@link #assignPrefix}.
+     * <p>
+     * If the source QName is in the XSD namespace, the mapping is ignored.
+     * </p>
+     *
+     * @param fromQ model component QName
+     * @param toQ target QName
+     * @throws CMFException if prefixes are undeclared or the mapping is inconsistent
      */
     public void addMapping (String fromQ, String toQ) throws CMFException {
         var fromPre = qnToPrefix(fromQ);
-        var toPre   = qnToPrefix(toQ);
-        var toU     = nsmap.getURI(toPre);
-        var cToQ    = qn2mapQ.get(fromQ);
-        var cFromQ  = mapQ2qn.get(toQ);
-        var cU2pre  = toU2pre.get(toU);
-        if (nsmap.getURI(fromPre) == null) {
+        var fromLN  = qnToName(fromQ);
+        var fromNS  = pre2uri.get(fromPre);
+        if (null == fromNS) {
             throw new CMFException("Undeclared source prefix: " + fromPre);
         }
-        if (null == toU) {
+        if (isXSDNamespace(fromNS)) {
+            return;
+        }
+
+        var toPre = qnToPrefix(toQ);
+        var toLN  = qnToName(toQ);
+        var toNS  = pre2uri.get(toPre);
+        if (null == toNS) {
             throw new CMFException("Undeclared target prefix: " + toPre);
         }
-        if (null != cU2pre && !cU2pre.equals(toPre)) {
+
+        var qn2map = qn2mapQ.get(fromQ);
+        var map2qn = mapQ2qn.get(toQ);
+        if (null != qn2map && !qn2map.equals(toQ)) {
             throw new CMFException(String.format(
-                "Can't add mapping %s -> %s (target namespace %s already used with prefix %s)",
-                fromQ, toQ, toU, cU2pre));            
+                "Can't map %s to %s (%s already mapped to %s)", fromQ, toQ, fromQ, qn2map));
         }
-        if (null != cToQ && !cToQ.equals(toQ)) {
+        if (null != map2qn && !map2qn.equals(fromQ)) {
             throw new CMFException(String.format(
-                "Can't add mapping %s -> %s (%s already mapped to %s)", fromQ, toQ, fromQ, cToQ));
+                "Can't map %s to %s (%s already mapped to %s)", fromQ, toQ, toQ, map2qn));
         }
-        if (null != cFromQ && !cFromQ.equals(fromQ)) {
-            throw new CMFException(String.format(
-                "Can't add mapping %s -> %s (%s already mapped to %s)", fromQ, toQ, cFromQ, toQ));     
-        }        
+
+        var fromU = makeURI(fromNS, fromLN);
+        var toU   = makeURI(toNS, toLN);
+        uri2mapU.put(fromU, toU);
+        mapU2uri.put(toU, fromU);
         qn2mapQ.put(fromQ, toQ);
         mapQ2qn.put(toQ, fromQ);
-        toU2pre.put(toU, toPre);
-        toNSuriS.add(toU);
-        if (toU2pre.size() > 1) noPrefix = false;
+        qn2mapU.put(fromQ, toU);
     }
-    
+
     /**
-     * Suppose you want a simple message format with a single namespace.  This method
-     * accepts a default namespace prefix and URI, and creates a mapping from 
-     * every property QName in the model to a QName with that prefix plus 
-     * the property name.
-     * 
-     * For example, given defPrefix "my" and defURI "http://my.default/",
-     * then nc:PersonName would be mapped to my:PersonName,
-     * which would expand to http://my.default/PersonName.
-     *  
-     * Uses the namespace prefix to mung property names in case of collision; for example,
-     * if your model has nc:PersonSurName and foo:PersonSurName, then the mapping file
-     * will have my:nc_PersonSurName and my:foo_PersonSurName.
-     * 
-     * If your model includes object references, then the output will include
-     * dummy mappings for structures:id, ref, and uri.  You will have to edit
-     * the output to provide the correct structures prefix and URI.
+     * Creates a mapping object with a dummy target QName for each mappable
+     * component in a model. Components in the XSD namespace are skipped.
+     * The result is suitable for editing once written to a file.
      *
-     * @param m Model object
-     * @param defPrefix 
-     * @param defURI 
+     * @param m model object
+     * @param defPrefix prefix for each mapping target in template
+     * @param defURI URI for each mapping target
      * @return new Mapping object
+     * @throws CMFException if the mapping cannot be constructed
      */
-    public static Mapping createPropertyDefault (Model m, String defPrefix, String defURI) {
-        return createDefault(m, defPrefix, defURI, false);
+    public static Mapping createTemplate (Model m, String defPrefix, String defURI) throws CMFException {
+        return createTemplate(m, null, defPrefix, defURI);
     }
-    
+
     /**
-     * Like createPropertyDefault, but also creates mappings for class and datatype
-     * QNames.
-     * @param m
-     * @param defPrefix
-     * @param defURI
-     * @return new Mapping object 
+     * Creates a mapping object with a dummy target QName for the model
+     * components required to create a message schema for the specified
+     * message property. Components in the XSD namespace are skipped.
+     * The result is suitable for editing once written to a file.
+     *
+     * @param m model object
+     * @param msgProp message ObjectProperty
+     * @param defPrefix prefix for each mapping target in template
+     * @param defURI URI for each mapping target
+     * @return new Mapping object
+     * @throws CMFException if defPrefix is a prefix of a model namespace
      */
-    public static Mapping createComponentDefault (Model m, String defPrefix, String defURI) {
-        return createDefault(m, defPrefix, defURI, true);
-    }
-    
-    public static Mapping createDefault (Model m, String defPrefix, String defURI, boolean includeTypes) {
+    public static Mapping createTemplate (
+        Model m,
+        ObjectProperty msgProp,
+        String defPrefix,
+        String defURI) throws CMFException {
+
         var map = new Mapping();
-        
-        // Add mapping for each model namespace
-        try {
-            for (var ns : m.namespaceList()) {
-                if (ns.isModelNS()) {
-                    map.assignPrefix(ns.prefix(), ns.uri());
-                }
-            }
-            // Add mapping for default prefix/URI.  Prefix might be munged.
-            defPrefix = map.assignPrefix(defPrefix, defURI);
-        } catch (CMFException ex) { // CAN'T HAPPEN
-            throw new IllegalStateException("Unexpected namespace mapping collision");
+        for (var ns : m.namespaceSet()) {
+            map.assignPrefix(ns.prefix(), ns.uri());
         }
-        
-        // Add mappings for structures namespace if needed
-        var needStructures = false;
-        for (var ct : m.classTypeL()) {
-            if (!"NONE".equals(ct.effectiveReferenceCode())) {
-                needStructures = true;
-                break;
-            }
+        map.assignPrefix(defPrefix, defURI);
+
+        List<Component> compL;
+        if (null == msgProp) compL = new ArrayList<>(m.componentList());
+        else compL = new ArrayList<>(m.messageComponents(msgProp));
+
+        int nmap = 0;
+        for (var c : compL) {
+            if (!isXSDComponent(c)) nmap++;
         }
-        if (needStructures) {
-            try {
-                var sPre = map.assignPrefix("YOUR_STRUCTURES_PREFIX", "http://YOUR_STRUCTURES_NS_URI_HERE");
-                map.addMapping(makeQN(sPre, "id"),  makeQN(defPrefix, "__STRUCTURES_ID__"));
-                map.addMapping(makeQN(sPre, "ref"), makeQN(defPrefix, "__STRUCTURES_REF__"));
-                map.addMapping(makeQN(sPre, "uri"), makeQN(defPrefix, "__STRUCTURES_URI__"));
-            } catch (CMFException ex) { // EXTREMELY WEIRD MODEL
-                throw new IllegalStateException("Unexpected structures mapping collision");
-            }
-        }        
-        // How many times does a local name appear in the model?
+
+        var digits = Long.toString(Math.max(nmap, 1)).length();
+        var tfmt   = "TEMP%0" + digits + "d";
+        var cnum = 0;
+        for (var c : compL) {
+            if (isXSDComponent(c)) continue;
+            var tname = String.format(tfmt, cnum++);
+            var tQ = makeQN(defPrefix, tname);
+            map.addMapping(c.qname(), tQ);
+        }
+        return map;
+    }
+
+    /**
+     * Creates a mapping object that maps every mappable component to a QName
+     * in a single target namespace. Components in the XSD namespace are skipped.
+     * <p>
+     * Uses the source namespace prefix to mung property names in case of collision.
+     * For example, if your model has nc:PersonName and foo:PersonName, then
+     * the mapping will have my:nc_PersonName and my:foo_PersonName.
+     * </p>
+     * <p>
+     * If your model includes object references, then the result will include
+     * mappings for structures:id, ref, and uri.
+     * </p>
+     *
+     * @param m model object
+     * @param msgProp message property object
+     * @param defPrefix target namespace prefix
+     * @param defURI target namespace URI
+     * @return new Mapping object
+     * @throws CMFException if defPrefix is the prefix of a model namespace
+     */
+    public static Mapping createOneNamespaceMapping (
+        Model m,
+        ObjectProperty msgProp,
+        String defPrefix,
+        String defURI) throws CMFException {
+
+        var map = new Mapping();
+        var nsm = new NamespaceMap();
+        for (var ns : m.namespaceSet()) {
+            map.assignPrefix(ns.prefix(), ns.uri());
+            nsm.assignPrefix(ns.prefix(), ns.uri());
+        }
+        map.assignPrefix(defPrefix, defURI);
+        nsm.assignPrefix(defPrefix, defURI);
+
+        List<Component> compL;
+        if (null == msgProp) compL = new ArrayList<>(m.componentList());
+        else compL = new ArrayList<>(m.messageComponents(msgProp));
+
+        // Count number of times each local name appears in component list.
+        // Ignore XSD components because they are not mapped.
         var lnct = new HashMap<String,Integer>();
-        for (var c : m.componentList()) {
+        for (var c : compL) {
+            if (isXSDComponent(c)) continue;
             if (!c.namespace().isModelNS()) continue;
             if (c.isAbstract()) continue;
             var lct = lnct.getOrDefault(c.name(), 0);
             lnct.put(c.name(), lct + 1);
         }
-        // Add mappings; munged mapping when a local name appears more than once.      
-        for (var c : m.componentList()) {
-            if (!c.namespace().isModelNS()) continue;
-            if (c.isAbstract()) continue;
-            if (!c.isProperty() && !includeTypes) continue;
-            var cQ  = c.qname();
-            var lct = lnct.get(c.name());
-            try {
-                if (lct > 1) {
-                    var toQ = makeQN(defPrefix, qnToPrefix(cQ) + "_" + c.name());
-                    map.addMapping(c.qname(), toQ);
-                } else {
-                    var toQ = makeQN(defPrefix, c.name());
-                    map.addMapping(c.qname(), toQ);
+
+        // Do we need mappings for XML reference attributes?
+        var structUs = new HashSet<String>();
+        for (var c : compL) {
+            if (isXSDComponent(c)) continue;
+            if (c instanceof ClassType ct && !"NONE".equals(ct.effectiveReferenceCode())) {
+                var vers = ct.namespace().version();
+                var structU = NamespaceKind.builtinNSU(vers, "STRUCTURES");
+                if (!structUs.contains(structU)) {
+                    var structP = nsm.assignPrefix("structures", structU);
+                    map.assignPrefix(structP, structU);
+                    structUs.add(structU);
+                    lnct.put("id",  lnct.getOrDefault("id", 0) + 1);
+                    lnct.put("ref", lnct.getOrDefault("ref", 0) + 1);
+                    lnct.put("uri", lnct.getOrDefault("uri", 0) + 1);
                 }
-            } catch (CMFException ex) {  // CAN'T HAPPEN
-                throw new IllegalStateException("Impossible addMapping exception");
+            }
+        }
+
+        // Add component mappings.
+        for (var c : compL) {
+            if (isXSDComponent(c)) continue;
+            var cns  = c.namespace();
+            var cln  = c.name();
+            var cpre = cns.prefix();
+            int num  = lnct.getOrDefault(cln, 1);
+            if (num > 1) {
+                map.addMapping(c.qname(), makeQN(defPrefix, cpre + "_" + cln));
+            }
+            else {
+                map.addMapping(c.qname(), makeQN(defPrefix, cln));
+            }
+        }
+
+        // Add reference attribute mappings.
+        for (var structU : structUs) {
+            var structP = nsm.getPrefix(structU);
+            for (var cln : Set.of("id", "ref", "uri")) {
+                var fromQ = makeQN(structP, cln);
+                var toQ = "";
+                int num = lnct.getOrDefault(cln, 1);
+                if (num > 1) toQ = makeQN(defPrefix, structP + "_" + cln);
+                else toQ = makeQN(defPrefix, cln);
+                map.addMapping(fromQ, toQ);
             }
         }
         return map;
-    }
-    
-    public static Mapping createPropertyTemplate (Model m) {
-        return createTemplate(m, "T", "http://example.com/YourNamespaceURIGoesHere/", false);
-    }
-    
-    public static Mapping createComponentTemplate (Model m) {
-        return createTemplate(m, "T", "http://example.com/YourNamespaceURIGoesHere/", true);
-    }
-    
-    public static Mapping createTemplate (Model m, boolean includeTypes) {
-        return createTemplate(m, "T", "http://example.com/YourNamespaceURIGoesHere/", includeTypes);
     }
 
     /**
-     * Creates a mapping object with a dummy "to" QName for each property in a model.
-     * @param m Model object
-     * @param defPrefix - prefix for each mapping target in template
-     * @param defURI - URI for each mapping target
-     * @return new Mapping object
-     */
-    public static Mapping createTemplate (Model m, String defPrefix, String defURI, boolean includeTypes) {
-        var map   = new Mapping();
-        try {
-            for (var ns : m.namespaceList()) {
-                if (ns.isModelNS()) {
-                    map.assignPrefix(ns.prefix(), ns.uri());
-                }
-            }
-            defPrefix = map.assignPrefix(defPrefix, defURI);
-        } catch (CMFException ex) { } // IGNORE
-        
-        var num = 0;
-        var spL = new ArrayList<>(m.componentList());
-        Collections.sort(spL);
-        for (var c : spL) {
-            if (!c.namespace().isModelNS()) continue;
-            if (c.isAbstract()) continue;
-            if (!c.isProperty() && !includeTypes) continue;
-            try {
-                map.addMapping(c.qname(), String.format("%s:TEMP%04d", defPrefix, num++));
-            } catch (CMFException ex) {  // CAN'T HAPPEN
-                throw new IllegalStateException("Impossible addMapping exception happened");
-            }
-        }
-        return map;
-    }
-    
-    /**
-     * Writes the mapping object in RDF/Turtle format.
-     * @param w - output writer
-     * @throws IOException 
+     * Writes the mapping object to a file.
+     * @param w output writer
+     * @throws IOException if output fails
      */
     public void write (Writer w) throws IOException {
-        var owlPre  = nsmap.assignPrefix("owl", OWL_NS_URI);
-        var prefixL = new ArrayList<>(nsmap.prefixList());
+        var prefixL = new ArrayList<>(pre2uri.keySet());
         var maxLen  = 0;
-        Collections.sort(prefixL);                     // alphabetical
+        Collections.sort(prefixL);
         for (var pre : prefixL) {
-            if (nsmap.isReserved(pre)) continue;         // skip reserved prefixes
             maxLen = Math.max(maxLen, pre.length());
         }
         maxLen += 1;
-        var fmt = "@prefix %-" + maxLen + "s <%s> .\n";
+        var fmt = "PREFIX %-" + maxLen + "s  %s\n";
         for (var pre : prefixL) {
-            if (nsmap.isReserved(pre)) continue;     // do not emit reserved prefixes
-            w.write(String.format(fmt, pre + ":", nsmap.getURI(pre)));
-        }        
-        var srcL = new ArrayList<>(qn2mapQ.keySet());
-        maxLen   = 0;
-        Collections.sort(srcL);
-        for (var src : srcL) {
-            maxLen = Math.max(maxLen, src.length());
+            w.write(String.format(fmt, pre, pre2uri.get(pre)));
         }
-        fmt = "%-" + maxLen + "s " + owlPre + ":equivalentProperty %s .\n";
-        for (var srcQ : srcL) {
-            if (srcQ.endsWith("Type")) continue;
-            var tQ = qn2mapQ.get(srcQ);
-            w.write(String.format(fmt, srcQ, tQ));
-        }        
-        for (var srcQ : srcL) {
-            if (!srcQ.endsWith("Type")) continue;
-            var tQ = qn2mapQ.get(srcQ);
-            w.write(String.format(fmt, srcQ, tQ));
-        } 
+
+        var order = new HashMap<String,String>();
+        var fromL = new ArrayList<>(qn2mapQ.keySet());
+        Collections.sort(fromL);
+        maxLen = 1;
+        for (var fromQ : fromL) {
+            maxLen = Math.max(maxLen, fromQ.length());
+            var fpre = qnToPrefix(fromQ);
+            var fnsU = pre2uri.get(fpre);
+            var kind = NamespaceKind.namespaceToKindCode(fnsU);
+            if ("STRUCTURES".equals(kind)) order.put(fromQ, "structures");
+            else if (fromQ.endsWith("Type")) order.put(fromQ, "type");
+            else order.put(fromQ, "prop");
+        }
+        fmt = "%-" + maxLen + "s    %s\n";
+        w.write(String.format(fmt, "# FromQName", "ToQName"));
+        for (var fromQ : fromL) {
+            if ("prop".equals(order.get(fromQ))) {
+                w.write(String.format(fmt, fromQ, qn2mapQ.get(fromQ)));
+            }
+        }
+        for (var fromQ : fromL) {
+            if ("type".equals(order.get(fromQ))) {
+                w.write(String.format(fmt, fromQ, qn2mapQ.get(fromQ)));
+            }
+        }
+        for (var fromQ : fromL) {
+            if ("structures".equals(order.get(fromQ))) {
+                w.write(String.format(fmt, fromQ, qn2mapQ.get(fromQ)));
+            }
+        }
     }
-    
+
     /**
-     * Reads a mapping object from a File in RDF/Turtle format
-     * @param f - mapping file
+     * Reads a mapping object from a File.
+     * @param f mapping file
      * @return mapping object
-     * @throws IOException
-     * @throws CMFException 
+     * @throws IOException if input fails
+     * @throws CMFException if the mapping file is invalid
      */
     public static Mapping readFile(File f) throws IOException, CMFException {
         try (var rdr = java.nio.file.Files.newBufferedReader(
@@ -393,87 +426,157 @@ public class Mapping {
     private static final String PREFIX = "[A-Za-z][A-Za-z0-9_-]*";
     private static final String LOCAL = "[A-Za-z0-9_.-]+";
     private static final String PREFIXED_NAME = PREFIX + ":" + LOCAL;
-    
-    private static final Pattern PREFIX_PAT = Pattern.compile(
-        "^@prefix\\s+(" + PREFIX + "):\\s+<([^>]+)>\\s*\\.$");
-    
-    public static final Pattern TURTLE_TRIPLE = Pattern.compile(
-        "^\\s*" +
-        "(?<subject>"   + PREFIXED_NAME + ")\\s+" +
-        "(?<predicate>" + PREFIXED_NAME + ")\\s+" +
-        "(?<object>"    + PREFIXED_NAME + ")" +
-        "\\s*\\.\\s*" +           // must end with .
-        "(?:#.*)?$",              // optional comment
+
+    private static final Pattern WRITE_PREFIX_PAT = Pattern.compile(
+        "^PREFIX\\s+(" + PREFIX + ")\\s+(\\S+)(?:\\s+#.*)?\\s*$",
         Pattern.UNICODE_CHARACTER_CLASS
     );
-    
+
+    private static final Pattern WRITE_MAPPING_PAT = Pattern.compile(
+        "^(" + PREFIXED_NAME + ")\\s+(" + PREFIXED_NAME + ")(?:\\s+#.*)?\\s*$",
+        Pattern.UNICODE_CHARACTER_CLASS
+    );
+
     /**
-     * Reads a mapping object from a reader in RDF/Turtle format.
-     * @param r - source reader
+     * Reads a mapping object from a reader in the text format produced by
+     * {@link #write(Writer)}.
+     *
+     * @param r source reader
      * @return mapping object
-     * @throws IOException
-     * @throws CMFException 
+     * @throws IOException if input fails
+     * @throws CMFException if the mapping syntax or semantics are invalid
      */
-    public static Mapping read (Reader r) throws IOException, CMFException {
-        var map  = new Mapping();
+    public static Mapping read(Reader r) throws IOException, CMFException {
+        var map = new Mapping();
         var br = (r instanceof BufferedReader) ? (BufferedReader) r : new BufferedReader(r);
-        var lnum = 0;
-        var line = "";
+        String line;
+        int lnum = 0;
+
         while ((line = br.readLine()) != null) {
             lnum++;
-            if (line.length() > 0 && '\uFEFF' == line.charAt(0)) {
+            if (!line.isEmpty() && line.charAt(0) == '\uFEFF') {
                 line = line.substring(1);
             }
             line = line.strip();
             if (line.isEmpty()) continue;
             if (line.startsWith("#")) continue;
-            var preM = PREFIX_PAT.matcher(line);
-            if (preM.matches()) {
-                var pre = preM.group(1);
-                var uri = preM.group(2);
-                var preMap = map.nsmap.getURI(pre);
-                if (null != preMap && !uri.equals(preMap)) {
-                    throw new CMFException(String.format(
-                        "Invalid mapping file (prefix \"%s\" is mapped to %s and %s)", pre, preMap, uri));
-                }
-                var assigned = map.assignPrefix(pre, uri);
-                if (!assigned.equals(pre)) {
-                    throw new CMFException(String.format(
-                        "Invalid mapping file (prefix \"%s\" could not be assigned exactly)", pre));
+
+            var pm = WRITE_PREFIX_PAT.matcher(line);
+            if (pm.matches()) {
+                var prefix = pm.group(1);
+                var uri = pm.group(2);
+                try {
+                    map.assignPrefix(prefix, uri);
+                } catch (CMFException ex) {
+                    throw new CMFException("Line " + lnum + ": " + ex.getMessage());
                 }
                 continue;
             }
-            var tripleM = TURTLE_TRIPLE.matcher(line);
-            if (tripleM.matches()) {               
-                var sub  = tripleM.group("subject");
-                var pred = tripleM.group("predicate");
-                var obj  = tripleM.group("object");
-                var subPrefix = qnToPrefix(sub);
-                var predPrefix = qnToPrefix(pred);
-                var objPrefix = qnToPrefix(obj);
-                if (map.nsmap.getURI(subPrefix) == null) {
-                    throw new CMFException(String.format(
-                        "Invalid mapping file (undeclared prefix %s at line %d)", subPrefix, lnum));
-                }
-                if (map.nsmap.getURI(predPrefix) == null) {
-                    throw new CMFException(String.format(
-                        "Invalid mapping file (undeclared prefix %s at line %d)", predPrefix, lnum));
-                }
-                if (map.nsmap.getURI(objPrefix) == null) {
-                    throw new CMFException(String.format(
-                        "Invalid mapping file (undeclared prefix %s at line %d)", objPrefix, lnum));
-                }
-                if (!"equivalentProperty".equals(qnToName(pred)) ||
-                    !OWL_NS_URI.equals(map.nsmap.getURI(qnToPrefix(pred)))) {
-                    throw new CMFException(String.format(
-                        "Invalid mapping file (invalid predicate at line %d)", lnum));
-                }
 
-                map.addMapping(sub, obj);
+            var mm = WRITE_MAPPING_PAT.matcher(line);
+            if (mm.matches()) {
+                var fromQ = mm.group(1);
+                var toQ = mm.group(2);
+                try {
+                    map.addMapping(fromQ, toQ);
+                } catch (CMFException ex) {
+                    throw new CMFException("Line " + lnum + ": " + ex.getMessage());
+                }
+                continue;
             }
-            else throw new CMFException(String.format(
-                "Invalid mapping file (line %d is not a triple)", lnum));
+
+            throw new CMFException("Line " + lnum + ": invalid mapping syntax: " + line);
         }
+
         return map;
+    }
+
+    /**
+     * Validates that this mapping is consistent with the supplied model.
+     * <p>
+     * Checks that:
+     * </p>
+     * <ul>
+     *   <li>every mapped source QName uses a prefix declared in the model</li>
+     *   <li>every mapped source prefix is bound to the same URI in the mapping
+     *       and the model</li>
+     *   <li>every mapped source QName identifies a component in the model</li>
+     *   <li>every mapped target prefix is declared in the mapping</li>
+     *   <li>if a mapped target prefix is also used by the model, it is bound
+     *       to the same URI in both places</li>
+     * </ul>
+     *
+     * @param m model object
+     * @throws NullPointerException if {@code m} is {@code null}
+     * @throws CMFException if the mapping is inconsistent with the model
+     */
+    public void validateAgainstModel(Model m) throws CMFException {
+        if (null == m) {
+            throw new NullPointerException("m must not be null");
+        }
+
+        var errs = new ArrayList<String>();
+
+        var fromL = new ArrayList<>(qn2mapQ.keySet());
+        Collections.sort(fromL);
+
+        for (var fromQ : fromL) {
+            var fromPre = qnToPrefix(fromQ);
+            var mapNSU = pre2uri.get(fromPre);
+            var modNSU = m.prefixToNSU(fromPre);
+
+            if (null == modNSU) {
+                errs.add(String.format(
+                    "%s: source prefix %s is not declared in model",
+                    fromQ, fromPre));
+                continue;
+            }
+
+            if (null != mapNSU && !modNSU.equals(mapNSU)) {
+                errs.add(String.format(
+                    "%s: source prefix %s maps to %s in mapping but %s in model",
+                    fromQ, fromPre, mapNSU, modNSU));
+                continue;
+            }
+
+            if (null == m.qnToComponent(fromQ)) {
+                errs.add(String.format(
+                    "%s: no such component in model",
+                    fromQ));
+            }
+        }
+
+        var seenTargetQ = new HashSet<String>();
+        for (var toQ : qn2mapQ.values()) {
+            if (!seenTargetQ.add(toQ)) continue;
+
+            var toPre = qnToPrefix(toQ);
+            var mapNSU = pre2uri.get(toPre);
+            if (null == mapNSU) {
+                errs.add(String.format(
+                    "%s: target prefix %s is not declared in mapping",
+                    toQ, toPre));
+                continue;
+            }
+
+            var modNSU = m.prefixToNSU(toPre);
+            if (null != modNSU && !modNSU.equals(mapNSU)) {
+                errs.add(String.format(
+                    "%s: target prefix %s maps to %s in mapping but %s in model",
+                    toQ, toPre, mapNSU, modNSU));
+            }
+        }
+
+        if (!errs.isEmpty()) {
+            throw new CMFException(String.join("\n", errs));
+        }
+    }
+
+    private static boolean isXSDNamespace(String nsuri) {
+        return "XSD".equals(NamespaceKind.namespaceToKindCode(nsuri));
+    }
+
+    private static boolean isXSDComponent(Component c) {
+        return isXSDNamespace(c.namespace().uri());
     }
 }

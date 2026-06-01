@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,23 +23,26 @@
  */
 package org.mitre.niem.cmftool;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.xml.parsers.ParserConfigurationException;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.json.ModelToJSONSchema;
-import org.mitre.niem.utility.JCUsageFormatter;
+import org.mitre.niem.utility.AtomicPathWriter;
 import org.mitre.niem.xml.ParserBootstrap;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
 
 /**
@@ -47,132 +50,131 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
+@Command(
+    name = "m2jmsg",
+    description = "generate a JSON message schema from CMF",
+    mixinStandardHelpOptions = true,
+    sortOptions = false
+)
+public class CmdCMFtoJSONSchema implements Callable<Integer> {
 
-@Parameters(commandDescription = "generate a JSON message schema from CMF")
-    
-public class CmdCMFtoJSONSchema implements JCCommand {
-    
-    @Parameter(order = 1, names = {"-p", "--msgProp"}, description = "message property QNames")
-    private List<String> msgQA = null;
-    
-    @Parameter(order = 2, names = {"-c", "--context"}, description = "context URI")
+    private static final Set<String> VALID_SCHEMA_VERSIONS =
+        Set.of("draft-07", "2019-09", "2020-12");
+
+    @Option(
+        names = {"--msgProp"},
+        split = ",",
+        paramLabel = "<QName>",
+        description = "build schema to validate these message properties"
+    )
+    private List<String> msgQA = new ArrayList<>();
+
+    @Option(
+        names = {"-c", "--context"},
+        paramLabel = "<URI>",
+        description = "schema will require this @context URI"
+    )
     private String contextU = null;
-    
-    @Parameter(order = 3, names = {"-m", "--map"}, description = "mapping file for property keys")
-    private File mapF = null;
-    
-    @Parameter(order = 4, names = {"-a","--alldefs"}, description = "generate definition for all model classes and datatypes")
-    private boolean allDefs = false;
-    
-    @Parameter(order = 5, names = "-o", description = "name of output file")
-    private String modelFN = null;
 
-    @Parameter(order = 6, names = "--noprefix", description = "don't use prefix in property keys")
+    @Option(
+        names = {"-m", "--map"},
+        description = "mapping file for property keys"
+    )
+    private Path mapPath = null;
+
+    @Option(
+        names = {"-a", "--alldefs"},
+        description = "generate definition for all model classes and datatypes"
+    )
+    private boolean allDefs = false;
+
+    @Option(
+        names = {"-o", "--output"},
+        description = "name of output file"
+    )
+    private Path outputPath = null;
+
+    @Option(
+        names = "--noprefix",
+        description = "don't use prefix in property keys"
+    )
     private boolean noPrefix = false;
-    
-    @Parameter(order = 6, names = "--noformat", description = "don't include format properties in built-in types")
+
+    @Option(
+        names = "--noformat",
+        description = "don't include format properties in built-in types"
+    )
     private boolean noFormat = false;
-    
-    @Parameter(order = 6, names = "--nopattern", description = "don't include pattern properties in built-in types")
+
+    @Option(
+        names = "--nopattern",
+        description = "don't include pattern properties in built-in types"
+    )
     private boolean noPattern = false;
-    
-    @Parameter(order = 6, names = "--nominmax", description = "don't include minimum/maximum properties in built-in types")
+
+    @Option(
+        names = "--nominmax",
+        description = "don't include minimum/maximum properties in built-in types"
+    )
     private boolean noMinMax = false;
 
-    @Parameter(order = 7, names = "--version", description = "schema version {draft-07,2019-09,2020-12}")
+    @Option(
+        names = "--version",
+        description = "schema version {draft-07,2019-09,2020-12}",
+        defaultValue = "draft-07"
+    )
     private String version = "draft-07";
-    
-    @Parameter(order = 7, names = "--versionURI", description = "schema version URI")
+
+    @Option(
+        names = {"--version-uri"},
+        paramLabel = "<URI>",
+        description = "schema version URI (eg. http://json-schema.org/draft-07/schema#)"
+    )
     private String versionURI = null;
 
-    @Parameter(order = 8, names = {"-h","--help"}, description = "display this usage message", help = true)
-    boolean help = false;
-        
-    @Parameter(description = "modelFile.cmf")
-    private List<String> mainArgs;
-    
-    CmdCMFtoJSONSchema () {
-    }
-  
-    CmdCMFtoJSONSchema (JCommander jc) {
-    }
+    @Parameters(
+        index = "0",
+        arity = "1",
+        paramLabel = "modelFile.cmf",
+        description = "model file"
+    )
+    private Path modelPath;
 
-    public static void main (String[] args) {       
-        CmdCMFtoCMF obj = new CmdCMFtoCMF();
-        obj.runMain(args);
-    }
-    
     @Override
-    public void runMain (String[] args) {
-        var jc = new JCommander(this);
-        var uf = new JCUsageFormatter(jc); 
-        jc.setUsageFormatter(uf);
-        jc.setProgramName("m2jmsg");
-        jc.parse(args);
-        run(jc);
-    }
-    
-    @Override
-    public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool m2jmsg");
-        run(cob);
-    }    
-    
-    private void run (JCommander cob)  {
-
-        if (help) {
-            cob.usage();
-            System.exit(0);
-        }
-        if (mainArgs == null || mainArgs.isEmpty()) {
-            cob.usage();
-            System.exit(2);
-        }
-        // Argument of "-" signals end of arguments, allows "-foo" filenames
-        String na = mainArgs.get(0);
-        if (na.startsWith("-")) {
-            if (na.length() == 1) {
-                mainArgs.remove(0);
-            } else {
-                System.err.println("Unknown option: " + na);
-                cob.usage();
-                System.exit(2);
-            }
-        }
-        if (mainArgs.isEmpty() || mainArgs.size() > 1) {
-            cob.usage();
-            System.exit(2);            
-        }
+    public Integer call() {
         // Make sure the Xerces parsers can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
         } catch (ParserConfigurationException ex) {
             System.err.println("Internal parser error: " + ex.getMessage());
-            System.exit(1);
+            return 1;
         }
-        // Make sure output model file is writable      
-        var ow = new OutputStreamWriter(System.out);
-        if (null != modelFN) try {
-            var os = new FileOutputStream(modelFN);
-            ow = new OutputStreamWriter(os, "UTF-8");
-        } catch (IOException ex) {
-            System.err.println(String.format("Can't write to output file %s: %s", modelFN, ex.getMessage()));
-            System.exit(1);            
-        }       
-        // Read the model object from the model instance file (mainArg[0])
-        var mr = new ModelXMLReader();  
-        var model = mr.readFiles(new File(mainArgs.get(0)));
-        
+
+        if (versionURI == null && !VALID_SCHEMA_VERSIONS.contains(version)) {
+            System.err.println(
+                "Invalid --version value: " + version
+                    + " (expected one of: draft-07, 2019-09, 2020-12)"
+            );
+            return 2;
+        }
+
+        // Read the model object from the model instance file
+        var mr = new ModelXMLReader();
+        final var model = mr.readFiles(modelPath.toFile());
+
         // Read the mapping file if one was provided
         Mapping map = null;
-        if (null != mapF) {
+        if (null != mapPath) {
             try {
-                map = Mapping.readFile(mapF);
+                map = Mapping.readFile(mapPath.toFile());
             } catch (IOException | CMFException ex) {
-                System.err.println(String.format("Can't read mapping file %s: %s", mapF.toString(), ex.getMessage()));
-                System.exit(1);
+                System.err.println(
+                    String.format("Can't read mapping file %s: %s", mapPath, ex.getMessage())
+                );
+                return 1;
             }
         }
+
         // Get message property object (if specified)
         List<Property> msgPropA = new ArrayList<>();
         if (null != msgQA) {
@@ -180,11 +182,12 @@ public class CmdCMFtoJSONSchema implements JCCommand {
                 var p = model.qnToProperty(msgQ);
                 if (null == p) {
                     System.err.println("Property " + msgQ + " is not in model");
-                    System.exit(1);
+                    return 1;
                 }
                 msgPropA.add(p);
             }
         }
+
         // Generate JSON Schema
         try {
             var js = new ModelToJSONSchema(model);
@@ -196,16 +199,30 @@ public class CmdCMFtoJSONSchema implements JCCommand {
             js.setNoFormat(noFormat);
             js.setNoPattern(noPattern);
             js.setNoMinMax(noMinMax);
-            if (null != versionURI) js.setSchemaURI(versionURI);
-            else js.setSchemaVersion(version);
-            js.writeSchema(ow);
-            ow.write("\n");
-            ow.close();
-        }
-        catch (CMFException | IOException ex) {
+
+            if (null != versionURI) {
+                js.setSchemaURI(versionURI);
+            } else {
+                js.setSchemaVersion(version);
+            }
+
+            if (outputPath != null) {
+                AtomicPathWriter.writeAtomically(outputPath, StandardCharsets.UTF_8, ow -> {
+                    js.writeSchema(ow);
+                    ow.write(System.lineSeparator());
+                });
+            } else {
+                var ow = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
+                js.writeSchema(ow);
+                ow.write(System.lineSeparator());
+                ow.flush();
+            }
+        } catch (CMFException | IOException ex) {
             System.err.println(ex.getMessage());
-            System.exit(1);
+            return 1;
         }
-        System.exit(0);
-    }    
+
+        return 0;
+    }
+
 }

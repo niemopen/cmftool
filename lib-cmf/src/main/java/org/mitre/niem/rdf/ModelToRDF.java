@@ -25,6 +25,7 @@ package org.mitre.niem.rdf;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
@@ -48,14 +49,14 @@ public class ModelToRDF {
         this.m = m;
     }
     
-    public void writeRDF (OutputStreamWriter ow) throws IOException {
+    public void writeRDF (Writer ow) throws IOException {
         writeNamespaces(ow);
         writeProperties(ow);
         writeClasses(ow);
         writeDatatypes(ow);
     }
     
-    private void writeNamespaces (OutputStreamWriter ow) throws IOException {
+    private void writeNamespaces (Writer ow) throws IOException {
         for (Namespace ns : m.namespaceList()) {
             ow.write(String.format("@prefix %-15s <%s> .\n", 
                     ns.prefix()+":", 
@@ -87,7 +88,7 @@ public class ModelToRDF {
         return rv;
     }
     
-    private void writeProperties (OutputStreamWriter ow) throws IOException {
+    private void writeProperties (Writer ow) throws IOException {
         for (var p : m.propertyL()) {
 
             // What kind of property? For abstracts, subproperties decide
@@ -119,7 +120,7 @@ public class ModelToRDF {
         }
     }
     
-    private void writeClasses (OutputStreamWriter ow) throws IOException {
+    private void writeClasses (Writer ow) throws IOException {
         for (var ct : m.classTypeL()) {
             ow.write("\n");
             ow.write(ct.qname());
@@ -149,7 +150,7 @@ public class ModelToRDF {
         }
     }
     
-    private void writeDatatypes (OutputStreamWriter ow) {
+    private void writeDatatypes (Writer ow) {
         for (var dt : m.datatypeL()) {
             if (W3C_XML_SCHEMA_NS_URI.equals(dt.namespace().uri())) continue;
 //            if (null != dt.getListOf()) writeListOfDatatype(dt, ow);

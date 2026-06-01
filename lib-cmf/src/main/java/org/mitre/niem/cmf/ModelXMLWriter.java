@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ package org.mitre.niem.cmf;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -63,27 +64,30 @@ public class ModelXMLWriter {
      * @param os - OutputStream
      */
     public boolean writeXML (Model m, Writer w) {
-        return writeXML(m, m.namespaceSet(), w);
+        return writeXML(m, new HashSet<>(m.namespaceSet()), w);
     }
     
     /**
      * Writes components from a specified set of namespaces as CMF-XML to a stream.
      * Returns false on failure, with diagnostic messages written to Log4J2.
      * @param m - Model object
-     * @param nsparam - set of namespace URIs or prefix strings
+     * @param nsparam - collection of namespace URIs or prefix strings
      * @param os  - output stream
      */
-    public boolean writeXML (Model m, List<String> nsparam, Writer w) {
+    public boolean writeXML (Model m, Collection<String> nsparam, Writer w) {
         var nsS = new HashSet<Namespace>();
+        var bad = new ArrayList<String>();
         for (var s : nsparam) {
-            Namespace ns = null;
-            if (s.contains(":")) ns = m.namespaceObj(s);
-            else ns = m.namespaceObj(s);
-            if (null ==  ns) {
-                LOG.error("{}: no such namespace in model", s);
-                return false;
-            }
-            nsS.add(ns);
+            if (null == s) continue;
+            var key = s.strip();
+            if (key.isEmpty()) continue;
+            var ns = m.namespaceObj(key);
+            if (null == ns) bad.add(key);
+            else nsS.add(ns);
+        }
+        if (!bad.isEmpty()) {
+            LOG.error("No such namespace(s) in model: {}", String.join(", ", bad));
+            return false;
         }
         return writeXML(m, nsS, w);
     }
@@ -113,9 +117,10 @@ public class ModelXMLWriter {
         e.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:structures", CMF_STRUCTURES_NS_URI);
         e.setAttributeNS(XML_NS_URI, "xml:lang", "en-US");
         for (var n : m.namespaceList()) appendNamespace(doc, e, n, nsS);
-        for (var c : m.componentList()) if (c.isProperty())     appendComponent(doc, e, c, nsS);
-        for (var c : m.componentList()) if (c.isClassType())    appendComponent(doc, e, c, nsS);
-        for (var c : m.componentList()) if (c.isDatatype())     appendComponent(doc, e, c, nsS);
+        var compL = m.componentList();
+        for (var c : compL) if (c.isProperty())     appendComponent(doc, e, c, nsS);
+        for (var c : compL) if (c.isClassType())    appendComponent(doc, e, c, nsS);
+        for (var c : compL) if (c.isDatatype())     appendComponent(doc, e, c, nsS);
         return e;
     }
     

@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,12 +79,13 @@ public class Model extends CMFObject {
     public NamespaceMap nsmap()                         { return nsmap; }
     
     // Returns a list of model objects.
-    // In general you must not modify collections returned by CMF objects.
+    // In general you must not modify collections returned by CMF objects,
+    // or the objects in those collections.
     public List<ClassType> classTypeL ()                { return new ArrayList<>(classMap.values()); }
     public List<Datatype> datatypeL ()                  { return new ArrayList<>(dtypeMap.values()); }
     public List<Property> propertyL ()                  { return new ArrayList<>(propMap.values()); }
     public List<DataProperty> dataPropertyL ()          { return new ArrayList<>(dpropMap.values()); }
-    public Set<Namespace> namespaceSet ()               { return nsS; }
+    public Set<Namespace> namespaceSet ()               { return Collections.unmodifiableSet(nsS); }
      
     // Get a model object from its QName
     // Returns null if no such object in model
@@ -105,8 +106,8 @@ public class Model extends CMFObject {
     public Property uriToProperty (String uri)          { return propMap.get(uri); }
     
     // Convenience functions for namespace prefixes and URIs.
-    public String nsUToPrefix (String p)                { return nsmap.getURI(p); }
-    public String prefixToNSU (String u)                { return nsmap.getPrefix(u); }
+    public String nsUToPrefix (String p)                { return nsmap.getPrefix(p); }
+    public String prefixToNSU (String u)                { return nsmap.getURI(u); }
 
     // Returns the namespace object corresponding to either the namespace
     // prefix or the namespace URI.  Returns null if no such object.
@@ -273,7 +274,7 @@ public class Model extends CMFObject {
         ordComp = null;
     }
     
-    // Called by namespace or component when a change invalidates the sorted list
+    // Called by namespace or component objects when a change invalidates the sorted list
     public void changeNamespace ()      { ordNS = null; }
     public void changeComponent ()      { ordComp = null; }
 
@@ -297,6 +298,10 @@ public class Model extends CMFObject {
         }
         Collections.sort(ordComp);
         return ordComp;
+    }
+    
+    public Set<Component> componentSet () {
+        return new HashSet<>(compMap.values());
     }
     
     // CMF records subproperties from child to parent; ie. subPropertyOf.
@@ -340,8 +345,49 @@ public class Model extends CMFObject {
         allSubS = null;
     }
     
+    
+    /**
+     * Returns the set of model components required for the specified
+     * message property.  That is the message property, its class, all of
+     * the properties of that class, the class or datatype of those properties,
+     * and so forth.
+     * @param msgProp message property
+     * @return set of model components
+     */
+    public Set<Component> messageComponents (ObjectProperty msgProp) {
+        return messageComponents(Set.of(msgProp));
+    }
+    
+    /**
+     * Returns the set of model components required for the specified
+     * message properties.  That is the message property, its class, all of
+     * the properties of that class, the class or datatype of those properties,
+     * and so forth.
+     * @param msgPropS set of message properties
+     * @return set of model components
+     */
+    public Set<Component> messageComponents (Set<ObjectProperty> msgPropS) {
+        var todo = new Stack<Component>();
+        var res  = new HashSet<Component>();
+        for (var p : msgPropS) todo.push(p);
+        while (!todo.isEmpty()) {
+            var c  = todo.pop();
+            if (res.contains(c)) continue;
+            res.add(c);
+            if (c instanceof DataProperty dp)        todo.push(dp.datatype());
+            else if (c instanceof ObjectProperty op) todo.push(op.classType());
+            else if (c instanceof Datatype dt)       todo.push(dt.base());
+            else if (c instanceof ClassType ct) {
+                for (var pa : ct.propL()) {
+                    todo.push(pa.property());
+                }
+            }
+        }        
+        return res;
+    }
+    
+    
     // Routines for reading model objects from CMF-XML.
-
 
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

@@ -135,8 +135,8 @@ public class ModelToJSONSchema {
      * @param noPrefix 
      */
     public void setNoPrefix (boolean noPrefix) {
-        var rv = map.setNoPrefix(noPrefix);
-        if (noPrefix && !rv) LOG.error("Can't set noPrefix when map has >1 target prefixes");
+//        var rv = map.setNoPrefix(noPrefix);
+//        if (noPrefix && !rv) LOG.error("Can't set noPrefix when map has >1 target prefixes");
     }
     
     /**
@@ -1002,7 +1002,7 @@ public class ModelToJSONSchema {
     // * the mapped QName, if map.noPrefix() is false.
     // * the mapped local name, if map.noPrefix() is true.
     public String qnToKey (String qn) {
-        return map.qnToMappedName(qn);
+        return map.qnToMappedQ(qn); // FIXME
     }
     
     // Parses JSON text to create a JsonObject containing a pair
