@@ -23,124 +23,204 @@
  */
 package org.mitre.niem.translate;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.List;
+import java.nio.file.Path;
+import java.util.concurrent.Callable;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
-import org.mitre.niem.utility.JCUsageFormatter;
+import org.mitre.niem.utility.AtomicPathWriter;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
+@Command(
+    name = "j2r",
+    description = "convert NIEM JSON message to RDF",
+    mixinStandardHelpOptions = true,
+    sortOptions = false
+)
+public class CmdJSONtoRDF implements Callable<Integer> {
 
-@Parameters(commandDescription = "convert NIEM JSON message to RDF")
+    @Option(
+        names = {"-c", "--context"},
+        paramLabel = "<path>",
+        description = "use context from this JSON file"
+    )
+    private Path contextPath = null;
 
-public class CmdJSONtoRDF implements JCCommand {
-    
-    @Parameter(names = {"-c", "--context"}, description = "use context from this JSON file")
-    File contextF = null;
-    
-    @Parameter(names = {"-m", "--model"}, description = "use message model in this CMF file")
-    File modelF = null;
-    
-    @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
-    boolean help = false;
+    @Option(
+        names = {"-m", "--model"},
+        paramLabel = "<path>",
+        description = "use message model in this CMF file"
+    )
+    private Path modelPath = null;
 
-    @Parameter(description = "message.json")
-    private List<File> msgFL = null;
-    
-    CmdJSONtoRDF () {
+    @Option(
+        names = {"-o", "--output"},
+        paramLabel = "<path>",
+        description = "write RDF output to this file, or '-' for stdout"
+    )
+    private Path outputPath = null;
+
+    @Parameters(
+        index = "0",
+        arity = "1",
+        paramLabel = "message.json",
+        description = "message JSON file"
+    )
+    private Path msgPath;
+
+    CmdJSONtoRDF() {
     }
-  
-    CmdJSONtoRDF (JCommander jc) {
+
+    public static void main(String[] args) {
+        int rc = new CommandLine(new CmdJSONtoRDF()).execute(args);
+        System.exit(rc);
     }
 
-    public static void main (String[] args) {       
-        var obj = new CmdJSONtoRDF();
-        obj.runMain(args);
-    }    
-    
     @Override
-    public void runMain (String[] args) {
-        var jc = new JCommander(this);
-        var uf = new JCUsageFormatter(jc); 
-        jc.setUsageFormatter(uf);
-        jc.setProgramName("compile");
-        jc.parse(args);
-        run(jc);
-    }
-    
-    @Override
-    public void runCommand (JCommander cob) {
-        cob.setProgramName("niemtran j2r");
-        run(cob);
-    }      
-    
-    private void run (JCommander cob) {
-        if (help) {
-            cob.usage();
-            System.exit(0);
-        }
-        if (msgFL.size() < 1) {
-            cob.usage();
-            System.exit(0);
-        }
+    public Integer call() {
         // Read context if provided
         String contextS = null;
-        if (null != contextF) {
+        if (contextPath != null) {
+            int rc = validateReadableFile(contextPath, "context file");
+            if (rc != 0) {
+                return rc;
+            }
             try {
-                contextS = Files.readString(contextF.toPath(), StandardCharsets.UTF_8);
+                contextS = Files.readString(contextPath, StandardCharsets.UTF_8);
             } catch (IOException ex) {
-                System.err.println(String.format("Can't read context file %s: %s",
-                    contextF.toString(), ex.getMessage()));
-                System.exit(1);
+                System.err.println(String.format(
+                    "Can't read context file %s: %s",
+                    contextPath,
+                    ex.getMessage()
+                ));
+                return 1;
             }
         }
+
         // Read model if provided
         Model model = null;
-        if (null != modelF) {
-            var mr = new ModelXMLReader();  
-            model = mr.readFiles(modelF);    
-            if (null == model) {
-                System.err.println("Can't read model from " + modelF.toString());
-                System.exit(1);
-            }            
+        if (modelPath != null) {
+            int rc = validateReadableFile(modelPath, "model file");
+            if (rc != 0) {
+                return rc;
+            }
+            try {
+                var mr = new ModelXMLReader();
+                model = mr.readFiles(modelPath.toFile());
+            } catch (Exception ex) {
+                System.err.println(String.format(
+                    "Can't read model from %s: %s",
+                    modelPath,
+                    ex.getMessage()
+                ));
+                return 1;
+            }
+            if (model == null) {
+                System.err.println("Can't read model from " + modelPath);
+                return 1;
+            }
         }
+
         // Read message
-        String msgS = null;
-        var msgF = msgFL.get(0);
-        try {
-            msgS = Files.readString(msgF.toPath(), StandardCharsets.UTF_8);
-        } catch (IOException ex) {
-            System.err.println(String.format("Can't read context file %s: %s",
-                msgF.toString(), ex.getMessage()));
-            System.exit(1);
+        int rc = validateReadableFile(msgPath, "message file");
+        if (rc != 0) {
+            return rc;
         }
+
+        // Make sure output file is writable
+        if (!isStdout(outputPath)) {
+            rc = validateOutputPath(outputPath);
+            if (rc != 0) {
+                return rc;
+            }
+        }
+
         // Convert and write to output
-        var ow  = new BufferedWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8));
         var cvt = new JSONMsgToRDF();
         try {
             cvt.setContext(contextS);
-            cvt.setModel(model);            
-            cvt.convert(msgS, ow);
-            ow.close();
+            cvt.setModel(model);
+
+            if (isStdout(outputPath)) {
+                try (BufferedReader msgR = Files.newBufferedReader(msgPath, StandardCharsets.UTF_8)) {
+                    var ow = new BufferedWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8));
+                    cvt.convert(msgR, ow);
+                    ow.flush();
+                }
+            } else {
+                try {
+                    AtomicPathWriter.writeAtomically(outputPath, StandardCharsets.UTF_8, ow -> {
+                        try (BufferedReader msgR = Files.newBufferedReader(msgPath, StandardCharsets.UTF_8)) {
+                            cvt.convert(msgR, ow);
+                        } catch (NIEMTranException ex) {
+                            throw new WrappedNIEMTranException(ex);
+                        }
+                    });
+                } catch (WrappedNIEMTranException ex) {
+                    throw (NIEMTranException) ex.getCause();
+                }
+            }
         } catch (IOException ex) {
             System.err.println("IO error writing RDF output: " + ex.getMessage());
-            System.exit(1);
+            return 1;
         } catch (NIEMTranException ex) {
             System.err.println("Conversion error: " + ex.getMessage());
-            System.exit(1);
+            return 1;
         }
-        System.exit(0);
-    }    
+
+        return 0;
+    }
+
+    private boolean isStdout(Path path) {
+        return path == null || "-".equals(path.toString());
+    }
+
+    private int validateReadableFile(Path path, String label) {
+        if (!Files.exists(path)) {
+            System.err.println(label + " does not exist: " + path);
+            return 2;
+        }
+        if (!Files.isRegularFile(path)) {
+            System.err.println(label + " is not a regular file: " + path);
+            return 2;
+        }
+        if (!Files.isReadable(path)) {
+            System.err.println(label + " is not readable: " + path);
+            return 2;
+        }
+        return 0;
+    }
+
+    private int validateOutputPath(Path path) {
+        Path abs = path.toAbsolutePath().normalize();
+        Path parent = abs.getParent();
+        if (parent != null && !Files.exists(parent)) {
+            System.err.println("Output directory does not exist: " + parent);
+            return 2;
+        }
+        if (Files.exists(abs) && Files.isDirectory(abs)) {
+            System.err.println("Output path is a directory: " + abs);
+            return 2;
+        }
+        return 0;
+    }
+
+    private static final class WrappedNIEMTranException extends IOException {
+        WrappedNIEMTranException(NIEMTranException cause) {
+            super(cause.getMessage(), cause);
+        }
+    }
 }
