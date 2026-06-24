@@ -112,6 +112,7 @@ public class ModelXMLWriter {
     
     private Element genModel (Document doc, Model m, Set<Namespace>nsS) {
         var e = doc.createElementNS(CMF_NS_URI, "Model");
+        e.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns", CMF_NS_URI);
         e.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:cmf", CMF_NS_URI);
         e.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:xsi", W3C_XML_SCHEMA_INSTANCE_NS_URI);
         e.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:structures", CMF_STRUCTURES_NS_URI);

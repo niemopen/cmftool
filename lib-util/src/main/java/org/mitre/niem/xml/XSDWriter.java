@@ -1,13 +1,13 @@
 /*
  * NOTICE
- * 
+ *
  * This software was produced for the U. S. Government
  * under Basic Contract No. W56KGU-18-D-0004, and is
  * subject to the Rights in Noncommercial Computer Software
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
- * 
- * Copyright 2020-2025 The MITRE Corporation.
+ *
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,124 +24,447 @@
 package org.mitre.niem.xml;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
-import org.mitre.niem.utility.MapToList;
+import javax.xml.XMLConstants;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 
 /**
- * A class to generate an output stream of lovely XSD from a Document object.
+ * Writes readable XML Schema documents directly from a DOM.
  *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
+ * <p>This writer preserves the pretty-printing behavior of {@link XMLWriter},
+ * but applies XSD-specific attribute ordering rules:
+ *
+ * <ul>
+ *   <li>xs:element: name, ref, type, minOccurs, maxOccurs, substitutionGroup, then others</li>
+ *   <li>xs:import: namespace, schemaLocation, then others</li>
+ *   <li>xs:complexType: name, type, then others</li>
+ *   <li>xs:attribute: name, ref, type, use, then others</li>
+ *   <li>xs:choice: minOccurs, maxOccurs, then others</li>
+ *   <li>xs:schema: targetNamespace, then namespace declarations, with xmlns:xs and xmlns:xsi last</li>
+ * </ul>
+ *
+ * <p>The writer also ensures the serialized root includes
+ * {@code xmlns:xs="http://www.w3.org/2001/XMLSchema"}.
  */
 public class XSDWriter extends XMLWriter {
-    
-    // process string by lines to do what XSLT won't do :-(
-    // For <xs:schema>, namespace decls and attributes on separate indented lines.
-    // For <xs:element>, order as @ref, @minOccurs, @maxOccurs, @name, @type, @substitutionGroup, then others
-    // For <xs:import>, order as @namespace, @schemaLocation, then others
-    private static final Pattern linePat = Pattern.compile("^(\\s*)<([^\\s>]+)(.*)");
-    protected static final MapToList<String,String> reorderMap;
-    protected static final String[][]reorder = {
-                { "xs:element", "name", "ref", "type", "minOccurs", "maxOccurs", "substitutionGroup" },
-                { "xs:import", "namespace", "schemaLocation" },
-                { "xs:complexType", "name", "type" },
-                { "xs:attribute", "name", "ref", "type", "use" },
-                { "xs:choice", "minOccurs", "maxOccurs" }
-        };
-    
-    static {
-        reorderMap = new MapToList<>();
-        for (int i = 0; i < reorder.length; i++) {
-            var key = reorder[i][0];
-            for (int j = 1; j < reorder[i].length; j++) {
-                reorderMap.add(key, reorder[i][j]);
+
+    private static final String XSD_NS = XMLConstants.W3C_XML_SCHEMA_NS_URI;
+
+    private static final Comparator<NameValue> DEFAULT_NS_DECL_ORDER = (a, b) -> {
+        int ra = namespaceDeclarationRank(a.name);
+        int rb = namespaceDeclarationRank(b.name);
+        if (ra != rb) return Integer.compare(ra, rb);
+
+        String pa = namespaceSortKey(a.name);
+        String pb = namespaceSortKey(b.name);
+
+        int c = compareNaturalIgnoreCase(pa, pb);
+        if (c != 0) return c;
+
+        return a.name.compareTo(b.name);
+    };
+
+    private static final Comparator<NameValue> SCHEMA_NS_DECL_ORDER = (a, b) -> {
+        int dra = namespaceDeclarationRank(a.name);
+        int drb = namespaceDeclarationRank(b.name);
+        if (dra != drb) return Integer.compare(dra, drb);
+
+        int ra = schemaNamespaceRank(a.name);
+        int rb = schemaNamespaceRank(b.name);
+        if (ra != rb) return Integer.compare(ra, rb);
+
+        String pa = namespaceSortKey(a.name);
+        String pb = namespaceSortKey(b.name);
+
+        int c = compareNaturalIgnoreCase(pa, pb);
+        if (c != 0) return c;
+
+        return a.name.compareTo(b.name);
+    };
+
+    public XSDWriter() {
+        super();
+    }
+
+    public static String nodeToText(Node n) {
+        if (n == null) return "";
+
+        try {
+            StringWriter sw = new StringWriter();
+            XSDWriter xw = new XSDWriter();
+
+            if (n.getNodeType() == Node.DOCUMENT_NODE) {
+                xw.writeXML((Document) n, sw);
+            } else if (n.getNodeType() == Node.ELEMENT_NODE) {
+                xw.writeXML((Element) n, sw);
+            } else {
+                xw.writeNode(n, sw, 0);
             }
+            return sw.toString();
+        } catch (IOException ex) {
+            return "";
         }
     }
-    
-    public XSDWriter () { }
-    
+
     @Override
-    protected void handleOtherLines (String line, Writer w) throws IOException  {    
-        var lineM = linePat.matcher(line);
-        if (!lineM.matches()) { 
-            w.write(line + "\n");
+    protected void writeElement(Element elem, Writer w, int level, boolean isRoot) throws IOException {
+        writeElementInternal(elem, w, level, isRoot, false);
+    }
+
+    @Override
+    protected void writeStandaloneElement(Element elem, Writer w, int level) throws IOException {
+        writeElementInternal(elem, w, level, true, true);
+    }
+
+    private void writeElementInternal(
+            Element elem,
+            Writer w,
+            int level,
+            boolean isRoot,
+            boolean copyInScopeNamespaces) throws IOException {
+
+        indent(w, level);
+        w.write("<");
+        w.write(elem.getTagName());
+
+        List<NameValue> nsDecls = copyInScopeNamespaces
+                ? inScopeNamespaceDeclarationsList(elem)
+                : ownNamespaceDeclarations(elem);
+
+        List<NameValue> attrs = nonNamespaceAttributesList(elem);
+
+        if (isRoot) {
+            ensureXSNamespaceDeclaration(nsDecls);
+        }
+
+        nsDecls.sort(isSchemaElement(elem) ? SCHEMA_NS_DECL_ORDER : DEFAULT_NS_DECL_ORDER);
+        attrs.sort(attributeOrderFor(elem));
+
+        if (isSchemaElement(elem)) {
+            if (isRoot) {
+                writeSchemaRootAttributes(nsDecls, attrs, w, level);
+            } else {
+                writeSchemaInlineAttributes(nsDecls, attrs, w);
+            }
+        } else {
+            if (isRoot) {
+                writeRootAttributes(nsDecls, attrs, w, level);
+            } else {
+                writeInlineAttributes(nsDecls, attrs, w);
+            }
+        }
+
+        List<Node> children = significantChildren(elem);
+
+        if (children.isEmpty()) {
+            w.write("/>");
+            w.write("\n");
             return;
         }
-        var indent = lineM.group(1);
-        var tag    = lineM.group(2);
-        var res    = lineM.group(3);
-        var end    = ">";
-        res = res.stripTrailing();
-        if (res.endsWith("/>")) end = "/>";
-        res = res.substring(0, res.length() - end.length());
-        
-        if (reorderMap.containsKey(tag)) {
-            var amap = keyValMap(res);
-            var keyL = reorderMap.get(tag);
-            w.write(indent);
-            w.write("<" + tag);
-            for (var key : keyL) {
-                if (null != amap.get(key)) {
-                    w.write(String.format(" %s=\"%s\"", key, amap.get(key)));
-                    amap.remove(key);                    
+
+        if (isTextOnly(children)) {
+            w.write(">");
+            writeInlineChildren(children, w);
+            w.write("</");
+            w.write(elem.getTagName());
+            w.write(">");
+            w.write("\n");
+            return;
+        }
+
+        w.write(">");
+        w.write("\n");
+
+        for (Node child : children) {
+            writeNode(child, w, level + 1);
+        }
+
+        indent(w, level);
+        w.write("</");
+        w.write(elem.getTagName());
+        w.write(">");
+        w.write("\n");
+    }
+
+    protected void writeRootAttributes(
+            List<NameValue> nsDecls,
+            List<NameValue> attrs,
+            Writer w,
+            int level) throws IOException {
+
+        for (NameValue nv : nsDecls) {
+            w.write("\n");
+            indent(w, level + 1);
+            writeAttribute(nv.name, nv.value, w);
+        }
+
+        for (NameValue nv : attrs) {
+            w.write("\n");
+            indent(w, level + 1);
+            writeAttribute(nv.name, nv.value, w);
+        }
+    }
+
+    protected void writeInlineAttributes(
+            List<NameValue> nsDecls,
+            List<NameValue> attrs,
+            Writer w) throws IOException {
+
+        for (NameValue nv : nsDecls) {
+            w.write(" ");
+            writeAttribute(nv.name, nv.value, w);
+        }
+
+        for (NameValue nv : attrs) {
+            w.write(" ");
+            writeAttribute(nv.name, nv.value, w);
+        }
+    }
+
+    private void writeSchemaRootAttributes(
+            List<NameValue> nsDecls,
+            List<NameValue> attrs,
+            Writer w,
+            int level) throws IOException {
+
+        NameValue targetNamespace = null;
+        List<NameValue> otherAttrs = new ArrayList<>();
+
+        for (NameValue nv : attrs) {
+            if (targetNamespace == null && "targetNamespace".equals(nv.name)) {
+                targetNamespace = nv;
+            } else {
+                otherAttrs.add(nv);
+            }
+        }
+
+        if (targetNamespace != null) {
+            w.write("\n");
+            indent(w, level + 1);
+            writeAttribute(targetNamespace.name, targetNamespace.value, w);
+        }
+
+        for (NameValue nv : nsDecls) {
+            w.write("\n");
+            indent(w, level + 1);
+            writeAttribute(nv.name, nv.value, w);
+        }
+
+        for (NameValue nv : otherAttrs) {
+            w.write("\n");
+            indent(w, level + 1);
+            writeAttribute(nv.name, nv.value, w);
+        }
+    }
+
+    private void writeSchemaInlineAttributes(
+            List<NameValue> nsDecls,
+            List<NameValue> attrs,
+            Writer w) throws IOException {
+
+        NameValue targetNamespace = null;
+        List<NameValue> otherAttrs = new ArrayList<>();
+
+        for (NameValue nv : attrs) {
+            if (targetNamespace == null && "targetNamespace".equals(nv.name)) {
+                targetNamespace = nv;
+            } else {
+                otherAttrs.add(nv);
+            }
+        }
+
+        if (targetNamespace != null) {
+            w.write(" ");
+            writeAttribute(targetNamespace.name, targetNamespace.value, w);
+        }
+
+        for (NameValue nv : nsDecls) {
+            w.write(" ");
+            writeAttribute(nv.name, nv.value, w);
+        }
+
+        for (NameValue nv : otherAttrs) {
+            w.write(" ");
+            writeAttribute(nv.name, nv.value, w);
+        }
+    }
+
+    private List<NameValue> ownNamespaceDeclarations(Element elem) {
+        List<NameValue> out = new ArrayList<>();
+        NamedNodeMap nnm = elem.getAttributes();
+
+        for (int i = 0; i < nnm.getLength(); i++) {
+            Attr attr = (Attr) nnm.item(i);
+            if (isNamespaceDeclaration(attr)) {
+                out.add(new NameValue(attr.getName(), attr.getValue()));
+            }
+        }
+        return out;
+    }
+
+    private List<NameValue> nonNamespaceAttributesList(Element elem) {
+        List<NameValue> out = new ArrayList<>();
+        NamedNodeMap nnm = elem.getAttributes();
+
+        for (int i = 0; i < nnm.getLength(); i++) {
+            Attr attr = (Attr) nnm.item(i);
+            if (!isNamespaceDeclaration(attr)) {
+                out.add(new NameValue(attr.getName(), attr.getValue()));
+            }
+        }
+        return out;
+    }
+
+    private List<NameValue> inScopeNamespaceDeclarationsList(Element elem) {
+        Map<String, String> seen = new HashMap<>();
+
+        for (Node cur = elem; cur != null && cur.getNodeType() == Node.ELEMENT_NODE; cur = cur.getParentNode()) {
+            NamedNodeMap nnm = cur.getAttributes();
+            for (int i = 0; i < nnm.getLength(); i++) {
+                Attr attr = (Attr) nnm.item(i);
+                if (isNamespaceDeclaration(attr)) {
+                    seen.putIfAbsent(attr.getName(), attr.getValue());
                 }
             }
-            for (var key : amap.keySet()) {
-                w.write(String.format(" %s=\"%s\"", key, amap.get(key)));
-            }
-            w.write(end + "\n");                
         }
-        else w.write(line + "\n");
+
+        List<NameValue> out = new ArrayList<>();
+        for (Map.Entry<String, String> me : seen.entrySet()) {
+            out.add(new NameValue(me.getKey(), me.getValue()));
+        }
+        return out;
     }
 
-    // Rewrite the xs:schema element to make it pretty.
-    // targetNamespace comes first
-    // then namespace declarations, in prefix order, except xs and xsi are last
-    // then everything else, in alphabetical order    
-    @Override
-    protected void handleFirstLine (String line, Writer w) throws IOException {
-        var lineM = linePat.matcher(line);
-        if (!lineM.matches()) { 
-            w.write(line + "\n");
-            return;
-        }
-        var indent = lineM.group(1);
-        var tag    = lineM.group(2);
-        var res    = lineM.group(3);
-        var end    = ">";
-        res = res.stripTrailing();
-        if (res.endsWith("/>")) end = "/>";
-        res = res.substring(0, res.length() - end.length());
-        
-        w.write("<xs:schema");
-        var tmap = keyValMap(res);
-        var tns = tmap.get("targetNamespace");
-        if (null != tns) {
-            w.write(String.format("\n  targetNamespace=\"%s\"", tns));
-            tmap.remove("targetNamespace");
-        }
-        var xsURI = tmap.remove("xmlns:xs");
-        var xsiURI = tmap.remove("xmlns:xsi");
-        for (var me : tmap.entrySet()) {
-            if (me.getKey().startsWith("xmlns:")) {
-                w.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
-            }
-        }
-        if (null != xsURI) {
-            w.write("\n  xmlns:xs=\"" + xsURI + "\"");
-        }
-        if (null != xsiURI) {
-            w.write("\n  xmlns:xsi=\"" + xsiURI + "\"");
-        }
-        for (Map.Entry<String, String> me : tmap.entrySet()) {
-            if (!me.getKey().startsWith("xmlns:")) {
-                w.write(String.format("\n  %s=\"%s\"", me.getKey(), me.getValue()));
-            }
-        }
-        w.write(end + "\n");
-     }
+    protected int attributeRank(Element elem, String attrName) {
+        if (!isSchemaElement(elem)) return Integer.MAX_VALUE;
 
+        String local = schemaLocalName(elem);
+
+        switch (local) {
+            case "element":
+                return rank(attrName,
+                        "name",
+                        "ref",
+                        "type",
+                        "minOccurs",
+                        "maxOccurs",
+                        "substitutionGroup");
+
+            case "import":
+                return rank(attrName,
+                        "namespace",
+                        "schemaLocation");
+
+            case "complexType":
+                return rank(attrName,
+                        "name",
+                        "type");
+
+            case "attribute":
+                return rank(attrName,
+                        "name",
+                        "ref",
+                        "type",
+                        "use");
+
+            case "choice":
+                return rank(attrName,
+                        "minOccurs",
+                        "maxOccurs");
+
+            case "schema":
+                return rank(attrName,
+                        "targetNamespace");
+
+            default:
+                return Integer.MAX_VALUE;
+        }
+    }
+
+    protected static int rank(String attrName, String... orderedNames) {
+        for (int i = 0; i < orderedNames.length; i++) {
+            if (orderedNames[i].equals(attrName)) return i;
+        }
+        return Integer.MAX_VALUE;
+    }
+
+    private Comparator<NameValue> attributeOrderFor(Element elem) {
+        return (a, b) -> {
+            int ra = attributeRank(elem, a.name);
+            int rb = attributeRank(elem, b.name);
+
+            if (ra != rb) return Integer.compare(ra, rb);
+
+            int c = compareNaturalIgnoreCase(a.name, b.name);
+            if (c != 0) return c;
+
+            return a.name.compareTo(b.name);
+        };
+    }
+
+    protected boolean isNamespaceDeclaration(Attr attr) {
+        if (attr == null) return false;
+        if (XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(attr.getNamespaceURI())) return true;
+
+        String name = attr.getName();
+        return "xmlns".equals(name) || (name != null && name.startsWith("xmlns:"));
+    }
+
+    private void ensureXSNamespaceDeclaration(List<NameValue> nsDecls) {
+        if (!containsName(nsDecls, "xmlns:xs")) {
+            nsDecls.add(new NameValue("xmlns:xs", XSD_NS));
+        }
+    }
+
+    private boolean containsName(List<NameValue> values, String name) {
+        for (NameValue nv : values) {
+            if (nv.name.equals(name)) return true;
+        }
+        return false;
+    }
+
+    protected boolean isSchemaElement(Element elem) {
+        return XSD_NS.equals(elem.getNamespaceURI());
+    }
+
+    protected String schemaLocalName(Element elem) {
+        String ln = elem.getLocalName();
+        if (ln != null) return ln;
+
+        String tn = elem.getTagName();
+        int c = tn.indexOf(':');
+        return c >= 0 ? tn.substring(c + 1) : tn;
+    }
+
+    protected static int namespaceDeclarationRank(String name) {
+        if ("xmlns".equals(name)) return 0;
+        if (name != null && name.startsWith("xmlns:")) return 1;
+        return 2;
+    }
+
+    protected static int schemaNamespaceRank(String name) {
+        if ("xmlns:xs".equals(name)) return 1;
+        if ("xmlns:xsi".equals(name)) return 2;
+        return 0;
+    }
+
+    protected static final class NameValue {
+        protected final String name;
+        protected final String value;
+
+        protected NameValue(String name, String value) {
+            this.name = name;
+            this.value = value;
+        }
+    }
 }

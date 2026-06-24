@@ -23,29 +23,71 @@
  */
 package org.mitre.niem.xsd;
 
-import java.util.List;
-import java.util.Map;
-import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
+import java.util.Objects;
 import org.mitre.niem.xml.XSDWriter;
+import org.w3c.dom.Element;
 
 /**
+ * XML Schema writer with additional NIEM appinfo-specific attribute ordering.
  *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
+ * <p>The constructor takes the QName prefix used for NIEM appinfo elements.
+ * For example, if the prefix is {@code "appinfo"}, then:
+ *
+ * <ul>
+ *   <li>{@code appinfo:LocalTerm}: {@code term}, then all others</li>
+ *   <li>{@code appinfo:Augmentation}: {@code class}, {@code property},
+ *       {@code use}, {@code globalClassCode}, then all others</li>
+ * </ul>
+ *
+ * <p>All normal {@link XSDWriter} ordering rules still apply to other elements.
  */
 public class NIEMXSDWriter extends XSDWriter {
-    
-    public NIEMXSDWriter () { }
-    
-    // Customize XSDWriter with attribute reorderings for NIEM XSD.
-    // The appinfo namespace might have a funky prefix (supplied as aPre).
-    // <appinfo:LocalTerm>:    order is @term, then others
-    // <appinfo:Augmentation>: order is @class, @property, @use, @globalClassCode
-    public NIEMXSDWriter (String aPre) {
+
+    private final String appinfoPrefix;
+
+    public NIEMXSDWriter(String appinfoPrefix) {
         super();
-        var ltQ  = makeQN(aPre, "LocalTerm");       // appinfo:LocalTerm
-        var augQ = makeQN(aPre, "Augmentation");    // appinfo:Augmentation
-        reorderMap.add(ltQ, "term");
-        reorderMap.addAll(augQ, List.of("class", "property", "use", "globalClassCode"));
+        this.appinfoPrefix = Objects.requireNonNull(appinfoPrefix, "appinfoPrefix must not be null");
+    }
+
+    @Override
+    protected int attributeRank(Element elem, String attrName) {
+        if (elem == null || attrName == null) {
+            return super.attributeRank(elem, attrName);
+        }
+
+        String prefix = elementPrefix(elem);
+        String local = elementLocalName(elem);
+
+        if (appinfoPrefix.equals(prefix)) {
+            if ("LocalTerm".equals(local)) {
+                return rank(attrName, "term");
+            }
+
+            if ("Augmentation".equals(local)) {
+                return rank(attrName, "class", "property", "use", "globalClassCode");
+            }
+        }
+
+        return super.attributeRank(elem, attrName);
+    }
+
+    protected String elementPrefix(Element elem) {
+        String pfx = elem.getPrefix();
+        if (pfx != null) return pfx;
+
+        String tn = elem.getTagName();
+        int c = tn.indexOf(':');
+        return c >= 0 ? tn.substring(0, c) : "";
+    }
+
+    protected String elementLocalName(Element elem) {
+        String ln = elem.getLocalName();
+        if (ln != null) return ln;
+
+        String tn = elem.getTagName();
+        int c = tn.indexOf(':');
+        return c >= 0 ? tn.substring(c + 1) : tn;
     }
 }
+
