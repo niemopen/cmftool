@@ -51,17 +51,17 @@ public class ClassType extends Component {
     
     private boolean isAbstract = false;         // cmf:AbstractIndicator
     private String refCode = "";                // cmf:ReferenceCode
-    private ClassType subclass = null;          // cmf:SubClassOf
+    private ClassType subclassOf = null;        // cmf:SubClassOf
     private final List<PropertyAssociation> propL = new ArrayList<>();  // cmf:ChildPropertyAssociation
     private final List<AnyProperty> anyL = new ArrayList<>();           // cmf:AnyProperty
     
     @Override
-    public boolean isAbstract ()                { return isAbstract; }
+    public boolean isAbstract ()                    { return isAbstract; }
     @Override
-    public String referenceCode ()              { return refCode; }
-    public ClassType subClassOf ()              { return subclass; }
-    public List<PropertyAssociation> propL ()   { return propL; }
-    public List<AnyProperty> anyL ()            { return anyL; }
+    public String referenceCode ()                  { return refCode; }
+    public ClassType subClassOf ()                  { return subclassOf; }
+    public List<PropertyAssociation> propAssocL ()  { return propL; }
+    public List<AnyProperty> anyL ()                { return anyL; }
     
     public boolean isAssociationClass ()        { return name().endsWith("AssociationType"); }
     public boolean isAdapterClass ()            { return name().endsWith("AdapterType"); }
@@ -75,7 +75,7 @@ public class ClassType extends Component {
     public void setIsAbstract (boolean f)       { isAbstract = f; }
     @Override
     public void setReferenceCode (String s)     { super.setReferenceCode(s); refCode = s; }
-    public void setSubclass (ClassType c)       { subclass = c; }
+    public void setSubclass (ClassType c)       { subclassOf = c; }
     
     public void addPropertyAssociation (PropertyAssociation pa) {
         propL.add(pa);
@@ -85,7 +85,7 @@ public class ClassType extends Component {
     }
     public String effectiveReferenceCode () {
         if (!refCode.isEmpty()) return refCode;
-        else if (null != subclass) return subclass.effectiveReferenceCode();
+        else if (null != subclassOf) return subclassOf.effectiveReferenceCode();
         else return "NONE";
     }
     
@@ -97,8 +97,8 @@ public class ClassType extends Component {
     // otherwise returns null.  If you want to know if the class inherits
     // a literal property, you must follow the subClassOf links yourself.
     public DataProperty literalDataProperty () {
-        if (propL().isEmpty()) return null;
-        var pa = propL().get(0);
+        if (propAssocL().isEmpty()) return null;
+        var pa = propAssocL().get(0);
         var p  = pa.property();
         if (!p.name().endsWith("Literal")) return null;
         if (!p.isDataProperty()) return null;
@@ -122,7 +122,7 @@ public class ClassType extends Component {
     
     public boolean hasXmlLang () {
         if (null != subClassOf() && subClassOf().hasXmlLang()) return true;
-        for (var pa : propL()) {
+        for (var pa : propAssocL()) {
             var p = pa.property();
             if (XML_NS_URI.equals(p.namespaceURI()) && "lang".equals(p.name()))
                 return true;
@@ -132,7 +132,7 @@ public class ClassType extends Component {
     
     public boolean isRepeatableProperty (Property p) {
         if (null != subClassOf() && subClassOf().isRepeatableProperty(p)) return true;
-        for (var pa : propL()) {
+        for (var pa : propAssocL()) {
             var subpS = pa.property().allSubProps();
             if (p == pa.property() || subpS.contains(p)) {
                 if (pa.maxOccursVal() > 1 || pa.isMaxUnbounded())

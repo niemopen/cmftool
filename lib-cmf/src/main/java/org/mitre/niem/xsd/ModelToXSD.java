@@ -61,7 +61,6 @@ import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
 import static org.mitre.niem.utility.IndefiniteArticle.articalize;
 import org.mitre.niem.utility.MapToList;
-import org.mitre.niem.utility.MapToSet;
 import org.mitre.niem.utility.NaturalOrderIgnoreCaseComparator;
 import org.mitre.niem.utility.ResourceManager;
 import static org.mitre.niem.utility.StringUtils.replaceSuffix;
@@ -574,7 +573,7 @@ public abstract class ModelToXSD {
             if (propL.isEmpty()) continue;
             
             Collections.sort(propL);                // OK to sort this list by index
-            act.propL().addAll(propL);
+            act.propAssocL().addAll(propL);
             act.addDocumentation(atDoc, "en-US");
             createCCCType(doc, act);
             

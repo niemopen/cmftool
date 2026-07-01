@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="t">
+    <NamespaceURI>http://example.com/Test/</NamespaceURI>
+    <NamespacePrefixText>t</NamespacePrefixText>
+    <DocumentationText>
+      json to xml test schema: repeatable elements, list datatypes and literal class
+    </DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ExtensionSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>list.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <DataProperty structures:id="t.ListDataElement">
+    <Name>ListDataElement</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="t.ListDataType" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="t.ListObjectElement">
+    <Name>ListObjectElement</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.ListObjectType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="t.ListObjectLiteral">
+    <Name>ListObjectLiteral</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="t.ListDataType" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.myAtt">
+    <Name>myAtt</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <ObjectProperty structures:id="t.ObjectElement">
+    <Name>ObjectElement</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.ObjectType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="t.SimpleElement">
+    <Name>SimpleElement</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="t.ListObjectType">
+    <Name>ListObjectType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.ListObjectLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.myAtt" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.ObjectType">
+    <Name>ObjectType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.SimpleElement" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.ListDataElement" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="t.ListObjectElement" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <List structures:id="t.ListDataType">
+    <Name>ListDataType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ListItemDatatype structures:ref="xs.integer" xsi:nil="true"/>
+  </List>
+  <Datatype structures:id="xs.integer">
+    <Name>integer</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

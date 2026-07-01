@@ -24,14 +24,9 @@
 package org.mitre.niem.xsd;
 
 import java.io.File;
-import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Set;
-import org.mitre.niem.cmf.CMFException;
-import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
-import org.mitre.niem.cmf.DataProperty;
-import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ObjectProperty;
@@ -44,79 +39,50 @@ import org.mitre.niem.cmf.ObjectProperty;
 public class ModelToMappedXMLSchema {
     
     private final Model m;
-    private final Mapping map;
-    private Set<String> namespaceURIs = null;
-    private ObjectProperty messageProp = null;
-    boolean singleNamespace = false;
+    private Mapping map = new Mapping();                            // canonical to simple name map, if provided
+    private Set<ObjectProperty> msgPropS = null;                    // message property objects, if provided
     
     public ModelToMappedXMLSchema (Model m) {
         this.m = m;
-        this.map = new Mapping();
     }
-    
-    public ModelToMappedXMLSchema(Model m, Mapping map) {
-        this.m = m;
-        this.map = map;
+      
+    /**
+     * Provides a Mapping object which will be used to replace model property
+     * QNames in the schema; for example, msg:lname instead of
+     * nc:PersonSurName.  A null parameter clears any existing map.
+     * @param map Mapping object
+     */
+    public void setMapping (Mapping map) {
+        if (null == map) this.map = new Mapping();
+        else this.map = map;
     }
-    
+
     // The URI of a model component ia either a URN or contains "://".
-    public void setMessageElement (String qnOrURI) throws CMFException {
-        if (null == qnOrURI) {
-            messageProp = null;
-            return;
-        }
-        namespaceURIs = null;
-        if (qnOrURI.regionMatches(true, 0, "urn:", 0, 4) || qnOrURI.contains("://")) {
-//            var mQorU = map.mappedUtoU(qnOrURI);
-//            messageProp = m.uriToObjectProperty(mQorU);
-        }
-        else {
-//            var mQorU = map.mappedQNtoQN(qnOrURI);
-//            messageProp = m.qnToObjectProperty(mQorU);
-        }
-        if (null == messageProp)
-            throw new CMFException(qnOrURI + " is not a model QName or URI");
+    public void setMessageProperty (ObjectProperty mprop) {
+        msgPropS = (mprop == null) ? null : Set.of(mprop);        
     }
     
-//    public void setSingleNamespace (boolean f) throws CMFException  {
-//        if (f) {
-//        computeNamespaceSet();
-//        if (namespaceURIs.size() > 1)
-//            throw new CMFException("More than one namespace after mapping");
-//        }
-//        singleNamespace = f;
-//    }
-    
+    public void setMessageProperties (Set<ObjectProperty> mpropS) {
+        if (null == mpropS) msgPropS = null;
+        else msgPropS = mpropS;
+    }
+
     public void writeModelXSD (File outD) {
+        
+        // Establish needed components for the specified message properties
+        Set<Component> compS;
+        if (msgPropS.isEmpty()) compS = m.componentSet();
+        else compS = m.messageComponents(msgPropS);
+        
+        // Construct set of required namespaces (after mapping)
+        var nsuS = new HashSet<String>();
+        for (var c : compS) {
+            var nsU = map.uriToTargetNSU(c.uri());
+            nsuS.add(nsU);
+        }
+        
         
     }
     
-    protected void computeNamespaceSet () {
-        if (null != namespaceURIs) return;
-        namespaceURIs = new HashSet<>();
-        var done = new HashSet<Component>();
-        var todo = new ArrayDeque<Component>();
-        if (null != messageProp) todo.add(messageProp);
-        else {
-            for (var c : m.componentList()) todo.add(c);
-        }
-        while (!todo.isEmpty()) {
-            var c  = todo.pop();
-            if (done.contains(c)) continue;
-            if (c.isAbstract()) continue;
-            var cU = c.uri();
-//            var cnsU = map.uriToMappedNS(cU);
-//            namespaceURIs.add(cnsU);
-            done.add(c);
-            if (c instanceof DataProperty dp)        todo.add(dp.datatype());
-            else if (c instanceof ObjectProperty op) todo.add(op.classType());
-            else if (c instanceof Datatype dt)       todo.add(dt.base());
-            else if (c instanceof ClassType ct) {
-                for (var pa : ct.propL()) {
-                    todo.add(pa.property());
-                }
-            }
-        }
-    }
     
 }

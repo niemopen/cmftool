@@ -53,21 +53,28 @@ import picocli.CommandLine.Parameters;
     description = {
         "canonicalize an XML Schema document",
         "Use '--' before filenames beginning with '-'.",
-        "Use '-i' for in-place canonicalization, or '-i bak' to keep the original as a backup."
+        "Use '-i' for in-place canonicalization, or '--in-place=bak' to keep the original as a backup."
     },
     mixinStandardHelpOptions = true,
     sortOptions = false
 )
 public class CmdXSDCanonicalize implements Callable<Integer> {
+    
+    @Option(
+        names = {"-i"},
+        arity = "0",
+        description = "canonicalize in place"
+    )
+    private boolean inPlaceF = false;
+    
 
     @Option(
-        names = {"-i", "--in-place"},
-        arity = "0..1",
-        fallbackValue = "",
-        paramLabel = "bak",
-        description = "canonicalize in place; optional backup suffix, eg. '-i bak'"
+        names = {"--in-place"},
+        arity = "1",
+        paramLabel = "suffix",
+        description = "canonicalize in place with backup suffix, eg. '--in-place=bak'"
     )
-    private String backSuf = null;
+    private String backSuf = "";
 
     @Option(
         names = {"-o", "--output"},
@@ -91,7 +98,7 @@ public class CmdXSDCanonicalize implements Callable<Integer> {
     @Override
     public Integer call() {
 
-        boolean inPlace = backSuf != null;
+        boolean inPlace = inPlaceF || (!backSuf.isBlank());
 
         if (inPlace && objFile != null) {
             System.err.println("-i and -o options are in conflict");
@@ -161,6 +168,7 @@ public class CmdXSDCanonicalize implements Callable<Integer> {
             AtomicPathWriter.writeAtomically(outPath, StandardCharsets.UTF_8, ow -> {
                 try (InputStream is = Files.newInputStream(inPath)) {
                     CanonicalXSD.canonicalize(is, ow);
+                    ow.close();
                 } catch (ParserConfigurationException | SAXException | TransformerException ex) {
                     throw new WrappedCanonicalizeException(ex);
                 }
@@ -198,6 +206,7 @@ public class CmdXSDCanonicalize implements Callable<Integer> {
             try (InputStream is = Files.newInputStream(absoluteInput);
                  Writer ow = Files.newBufferedWriter(tempPath, StandardCharsets.UTF_8)) {
                 CanonicalXSD.canonicalize(is, ow);
+                ow.close();
             }
 
             // Rename input file to backup file, if one is desired

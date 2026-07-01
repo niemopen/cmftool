@@ -23,7 +23,6 @@
  */
 package org.mitre.niem.cmftool;
 
-import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -32,12 +31,17 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.xml.parsers.ParserConfigurationException;
 import org.mitre.niem.cmf.CMFException;
 import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
+import org.mitre.niem.cmf.ObjectProperty;
 import org.mitre.niem.json.Context;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
@@ -53,18 +57,33 @@ import picocli.CommandLine.Parameters;
  */
 @Command(
     name = "m2context",
-    description = "create a JSON-LD context from a model file and mapping",
-    mixinStandardHelpOptions = true
+    description = "create a JSON-LD context from a model file and (optional) mapping",
+    mixinStandardHelpOptions = true,
+    sortOptions = false
 )
 public class CmdCMFtoContext implements Callable<Integer> {
     
     @Option(
-        names = {"-m", "--map"},
+        names = {"--map"},
         paramLabel = "<path>",
         description = "mapping file for property keys"
     )
     private Path mapF = null;
-         
+
+    @Option(
+        names = {"-m", "--msg"},
+        split = ",",
+        paramLabel = "<QName>",
+        description = "create context for these message properties"
+    )
+    private List<String> msgQA = new ArrayList<>();    
+    
+    @Option(
+        names = "--noprefix",
+        description = "include all property keys; use no prefixes"
+    )
+    private boolean noPrefix = false;
+
     @Option(
         names = {"-o", "--output"},
         paramLabel = "<path>",
@@ -114,7 +133,6 @@ public class CmdCMFtoContext implements Callable<Integer> {
             int rc = validateOutputTarget();
             if (0 != rc) return rc;
         }
-        
         // Make sure the Xerces parsers can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
@@ -122,13 +140,7 @@ public class CmdCMFtoContext implements Callable<Integer> {
             System.err.println("Internal parser error: " + ex.getMessage());
             return 1;
         }
-        
         // Read the model object from the model file
-        if (null == modelF || !Files.exists(modelF) || !Files.isRegularFile(modelF) || !Files.isReadable(modelF)) {
-            System.err.println("Could not read model from CMF file " + modelF);
-            return 1;
-        }
-
         Model model;
         try {
             var mr = new ModelXMLReader();  
@@ -141,14 +153,9 @@ public class CmdCMFtoContext implements Callable<Integer> {
             System.err.println("Could not read model from CMF file " + modelF);
             return 1;
         }
-
         // Read the mapping file if one was provided
         Mapping map = null;
         if (null != mapF) {
-            if (!Files.exists(mapF) || !Files.isRegularFile(mapF) || !Files.isReadable(mapF)) {
-                System.err.println(String.format("Can't read mapping file %s", mapF));
-                return 1;
-            }
             try {
                 map = Mapping.readFile(mapF.toFile());
             } catch (IOException | CMFException ex) {
@@ -156,7 +163,6 @@ public class CmdCMFtoContext implements Callable<Integer> {
                 return 1;
             }
         }
-
         // Validate mapping against the model if one was provided
         if (null != map) {
             try {
@@ -166,11 +172,22 @@ public class CmdCMFtoContext implements Callable<Integer> {
                 return 1;
             }
         }
-
+        // Get message property objects (if specified)
+        Set<ObjectProperty> msgPropS = new HashSet<>();
+        if (null != msgQA) {
+            for (var msgQ : msgQA) {
+                var p = model.qnToObjectProperty(msgQ);
+                if (null == p) {
+                    System.err.println("Property " + msgQ + " is not in model");
+                    return 1;
+                }
+                msgPropS.add(p);
+            }
+        }
         // Create context
-        JsonObject cxt;
+        Context cxt;
         try {
-            cxt = Context.create(model, map);
+            cxt = new Context(model, map, msgPropS, noPrefix);
         } catch (CMFException ex) {
             System.err.println("Can't create context: " + ex.getMessage());
             return 1;
@@ -227,15 +244,15 @@ public class CmdCMFtoContext implements Callable<Integer> {
         return 0;
     }
     
-    private int writeToStdout(JsonObject cxt) throws IOException {
+    private int writeToStdout(Context cxt) throws IOException {
         var ow = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
-        Context.write(cxt, ow);
+        cxt.write(ow);
         ow.write("\n");
         ow.flush();
         return 0;
     }
     
-    private int writeToFileAtomically(JsonObject cxt, Path target) throws IOException {
+    private int writeToFileAtomically(Context cxt, Path target) throws IOException {
         Path absTarget = target.toAbsolutePath().normalize();
         Path dir = absTarget.getParent();
         if (null == dir) dir = Path.of(".").toAbsolutePath().normalize();
@@ -244,7 +261,7 @@ public class CmdCMFtoContext implements Callable<Integer> {
         try {
             tempFile = Files.createTempFile(dir, absTarget.getFileName().toString() + ".", ".tmp");
             try (Writer ow = Files.newBufferedWriter(tempFile, StandardCharsets.UTF_8)) {
-                Context.write(cxt, ow);
+                cxt.write(ow);
                 ow.write("\n");
             }
             moveIntoPlace(tempFile, absTarget);

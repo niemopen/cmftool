@@ -25,261 +25,289 @@ package org.mitre.niem.json;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mitre.niem.cmf.CMFException;
-import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.ObjectProperty;
 import org.mitre.niem.cmf.Property;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ContextTest {
 
+    private static final String NC_NS = "http://example.org/nc/";
+    private static final String J_NS = "http://example.org/j/";
+    private static final String MSG_NS = "http://example.org/msg/";
+
     @Test
-    void create_allComponents_noMapping_includesNamespaceDeclarationsOnlyWhenNoAliasNeeded() throws Exception {
-        Property prop = property("foo", "urn:foo", "thing", false);
-        FakeModel model = new FakeModel(setOf(prop), setOf(prop));
+    void readerConstructorReadsWrappedContext() throws Exception {
+        var json = """
+            {
+              "@context": {
+                "nc": "http://example.org/nc/",
+                "msg:name": "nc:PersonName"
+              }
+            }
+            """;
 
-        JsonObject cxt = Context.create(model, new Mapping());
+        var ctx = new Context(new StringReader(json));
+        JsonObject obj = ctx.jsonObject();
 
-        assertNotNull(cxt);
-        assertEquals("urn:foo", cxt.get("foo").getAsString());
-        assertEquals(1, cxt.size());
+        assertEquals(NC_NS, obj.get("nc").getAsString());
+        assertEquals("nc:PersonName", obj.get("msg:name").getAsString());
     }
 
     @Test
-    void create_withMappedProperty_addsMappedTermAndMappedNamespace() throws Exception {
-        Property prop = property("foo", "urn:foo", "thing", false);
-        FakeModel model = new FakeModel(setOf(prop), setOf(prop));
-        StubMapping mapping = new StubMapping()
-            .map("foo:thing", "bar:stuff")
-            .prefix("bar", "urn:bar");
+    void readerConstructorReadsBareContextObject() throws Exception {
+        var json = """
+            {
+              "nc": "http://example.org/nc/",
+              "msg:name": "nc:PersonName"
+            }
+            """;
 
-        JsonObject cxt = Context.create(model, mapping);
+        var ctx = new Context(new StringReader(json));
+        JsonObject obj = ctx.jsonObject();
 
-        assertEquals("urn:foo", cxt.get("foo").getAsString());
-        assertEquals("urn:bar", cxt.get("bar").getAsString());
-        assertEquals("foo:thing", cxt.get("bar:stuff").getAsString());
+        assertEquals(NC_NS, obj.get("nc").getAsString());
+        assertEquals("nc:PersonName", obj.get("msg:name").getAsString());
     }
 
     @Test
-    void create_withNoPrefix_usesMappedLocalName() throws Exception {
-        Property prop = property("foo", "urn:foo", "thing", false);
-        FakeModel model = new FakeModel(setOf(prop), setOf(prop));
-        StubMapping mapping = new StubMapping()
-            .map("foo:thing", "bar:stuff")
-            .prefix("bar", "urn:bar");
-
-        JsonObject cxt = Context.create(model, mapping, null, true);
-
-        assertEquals("urn:foo", cxt.get("foo").getAsString());
-        assertEquals("urn:bar", cxt.get("bar").getAsString());
-        assertEquals("foo:thing", cxt.get("stuff").getAsString());
+    void readerConstructorRejectsInvalidJson() {
+        var ex = assertThrows(CMFException.class, () -> new Context(new StringReader("not json")));
+        assertTrue(ex.getMessage().startsWith("can't read context:"));
     }
 
     @Test
-    void create_withOrderedMappedProperty_writesListContainerForMappedTermAndOriginalQName() throws Exception {
-        Property prop = property("foo", "urn:foo", "thing", true);
-        FakeModel model = new FakeModel(setOf(prop), setOf(prop));
-        StubMapping mapping = new StubMapping()
-            .map("foo:thing", "bar:stuff")
-            .prefix("bar", "urn:bar");
+    void modelConstructorAddsNamespacePrefixesWithoutMappedTerms() throws Exception {
+        var model = new Model();
+        var nc = addNamespace(model, "nc", NC_NS);
 
-        JsonObject cxt = Context.create(model, mapping);
+        var personName = new Property(nc, "PersonName");
+        model.addProperty(personName);
 
-        JsonObject mapped = cxt.getAsJsonObject("bar:stuff");
-        JsonObject original = cxt.getAsJsonObject("foo:thing");
+        var ctx = new Context(model);
+        JsonObject obj = ctx.jsonObject();
 
-        assertNotNull(mapped);
-        assertEquals("foo:thing", mapped.get("@id").getAsString());
+        assertEquals(NC_NS, obj.get("nc").getAsString());
+        assertFalse(obj.has("nc:PersonName"));
+        assertFalse(obj.has("xs"));
+    }
+
+    @Test
+    void modelConstructorWithMappingAddsMappedTermDefinition() throws Exception {
+        var model = new Model();
+        var nc = addNamespace(model, "nc", NC_NS);
+
+        var personName = new Property(nc, "PersonName");
+        model.addProperty(personName);
+
+        var map = new Mapping();
+        map.assignPrefix("nc", NC_NS);
+        map.assignPrefix("msg", MSG_NS);
+        map.addMapping(personName.qname(), "msg:name");
+
+        var ctx = new Context(model, map);
+        JsonObject obj = ctx.jsonObject();
+
+        assertEquals(NC_NS, obj.get("nc").getAsString());
+        assertEquals(MSG_NS, obj.get("msg").getAsString());
+        assertEquals("nc:PersonName", obj.get("msg:name").getAsString());
+    }
+
+    @Test
+    void orderedPropertyCreatesListContainerEntries() throws Exception {
+        var model = new Model();
+        var nc = addNamespace(model, "nc", NC_NS);
+
+        var aliases = new Property(nc, "PersonAlias");
+        aliases.setIsOrdered(true);
+        model.addProperty(aliases);
+
+        var map = new Mapping();
+        map.assignPrefix("nc", NC_NS);
+        map.assignPrefix("msg", MSG_NS);
+        map.addMapping(aliases.qname(), "msg:aliases");
+
+        var ctx = new Context(model, map);
+        JsonObject obj = ctx.jsonObject();
+
+        assertTrue(obj.has("msg:aliases"));
+        JsonObject mapped = obj.getAsJsonObject("msg:aliases");
+        assertEquals(aliases.uri(), mapped.get("@id").getAsString());
         assertEquals("@list", mapped.get("@container").getAsString());
 
-        assertNotNull(original);
-        assertEquals("@list", original.get("@container").getAsString());
+        assertTrue(obj.has(aliases.uri()));
+        JsonObject byUri = obj.getAsJsonObject(aliases.uri());
+        assertEquals("@list", byUri.get("@container").getAsString());
     }
 
     @Test
-    void create_withOrderedMappedPropertyAndNoPrefix_writesLocalNameListTermAndOriginalQName() throws Exception {
-        Property prop = property("foo", "urn:foo", "thing", true);
-        FakeModel model = new FakeModel(setOf(prop), setOf(prop));
-        StubMapping mapping = new StubMapping()
-            .map("foo:thing", "bar:stuff")
-            .prefix("bar", "urn:bar");
+    void writeWrapsContextInAtContextObject() throws Exception {
+        var ctx = new Context(new StringReader("""
+            {
+              "nc": "http://example.org/nc/"
+            }
+            """));
 
-        JsonObject cxt = Context.create(model, mapping, null, true);
+        var out = new StringWriter();
+        ctx.write(out);
 
-        JsonObject local = cxt.getAsJsonObject("stuff");
-        JsonObject original = cxt.getAsJsonObject("foo:thing");
-
-        assertNotNull(local);
-        assertEquals("foo:thing", local.get("@id").getAsString());
-        assertEquals("@list", local.get("@container").getAsString());
-
-        assertNotNull(original);
-        assertEquals("@list", original.get("@container").getAsString());
+        JsonObject written = JsonParser.parseString(out.toString()).getAsJsonObject();
+        assertTrue(written.has("@context"));
+        assertEquals(
+            NC_NS,
+            written.getAsJsonObject("@context").get("nc").getAsString()
+        );
     }
 
     @Test
-    void create_singleMessage_usesMessageComponents() throws Exception {
-        Property prop = property("foo", "urn:foo", "thing", false);
-        FakeModel model = new FakeModel(Set.of(), setOf(prop));
-        ObjectProperty msg = objectProperty("msg", "urn:msg", "Message", false);
+    void selectedMessageRootsLimitIncludedComponents() throws Exception {
+        var model = new Model();
+        var nc = addNamespace(model, "nc", NC_NS);
+        var j = addNamespace(model, "j", J_NS);
 
-        JsonObject cxt = Context.create(model, new Mapping(), msg);
+        var root = new ObjectProperty(nc, "RootMessage");
+        model.addProperty(root);
 
-        assertEquals("urn:foo", cxt.get("foo").getAsString());
-        assertEquals(1, cxt.size());
+        var extra = new Property(j, "OtherThing");
+        model.addProperty(extra);
+
+        var ctx = new Context(model, null, Set.of(root));
+        JsonObject obj = ctx.jsonObject();
+
+        assertTrue(obj.has("nc"));
+        assertFalse(obj.has("j"));
     }
 
     @Test
-    void create_noPrefix_duplicateLocalNames_throwsCMFException() {
-        Property p1 = property("foo", "urn:foo", "thing", false);
-        Property p2 = property("baz", "urn:baz", "thing", false);
-        FakeModel model = new FakeModel(setOf(p1, p2), setOf(p1, p2));
+    void noPrefixContextUsesMappedLocalNameAsTerm() throws Exception {
+        var model = new Model();
+        var nc = addNamespace(model, "nc", NC_NS);
 
-        assertThrows(CMFException.class, () -> Context.create(model, new Mapping(), null, true));
+        var personName = new Property(nc, "PersonName");
+        model.addProperty(personName);
+
+        var map = new Mapping();
+        map.assignPrefix("nc", NC_NS);
+        map.assignPrefix("msg", MSG_NS);
+        map.addMapping(personName.qname(), "msg:name");
+
+        var ctx = new Context(model, map, null, true);
+        JsonObject obj = ctx.jsonObject();
+
+        assertEquals(NC_NS, obj.get("nc").getAsString());
+        assertEquals(MSG_NS, obj.get("msg").getAsString());
+        assertEquals("nc:PersonName", obj.get("name").getAsString());
+        assertFalse(obj.has("msg:name"));
     }
 
     @Test
-    void create_noPrefix_localNameMatchingNamespacePrefix_throwsCMFException() {
-        Property p1 = property("foo", "urn:foo", "bar", false);
-        Property p2 = property("bar", "urn:bar", "item", false);
-        FakeModel model = new FakeModel(setOf(p1, p2), setOf(p1, p2));
+    void noPrefixContextRejectsDuplicateLocalNames() throws Exception {
+        var model = new Model();
+        var nc = addNamespace(model, "nc", NC_NS);
+        var j = addNamespace(model, "j", J_NS);
 
-        assertThrows(CMFException.class, () -> Context.create(model, new Mapping(), null, true));
+        model.addProperty(new Property(nc, "Name"));
+        model.addProperty(new Property(j, "Name"));
+
+        var ex = assertThrows(CMFException.class, () -> new Context(model, null, null, true));
+        assertTrue(ex.getMessage().contains("have same local name"));
     }
-
     @Test
-    void create_missingMappedPrefixUri_throwsCMFException() {
-        Property prop = property("foo", "urn:foo", "thing", false);
-        FakeModel model = new FakeModel(setOf(prop), setOf(prop));
-        StubMapping mapping = new StubMapping()
-            .map("foo:thing", "bar:stuff");
-
-        assertThrows(CMFException.class, () -> Context.create(model, mapping));
-    }
-
-    @Test
-    void create_conflictingNamespaceBindings_throwsCMFException() {
-        Property p1 = property("dup", "urn:one", "item1", false);
-        Property p2 = property("dup", "urn:two", "item2", false);
-        FakeModel model = new FakeModel(setOf(p1, p2), setOf(p1, p2));
-
-        assertThrows(CMFException.class, () -> Context.create(model, new Mapping()));
-    }
-
-    @Test
-    void create_conflictingGeneratedTerms_throwsCMFException() {
-        Property p1 = property("foo", "urn:foo", "one", false);
-        Property p2 = property("bar", "urn:bar", "two", false);
-        FakeModel model = new FakeModel(setOf(p1, p2), setOf(p1, p2));
-        StubMapping mapping = new StubMapping()
-            .map("foo:one", "baz:same")
-            .map("bar:two", "baz:same")
-            .prefix("baz", "urn:baz");
-
-        assertThrows(CMFException.class, () -> Context.create(model, mapping));
-    }
-
-    @Test
-    void create_nullModel_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> Context.create(null));
-    }
-
-    @Test
-    void create_nullMessage_throwsNullPointerException() {
-        FakeModel model = new FakeModel(Set.of(), Set.of());
-        assertThrows(NullPointerException.class, () -> Context.create(model, new Mapping(), (ObjectProperty) null));
-    }
-
-    @Test
-    void write_wrapsContextInAtContext() throws Exception {
-        JsonObject res = new JsonObject();
-        res.addProperty("foo", "urn:foo");
-        res.addProperty("bar:stuff", "foo:thing");
-
-        StringWriter out = new StringWriter();
-        Context.write(res, out);
-
-        JsonObject root = JsonParser.parseString(out.toString()).getAsJsonObject();
-        JsonObject cxt = root.getAsJsonObject("@context");
-
-        assertNotNull(cxt);
-        assertEquals("urn:foo", cxt.get("foo").getAsString());
-        assertEquals("foo:thing", cxt.get("bar:stuff").getAsString());
-    }
-
-    private static Property property(String prefix, String uri, String localName, boolean ordered) {
-        Property p = new Property(new Namespace(prefix, uri), localName);
-        p.setIsOrdered(ordered);
-        return p;
-    }
-
-    private static ObjectProperty objectProperty(String prefix, String uri, String localName, boolean ordered) {
-        ObjectProperty p = new ObjectProperty(new Namespace(prefix, uri), localName);
-        p.setIsOrdered(ordered);
-        return p;
-    }
-
-    @SafeVarargs
-    private static <T> Set<T> setOf(T... values) {
-        Set<T> s = new LinkedHashSet<>();
-        for (T v : values) s.add(v);
-        return s;
-    }
-
-    private static final class FakeModel extends Model {
-        private final Set<Component> componentS;
-        private final Set<Component> messageComponentS;
-
-        FakeModel(Set<Component> componentS, Set<Component> messageComponentS) {
-            this.componentS = new LinkedHashSet<>(componentS);
-            this.messageComponentS = new LinkedHashSet<>(messageComponentS);
+    void expandExpandsMappedTermToFullIri() throws Exception {
+        var ctx = new Context(new StringReader("""
+        {
+          "@context": {
+            "nc": "http://example.org/nc/",
+            "name": "nc:PersonName"
+          }
         }
+        """));
 
-        @Override
-        public Set<Component> componentSet() {
-            return new LinkedHashSet<>(componentS);
-        }
-
-        @Override
-        public Set<Component> messageComponents(Set<ObjectProperty> msgPropS) {
-            return new LinkedHashSet<>(messageComponentS);
-        }
+        assertEquals("http://example.org/nc/PersonName", ctx.expand("name"));
     }
 
-    private static final class StubMapping extends Mapping {
-        private final Map<String, String> qnMap = new HashMap<>();
-        private final Map<String, String> preMap = new HashMap<>();
-
-        StubMapping map(String fromQ, String toQ) {
-            qnMap.put(fromQ, toQ);
-            return this;
+    @Test
+    void expandExpandsCompactIriToFullIri() throws Exception {
+        var ctx = new Context(new StringReader("""
+        {
+          "@context": {
+            "nc": "http://example.org/nc/"
+          }
         }
+        """));
 
-        StubMapping prefix(String prefix, String uri) {
-            preMap.put(prefix, uri);
-            return this;
-        }
+        assertEquals("http://example.org/nc/PersonName", ctx.expand("nc:PersonName"));
+    }
 
-        @Override
-        public String qnToMappedQ(String fromQ) {
-            return qnMap.getOrDefault(fromQ, fromQ);
+    @Test
+    void expandExpandsObjectTermDefinitionUsingAtId() throws Exception {
+        var ctx = new Context(new StringReader("""
+        {
+          "@context": {
+            "nc": "http://example.org/nc/",
+            "aliases": {
+              "@id": "nc:PersonAlias",
+              "@container": "@list"
+            }
+          }
         }
+        """));
 
-        @Override
-        public String prefixToURI(String prefix) {
-            return preMap.get(prefix);
+        assertEquals("http://example.org/nc/PersonAlias", ctx.expand("aliases"));
+    }
+
+    @Test
+    void expandReturnsAbsoluteIriUnchangedWhenNotInContext() throws Exception {
+        var ctx = new Context(new StringReader("""
+        {
+          "@context": {
+            "nc": "http://example.org/nc/"
+          }
         }
+        """));
+
+        var iri = "http://other.example.org/test/Thing";
+        assertEquals(iri, ctx.expand(iri));
+    }
+
+    @Test
+    void expandReturnsUnknownTermUnchangedWhenNoMappingExists() throws Exception {
+        var ctx = new Context(new StringReader("""
+        {
+          "@context": {
+            "nc": "http://example.org/nc/"
+          }
+        }
+        """));
+
+        assertEquals("unknownTerm", ctx.expand("unknownTerm"));
+    }
+
+    @Test
+    void expandRejectsNullArgument() throws Exception {
+        var ctx = new Context(new StringReader("""
+        {
+          "@context": {
+            "nc": "http://example.org/nc/"
+          }
+        }
+        """));
+
+        var ex = assertThrows(NullPointerException.class, () -> ctx.expand(null));
+        assertEquals("termOrCompactIRI must not be null", ex.getMessage());
+    }
+
+    private Namespace addNamespace(Model model, String prefix, String uri) throws CMFException {
+        var ns = new Namespace(prefix, uri);
+        model.addNamespace(ns);
+        return ns;
     }
 }

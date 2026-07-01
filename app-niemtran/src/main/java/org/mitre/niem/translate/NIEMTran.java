@@ -92,6 +92,7 @@ public class NIEMTran implements Runnable {
 
         // Help command lists subcommands in this order
         cmd.addSubcommand("x2j", new CmdXMLtoJSON());
+        cmd.addSubcommand("j2x", new CmdJSONtoXML());
         cmd.addSubcommand("j2r", new CmdJSONtoRDF());
         cmd.addSubcommand("help", new CommandHelp());
 

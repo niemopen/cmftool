@@ -171,11 +171,11 @@ public class ModelAssertions {
         assertThat(p2.subPropertyOfS()).containsExactlyInAnyOrder(cp1, cp2);
         assertThat(p3.subPropertyOfS()).containsExactlyInAnyOrder(cp2);
 
-        assertEquals(c1.propL().get(0).property(), p1);        
-        assertEquals(c2.propL().get(0).property(), p1);        
-        assertEquals(c3.propL().get(0).property(), cp1);        
-        assertEquals(c4.propL().get(0).property(), cp1);
-        assertEquals(c5.propL().get(0).property(), cp2);       
+        assertEquals(c1.propAssocL().get(0).property(), p1);        
+        assertEquals(c2.propAssocL().get(0).property(), p1);        
+        assertEquals(c3.propAssocL().get(0).property(), cp1);        
+        assertEquals(c4.propAssocL().get(0).property(), cp1);
+        assertEquals(c5.propAssocL().get(0).property(), cp2);       
     }
     
     public static void checkComponent (Model m) {
@@ -229,10 +229,10 @@ public class ModelAssertions {
         var ct4 = m.qnToClassType("test:Test4Type");
         var ct5 = m.qnToClassType("test:Test5Type");
         
-        var cp = ct1.propL().get(0);
+        var cp = ct1.propAssocL().get(0);
         assertTrue(ct1.isAbstract());
         assertNull(ct1.subClassOf());
-        assertThat(ct1.propL()).hasSize(1);
+        assertThat(ct1.propAssocL()).hasSize(1);
         assertEquals("test:AnElement", cp.property().qname());
         assertEquals("0", cp.minOccurs());
         assertEquals("1", cp.maxOccurs());
@@ -245,10 +245,10 @@ public class ModelAssertions {
         assertEquals("http://someNS/ http://otherNS/", ap.nsConstraint());
         assertFalse(ap.isAttribute());
         
-        cp = ct2.propL().get(0);
+        cp = ct2.propAssocL().get(0);
         assertFalse(ct2.isAbstract());
         assertNull(ct2.subClassOf());
-        assertThat(ct2.propL()).hasSize(1);
+        assertThat(ct2.propAssocL()).hasSize(1);
         assertEquals("test:AnElement", cp.property().qname());
         assertEquals("1", cp.minOccurs());
         assertEquals("1", cp.maxOccurs());
@@ -259,10 +259,10 @@ public class ModelAssertions {
         assertEquals("", ap.nsConstraint());
         assertTrue(ap.isAttribute());
         
-        cp = ct3.propL().get(0);
+        cp = ct3.propAssocL().get(0);
         assertFalse(ct3.isAbstract());
         assertEquals("test:Test1Type", ct3.subClassOf().qname());
-        assertThat(ct3.propL()).hasSize(1);
+        assertThat(ct3.propAssocL()).hasSize(1);
         assertEquals("test:AnotherElement", cp.property().qname());
         assertEquals("1", cp.minOccurs());
         assertEquals("1", cp.maxOccurs());
@@ -548,13 +548,13 @@ public class ModelAssertions {
         assertNotNull(m.namespaceObj("gml"));
         assertNotNull(m.namespaceObj("niem-gml"));
         
-        var pL = m.qnToClassType("niem-gml:PointAdapterType").propL();
+        var pL = m.qnToClassType("niem-gml:PointAdapterType").propAssocL();
         var p  = pL.get(0).property();
         var op = (ObjectProperty)p;
         assertEquals("gml:Point", p.qname());
         assertNull(op.classType());    
 
-        pL = m.qnToClassType("niem-gml:PolygonAdapterType").propL();
+        pL = m.qnToClassType("niem-gml:PolygonAdapterType").propAssocL();
         p  = pL.get(0).property();
         op = (ObjectProperty)p;
         assertEquals("gml:Polygon", p.qname());
@@ -814,7 +814,7 @@ public class ModelAssertions {
     }  
 
     public static void checkPropAssoc (Model m) {
-        var propList = m.qnToClassType("test:T2Type").propL();
+        var propList = m.qnToClassType("test:T2Type").propAssocL();
         for (var pa: propList) {
             switch (pa.property().name()) {
             case "OProp2": 

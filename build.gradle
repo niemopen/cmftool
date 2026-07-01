@@ -1,7 +1,7 @@
 plugins {
   id 'java'
   id 'distribution'
-  id 'org.cyclonedx.bom' version '2.3.1'
+  id 'org.cyclonedx.bom' version '3.2.4'
 }
 
 allprojects {
@@ -12,18 +12,36 @@ allprojects {
         sourceCompatibility = JavaVersion.VERSION_25
         targetCompatibility = JavaVersion.VERSION_25
     }
+    repositories {
+        mavenCentral()
+    }
 }
 
-project.version = '1.1-alpha.7-SNAPSHOT'
+version = '1.1-alpha.7'
 
 subprojects {
-    version = rootProject.version
+    apply plugin: 'org.cyclonedx.bom'
+    tasks.named('cyclonedxDirectBom') {
+        includeConfigs = ['runtimeClasspath']
+        skipConfigs = ['testRuntimeClasspath']
+    }
+
+    tasks.named('cyclonedxBom') {
+        enabled = false
+    }
+    version = '1.1-alpha.7'
+    group = 'org.niemopen'
+}
+
+tasks.register('cyclonedxPerProjectBom') {
+    group = 'cyclonedx'
+    description = 'Generate one CycloneDX BOM per subproject'
+    dependsOn subprojects.collect { it.tasks.named('cyclonedxDirectBom') }
 }
 
 tasks.named('distZip') {
     dependsOn tasks.named('collectDist')
 }
-
 
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption

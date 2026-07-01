@@ -412,6 +412,12 @@ public class ModelXMLReader {
                 child.setContent(sval);
                 if (null != parent) parent.addChild(eln, locstr, child);
             }
+            // Set namespace field in AugmentationRecord from parent element
+            if (child instanceof AugmentRecord arec) {
+                if (parent instanceof Namespace ns) {
+                    arec.setNamespace(ns);
+                }
+            }
             super.endElement(ens, eln, eQN);
         }
     }

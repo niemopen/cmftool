@@ -27,7 +27,10 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -35,6 +38,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
+import org.mitre.niem.cmf.ObjectProperty;
+import org.mitre.niem.cmf.Property;
 import org.mitre.niem.utility.AtomicPathWriter;
 import org.mitre.niem.xml.ParserBootstrap;
 import picocli.CommandLine.Command;
@@ -59,6 +64,14 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
     sortOptions = false
 )
 public class CmdCMFtoMapping implements Callable<Integer> {
+
+    @Option(
+        names = {"-m", "--msg"},
+        split = ",",
+        paramLabel = "<QName>",
+        description = "build schema to validate these message properties"
+    )
+    private List<String> msgQA = new ArrayList<>();
 
     @Option(
         names = {"-s", "--single"},
@@ -143,20 +156,26 @@ public class CmdCMFtoMapping implements Callable<Integer> {
             return 1;
         }
 
+        // Get message property object (if specified)
+        Set<ObjectProperty> msgPropS = new HashSet<>();
+        if (null != msgQA) {
+            for (var msgQ : msgQA) {
+                var p = model.qnToObjectProperty(msgQ);
+                if (null == p) {
+                    System.err.println("Property " + msgQ + " is not in model");
+                    return 1;
+                }
+                msgPropS.add(p);
+            }
+        }
+
         // Create mapping object from model, write to output
         try {
             final Mapping map;
             if (null != targetMap) {
-                map = Mapping.createOneNamespaceMapping(model, null, targetP, targetU);
+                map = Mapping.createOneNamespaceMapping(model, msgPropS, targetP, targetU, includeTypes);
             } else {
-                map = Mapping.createTemplate(model, "T", "http://example.com/YourTargetNSURI/");
-            }
-
-            // Suggested fix from original code: --types was parsed but not used.
-            // If Mapping has or gains an API for this, wire includeTypes into the
-            // mapping generation here.
-            if (includeTypes) {
-                // TODO: apply includeTypes to mapping generation when supported by Mapping API.
+                map = Mapping.createTemplate(model, msgPropS, "T", "http://example.com/YourTargetNSURI/", includeTypes);
             }
 
             if (outputPath != null) {

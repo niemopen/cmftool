@@ -23,85 +23,44 @@
  */
 package org.mitre.niem.translate;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonParser;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.Map;
-import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.XMLConstants;
 import nl.altindag.log.LogCaptor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.mitre.niem.cmf.AugmentRecord;
 import org.mitre.niem.cmf.ClassType;
+import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.cmf.Namespace;
+import org.mitre.niem.cmf.ObjectProperty;
 import org.mitre.niem.cmf.Property;
+import org.mitre.niem.cmf.PropertyAssociation;
+import org.mitre.niem.cmf.Union;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import static org.junit.jupiter.api.Assertions.*;
-import org.mitre.niem.cmf.ModelXMLReader;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mitre.niem.xml.XMLSchemaDocument.makeURI;
 
 @Execution(ExecutionMode.SAME_THREAD)
 class XMLMsgToJSONTest {
-    private final static Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private final static String resDN = "src/test/resources/";
 
-    private static final String NS = "urn:test:model";
-    private static final String XSI_NS = "http://www.w3.org/2001/XMLSchema-instance";
+    private static final String RES_DN = "src/test/resources/";
+    private static final String TEST_NS = "http://example.com/test/";
+    private static final String AUG_NS = "http://example.com/aug/";
 
-    private Model model;
-    private XMLMsgToJSON converter;
     private LogCaptor logCaptor;
-
-    private final Map<String, Property> propertiesByUri = new HashMap<>();
-    private final Map<String, Property> propertiesByQname = new HashMap<>();
-    private final Map<String, Namespace> namespacesByUri = new HashMap<>();
-
-    private ClassType rootClass;
 
     @BeforeEach
     void setUp() {
-        propertiesByUri.clear();
-        propertiesByQname.clear();
-        namespacesByUri.clear();
-
-        model = mock(Model.class);
-
-        when(model.uriToProperty(anyString()))
-            .thenAnswer(inv -> propertiesByUri.get(inv.getArgument(0, String.class)));
-
-        when(model.qnToProperty(anyString()))
-            .thenAnswer(inv -> propertiesByQname.get(inv.getArgument(0, String.class)));
-
-        when(model.namespaceObj(anyString()))
-            .thenAnswer(inv -> namespacesByUri.get(inv.getArgument(0, String.class)));
-
-        Namespace ns = mock(Namespace.class);
-        when(ns.isAugmentation(anyString())).thenReturn(false);
-        namespacesByUri.put(NS, ns);
-
-        rootClass = newClassType();
-        registerRootMessage("Message", "m:Message", rootClass);
-
-        converter = new XMLMsgToJSON(model);
-
         logCaptor = LogCaptor.forClass(XMLMsgToJSON.class);
         logCaptor.clearLogs();
     }
@@ -114,276 +73,633 @@ class XMLMsgToJSONTest {
     }
 
     @Test
-    public void testLiteral() throws Exception {
-        var rdr   = new ModelXMLReader();
-        var model = rdr.readFiles(new File(resDN, "literal.cmf"));        
-        var xmlF   = new File(resDN, "literal.xml");
-        var xmlIS  = new InputSource(new FileInputStream(xmlF));
-        var jsonW  = new StringWriter();
-        var tran   = new XMLMsgToJSON(model);
-        var jobj   = new JsonObject();
-        var status = tran.convert(xmlIS, jobj);
-        var jmsg   = gson.toJson(jobj);
-        
-        var m = jobj.getAsJsonObject("t:Message");
-        var na = m.getAsJsonArray("nc:PersonName");
-        var n1 = na.get(0).getAsJsonObject();
-        var gn = n1.getAsJsonObject("nc:PersonGivenName");
-        assertEquals("Peter", gn.getAsJsonPrimitive("nc:TextLiteral").getAsString());
-        assertEquals("foo", gn.getAsJsonPrimitive("nc:personNameCommentText").getAsString());
+    void testList() throws Exception {
+        var model = readModel("list.cmf");
+        var xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <t:ObjectElement
+              xmlns:t="http://example.com/Test/">
+              <t:SimpleElement>1 2 3</t:SimpleElement>
+              <t:SimpleElement>4 5</t:SimpleElement>
+              <t:ListDataElement>6 7 8</t:ListDataElement>
+              <t:ListDataElement>6 7 88</t:ListDataElement>
+              <t:ListObjectElement t:myAtt="foo">9 10 11</t:ListObjectElement>
+            </t:ObjectElement>
+            """;
+        var expected = """
+            {
+              "t:ObjectElement": {
+                "t:SimpleElement": [ "1 2 3", "4 5" ],
+                "t:ListDataElement": [
+                  [ 6, 7, 8 ],
+                  [ 6, 7, 88 ]
+                ],
+                "t:ListObjectElement": {
+                  "t:myAtt": "foo",
+                  "t:ListObjectLiteral": [ 9, 10, 11 ]
+                }
+              }
+            }
+            """;
+
+        var result = convert(model, xml);
+
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals(expected, result.json);
+        assertNoWarningsOrErrors();
     }
-    
+
     @Test
-    void convert_validSimpleDataProperty_returnsOkAndWritesPrimitive()
-        throws ParserConfigurationException, SAXException, IOException {
+    void testLiteral() throws Exception {
+        var model = readModel("literal.cmf");
+        var xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <t:Message
+             xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+             xmlns:t="http://example.com/test/">
+              <nc:PersonName>
+                <nc:PersonGivenName nc:personNameCommentText="foo">Peter</nc:PersonGivenName>
+                <nc:PersonMiddleName>Death</nc:PersonMiddleName>
+                <nc:PersonMiddleName>Bredon</nc:PersonMiddleName>
+                <nc:PersonSurName>Wimsey</nc:PersonSurName>
+              </nc:PersonName>
+            </t:Message>
+            """;
+        var expected = """
+            {
+              "t:Message": {
+                "nc:PersonName": [
+                  {
+                    "nc:PersonGivenName": {
+                      "nc:personNameCommentText": "foo",
+                      "nc:TextLiteral": "Peter"
+                    },
+                    "nc:PersonMiddleName": [
+                      { "nc:TextLiteral": "Death" },
+                      { "nc:TextLiteral": "Bredon" }
+                    ],
+                    "nc:PersonSurName": { "nc:TextLiteral": "Wimsey" }
+                  }
+                ]
+              }
+            }
+            """;
 
-        Datatype stringType = newDatatype("TextType", "string");
-        registerDataProperty(NS, "Text", "m:Text", rootClass, stringType, false);
+        var result = convert(model, xml);
 
-        JsonObject json = new JsonObject();
-        int status = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\">" +
-                "<m:Text>Hello</m:Text>" +
-            "</m:Message>"
-        ), json);
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals(expected, result.json);
+        assertNoWarningsOrErrors();
+    }
 
-        assertEquals(XMLMsgToJSON.CONVERT_OK, status);
-        assertTrue(json.has("m:Message"));
+    @Test
+    void testUnknownElementIsIgnoredAndSetsWarnStatus() throws Exception {
+        var model = readModel("list.cmf");
+        var xml = """
+            <t:ObjectElement xmlns:t="http://example.com/Test/">
+              <t:UnknownElement>
+                <t:ListObjectElement t:myAtt="nope">1 2</t:ListObjectElement>
+              </t:UnknownElement>
+              <t:ListObjectElement t:myAtt="foo">9 10 11</t:ListObjectElement>
+            </t:ObjectElement>
+            """;
+        var expected = """
+            {
+              "t:ObjectElement": {
+                "t:ListObjectElement": {
+                  "t:myAtt": "foo",
+                  "t:ListObjectLiteral": [ 9, 10, 11 ]
+                }
+              }
+            }
+            """;
 
-        JsonObject root = json.get("m:Message").getAsJsonObject();
-        assertEquals("Hello", root.get("m:Text").getAsString());
+        var result = convert(model, xml);
+
+        assertEquals(XMLMsgToJSON.CONVERT_WARN, result.status);
+        assertJsonEquals(expected, result.json);
+        assertWarnLogged("unknown element t:UnknownElement");
+        assertNoErrors();
+    }
+
+    @Test
+    void testUnknownAttributeIsIgnoredAndSetsWarnStatus() throws Exception {
+        var model = readModel("list.cmf");
+        var xml = """
+            <t:ObjectElement xmlns:t="http://example.com/Test/">
+              <t:ListObjectElement t:bogus="x">9 10 11</t:ListObjectElement>
+            </t:ObjectElement>
+            """;
+        var expected = """
+            {
+              "t:ObjectElement": {
+                "t:ListObjectElement": {
+                  "t:ListObjectLiteral": [ 9, 10, 11 ]
+                }
+              }
+            }
+            """;
+
+        var result = convert(model, xml);
+
+        assertEquals(XMLMsgToJSON.CONVERT_WARN, result.status);
+        assertJsonEquals(expected, result.json);
+        assertWarnLogged("unknown attribute t:bogus");
+        assertNoErrors();
+    }
+
+    @Test
+    void testXsiNilAttributeIsIgnoredWithoutWarning() throws Exception {
+        var model = readModel("list.cmf");
+        var xml = """
+            <t:ObjectElement
+              xmlns:t="http://example.com/Test/"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+              <t:ListObjectElement xsi:nil="true">9 10 11</t:ListObjectElement>
+            </t:ObjectElement>
+            """;
+        var expected = """
+            {
+              "t:ObjectElement": {
+                "t:ListObjectElement": {
+                  "t:ListObjectLiteral": [ 9, 10, 11 ]
+                }
+              }
+            }
+            """;
+
+        var result = convert(model, xml);
+
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals(expected, result.json);
+        assertNoWarningsOrErrors();
+    }
+
+    @Test
+    void testInteriorXmlBaseLogsWarningAndIsIgnored() throws Exception {
+        var model = readModel("list.cmf");
+        var xml = """
+            <t:ObjectElement xmlns:t="http://example.com/Test/">
+              <t:ListObjectElement xml:base="http://example.org/base/" t:myAtt="foo">9 10 11</t:ListObjectElement>
+            </t:ObjectElement>
+            """;
+        var expected = """
+            {
+              "t:ObjectElement": {
+                "t:ListObjectElement": {
+                  "t:myAtt": "foo",
+                  "t:ListObjectLiteral": [ 9, 10, 11 ]
+                }
+              }
+            }
+            """;
+
+        var result = convert(model, xml);
+
+        assertEquals(XMLMsgToJSON.CONVERT_WARN, result.status);
+        assertJsonEquals(expected, result.json);
+        assertWarnLogged("xml:base on interior element");
+        assertNoErrors();
+    }
+
+    @Test
+    void testOutputUsesModelQNameNotInputPrefix() throws Exception {
+        var model = readModel("list.cmf");
+        var xml = """
+            <x:ObjectElement xmlns:x="http://example.com/Test/">
+              <x:ListObjectElement>9 10</x:ListObjectElement>
+            </x:ObjectElement>
+            """;
+        var expected = """
+            {
+              "t:ObjectElement": {
+                "t:ListObjectElement": {
+                  "t:ListObjectLiteral": [ 9, 10 ]
+                }
+              }
+            }
+            """;
+
+        var result = convert(model, xml);
+
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals(expected, result.json);
+        assertNoWarningsOrErrors();
+    }
+
+    @Test
+    void testConverterCanBeReusedForMultipleMessages() throws Exception {
+        var model = readModel("list.cmf");
+        var tran = new XMLMsgToJSON(model);
+
+        var result1 = convert(tran, """
+            <t:ObjectElement xmlns:t="http://example.com/Test/">
+              <t:ListObjectElement>1 2</t:ListObjectElement>
+            </t:ObjectElement>
+            """);
+
+        var result2 = convert(tran, """
+            <t:ObjectElement xmlns:t="http://example.com/Test/">
+              <t:ListObjectElement>3 4 5</t:ListObjectElement>
+            </t:ObjectElement>
+            """);
+
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result1.status);
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result2.status);
+
+        assertJsonEquals("""
+            {
+              "t:ObjectElement": {
+                "t:ListObjectElement": {
+                  "t:ListObjectLiteral": [ 1, 2 ]
+                }
+              }
+            }
+            """, result1.json);
+
+        assertJsonEquals("""
+            {
+              "t:ObjectElement": {
+                "t:ListObjectElement": {
+                  "t:ListObjectLiteral": [ 3, 4, 5 ]
+                }
+              }
+            }
+            """, result2.json);
 
         assertNoWarningsOrErrors();
     }
 
     @Test
-    void convert_nestedObjectProperty_buildsNestedJsonObject()
-        throws ParserConfigurationException, SAXException, IOException {
+    void testMalformedXmlThrowsSAXException() throws Exception {
+        var model = readModel("list.cmf");
+        var tran = new XMLMsgToJSON(model);
+        var out = new JsonObject();
+        var xml = new InputSource(new StringReader("""
+            <t:ObjectElement xmlns:t="http://example.com/Test/">
+              <t:ListObjectElement>1 2</t:ListObjectElement>
+            """));
 
-        Datatype stringType = newDatatype("TextType", "string");
-        ClassType addressClass = newClassType();
+        assertThrows(SAXException.class, () -> tran.convert(xml, out));
+    }
 
-        registerObjectProperty(NS, "Address", "m:Address", rootClass, addressClass, false);
-        registerDataProperty(NS, "Street", "m:Street", addressClass, stringType, false);
+    @Test
+    void testBooleanTrueFalseOneZeroConvertCorrectly() throws Exception {
+        var parts = createBaseModel();
+        var xsBoolean = addXsdDatatype(parts, "boolean");
+        addDataProperty(parts.messageType, parts.tNs, "Flag", xsBoolean, "1");
 
-        JsonObject json = new JsonObject();
-        int status = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\">" +
-                "<m:Address>" +
-                    "<m:Street>Main St</m:Street>" +
-                "</m:Address>" +
-            "</m:Message>"
-        ), json);
+        logCaptor.clearLogs();
+        var resultTrue = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Flag>true</t:Flag>
+            </t:Message>
+            """);
+        assertEquals(XMLMsgToJSON.CONVERT_OK, resultTrue.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Flag": true
+              }
+            }
+            """, resultTrue.json);
+        assertNoWarningsOrErrors();
 
-        assertEquals(XMLMsgToJSON.CONVERT_OK, status);
+        logCaptor.clearLogs();
+        var resultFalse = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Flag>false</t:Flag>
+            </t:Message>
+            """);
+        assertEquals(XMLMsgToJSON.CONVERT_OK, resultFalse.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Flag": false
+              }
+            }
+            """, resultFalse.json);
+        assertNoWarningsOrErrors();
 
-        JsonObject root = json.get("m:Message").getAsJsonObject();
-        JsonObject address = root.get("m:Address").getAsJsonObject();
-        assertEquals("Main St", address.get("m:Street").getAsString());
+        logCaptor.clearLogs();
+        var resultOne = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Flag>1</t:Flag>
+            </t:Message>
+            """);
+        assertEquals(XMLMsgToJSON.CONVERT_OK, resultOne.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Flag": true
+              }
+            }
+            """, resultOne.json);
+        assertNoWarningsOrErrors();
 
+        logCaptor.clearLogs();
+        var resultZero = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Flag>0</t:Flag>
+            </t:Message>
+            """);
+        assertEquals(XMLMsgToJSON.CONVERT_OK, resultZero.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Flag": false
+              }
+            }
+            """, resultZero.json);
         assertNoWarningsOrErrors();
     }
 
     @Test
-    void convert_repeatableProperty_writesJsonArray()
-        throws ParserConfigurationException, SAXException, IOException {
+    void testInvalidBooleanWarnsAndDefaultsFalse() throws Exception {
+        var parts = createBaseModel();
+        var xsBoolean = addXsdDatatype(parts, "boolean");
+        addDataProperty(parts.messageType, parts.tNs, "Flag", xsBoolean, "1");
 
-        Datatype stringType = newDatatype("TextType", "string");
-        registerDataProperty(NS, "Text", "m:Text", rootClass, stringType, true);
+        var result = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Flag>maybe</t:Flag>
+            </t:Message>
+            """);
 
-        JsonObject json = new JsonObject();
-        int status = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\">" +
-                "<m:Text>A</m:Text>" +
-                "<m:Text>B</m:Text>" +
-            "</m:Message>"
-        ), json);
-
-        assertEquals(XMLMsgToJSON.CONVERT_OK, status);
-
-        JsonObject root = json.get("m:Message").getAsJsonObject();
-        JsonArray textArray = root.get("m:Text").getAsJsonArray();
-
-        assertEquals(2, textArray.size());
-        assertEquals("A", textArray.get(0).getAsString());
-        assertEquals("B", textArray.get(1).getAsString());
-
-        assertNoWarningsOrErrors();
-    }
-
-    @Test
-    void convert_numericDataProperty_writesJsonNumber()
-        throws ParserConfigurationException, SAXException, IOException {
-
-        Datatype intType = newDatatype("IntType", "int");
-        registerDataProperty(NS, "Count", "m:Count", rootClass, intType, false);
-
-        JsonObject json = new JsonObject();
-        int status = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\">" +
-                "<m:Count>42</m:Count>" +
-            "</m:Message>"
-        ), json);
-
-        assertEquals(XMLMsgToJSON.CONVERT_OK, status);
-
-        JsonPrimitive value = json.get("m:Message").getAsJsonObject()
-            .get("m:Count").getAsJsonPrimitive();
-
-        assertTrue(value.isNumber());
-        assertEquals(42, value.getAsInt());
-
-        assertNoWarningsOrErrors();
-    }
-
-    @Test
-    void convert_booleanDataProperty_writesJsonBoolean()
-        throws ParserConfigurationException, SAXException, IOException {
-
-        Datatype booleanType = newDatatype("BooleanType", "boolean");
-        registerDataProperty(NS, "Flag", "m:Flag", rootClass, booleanType, false);
-
-        JsonObject json = new JsonObject();
-        int status = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\">" +
-                "<m:Flag>true</m:Flag>" +
-            "</m:Message>"
-        ), json);
-
-        assertEquals(XMLMsgToJSON.CONVERT_OK, status);
-
-        JsonPrimitive value = json.get("m:Message").getAsJsonObject()
-            .get("m:Flag").getAsJsonPrimitive();
-
-        assertTrue(value.isBoolean());
-        assertTrue(value.getAsBoolean());
-
-        assertNoWarningsOrErrors();
-    }
-
-    @Test
-    void convert_invalidBoolean_returnsWarnAndWritesFalse()
-        throws ParserConfigurationException, SAXException, IOException {
-
-        Datatype booleanType = newDatatype("BooleanType", "boolean");
-        registerDataProperty(NS, "Flag", "m:Flag", rootClass, booleanType, false);
-
-        JsonObject json = new JsonObject();
-        int status = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\">" +
-                "<m:Flag>maybe</m:Flag>" +
-            "</m:Message>"
-        ), json);
-
-        assertEquals(XMLMsgToJSON.CONVERT_WARN, status);
-
-        JsonPrimitive value = json.get("m:Message").getAsJsonObject()
-            .get("m:Flag").getAsJsonPrimitive();
-
-        assertTrue(value.isBoolean());
-        assertFalse(value.getAsBoolean());
-
+        assertEquals(XMLMsgToJSON.CONVERT_WARN, result.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Flag": false
+              }
+            }
+            """, result.json);
         assertWarnLogged("is not a valid xs:boolean");
         assertNoErrors();
     }
 
     @Test
-    void convert_usesModelQNamesNotInputPrefixes()
-        throws ParserConfigurationException, SAXException, IOException {
+    void testNumericDatatypeProducesJsonNumber() throws Exception {
+        var parts = createBaseModel();
+        var xsInt = addXsdDatatype(parts, "int");
+        addDataProperty(parts.messageType, parts.tNs, "Count", xsInt, "1");
 
-        Datatype stringType = newDatatype("TextType", "string");
-        registerDataProperty(NS, "Text", "m:Text", rootClass, stringType, false);
+        var result = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Count>42</t:Count>
+            </t:Message>
+            """);
 
-        JsonObject json = new JsonObject();
-        int status = converter.convert(input(
-            "<x:Message xmlns:x=\"" + NS + "\" xmlns:y=\"" + NS + "\">" +
-                "<y:Text>Hello</y:Text>" +
-            "</x:Message>"
-        ), json);
-
-        assertEquals(XMLMsgToJSON.CONVERT_OK, status);
-        assertTrue(json.has("m:Message"));
-        assertFalse(json.has("x:Message"));
-
-        JsonObject root = json.get("m:Message").getAsJsonObject();
-        assertTrue(root.has("m:Text"));
-        assertFalse(root.has("y:Text"));
-        assertEquals("Hello", root.get("m:Text").getAsString());
-
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Count": 42
+              }
+            }
+            """, result.json);
         assertNoWarningsOrErrors();
     }
 
     @Test
-    void convert_unknownElementOutsideAdapter_isIgnoredAndReturnsWarn()
-        throws ParserConfigurationException, SAXException, IOException {
+    void testUnionWithNumericMemberAndNumericLexicalValueProducesNumber() throws Exception {
+        var parts = createBaseModel();
+        var xsString = addXsdDatatype(parts, "string");
+        var xsDecimal = addXsdDatatype(parts, "decimal");
 
-        Datatype stringType = newDatatype("TextType", "string");
-        registerDataProperty(NS, "Text", "m:Text", rootClass, stringType, false);
+        var union = new Union(parts.tNs, "NumberishUnionType");
+        union.addMember(xsString);
+        union.addMember(xsDecimal);
+        parts.model.addDatatype(union);
 
-        JsonObject json = new JsonObject();
-        int status = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\">" +
-                "<m:Text>ok</m:Text>" +
-                "<m:Unknown>ignore me</m:Unknown>" +
-            "</m:Message>"
-        ), json);
+        addDataProperty(parts.messageType, parts.tNs, "Value", union, "1");
 
-        assertEquals(XMLMsgToJSON.CONVERT_WARN, status);
+        var result = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Value>12.34</t:Value>
+            </t:Message>
+            """);
 
-        JsonObject root = json.get("m:Message").getAsJsonObject();
-        assertEquals("ok", root.get("m:Text").getAsString());
-        assertFalse(root.has("m:Unknown"));
-
-        assertWarnLogged("unknown element");
-        assertNoErrors();
-    }
-
-    @Test
-    void convert_xsiNil_isIgnoredWithoutWarning()
-        throws ParserConfigurationException, SAXException, IOException {
-
-        Datatype stringType = newDatatype("TextType", "string");
-        registerDataProperty(NS, "Text", "m:Text", rootClass, stringType, false);
-
-        JsonObject json = new JsonObject();
-        int status = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\" xmlns:xsi=\"" + XSI_NS + "\">" +
-                "<m:Text xsi:nil=\"true\"/>" +
-            "</m:Message>"
-        ), json);
-
-        assertEquals(XMLMsgToJSON.CONVERT_OK, status);
-
-        JsonObject root = json.get("m:Message").getAsJsonObject();
-        assertTrue(root.has("m:Text"));
-        assertEquals("", root.get("m:Text").getAsString());
-
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Value": 12.34
+              }
+            }
+            """, result.json);
         assertNoWarningsOrErrors();
     }
 
     @Test
-    void convert_reusedInstanceAfterWarning_shouldResetStatusPerConversion()
-        throws ParserConfigurationException, SAXException, IOException {
+    void testUnionWithNumericMemberAndNonNumericLexicalValueProducesString() throws Exception {
+        var parts = createBaseModel();
+        var xsString = addXsdDatatype(parts, "string");
+        var xsDecimal = addXsdDatatype(parts, "decimal");
 
-        Datatype stringType = newDatatype("TextType", "string");
-        registerDataProperty(NS, "Text", "m:Text", rootClass, stringType, false);
+        var union = new Union(parts.tNs, "NumberishUnionType");
+        union.addMember(xsString);
+        union.addMember(xsDecimal);
+        parts.model.addDatatype(union);
 
-        JsonObject first = new JsonObject();
-        int firstStatus = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\">" +
-                "<m:Unknown>bad</m:Unknown>" +
-            "</m:Message>"
-        ), first);
+        addDataProperty(parts.messageType, parts.tNs, "Value", union, "1");
 
-        JsonObject second = new JsonObject();
-        int secondStatus = converter.convert(input(
-            "<m:Message xmlns:m=\"" + NS + "\">" +
-                "<m:Text>good</m:Text>" +
-            "</m:Message>"
-        ), second);
+        var result = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Value>ABC</t:Value>
+            </t:Message>
+            """);
 
-        assertEquals(XMLMsgToJSON.CONVERT_WARN, firstStatus);
-        assertEquals(XMLMsgToJSON.CONVERT_OK, secondStatus);
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Value": "ABC"
+              }
+            }
+            """, result.json);
+        assertNoWarningsOrErrors();
+    }
+
+    @Test
+    void testCodeTypeRemainsStringEvenIfNumericLooking() throws Exception {
+        var parts = createBaseModel();
+        var codeType = new Datatype(parts.tNs, "CountryCodeType");
+        parts.model.addDatatype(codeType);
+        addDataProperty(parts.messageType, parts.tNs, "CountryCode", codeType, "1");
+
+        var result = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:CountryCode>123</t:CountryCode>
+            </t:Message>
+            """);
+
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:CountryCode": "123"
+              }
+            }
+            """, result.json);
+        assertNoWarningsOrErrors();
+    }
+
+    @Test
+    void testSingleOccurrenceOfRepeatablePropertyStillCreatesArray() throws Exception {
+        var parts = createBaseModel();
+        var xsString = addXsdDatatype(parts, "string");
+        addDataProperty(parts.messageType, parts.tNs, "Item", xsString, "2");
+
+        var result = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Item>only</t:Item>
+            </t:Message>
+            """);
+
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Item": [ "only" ]
+              }
+            }
+            """, result.json);
+        assertNoWarningsOrErrors();
+    }
+
+    @Test
+    void testReferenceAttributeCreatesArrayOfIdObjects() throws Exception {
+        var parts = createBaseModel();
+
+        var holderType = new ClassType(parts.tNs, "HolderType");
+        parts.model.addClassType(holderType);
+        addObjectProperty(parts.messageType, parts.tNs, "Holder", holderType, "1");
+
+        var xsString = addXsdDatatype(parts, "string");
+
+        var fooProp = new DataProperty(parts.tNs, "Foo");
+        fooProp.setDatatype(xsString);
+        parts.model.addProperty(fooProp);
+
+        var fooRefAttr = new DataProperty(parts.tNs, "fooRef");
+        fooRefAttr.setIsAttribute(true);
+        fooRefAttr.setIsRefAttribute(true);
+        fooRefAttr.setDatatype(xsString);
+        parts.model.addProperty(fooRefAttr);
+
+        var result = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Holder t:fooRef="id1 id2"/>
+            </t:Message>
+            """);
+
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Holder": {
+                  "t:Foo": [
+                    { "@id": "#id1" },
+                    { "@id": "#id2" }
+                  ]
+                }
+              }
+            }
+            """, result.json);
+        assertNoWarningsOrErrors();
+    }
+
+    @Test
+    void testRelationshipPropertiesMovedUnderAnnotation() throws Exception {
+        var parts = createBaseModel();
+        var xsString = addXsdDatatype(parts, "string");
+
+        var holderType = new ClassType(parts.tNs, "HolderType");
+        parts.model.addClassType(holderType);
+        addObjectProperty(parts.messageType, parts.tNs, "Holder", holderType, "1");
+
+        var relatedType = addLiteralClass(parts.tNs, "RelatedType", "RelatedLiteral", xsString);
+        var relatedProp = addObjectProperty(holderType, parts.tNs, "RelatedItem", relatedType, "1");
+        relatedProp.setIsRelationship(true);
+
+        var result = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/">
+              <t:Holder>
+                <t:RelatedItem>abc</t:RelatedItem>
+              </t:Holder>
+            </t:Message>
+            """);
+
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "t:Holder": {
+                  "@annotation": {
+                    "t:RelatedItem": {
+                      "t:RelatedLiteral": "abc"
+                    }
+                  }
+                }
+              }
+            }
+            """, result.json);
+        assertNoWarningsOrErrors();
+    }
+
+    @Test
+    void testAugmentationElementMergesChildrenIntoParent() throws Exception {
+        var parts = createBaseModel();
+        var xsString = addXsdDatatype(parts, "string");
+
+        var augNs = new Namespace("a", AUG_NS);
+        parts.model.addNamespace(augNs);
+
+        var extra = new DataProperty(augNs, "Extra");
+        extra.setDatatype(xsString);
+        parts.model.addProperty(extra);
+
+        var ar = new AugmentRecord();
+        ar.setClassType(parts.messageType);
+        augNs.addAugmentRecord(ar);
+
+        var result = convert(parts.model, """
+            <t:Message xmlns:t="http://example.com/test/" xmlns:a="http://example.com/aug/">
+              <a:MessageAugmentation>
+                <a:Extra>foo</a:Extra>
+              </a:MessageAugmentation>
+            </t:Message>
+            """);
+
+        assertEquals(XMLMsgToJSON.CONVERT_OK, result.status);
+        assertJsonEquals("""
+            {
+              "t:Message": {
+                "a:Extra": "foo"
+              }
+            }
+            """, result.json);
+        assertNoWarningsOrErrors();
+    }
+
+    private Model readModel(String cmfName) throws Exception {
+        return new ModelXMLReader().readFiles(new File(RES_DN, cmfName));
+    }
+
+    private ConversionResult convert(Model model, String xml) throws Exception {
+        return convert(new XMLMsgToJSON(model), xml);
+    }
+
+    private ConversionResult convert(XMLMsgToJSON tran, String xml) throws Exception {
+        var xmlIS = new InputSource(new StringReader(xml));
+        var jobj = new JsonObject();
+        var status = tran.convert(xmlIS, jobj);
+        return new ConversionResult(status, jobj);
+    }
+
+    private void assertJsonEquals(String expected, JsonObject actual) {
+        assertEquals(JsonParser.parseString(expected).getAsJsonObject(), actual);
     }
 
     private void assertWarnLogged(String expectedFragment) {
@@ -411,94 +727,83 @@ class XMLMsgToJSONTest {
         );
     }
 
-    private void registerRootMessage(String localName, String qname, ClassType classType) {
-        Property p = newProperty(qname);
-        when(p.isObjectProperty()).thenReturn(true);
-        when(p.isDataProperty()).thenReturn(false);
-        when(p.classType()).thenReturn(classType);
+    private TestModelParts createBaseModel() throws Exception {
+        var parts = new TestModelParts();
+        parts.model = new Model();
+        parts.tNs = new Namespace("t", TEST_NS);
+        parts.model.addNamespace(parts.tNs);
 
-        propertiesByUri.put(makeURI(NS, localName), p);
-        propertiesByQname.put(qname, p);
+        parts.xsNs = parts.model.namespaceObj(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        assertNotNull(parts.xsNs);
+
+        parts.messageType = new ClassType(parts.tNs, "MessageType");
+        parts.model.addClassType(parts.messageType);
+
+        parts.messageProp = new ObjectProperty(parts.tNs, "Message");
+        parts.messageProp.setClassType(parts.messageType);
+        parts.model.addProperty(parts.messageProp);
+
+        return parts;
     }
 
-    private Property registerDataProperty(
-        String ns,
-        String localName,
-        String qname,
-        ClassType parentType,
-        Datatype datatype,
-        boolean repeatable
-    ) {
-        Property p = newProperty(qname);
-        when(p.isDataProperty()).thenReturn(true);
-        when(p.isObjectProperty()).thenReturn(false);
-        when(p.datatype()).thenReturn(datatype);
-
-        propertiesByUri.put(makeURI(ns, localName), p);
-        propertiesByQname.put(qname, p);
-
-        when(parentType.isRepeatableProperty(p)).thenReturn(repeatable);
-        return p;
-    }
-
-    private Property registerObjectProperty(
-        String ns,
-        String localName,
-        String qname,
-        ClassType parentType,
-        ClassType childType,
-        boolean repeatable
-    ) {
-        Property p = newProperty(qname);
-        when(p.isObjectProperty()).thenReturn(true);
-        when(p.isDataProperty()).thenReturn(false);
-        when(p.classType()).thenReturn(childType);
-
-        propertiesByUri.put(makeURI(ns, localName), p);
-        propertiesByQname.put(qname, p);
-
-        when(parentType.isRepeatableProperty(p)).thenReturn(repeatable);
-        return p;
-    }
-
-    private Property newProperty(String qname) {
-        Property p = mock(Property.class);
-        when(p.qname()).thenReturn(qname);
-        when(p.isAttribute()).thenReturn(false);
-        when(p.isRefAttribute()).thenReturn(false);
-        when(p.isRelationship()).thenReturn(false);
-        when(p.isObjectProperty()).thenReturn(false);
-        when(p.isDataProperty()).thenReturn(false);
-        when(p.classType()).thenReturn(null);
-        when(p.datatype()).thenReturn(null);
-        return p;
-    }
-
-    private ClassType newClassType() {
-        ClassType ct = mock(ClassType.class);
-        when(ct.subClassOf()).thenReturn(null);
-        when(ct.literalDataProperty()).thenReturn(null);
-        when(ct.hasXmlLang()).thenReturn(false);
-        when(ct.isAdapterClass()).thenReturn(false);
-        return ct;
-    }
-
-    private Datatype newDatatype(String typeName, String baseName) {
-        Datatype dt = mock(Datatype.class);
-        when(dt.name()).thenReturn(typeName);
-        when(dt.facetL()).thenReturn(null);
-        when(dt.getType()).thenReturn(-1);
-
-        Datatype base = mock(Datatype.class);
-        when(base.name()).thenReturn(baseName);
-        when(dt.baseXS()).thenReturn(base);
-
+    private Datatype addXsdDatatype(TestModelParts parts, String localName) {
+        var dt = new Datatype(parts.xsNs, localName);
+        parts.model.addDatatype(dt);
         return dt;
     }
 
-    private InputSource input(String xml) {
-        InputSource src = new InputSource(new StringReader(xml));
-        src.setSystemId("memory:test.xml");
-        return src;
+    private DataProperty addDataProperty(ClassType owner, Namespace ns, String localName, Datatype datatype, String maxOccurs) {
+        var prop = new DataProperty(ns, localName);
+        prop.setDatatype(datatype);
+        owner.model().addProperty(prop);
+        associate(owner, prop, maxOccurs);
+        return prop;
+    }
+
+    private ObjectProperty addObjectProperty(ClassType owner, Namespace ns, String localName, ClassType type, String maxOccurs) {
+        var prop = new ObjectProperty(ns, localName);
+        prop.setClassType(type);
+        owner.model().addProperty(prop);
+        associate(owner, prop, maxOccurs);
+        return prop;
+    }
+
+    private ClassType addLiteralClass(Namespace ns, String className, String literalPropName, Datatype literalDatatype) {
+        var model = literalDatatype.model();
+        var ct = new ClassType(ns, className);
+        model.addClassType(ct);
+
+        var literal = new DataProperty(ns, literalPropName);
+        literal.setDatatype(literalDatatype);
+        model.addProperty(literal);
+
+        associate(ct, literal, "1");
+        return ct;
+    }
+
+    private void associate(ClassType owner, Property prop, String maxOccurs) {
+        var pa = new PropertyAssociation();
+        pa.setProperty(prop);
+        pa.setMaxOccurs(maxOccurs);
+        owner.addPropertyAssociation(pa);
+    }
+
+    private static final class ConversionResult {
+        final int status;
+        final JsonObject json;
+
+        ConversionResult(int status, JsonObject json) {
+            this.status = status;
+            this.json = json;
+        }
+    }
+
+    private static final class TestModelParts {
+        Model model;
+        Namespace tNs;
+        Namespace xsNs;
+        ClassType messageType;
+        ObjectProperty messageProp;
     }
 }
+

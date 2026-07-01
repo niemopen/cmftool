@@ -131,7 +131,7 @@ public class ModelToRDF {
             if (null != ct.definition()) {
                 ow.write(" ;\n    rdfs:comment \"" + ct.definition() + "\"");               
             }
-            for (PropertyAssociation hp : ct.propL()) {
+            for (PropertyAssociation hp : ct.propAssocL()) {
                 if (0 < hp.minOccursVal()) {
                     ow.write(" ;\n    owl:subclassOf [");
                     ow.write("\n        a owl:Restriction");

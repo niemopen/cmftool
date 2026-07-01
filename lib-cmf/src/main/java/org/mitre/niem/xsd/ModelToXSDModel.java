@@ -36,7 +36,6 @@ import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.mitre.niem.cmf.AugmentRecord;
 import static org.mitre.niem.cmf.CMFObject.CMF_LIST;
 import static org.mitre.niem.cmf.CMFObject.CMF_RESTRICTION;
 import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
@@ -44,20 +43,15 @@ import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
-import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.Model;
-import static org.mitre.niem.cmf.Model.uriToName;
 import org.mitre.niem.cmf.Namespace;
 import org.mitre.niem.cmf.NamespaceMap;
 import org.mitre.niem.cmf.Property;
 import org.mitre.niem.cmf.Restriction;
-import org.mitre.niem.cmf.Union;
-import static org.mitre.niem.utility.IndefiniteArticle.articalize;
 import org.mitre.niem.utility.MapToSet;
 import static org.mitre.niem.utility.StringUtils.listToString;
 import static org.mitre.niem.utility.StringUtils.replaceSuffix;
 import static org.mitre.niem.utility.StringUtils.setToString;
-import static org.mitre.niem.xml.XMLDocument.makeQN;
 import org.mitre.niem.xml.XMLSchemaDocument;
 import org.mitre.niem.xml.XSDWriter;
 import static org.mitre.niem.xsd.NamespaceKind.versionToCtNsURI;
@@ -205,7 +199,7 @@ public class ModelToXSDModel extends ModelToXSD {
         exE.setAttribute("base", baseQ);
         
         // Process object properties
-        for (var pa : ct.propL()) {
+        for (var pa : ct.propAssocL()) {
             Element pE;
             var p = pa.property();
             if (p.isAttribute()) {
@@ -290,8 +284,8 @@ public class ModelToXSDModel extends ModelToXSD {
         ctE.appendChild(scE);
 
         // Add all the attribute references to xs:extension
-        for (int i = 0; i < ct.propL().size(); i++) {
-            var pa = ct.propL().get(i);
+        for (int i = 0; i < ct.propAssocL().size(); i++) {
+            var pa = ct.propAssocL().get(i);
             var atE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:attribute");
             var dp  = (DataProperty)pa.property();
             if (!dp.isAttribute()) continue;

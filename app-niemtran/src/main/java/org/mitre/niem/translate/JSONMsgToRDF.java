@@ -28,6 +28,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
 import java.io.Reader;
@@ -171,6 +172,10 @@ public class JSONMsgToRDF {
                 }
                 if ("@type".equals(key)) {
                     continue;
+                }
+                if ("@id".equals(key) && val.isJsonPrimitive() && val.getAsString().startsWith("#")) {
+                    var nval = "_:" + val.getAsString().substring(1);
+                    e.setValue(new JsonPrimitive(nval));
                 }
                 if (null != nModel) {
                     var kI = expandCompactIRI(cxtO, key);

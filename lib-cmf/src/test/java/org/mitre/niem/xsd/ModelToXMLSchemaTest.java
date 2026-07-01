@@ -83,16 +83,16 @@ public class ModelToXMLSchemaTest {
       });
     }
     
-//    @Test
-//    public void testOne () throws Exception {
-//        var fnam = "augment";
-//        var cmF  = new File(resCDN, fnam + ".cmf");
-//        var rdr  = new ModelXMLReader();
-//        var m    = rdr.readFiles(cmF);
-//        var mtx  = new NewModelToXMLSchema(m);
-//        var outD = new File(tmpD, "msg.xsd");
-//        mtx.writeModelXSD(outD);
-//    }
+    @Test
+    public void testOne () throws Exception {
+        var fnam = "augment";
+        var cmF  = new File("../app-niemtran/src/test/resources/refs.cmf");
+        var rdr  = new ModelXMLReader();
+        var m    = rdr.readFiles(cmF);
+        var mtx  = new ModelToXMLSchema(m);
+        var outD = new File(tmpD, "msg.xsd");
+        mtx.writeModelXSD(outD);
+    }
     
     @Test
     public void testAny () throws Exception {

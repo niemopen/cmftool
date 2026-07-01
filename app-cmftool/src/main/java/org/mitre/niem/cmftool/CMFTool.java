@@ -59,7 +59,7 @@ public class CMFTool implements Runnable {
         cmd.addSubcommand("m2map", new CmdCMFtoMapping());
         cmd.addSubcommand("m2context", new CmdCMFtoContext());
         cmd.addSubcommand("mval", new CmdCMFValidate());
-        cmd.addSubcommand("xval", new CmdXSDValidate());
+//        cmd.addSubcommand("xval", new CmdXSDValidate());
         cmd.addSubcommand("xcanon", new CmdXSDCanonicalize());
         cmd.addSubcommand("help", new CommandHelp());
 

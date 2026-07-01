@@ -72,7 +72,7 @@ public class ReferenceGraph {
         var ns  = ct.namespace();
         var sub = ct.subClassOf();
         if (null != sub) addRef(ns, sub.namespace()); 
-        for (var pa : ct.propL()) {
+        for (var pa : ct.propAssocL()) {
             addRef(ns, pa.property().namespace());
         }
     }

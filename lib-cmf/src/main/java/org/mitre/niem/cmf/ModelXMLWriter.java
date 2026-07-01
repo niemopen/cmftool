@@ -167,7 +167,7 @@ public class ModelXMLWriter {
         appendOptionalIndicator(doc, c, "AbstractIndicator", x.isAbstract());
         appendComponentReference(doc, c, "SubClassOf", x.subClassOf(), nsS);
         appendSimpleChild(doc, c, "ReferenceCode", x.referenceCode());
-        for (var cpa : x.propL()) appendPropertyAssociation(doc, c, cpa, nsS);
+        for (var cpa : x.propAssocL()) appendPropertyAssociation(doc, c, cpa, nsS);
         for (var ap : x.anyL()) appendAnyProperty(doc, c, ap, nsS);
     }
     

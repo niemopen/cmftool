@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
+import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.Union;
 import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
@@ -242,6 +243,10 @@ public class XMLMsgToJSON {
                     }
                     obj.add(rpQ, refA);                    
                 }
+                // Ignore xml:base at this point
+                else if ("xml:base".equals(aQ)) {
+                    
+                }
                 // Unknown attribute, or it's an object property (how??)
                 else if (null == aP || !aP.isAttribute()) {
                     if (adaptF)
@@ -300,7 +305,7 @@ public class XMLMsgToJSON {
                 while (null != ct.subClassOf()) ct = ct.subClassOf();
                 var lp = ct.literalDataProperty();
                 if (null != lp) {
-                    var valE = valuePrimitive(lp.datatype(), cval);
+                    var valE = valueElement(lp.datatype(), cval);
                     obj.add(lp.qname(), valE);
                     isPrim = true;
                 }
@@ -323,7 +328,7 @@ public class XMLMsgToJSON {
             if (obj.entrySet().isEmpty()) {
                 if (null == p) value = new JsonPrimitive(cval); // unknown property; it's a string
                 else if (p.isDataProperty()) 
-                    value = valuePrimitive(p.datatype(), cval); // decide from property base type
+                    value = valueElement(p.datatype(), cval); // decide from property base type
                 
                 // Check for a literal data property
                 else {
@@ -332,7 +337,7 @@ public class XMLMsgToJSON {
                         ct = ct.subClassOf();
                     var lp = ct.literalDataProperty();
                     if (null == lp) return;                         // empty element; do nothing
-                    var lv = valuePrimitive(lp.datatype(), cval);   // add literal data property
+                    var lv = valueElement(lp.datatype(), cval);   // add literal data property
                     obj.add(lp.qname(), lv);
                 }            
             }
@@ -422,8 +427,9 @@ public class XMLMsgToJSON {
         // * string for all code types
         // * boolean for xs:boolean
         // * number for xs:double, xs:float, xs:decimal and derived types
+        // * array for a list type
         // * string for everything else
-        public JsonPrimitive valuePrimitive (Datatype dt, String val) {
+        public JsonElement valueElement (Datatype dt, String val) {
             
             // If we don't know the datatype, then the value is the character content
             if (null == dt) return new JsonPrimitive(val);
@@ -450,6 +456,18 @@ public class XMLMsgToJSON {
 
             // Unions are funky
             if (CMF_UNION == dt.getType()) return unionPrimitive((Union)dt, sval);
+            
+            // List type creates an array of values
+            if (dt instanceof ListType lt) {
+                var rval  = new JsonArray();
+                var itype = lt.itemType();
+                var vals  = sval.split("\\s+");
+                for (var v : vals) {
+                    var iv = valueElement(itype, v);
+                    rval.add(iv);
+                }
+                return rval;
+            }
                 
             // Get name of XSD base type
             var bname = "string";

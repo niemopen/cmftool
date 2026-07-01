@@ -196,7 +196,7 @@ class CmdXSDtoCMF implements Callable<Integer> {
         try {
             if (isStdout(outputPath)) {
                 var ow = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
-                if (onlyArg.isEmpty()) {
+                if (onlyL.isEmpty()) {
                     mw.writeXML(m, ow);
                 } else {
                     mw.writeXML(m, onlyL, ow);
@@ -204,7 +204,7 @@ class CmdXSDtoCMF implements Callable<Integer> {
                 ow.flush();
             } else {
                 AtomicPathWriter.writeAtomically(outputPath, StandardCharsets.UTF_8, ow -> {
-                    if (onlyArg.isEmpty()) {
+                    if (onlyL.isEmpty()) {
                         mw.writeXML(m, ow);
                     } else {
                         mw.writeXML(m, onlyL, ow);

@@ -199,7 +199,7 @@ public class Model extends CMFObject {
     public void addNamespace (Namespace n) throws CMFException {
         if (null == n) return;
         if (uri2ns.containsKey(n.uri())) return;
-        var cnsuri = nsmap.getPrefix(n.prefix());
+        var cnsuri = nsmap.getURI(n.prefix());
         if (null != cnsuri && !n.uri().equals(cnsuri)) {
             throw new CMFException(String.format(
                 "Can't add namespace %s=%s (prefix already assigned to %s)",
@@ -318,6 +318,16 @@ public class Model extends CMFObject {
                     dirSubS.add(spof, pp);
                 }
             }
+//            var pL = propertyL();
+//            Collections.sort(pL);
+//            for (var xp : pL) {
+//                var xsubs = dirSubS.get(xp);
+//                if (xsubs.isEmpty()) continue;
+//                System.err.println("directSubProps("+xp.qname()+")");
+//                for (var zp : dirSubS.get(xp)) {
+//                    System.err.println("  "+zp.qname());
+//                }
+//            }
         }
         return dirSubS.get(p);
     }
@@ -372,13 +382,14 @@ public class Model extends CMFObject {
         for (var p : msgPropS) todo.push(p);
         while (!todo.isEmpty()) {
             var c  = todo.pop();
+            if (null == c) continue;
             if (res.contains(c)) continue;
             res.add(c);
             if (c instanceof DataProperty dp)        todo.push(dp.datatype());
             else if (c instanceof ObjectProperty op) todo.push(op.classType());
             else if (c instanceof Datatype dt)       todo.push(dt.base());
             else if (c instanceof ClassType ct) {
-                for (var pa : ct.propL()) {
+                for (var pa : ct.propAssocL()) {
                     todo.push(pa.property());
                 }
             }

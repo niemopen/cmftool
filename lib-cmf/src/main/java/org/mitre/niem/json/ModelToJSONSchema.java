@@ -490,7 +490,7 @@ public class ModelToJSONSchema {
         // Create property association list; process classes, deepest inherited first
         while (!classS.isEmpty()) {
             xct = classS.pop();
-            paL.addAll(xct.propL());
+            paL.addAll(xct.propAssocL());
             paL.addAll(ctU2augL.get(xct.qname()));      // augmentation elements for this class
             if (!xct.anyL().isEmpty()) wildF = true;    // should handle wildcards better TODO
         }
@@ -1002,7 +1002,9 @@ public class ModelToJSONSchema {
     // * the mapped QName, if map.noPrefix() is false.
     // * the mapped local name, if map.noPrefix() is true.
     public String qnToKey (String qn) {
-        return map.qnToMappedQ(qn); // FIXME
+        var res = map.qnToTargetQN(qn); // FIXME
+        if (null == res) return qn;
+        return res;
     }
     
     // Parses JSON text to create a JsonObject containing a pair

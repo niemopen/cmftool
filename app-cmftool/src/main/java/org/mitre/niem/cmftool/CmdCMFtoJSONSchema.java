@@ -62,7 +62,7 @@ public class CmdCMFtoJSONSchema implements Callable<Integer> {
         Set.of("draft-07", "2019-09", "2020-12");
 
     @Option(
-        names = {"--msgProp"},
+        names = {"-m", "--msg"},
         split = ",",
         paramLabel = "<QName>",
         description = "build schema to validate these message properties"
@@ -77,7 +77,7 @@ public class CmdCMFtoJSONSchema implements Callable<Integer> {
     private String contextU = null;
 
     @Option(
-        names = {"-m", "--map"},
+        names = {"--map"},
         description = "mapping file for property keys"
     )
     private Path mapPath = null;
@@ -120,15 +120,15 @@ public class CmdCMFtoJSONSchema implements Callable<Integer> {
 
     @Option(
         names = "--version",
-        description = "schema version {draft-07,2019-09,2020-12}",
+        description = "use this Schematron version {draft-07,2019-09,2020-12}",
         defaultValue = "draft-07"
     )
     private String version = "draft-07";
 
     @Option(
-        names = {"--version-uri"},
+        names = {"--versionUri"},
         paramLabel = "<URI>",
-        description = "schema version URI (eg. http://json-schema.org/draft-07/schema#)"
+        description = "use this Schematron version URI (eg. http://json-schema.org/draft-07/schema#)"
     )
     private String versionURI = null;
 
@@ -179,7 +179,7 @@ public class CmdCMFtoJSONSchema implements Callable<Integer> {
         List<Property> msgPropA = new ArrayList<>();
         if (null != msgQA) {
             for (var msgQ : msgQA) {
-                var p = model.qnToProperty(msgQ);
+                var p = model.qnToObjectProperty(msgQ);
                 if (null == p) {
                     System.err.println("Property " + msgQ + " is not in model");
                     return 1;

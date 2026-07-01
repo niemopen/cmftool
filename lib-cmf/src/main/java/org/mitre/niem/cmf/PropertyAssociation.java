@@ -63,6 +63,7 @@ public class PropertyAssociation extends CMFObject  {
     public int maxOccursVal () { 
         return "unbounded".equals(maxOccurs) ? -1 : NumberUtils.toInt(maxOccurs);
     }
+    public boolean isRepeatable ()      { return isMaxUnbounded() ? true : maxOccursVal() > 1; }
     
     public ClassType classType ()       { return null; }
     public int index ()                 { return -2; }

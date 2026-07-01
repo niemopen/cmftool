@@ -4,25 +4,63 @@
 
 This subproject is part of the CMFTool project repository.  It contains the NIEMOpen message translation tool (NIEMTran).
 
-At present, NIEM supports two message serializations:  XML and JSON.  A message in one can be transformed to the equivalent message in the other.  NIEMTran uses the information in the message model to drive the transformation.  It is a multi-level command-line tool; at present, one subcommand is implemeted:
+At present, NIEM supports two message serializations:  XML and JSON.  A message in one can be transformed to the equivalent message in the other.  NIEMTran uses the information in the message model to drive the transformation.  It is a multi-level command-line tool.  The subcommands are:
 
 *  [*x2j*](#convert-niem-xml-to-json) -- convert a NIEM message from XML to JSON
+*  [*j2x*](#convert-niem-json-to-xml) -- convert NIEM JSON message to NIEM XML
+*  [*j2r*](#convert-niem-json-to-rdf) --  convert NIEM JSON message to RDF
 
 ### Convert NIEM XML to JSON
 
 *Usage:* **niemtran x2j** *[options]* *model.cmf message.xml ...*
 
-Converts each *message.xml* file to the equivalent *message.json*.
+With one msg.xml and no -o/--output, writes JSON to standard output.\
+With multiple msg.xml files, writes multiple msg.json output files
 
-| Options: | |
-| -- | -- |
-| `-c, --context` |  generate complete @context in the result |
-| `--curi URI`   |  include "@context:" URI pair in the result |
-| `-f, --force` |  overwrite existing .json files |
+Options:
+
+```text
+  -c, --context           generate complete @context in result
+      --curi=uri          include "@context": URI in result
+  -f, --force             overwrite existing output files
+  -o, --output=out.json   write output to out.json; only valid when there is a single msg.xml argument
+```
+
+### Convert NIEM JSON to XML
+
+*Usage:* **niemtran j2x** *[options]* *model.cmf message.json ...*
+
+With one msg.json and no -o/--output, writes XML to standard output.\
+With multiple msg.json files, writes multiple msg.xml output files
+
+Options:
+
+```text
+  -c, --context=context.json
+                         JSON-LD context file used to interpret input messages
+  -f, --force            overwrite existing output files
+  -o, --output=out.xml   write output to out.xml; only valid when there is a single msg.json argument
+```
+
+### Convert NIEM JSON to RDF
+
+*Usage:* **niemtran j2r** *[options]* *model.cmf message.json ...*
+
+With one msg.json and no -o/--output, writes RDF to standard output.\
+With multiple msg.json files, writes multiple msg.rdf output files
+
+Options:
+
+```text
+  -c, --context=context.json
+                         JSON-LD context file used to interpret input messages
+  -f, --force            overwrite existing output files
+  -o, --output=out.rdf   write output to out.rdf; only valid when there is a single msg.json argument
+```
 
 ## Getting started
 
-1. You must have a Java runtime environment.  JRE21 or later will work.  JRE17 might work.  
+1. You must have a Java runtime environment.  JRE25 or later will work.  JRE17 might work.  
    - Try `java –-version` from the command line.  If that works, you should be OK
    - Otherwise make sure your `JAVA_HOME` environment variable points to your JRE
 
@@ -44,22 +82,49 @@ Try `./gradlew build`
 
 ## Software Bill of Materials
 
-NIEMTran depends on the *lib-cmf* and *lib-util* subprojects in this repository.  It also depends on the following libraries, all of which are unmodified, and can be found at [mvnrepository.com](https://mvnrepository.com):
+NIEMTran depends on the *lib-cmf* and *lib-util* subprojects in this repository.  It also depends on the following libraries:
 
 | Library                  | Version        | License                        |
 |--------------------------|---------------|-------------------------------|
-| commons-io               | 2.18.0        | Apache-2.0                    |
-| commons-lang3            | 3.17.0        | Apache-2.0                    |
-| error_prone_annotations  | 2.38.0        | Apache-2.0                    |
-| javatuples               | 1.2           | Apache-2.0                    |
-| jcommander               | 2.0           | Apache-2.0                    |
-| log4j-api                | 2.24.3        | Apache-2.0                    |
-| log4j-core               | 2.24.3        | Apache-2.0                    |
-| Saxon-HE                 | 12.5          | MPL-2.0                       |
-| xalan                    | 2.7.3         | Apache-2.0                    |
-| xercesImpl               | 2.12.2        | Apache-2.0                    |
-| xml-apis                 | 1.4.01        | Apache-2.0                    |
-| xmlresolver              | 6.0.14        | Apache-2.0                    |
+| caffeine | 3.2.2 | Apache-2.0 |
+| collection | 0.7 | MIT |
+| commons-codec | 1.19.0 | Apache-2.0 |
+| commons-collections4 | 4.5.0 | Apache-2.0 |
+| commons-compress | 1.28.0 | Apache-2.0 |
+| commons-csv | 1.14.1 | Apache-2.0 |
+| commons-io | 2.20.0 | Apache-2.0 |
+| commons-lang3 | 3.20.0 | Apache-2.0 |
+| error_prone_annotations | 2.41.0 | Apache-2.0 |
+| gson | 2.13.2 | Apache-2.0 |
+| jakarta.json | 2.0.1 | EPL-2.0, GPL-2.0-with-classpath-exception |
+| javatuples | 1.2 | Apache-2.0 |
+| jcl-over-slf4j | 2.0.17 | Apache-2.0 |
+| jena-arq | 5.6.0 | Apache-2.0 |
+| jena-base | 5.6.0 | Apache-2.0 |
+| jena-core | 5.6.0 | Apache-2.0 |
+| jena-iri | 5.6.0 | Apache-2.0 |
+| jena-iri3986 | 5.6.0 | Apache-2.0 |
+| jena-langtag | 5.6.0 | Apache-2.0 |
+| jspecify | 1.0.0 | Apache-2.0 |
+| libthrift | 0.22.0 | Apache-2.0 |
+| log4j-api | 2.24.3 | Apache-2.0 |
+| log4j-core | 2.24.3 | Apache-2.0 |
+| logback-classic | 1.5.16 | EPL-1.0, GNU Lesser General Public License |
+| logback-core | 1.5.16 | EPL-1.0, GNU Lesser General Public License |
+| picocli | 4.7.7 | Apache-2.0 |
+| protobuf-java | 4.32.1 | BSD-3-Clause |
+| RoaringBitmap | 1.3.0 | Apache-2.0 |
+| Saxon-HE | 12.5 | MPL-2.0 |
+| serializer | 2.7.3 | - |
+| slf4j-api | 2.0.17 | MIT |
+| titanium-jcs | 1.1.1 | Apache-2.0 |
+| titanium-json-ld | 1.7.0 | Apache-2.0 |
+| titanium-rdf-api | 1.0.0 | Apache-2.0 |
+| titanium-rdf-n-quads | 1.0.2 | Apache-2.0 |
+| xalan | 2.7.3 | - |
+| xercesImpl | 2.12.2 | Apache-2.0 |
+| xml-apis | 1.4.01 | Apache-2.0, SAX-PD, The W3C License |
+| xmlresolver | 6.0.14 | Apache-2.0 |
 
 ## About NIEMOpen
 

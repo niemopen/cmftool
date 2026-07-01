@@ -26,7 +26,6 @@ package org.mitre.niem.cmf;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringJoiner;
-import org.apache.commons.lang3.math.NumberUtils;
 
 /**
  * A class for an AugmentationRecord object in a CMF model.
@@ -45,12 +44,12 @@ public class AugmentRecord extends PropertyAssociation implements Comparable<Aug
         this.setDocumentation(cpa.docL());
     }
     
+    private Namespace namespace = null;                 // augmenting namespace
     private ClassType classType = null;                 // cmf:Class
     private Set<String> codeS = new HashSet<>();        // cmf:GlobalClassCode
     private int index = -1;                             // cmf:AugmentationIndex
-                                                        // >0 for attribute in augmentation type
-                                                        // -1 for element substituting for aug point
-                                                        // -2 for property in appinfo:Augmentation
+                                                        // >=0 for any property in an augmentation type
+                                                        // -1 for ordinary element substituting for aug point
     @Override
     public ClassType classType ()                   { return classType; }
     @Override
@@ -62,7 +61,9 @@ public class AugmentRecord extends PropertyAssociation implements Comparable<Aug
         for (var code : codeS) res.add(code);
         return res.toString();
     }
+    public Namespace namespace()                    { return namespace; }
     
+    public void setNamespace (Namespace ns)         { namespace = ns; }
     public void setClassType (ClassType ct)         { classType = ct; }
     public void setIndex (int s)                    { index = s; }
     public void addCode (String s)                  { if (null != s) codeS.add(s); }

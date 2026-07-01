@@ -239,7 +239,7 @@ public class ModelToXMLSchema extends ModelToXSD {
             if (ct.isObjectClass())      propL.add(objAugPA);
             if (null != pct) addParentProperties(pct, propL);
         }
-        propL.addAll(ct.propL());
+        propL.addAll(ct.propAssocL());
             
         // Finally, append a dummy augmentation point property association
         if (ct.isAssociationClass() || ct.isObjectClass()) {
@@ -314,7 +314,7 @@ public class ModelToXMLSchema extends ModelToXSD {
         // Construct a list of attributes for this type.  Start with the 
         // attributes in the class.  
         var apropL = new ArrayList<PropertyAssociation>();
-        for (var pa : ct.propL()) {
+        for (var pa : ct.propAssocL()) {
             if (pa.property().isAttribute()) apropL.add(pa);
         }
         // Next, add augmentation attributes not already present.
@@ -371,7 +371,7 @@ public class ModelToXMLSchema extends ModelToXSD {
     // with the top of the inheritance chain.
     protected void addParentProperties (ClassType pct, List<PropertyAssociation> propL) {
         if (null != pct.subClassOf()) addParentProperties(pct.subClassOf(), propL);
-        propL.addAll(pct.propL());
+        propL.addAll(pct.propAssocL());
     }    
     
     // Add each property association to the list, if it's an attribute property, and
@@ -440,7 +440,7 @@ public class ModelToXMLSchema extends ModelToXSD {
         // Construct a list of attributes for this type.  Start with the 
         // attributes in the class.  
         var apropL = new ArrayList<PropertyAssociation>();
-        for (var pa : ct.propL()) {
+        for (var pa : ct.propAssocL()) {
             if (pa.property().isAttribute()) apropL.add(pa);
         }
         // Next, add augmentation attributes not already present.

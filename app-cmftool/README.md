@@ -1,6 +1,6 @@
 <img src="https://github.com/niemopen/oasis-open-project/blob/main/artwork/NIEM-NO-Logo-v5.png" width="200">
 
-# Common Model Format Tool (CMFTool), version 1.1
+# Common Model Format Tool (CMFTool), version 1.1-alpha.7
 
 This subproject is part of the CMFTool project repository.  It contains the NIEMOpen Common Model Format Tool (CMF). 
 
@@ -36,15 +36,17 @@ The initial schema documents are specified by the command arguments, which may b
 * a namespace URI, which will be resolved to a XSD file using...
 * an XML Catalog file
 
+Options:
+
+```text
+-o, --output=<path>     output model file, or '-' for stdout
+    --only=p1[,p2...]   include only these namespace URIs or prefixes; eg. '--only nc,j'
+```
+
 Examples:
 
 * `cmftool x2m CrashDriver.xsd`
 * `cmftool x2m http://example.com/CrashDriver/1.3/ catalog.xml`
-
-Options:
-
-* `-o` *file* -- output file for CMF; for example, `-o model.cmf`
-* `--only` *URI or prefix...* -- include only components from these namespaces; for example, `--only nc,j`
 
 ### Convert a NIEM model from CMF to XSD
 
@@ -54,11 +56,15 @@ This subcommand converts the CMF representation of a NIEM model to the equivalen
 
 Options:
 
-* `-o` *dir* -- write the XML schema document pile into this directory; for example, `-o model.xsd`
-* `-c` -- create an XML Catalog for the pile in *xml-catalog.xml*
-* `--catalog` *catFile* -- create an XML Catalog in *catFile*; for example, `--catalog cat.xml`
-* `-r`, `--root` *URI or prefix* -- make this the root namespace; for example, `--root exch`
-* `-v`, `--archVersion` *NIEMversion* -- use builtin schema documents from this NIEM version; for example, `-v NIEM4.0`
+```text
+  -o, --output-dir=<dir>    write schema pile into this directory
+  -c                        generate XML catalog into xml-catalog.xml file
+      --catalog=<catPath>   write XML catalog into this file
+  -r, --root=<rootNSarg>    make this schema document have all necessary imports
+  -v, --arch-version=<vers> builtins from this architecture (eg. "-v NIEM5.0")
+  -d, --debug               turn on debug logging
+      --force               replace existing output directory by moving it aside and promoting staged output
+```                              
 
 The `-r` option causes the schema document for the specified namespace to include `xs:import` elements as needed to ensure the entire model will be assembled from this document alone.
 
@@ -72,11 +78,15 @@ This subcommand creates an XML message schema from a CMF model.  The message sch
 
 Options:
 
-* `-o` *dir* -- write the XML schema document pile into this directory; for example, `-o model.xsd`
-* `-c` -- create an XML Catalog for the pile in *xml-catalog.xml*
-* `--catalog` *catFile* -- create an XML Catalog in *catFile*; for example, `--catalog cat.xml`
-* `-r`, `--root` *URI or prefix* -- make this the root namespace; for example, `--root exch`
-* `-v`, `--archVersion` *NIEMversion* -- use builtin schema documents from this NIEM version; for example, `-v NIEM4.0`
+```text
+  -o, --output-dir=<dir>     write schema pile into this directory
+  -c                         generate XML catalog into xml-catalog.xml file
+      --catalog=<catPath>    write XML catalog into this file
+  -r, --root=<prefixOrURI>   make schema document for this namespace have all necessary imports
+  -v, --arch-version=<vers>  builtins from this architecture (eg. "-v NIEM5.0")
+  -d, --debug                turn on debug logging
+      --force                replace existing output directory by moving it aside and promoting staged output
+```
 
 ### Generate a JSON message schema from CMF
 
@@ -85,8 +95,20 @@ Options:
 This subcommand creates a JSON message schema from a CMF model.  The result is a JSON Schema file that is suitable for validating NIEM JSON messages that conform to the model.
 
 Options:
-
-* `-o` *file* -- JSON Schema output file; for example, `-o message.schema.json`
+```text
+  -m, --msg=<QName>[,<QName>...]
+                            build schema to validate these message properties
+  -c, --context=<URI>       schema will require this @context URI
+      --map=<mapPath>       mapping file for property keys
+  -a, --alldefs             generate definition for all model classes and datatypes
+  -o, --output=<outputPath> name of output file
+      --noprefix            don't use prefix in property keys
+      --noformat            don't include format properties in built-in types
+      --nopattern           don't include pattern properties in built-in types
+      --nominmax            don't include minimum/maximum properties in built-in types
+      --version=<version>   use this Schematron version {draft-07,2019-09,2020-12}
+      --versionUri=<URI>    use this Schematron version URI (eg. http://json-schema.org/draft-07/schema#)
+```
 
 ### Canonicalize CMF, or extract namespaces from CMF
 
@@ -96,8 +118,10 @@ This subcommand converts a CMF model into a standard (canonical) CMF format.  It
 
 Options:
 
-* `-o` *file* -- output file for CMF; for example, `-o model.cmf`
-* `--only` *URI or prefix...* -- include only components from these namespaces; for example, `--only nc,j`
+```text
+  -o, --output=FILE|-     name of output model file; use '-' for stdout
+      --only=p1[,p2...]   include only these namespace URIs or prefixes; eg. '--only nc,j'
+```
 
 ### Generate model RDF from CMF
 
@@ -107,39 +131,13 @@ This subcommand creates an RDF file (in Turtle syntax) containing the triples en
 
 Options:
 
-* `-o` *file* -- RDF output file; for example, `-o model.ttl`
+```text
+  -o, --output=<path>       output file, or '-' for stdout (the default)
+```
 
 ### Create a mapping template file
 
 *Usage:* **cmftool m2map** *[options]* *modelFile.cmf*
-
-CMFTool uses the [Simple Standard for Sharing Ontology Mappings (SSSOM)](https://github.com/mapping-commons/sssom) format to represent mappings from a NIEM model component to a synonym.  These mappings are used to define non-canonical message formats.  For example, consider the canonical and non-canonical JSON messages below:
-
-```
-"msg:Request": {                          | "request": {
-  "msg:RequestID": "R012",                |   "id": "R012",
-  "msg:RequestedItem": {                  |   "item": {
-    "nc:ItemName": "Wrench",              |     "name": "Wrench",
-    "nc:ItemQuantity": 1                  |     "quantity": 1
-  }                                       |   }
-}                                         | }
-```
-
-The following SSSOM file defines the mappings between NIEM model components and the synonyms in the non-canonical message:
-
-```
-# curie_map:
-#   msg: http://example.com/ReqRes/1.0/
-#   nc: https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/
-#   owl: http://www.w3.org/2002/07/owl#
-#   sj: http://exmaple.com/ReqRes/1.0/simpleJSON
-subject_id      predicate_id    object_id
-msg:Request     owl:sameAs      sj:request
-msg:RequestedItem       owl:sameAs      sj:item
-msg:RequestID   owl:sameAs      sj:id
-nc:ItemName     owl:sameAs      sj:name
-nc:ItemQuantity owl:sameAs      sj:quantity
-```
 
 The *m2map* subcommand generates a mapping template from a model.  This template is then edited by the message designer to define the desired mappings.
 
@@ -147,13 +145,28 @@ When given the `-s` or `--single` option, *m2map* produces a template that maps 
 
 Options:
 
-* `-o` *file* -- mapping output file; for example, `-o map.sssom`
-* `-s` *prefix=URI*,\
- `--single` *prefix=URI* -- create template mapping all components to a single namespace
+```text
+  -m, --msg=<QName>[,<QName>...]
+                         build schema to validate these message properties
+  -s, --single=<p=URI>   prefix=URI of single target namespace
+  -t, --types            also map class and datatype QNames
+  -o, --output=<path>    name of output mapping file
+```
 
 ### Create a JSON-LD context
 
-*Usage:* **cmftool m2context** *[options]* *model.cmf* *[map.sssom]*
+*Usage:* **cmftool m2context** *[options]* *model.cmf*
+
+Options:
+
+```text
+      --map=<path>      mapping file for property keys
+  -m, --msg=<QName>[,<QName>...]
+                        create context for these message properties
+      --noprefix        include all property keys; use no prefixes
+  -o, --output=<path>   name of output context file; use '-' for stdout (the default)
+      --force           overwrite output file if it already exists
+```
 
 ### Validate a CMF model file
 
@@ -161,32 +174,23 @@ Options:
 
 This subcommand tests a CMF file for conformance.
 
-### Validate XML documents
-
-*Usage:* **cmftool xval --schema** *schema.xsd* **--file** *doc.xml ...*
-
-This subcommand assembles an XML schema from a single initial schema document, and then uses that schema to validate zero or more XML documents.
-
-Examples:
-
-* `cmftool xval model.xsd` -- tests XSD validity of *model.xsd*
-* `cmftool xval model.xsd msg1.xml msg2.xml` -- tests *msg1.xml* and *msg2.xml* against *model.xsd* schema
-
 ### Canonicalize an XML Schema document
 
 *Usage:* **cmftool xcanon** *[options]* *schemaDoc.xsd ...*
 
-This subcommand converts the XML schema document for a NIEM model namespace into a standard (canonical) format.
+This subcommand converts the XML schema document for a NIEM model namespace into a readable format.
 
 Options:
 
-* `-o file` -- output file for the canonical version of a single XSD document; for example, `-o canon.xsd`
-* `-i` -- canonicalize in place; for example, `cmftool xcanon -i *.xsd`
-* `-ibak` -- canonicalize in place, but keep originals with .bak suffix
+```text
+  -i                       canonicalize in place
+      --in-place=suffix    canonicalize in place with backup suffix, eg. '--in-place=bak'
+  -o, --output=<objFile>   file for converter output, or '-' for stdout
+```
 
 ## Getting started
 
-1. You must have a Java runtime environment.  JRE21 or later will work.  JRE17 might work.  
+1. You must have a Java runtime environment.  JRE25 or later will work.  JRE17 might work.  
    - Try `java –-version` from the command line.  If that works, you should be OK
    - Otherwise make sure your `JAVA_HOME` environment variable points to your JRE
 
@@ -216,21 +220,21 @@ CMFTool depends on the *lib-cmf* and *lib-util* subprojects in this repository. 
 
 | Library                  | Version        | License                        |
 |--------------------------|---------------|-------------------------------|
-| commons-io               | 2.18.0        | Apache-2.0                    |
-| commons-lang3            | 3.17.0        | Apache-2.0                    |
-| error_prone_annotations  | 2.38.0        | Apache-2.0                    |
-| gson                     | 2.13.1        | Apache-2.0                    |
-| javatuples               | 1.2           | Apache-2.0                    |
-| jcommander               | 2.0           | Apache-2.0                    |
-| lib-cmf                  | 1.0           | Apache-2.0                    |
-| lib-util                 | 1.0           | Apache-2.0                    |
-| log4j-api                | 2.24.3        | Apache-2.0                    |
-| log4j-core               | 2.24.3        | Apache-2.0                    |
-| Saxon-HE                 | 12.5          | MPL-2.0                       |
-| xalan                    | 2.7.3         | Apache-2.0                    |
-| xercesImpl               | 2.12.2        | Apache-2.0                    |
-| xml-apis                 | 1.4.01        | Apache-2.0                    |
-| xmlresolver              | 6.0.14        | Apache-2.0                    |
+| commons-io | 2.18.0 | Apache-2.0 |
+| commons-lang3 | 3.20.0 | Apache-2.0 |
+| cyclonedx-gradle-plugin | 3.2.4 | - |
+| error_prone_annotations | 2.38.0 | Apache-2.0 |
+| gson | 2.13.1 | Apache-2.0 |
+| javatuples | 1.2 | Apache-2.0 |
+| log4j-api | 2.24.3 | Apache-2.0 |
+| log4j-core | 2.24.3 | Apache-2.0 |
+| picocli | 4.7.7 | Apache-2.0 |
+| Saxon-HE | 12.5 | MPL-2.0 |
+| serializer | 2.7.3 | - |
+| xalan | 2.7.3 | - |
+| xercesImpl | 2.12.2 | Apache-2.0 |
+| xml-apis | 1.4.01 | Apache-2.0, SAX-PD, The W3C License |
+| xmlresolver | 6.0.14 | Apache-2.0 |
 
 ## About NIEMOpen
 

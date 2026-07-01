@@ -52,6 +52,7 @@ public class JSONWriter {
      */
     public static void write(JsonElement element, Writer w) throws IOException {
         write(element, w, 0);
+        w.write("\n");
     }
 
     /**

@@ -31,17 +31,17 @@ WARN  7-10.xsd:21:59 -- Rule 7-10: A Property object having an AbstractIndicator
 
 *Usage:* **scheval** *[options]* *input.xml ...*
 
-| Options: | |
-| -- | -- |
-| `-s, --schema` |  apply rules from this schematron file |
-| `-x, --xslt`   |  apply rules from this compiled schematron file |
-| `-o, --output` |  write output to this file (default = stdout) |
-| `--svrl`       |  write output in SVRL format |
-| `--compile`    | compile schema and write output in XSLT format |
-| `-c, --catalog`|  provide this XML catalog file as $xml-catalog parameter |
-| `-k, --keep`   |  keep temporary files |
-| `-d, --debug`  |  turn on debug logging |
-| `-h, --help`   | display this usage message |
+Options: 
+
+```text
+  -s, --schema=<schPath>    apply rules from this schematron file
+  -x, --xslt=<xsltPath>     apply rules from this compiled schematron file
+  -o, --output=<outPath>    write output to this file, or '-' for stdout (default = stdout)
+      --svrl                write output in SVRL format
+      --compile             compile schema and write output in XSLT format
+  -c, --catalog=<catPath>   provide this XML catalog file as $xml-catalog parameter
+  -k, --keep                keep temporary files
+```
 
 Examples:
 
@@ -73,18 +73,19 @@ SCHEval depends on the *lib-cmf* and *lib-util* subprojects in this repository. 
 
 | Library                  | Version        | License                        |
 |--------------------------|---------------|-------------------------------|
-| commons-io               | 2.18.0        | Apache-2.0                    |
-| commons-lang3            | 3.17.0        | Apache-2.0                    |
-| error_prone_annotations  | 2.38.0        | Apache-2.0                    |
-| javatuples               | 1.2           | Apache-2.0                    |
-| jcommander               | 2.0           | Apache-2.0                    |
-| log4j-api                | 2.24.3        | Apache-2.0                    |
-| log4j-core               | 2.24.3        | Apache-2.0                    |
-| Saxon-HE                 | 12.5          | MPL-2.0                       |
-| xalan                    | 2.7.3         | Apache-2.0                    |
-| xercesImpl               | 2.12.2        | Apache-2.0                    |
-| xml-apis                 | 1.4.01        | Apache-2.0                    |
-| xmlresolver              | 6.0.14        | Apache-2.0                    |
+| commons-lang3 | 3.17.0 | Apache-2.0 |
+| cyclonedx-gradle-plugin | 3.2.4 | - |
+| javatuples | 1.2 | Apache-2.0 |
+| lib-util | 1.1-alpha.7 | - |
+| log4j-api | 2.24.3 | Apache-2.0 |
+| log4j-core | 2.24.3 | Apache-2.0 |
+| picocli | 4.7.7 | Apache-2.0 |
+| Saxon-HE | 12.5 | MPL-2.0 |
+| serializer | 2.7.3 | - |
+| xalan | 2.7.3 | - |
+| xercesImpl | 2.12.2 | Apache-2.0 |
+| xml-apis | 1.4.01 | Apache-2.0, SAX-PD, The W3C License |
+| xmlresolver | 6.0.14 | Apache-2.0 |
 
 ## About NIEMOpen
 

@@ -147,7 +147,10 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
         for (var ct : ctL) addConformanceTarget(ct);
     }
     public void addLocalTerm (LocalTerm lt)     { locTermL.add(lt); }
-    public void addAugmentRecord (AugmentRecord a) { augL.add(a); }
+    public void addAugmentRecord (AugmentRecord a) { 
+        augL.add(a);
+        a.setNamespace(this);
+    }
     
     
     // Following routines ensure each namespace prefix maps to at most one URI.

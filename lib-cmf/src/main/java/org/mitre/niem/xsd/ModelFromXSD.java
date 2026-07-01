@@ -36,7 +36,6 @@ import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.xerces.xs.XSAnnotation;
@@ -916,7 +915,7 @@ public class ModelFromXSD {
         cpa.setDocumentation(docL);
         if (!max.isBlank()) cpa.setMaxOccurs(max);
         if (!min.isBlank()) cpa.setMinOccurs(min);
-        ct.propL().add(cpa);
+        ct.propAssocL().add(cpa);
     }
     
     // Populate the ClassType object from the children of the xs:sequence element.
@@ -967,7 +966,7 @@ public class ModelFromXSD {
             if (!max.isBlank()) cpa.setMaxOccurs(max);
             if (!min.isBlank()) cpa.setMinOccurs(min);
         }
-        ct.propL().add(cpa);
+        ct.propAssocL().add(cpa);
     }
     
     // Populate the ClassType object with an AnyPropery object created from 
@@ -1046,7 +1045,7 @@ public class ModelFromXSD {
                 atype  = m.uriToClassType(augmtU);      // augmented ClassType object                
             }
             var index  = 0;
-            for (var cpa : augt.propL()) {
+            for (var cpa : augt.propAssocL()) {
                 var pname = cpa.property().qname();
                 var arec = new AugmentRecord(cpa);
                 arec.setClassType(atype);
@@ -1068,6 +1067,7 @@ public class ModelFromXSD {
                 arec.setProperty(p);
                 arec.setMinOccurs("0");
                 arec.setMaxOccurs("unbounded");
+                arec.setNamespace(augns);
                 augns.addAugmentRecord(arec);
                 p.removeSubPropertyOf(apoint);
             }
@@ -1111,6 +1111,7 @@ public class ModelFromXSD {
                     continue;
                 }
                 var arec   = new AugmentRecord();
+                arec.setNamespace(ns);
                 arec.setClassType(ct);
                 arec.setProperty(p);
                 arec.setMaxOccurs("1");

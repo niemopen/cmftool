@@ -1,0 +1,10 @@
+               {
+                 "nc:PersonEducation": {
+                   "nc:EducationDescriptionText": [ "Text0", "Text1" ],
+                   "t:TestAugElement": "TestAugElement",
+                   "t:myAtt": "silly",
+                   "t:CommentDestinationText": "CommentText0",
+                   "j:EducationTotalYearsText": "20",
+                   "nc:CommentText": "OtherComment"
+                 }
+               }
