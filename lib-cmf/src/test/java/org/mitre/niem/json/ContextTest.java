@@ -203,7 +203,6 @@ class ContextTest {
         JsonObject obj = ctx.jsonObject();
 
         assertEquals(NC_NS, obj.get("nc").getAsString());
-        assertEquals(MSG_NS, obj.get("msg").getAsString());
         assertEquals("nc:PersonName", obj.get("name").getAsString());
         assertFalse(obj.has("msg:name"));
     }

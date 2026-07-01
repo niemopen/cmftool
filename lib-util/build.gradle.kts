@@ -1,0 +1,23 @@
+plugins {
+    `java-library`
+}
+
+dependencies {
+
+    implementation("net.sf.saxon:Saxon-HE:12.5")
+    implementation("xerces:xercesImpl:2.12.2")
+    implementation("org.xmlresolver:xmlresolver:6.0.14"   )
+    implementation("xalan:xalan:2.7.3")
+    implementation("xalan:serializer:2.7.3")
+    implementation("commons-io:commons-io:2.18.0")
+    implementation("org.apache.commons:commons-lang3:3.17.0")
+    implementation("org.apache.logging.log4j:log4j-core:2.24.3")
+    implementation("org.apache.logging.log4j:log4j-api:2.24.3")
+    implementation("org.javatuples:javatuples:1.2")
+    implementation("info.picocli:picocli:4.7.7")
+
+    testImplementation(libs.junit.jupiter)
+    testImplementation("org.assertj:assertj-core:3.26.0")
+    testImplementation("io.github.hakky54:logcaptor:2.9.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}

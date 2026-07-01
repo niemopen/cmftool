@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<request 
+  xmlns="http://example.com/Request/1.0/xsimple">
+  <id>R012</id>
+  <item>
+    <name>Wrench</name>
+    <quantity>1</quantity>
+  </item>
+  <item>
+    <name>Screw</name>
+    <quantity units="dozen">5</quantity>
+  </item>
+</request>

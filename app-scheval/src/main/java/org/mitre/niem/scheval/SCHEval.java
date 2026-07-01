@@ -48,6 +48,7 @@ import net.sf.saxon.s9api.XsltTransformer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.mitre.niem.utility.AtomicPathWriter;
+import org.mitre.niem.utility.BuildInfo;
 import org.mitre.niem.xml.Schematron;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -396,7 +397,11 @@ public class SCHEval implements java.util.concurrent.Callable<Integer> {
     }
 
     private static void printBanner() {
-        System.out.println("Version: " + SCHEval.class.getPackage().getImplementationVersion());
+        BuildInfo info = BuildInfo.forClass(SCHEval.class);
+        String version = String.format(
+            "Version: %s (%s)", info.getImplementationVersion(), info.getBuildDate());
+        System.out.println("Version: " + version);
+        System.out.println("Suggestions and bug reports: https://github.com/niemopen/cmftool/issues");
     }
 
     private boolean isStdout(Path path) {

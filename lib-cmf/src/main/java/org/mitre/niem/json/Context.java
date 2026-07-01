@@ -199,12 +199,14 @@ public class Context {
             
             // Assign prefix and namespace from target mapping, if any.
             // Throws an exception if target's mapping conflicts with model's mapping.
-            var pU = p.uri();
-            var mQ = map.uriToTargetQN(pU);
-            if (null != mQ) {
-                var mpre = qnToPrefix(mQ);          // target prefix
-                var mnsU = map.prefixToURI(mpre);   // uri of prefix from mapping
-                addNamespace(nsmap, mpre, mnsU);    // assign target prefix,uri
+            if (!noPrefix) {
+                var pU = p.uri();
+                var mQ = map.uriToTargetQN(pU);
+                if (null != mQ) {
+                    var mpre = qnToPrefix(mQ);          // target prefix
+                    var mnsU = map.prefixToURI(mpre);   // uri of prefix from mapping
+                    addNamespace(nsmap, mpre, mnsU);    // assign target prefix,uri
+                }
             }
         }
         // If we are constructing a no-prefix context, then we must make

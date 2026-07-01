@@ -49,6 +49,7 @@ package org.mitre.niem.translate;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.mitre.niem.utility.BuildInfo;
 import org.mitre.niem.utility.HelpOnEmptyCommandExecutionStrategy;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -116,7 +117,10 @@ public class NIEMTran implements Runnable {
     }
 
     static void printBanner() {
-        System.out.println("Version: " + NIEMTran.class.getPackage().getImplementationVersion());
+        BuildInfo info = BuildInfo.forClass(NIEMTran.class);
+        String version = String.format(
+            "Version: %s (%s)", info.getImplementationVersion(), info.getBuildDate());
+        System.out.println("Version: " + version);
         System.out.println("Suggestions and bug reports: https://github.com/niemopen/cmftool/issues");
     }
 

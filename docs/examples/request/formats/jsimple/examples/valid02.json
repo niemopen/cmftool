@@ -1,0 +1,25 @@
+{
+  "@context": {
+    "msg": "http://example.com/ReqRes/1.0/",
+    "nc": "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/",
+    "quantity": "nc:ItemQuantity",
+    "request": "msg:Request",
+    "item": "msg:RequestedItem",
+    "number": "nc:QuantityLiteral",
+    "id": "msg:RequestID",
+    "units": "nc:quantityUnitText",
+    "name": "nc:ItemName"
+  },
+  "request": {
+    "id": "R099",
+    "item": [
+      {
+        "name": "LugNut",
+        "quantity": {
+          "units": "dozen",
+          "number": 4
+        } 
+      }
+    ]
+  }
+}

@@ -209,12 +209,10 @@ public class CmdCMFtoJSONSchema implements Callable<Integer> {
             if (outputPath != null) {
                 AtomicPathWriter.writeAtomically(outputPath, StandardCharsets.UTF_8, ow -> {
                     js.writeSchema(ow);
-                    ow.write(System.lineSeparator());
                 });
             } else {
                 var ow = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
                 js.writeSchema(ow);
-                ow.write(System.lineSeparator());
                 ow.flush();
             }
         } catch (CMFException | IOException ex) {

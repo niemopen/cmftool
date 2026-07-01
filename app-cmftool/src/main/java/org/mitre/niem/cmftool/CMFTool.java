@@ -25,6 +25,7 @@ package org.mitre.niem.cmftool;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.mitre.niem.utility.BuildInfo;
 import org.mitre.niem.utility.HelpOnEmptyCommandExecutionStrategy;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -83,7 +84,9 @@ public class CMFTool implements Runnable {
     }
 
     static void printBanner() {
-        String version = CMFTool.class.getPackage().getImplementationVersion();
+        BuildInfo info = BuildInfo.forClass(CMFTool.class);
+        String version = String.format(
+            "Version: %s (%s)", info.getImplementationVersion(), info.getBuildDate());
         System.out.println("Version: " + version);
         System.out.println("Suggestions and bug reports: https://github.com/niemopen/cmftool/issues");
     }

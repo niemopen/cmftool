@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [ "@context", "request" ],
+  "additionalProperties": false,
+  "properties": {
+    "request": {
+      "description": "A request for one or more items.",
+      "$ref": "#/definitions/msg:RequestType"
+    },
+    "@context": {
+      "anyOf": [
+        { "type": "object" },
+        {
+          "type": "string",
+          "const": "http://example.com/Request/1.0/jsimple"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "msg:RequestType": {
+      "description": "A data type for a request of one or more items.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "An identifier for a request.",
+          "$ref": "#/definitions/xs:token"
+        },
+        "item": {
+          "description": "A request for a specified quantity of an item.",
+          "type": "array",
+          "items": { "$ref": "#/definitions/nc:ItemType" },
+          "minItems": 1
+        }
+      },
+      "required": [ "item", "id" ],
+      "additionalProperties": false
+    },
+    "nc:ItemType": {
+      "description": "A data type for an article or thing.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "A name of an item.",
+          "$ref": "#/definitions/nc:TextType"
+        },
+        "quantity": {
+          "description": "A count of the individual units which make up an item.",
+          "$ref": "#/definitions/nc:QuantityType"
+        }
+      },
+      "required": [ "quantity", "name" ],
+      "additionalProperties": false
+    },
+    "nc:QuantityType": {
+      "description": "A data type for a count or tally.",
+      "type": "object",
+      "properties": {
+        "number": {
+          "description": "A data type for a count or tally.",
+          "$ref": "#/definitions/nc:NumericType"
+        },
+        "units": {
+          "description": "A unit of counting or tallying for a quantity.",
+          "$ref": "#/definitions/xs:string"
+        }
+      },
+      "required": [ "number" ],
+      "additionalProperties": false
+    },
+    "nc:NumericType": {
+      "description": "A data type for a number value.",
+      "$ref": "#/definitions/xs:decimal"
+    },
+    "nc:TextType": {
+      "description": "A data type for a character string.",
+      "$ref": "#/definitions/xs:string"
+    },
+    "xs:decimal": {
+      "type": "number",
+      "format": "decimal"
+    },
+    "xs:string": { "type": "string" },
+    "xs:token": {
+      "type": "string",
+      "pattern": "^(?:$|\\S+(?: \\S+)*)$"
+    }
+  }
+}

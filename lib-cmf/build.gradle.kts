@@ -1,0 +1,27 @@
+plugins {
+    `java-library`
+}
+
+dependencies {
+    api(project(":lib-util"))
+
+    implementation("xerces:xercesImpl:2.12.2")
+    implementation("xalan:xalan:2.7.3")
+    implementation("xalan:serializer:2.7.3")
+    implementation("commons-io:commons-io:2.18.0")
+    implementation("com.google.code.gson:gson:2.13.1")
+    implementation("org.apache.commons:commons-lang3:3.20.0")
+    implementation("org.apache.logging.log4j:log4j-core:2.24.3")
+    implementation("org.apache.logging.log4j:log4j-api:2.24.3")
+    implementation("org.javatuples:javatuples:1.2")
+
+    testImplementation(libs.junit.jupiter)
+    testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("org.assertj:assertj-core:3.26.0")
+    testImplementation("io.github.hakky54:logcaptor:2.9.3"  )
+    testImplementation("com.jayway.jsonpath:json-path:3.0.0")
+    testImplementation("com.jayway.jsonpath:json-path-assert:3.0.0")
+    testImplementation("com.networknt:json-schema-validator:3.0.1")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}

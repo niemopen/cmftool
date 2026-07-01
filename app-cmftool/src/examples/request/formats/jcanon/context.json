@@ -1,6 +1,0 @@
-{
-  "@context": {
-    "msg": "http://example.com/ReqRes/1.0/",
-    "nc": "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
-  }
-}

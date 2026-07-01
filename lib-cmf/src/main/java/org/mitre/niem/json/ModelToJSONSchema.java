@@ -60,6 +60,7 @@ import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
 import org.mitre.niem.utility.MapToList;
+import static org.mitre.niem.xml.XMLDocument.qnToName;
 import static org.mitre.niem.xsd.NIEMConstants.hasMetadata;
 
 /**
@@ -102,6 +103,7 @@ public class ModelToJSONSchema {
     private Deque<Component> doTypes = null;                        // class and datatype schemas remaining
     private Map<Component,JsonObject> typeSch = null;               // type -> schema json object
     private boolean needID = false;                                 // true if any class is referenceable
+    private boolean noPrefix = false;                               // true if keys should be local name only
     
     private Datatype xsStringDT = null;                             // xs:string Datatype object
     private static final String XS_STRING_U = W3C_XML_SCHEMA_NS_URI + "/xs:string"; // xs:string URI
@@ -135,6 +137,7 @@ public class ModelToJSONSchema {
      * @param noPrefix 
      */
     public void setNoPrefix (boolean noPrefix) {
+        this.noPrefix = noPrefix;
 //        var rv = map.setNoPrefix(noPrefix);
 //        if (noPrefix && !rv) LOG.error("Can't set noPrefix when map has >1 target prefixes");
     }
@@ -1002,8 +1005,9 @@ public class ModelToJSONSchema {
     // * the mapped QName, if map.noPrefix() is false.
     // * the mapped local name, if map.noPrefix() is true.
     public String qnToKey (String qn) {
-        var res = map.qnToTargetQN(qn); // FIXME
+        var res = map.qnToTargetQN(qn);
         if (null == res) return qn;
+        if (noPrefix) return qnToName(res);
         return res;
     }
     
