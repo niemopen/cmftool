@@ -26,6 +26,7 @@ package org.mitre.niem.xsd;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.util.Iterator;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
@@ -44,6 +45,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.cmf.ModelXMLWriter;
 import org.mitre.niem.xml.XMLDocument;
+import org.mitre.niem.xml.XSDWriter;
 import org.w3c.dom.Element;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 import org.w3c.dom.NodeList;
@@ -420,7 +422,7 @@ public class ModelToXMLSchemaTest {
     public void testMessage () throws Exception {
         var fnam = "message";
         var pile = makePile(fnam);
-        var doc  = makeDoc(pile, fnam);
+        var doc  = makeDoc(pile, fnam);  
         Element e;
         
         e = evalE("//xs:complexType[@name='T1Type']", doc);
@@ -434,7 +436,7 @@ public class ModelToXMLSchemaTest {
         e = evalE("//xs:complexType[@name='T2Type']", doc);
         isTrue("./xs:complexContent/xs:extension[@base='t:T1Type']", e);
         e = evalE("./xs:complexContent/xs:extension", e);
-        isTrue("count(./xs:attribute)=4", e);
+        isTrue("count(./xs:attribute)=5", e);
         isTrue("./xs:attribute[@ref='t:aprop2']", e);
         isTrue("./xs:attribute[@ref='structures:id']", e);
         isTrue("./xs:attribute[@ref='structures:ref']", e);

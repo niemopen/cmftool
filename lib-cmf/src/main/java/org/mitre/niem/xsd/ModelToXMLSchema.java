@@ -353,7 +353,10 @@ public class ModelToXMLSchema extends ModelToXSD {
             attParentE.appendChild(anyE);
         }   
         // Add structures attributes as needed
-        if (needURI || needRef) addStructuresAttribute(attParentE, "id", structPre, structU);
+        if (needURI || needRef) {
+            addStructuresAttribute(attParentE, "appliesToParent", structPre, structU);
+            addStructuresAttribute(attParentE, "id", structPre, structU);
+        }
         if (needRef)            addStructuresAttribute(attParentE, "ref", structPre, structU);
         if (needURI)            addStructuresAttribute(attParentE, "uri", structPre, structU);
         if (!extendF && hasMetadata.contains(ver))

@@ -349,8 +349,8 @@ public class ModelFromXSD {
             var xtype  = tU2XS.get(cscU);
             var xctype = (XSComplexTypeDefinition)xtype;
             var appi   = appinfo.get(cscU);
-            var rc     = appi.getOrDefault("referenceCode", "");
-            var litF   = "ANY".equals(rc) || "REF".equals(rc) || "URI".equals(rc);
+            var rc     = appi.getOrDefault("referenceCode", "NONE");
+            var litF   = !"NONE".equals(rc);
             if (!litF) litF = hasAttributes(xctype);
             if (!litF) litF = attAugTypeUS.contains(cscU);
             if (!litF) litF = anyGlobalLitAugF;

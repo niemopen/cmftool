@@ -217,7 +217,7 @@ class ContextTest {
         model.addProperty(new Property(j, "Name"));
 
         var ex = assertThrows(CMFException.class, () -> new Context(model, null, null, true));
-        assertTrue(ex.getMessage().contains("have same local name"));
+        assertTrue(ex.getMessage().contains("map to same local name"));
     }
     @Test
     void expandExpandsMappedTermToFullIri() throws Exception {

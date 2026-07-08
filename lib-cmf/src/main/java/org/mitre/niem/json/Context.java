@@ -201,11 +201,12 @@ public class Context {
             // Throws an exception if target's mapping conflicts with model's mapping.
             if (!noPrefix) {
                 var pU = p.uri();
-                var mQ = map.uriToTargetQN(pU);
-                if (null != mQ) {
-                    var mpre = qnToPrefix(mQ);          // target prefix
-                    var mnsU = map.prefixToURI(mpre);   // uri of prefix from mapping
-                    addNamespace(nsmap, mpre, mnsU);    // assign target prefix,uri
+                var mrec = map.uriToMapRec(pU);
+                if (null != mrec) {
+                    var mpre = mrec.prefix();       // target prefix
+                    var mnsU = mrec.namespace();    // uri of prefix from mapping
+                    if (!mpre.isBlank())
+                        addNamespace(nsmap, mpre, mnsU);    // assign target prefix,uri
                 }
             }
         }
@@ -215,20 +216,20 @@ public class Context {
         if (noPrefix) {
             var lnmap = new HashMap<String, String>();
             for (var p : propL) {
+                var pQ = p.qname();
                 var pU = p.uri();
-                var mQ = map.uriToTargetQN(pU);
-                if (null == mQ) mQ = p.qname();     // not mapped, use model qname
-                var ln = qnToName(mQ);
+                var ln = qnToName(pQ);
+                var mrec = map.uriToMapRec(pU);
+                if (null != mrec) ln = mrec.localName();
+                
                 if (nsmap.containsKey(ln)) {
                     throw new CMFException(String.format(
-                        "Can't construct no-prefix context (local name %s is also a namespace prefix)",
-                        ln));
+                        "Can't construct no-prefix context (local name %s is also a namespace prefix)", ln));
                 }
-                var oQ = lnmap.putIfAbsent(ln, mQ);
-                if (oQ != null && !oQ.equals(mQ)) {
+                var oQ = lnmap.putIfAbsent(ln, pQ);
+                if (null != oQ && !oQ.equals(pQ)) {
                     throw new CMFException(String.format(
-                        "Can't construct no-prefix context (%s and %s have same local name)",
-                        oQ, mQ));
+                        "Can't construct no-prefix context (%s and %s map to same local name)", oQ, pQ));
                 }
             }
         }
@@ -245,8 +246,9 @@ public class Context {
         for (var p : propL) {
             var pQ = p.qname();
             var pU = p.uri();
-            var mQ = map.uriToTargetQN(pU);
-            if (null == mQ) mQ = pQ;
+            var mQ = pQ;
+            var mrec = map.uriToMapRec(pU);
+            if (null != mrec) mQ = mrec.qname();
             var term = noPrefix ? qnToName(mQ) : mQ;
             if (p.isOrdered()) {
                 var obj = new JsonObject();

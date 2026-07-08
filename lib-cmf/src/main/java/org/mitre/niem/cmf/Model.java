@@ -380,6 +380,19 @@ public class Model extends CMFObject {
         var todo = new Stack<Component>();
         var res  = new HashSet<Component>();
         for (var p : msgPropS) todo.push(p);
+        walkComponents(todo, res);
+        for (var ns : namespaceSet()) {
+            for (var arec : ns.augL()) {
+                if (res.contains(arec.classType()) || !arec.codeS().isEmpty())
+                    res.add(arec.property());
+            }
+        }
+        todo.addAll(res);
+        walkComponents(todo, res);
+        return res;
+    }
+    
+    private void walkComponents (Stack<Component> todo, Set<Component> res) {
         while (!todo.isEmpty()) {
             var c  = todo.pop();
             if (null == c) continue;
@@ -393,10 +406,8 @@ public class Model extends CMFObject {
                     todo.push(pa.property());
                 }
             }
-        }        
-        return res;
+        }         
     }
-    
     
     // Routines for reading model objects from CMF-XML.
 

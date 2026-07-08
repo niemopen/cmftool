@@ -6,8 +6,8 @@ msg:Request            sx:request
 msg:RequestID          sx:id
 msg:RequestedItem      sx:item
 nc:ItemName            sx:name
-nc:ItemQuantity        sx:quantity
-nc:quantityUnitText    sx:units
+nc:ItemQuantity        quantity
+nc:quantityUnitText    units
 msg:RequestType        sx:RequestType
 nc:ItemType            sx:ItemType
 nc:NumericType         sx:NumericType

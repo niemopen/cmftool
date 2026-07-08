@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="msg">
+    <NamespaceURI>http://example.com/Refs/1.0/</NamespaceURI>
+    <NamespacePrefixText>msg</NamespacePrefixText>
+    <DocumentationText>
+      This is the extension schema for the References message specification,
+      which appears in some examples in NDR 6.
+    </DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ExtensionSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>refs.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+    <AugmentationRecord>
+      <Class structures:ref="nc.PersonNameType" xsi:nil="true"/>
+      <DataProperty structures:ref="msg.secrecyCode" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentationRecord>
+    <AugmentationRecord>
+      <Class structures:ref="nc.PersonType" xsi:nil="true"/>
+      <ObjectProperty structures:ref="msg.Metadata" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </AugmentationRecord>
+  </Namespace>
+  <Namespace structures:id="nc">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/</NamespaceURI>
+    <NamespacePrefixText>nc</NamespacePrefixText>
+    <DocumentationText>NIEM core test skeleton schema document.</DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>niem/niem-core.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>CORE</NamespaceCategoryCode>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <ObjectProperty structures:id="msg.Message">
+    <Name>Message</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <Class structures:ref="msg.MessageType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="msg.Metadata">
+    <Name>Metadata</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <Class structures:ref="msg.MetadataType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="msg.secrecyCode">
+    <Name>secrecyCode</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <RelationshipIndicator>true</RelationshipIndicator>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.CommentText">
+    <Name>CommentText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A comment, note, or remark providing additional information.</DocumentationText>
+    <Class structures:ref="nc.TextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.EducationDescriptionText">
+    <Name>EducationDescriptionText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A description of a person's educational background.</DocumentationText>
+    <Class structures:ref="nc.TextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.Person">
+    <Name>Person</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A human being.</DocumentationText>
+    <Class structures:ref="nc.PersonType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonFullName">
+    <Name>PersonFullName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A complete name of a person.</DocumentationText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonGivenName">
+    <Name>PersonGivenName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A first name of a person.</DocumentationText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonMiddleName">
+    <Name>PersonMiddleName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A middle name of a person.</DocumentationText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonName">
+    <Name>PersonName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A combination of names and/or titles by which a person is known.</DocumentationText>
+    <Class structures:ref="nc.PersonNameType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.personNameInitialIndicator">
+    <Name>personNameInitialIndicator</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>True if value represents the first letter or initials of a persons name; false otherwise.</DocumentationText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.PersonSurName">
+    <Name>PersonSurName</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A last name or family name of a person.</DocumentationText>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.SourceIDText">
+    <Name>SourceIDText</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A number or string set by a data provider so that information that is sent can be retraced back to its source.</DocumentationText>
+    <Class structures:ref="nc.TextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="nc.TextLiteral">
+    <Name>TextLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="msg.MessageType">
+    <Name>MessageType</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.Person" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="msg.Metadata" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="msg.MetadataType">
+    <Name>MetadataType</Name>
+    <Namespace structures:ref="msg" xsi:nil="true"/>
+    <ReferenceCode>INTERNAL</ReferenceCode>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.CommentText" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.SourceIDText" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.CommentType">
+    <Name>CommentType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a comment, note, or remark providing additional information.</DocumentationText>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.CommentText" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.PersonNameTextType">
+    <Name>PersonNameTextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a name by which a person is known, referred, or addressed.</DocumentationText>
+    <SubClassOf structures:ref="nc.ProperNameTextType" xsi:nil="true"/>
+  </Class>
+  <Class structures:id="nc.PersonNameType">
+    <Name>PersonNameType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a combination of names and/or titles by which a person is known.</DocumentationText>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.PersonFullName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.PersonType">
+    <Name>PersonType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a human being.</DocumentationText>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.PersonName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="nc.ProperNameTextType">
+    <Name>ProperNameTextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a word or phrase by which a person or thing is known, referred, or addressed.</DocumentationText>
+    <SubClassOf structures:ref="nc.TextType" xsi:nil="true"/>
+  </Class>
+  <Class structures:id="nc.TextType">
+    <Name>TextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a character string.</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="nc.TextLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

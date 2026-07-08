@@ -32,6 +32,7 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.Property;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
 /**
@@ -64,7 +65,7 @@ public class CmdLineLogCapture {
     private class Appender extends AbstractAppender {
         
         protected Appender (String name, Layout<?> layout) { 
-            super(name, null, layout, false);
+            super(name, null, layout, false, Property.EMPTY_ARRAY);
         }
 
         @Override

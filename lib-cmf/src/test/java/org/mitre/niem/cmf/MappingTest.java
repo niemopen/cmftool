@@ -23,204 +23,269 @@
  */
 package org.mitre.niem.cmf;
 
+import static javax.xml.XMLConstants.NULL_NS_URI;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mitre.niem.xml.XMLDocument.makeURI;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.xml.XMLConstants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mitre.niem.xml.XMLDocument.makeURI;
-
 class MappingTest {
 
-    private static final String SRC_PREFIX = "src";
-    private static final String SRC_NS = "http://example.com/src/";
-    private static final String TGT_PREFIX = "tgt";
-    private static final String TGT_NS = "http://example.com/tgt/";
+    private static final String NC_NS = "http://example.com/nc/";
+    private static final String SX_NS = "http://example.com/simple/";
+    private static final String ALT_NS = "http://example.com/alt/";
 
-    @Test
-    void assignPrefixStoresAssignment() throws Exception {
+    private static Mapping newMapping() throws CMFException {
+        return new Mapping();
+    }
+
+    private static Mapping newMappingWithNcAndSx() throws CMFException {
         var map = new Mapping();
+        map.assignPrefix("nc", NC_NS);
+        map.assignPrefix("sx", SX_NS);
+        return map;
+    }
 
-        map.assignPrefix(SRC_PREFIX, SRC_NS);
-
-        assertEquals(SRC_NS, map.prefixToURI(SRC_PREFIX));
-        assertNull(map.prefixToURI("missing"));
+    private static String ncUri(String localName) {
+        return makeURI(NC_NS, localName);
     }
 
     @Test
-    void assignPrefixRejectsDifferentPrefixForSameUri() throws Exception {
-        var map = new Mapping();
-        map.assignPrefix("a", SRC_NS);
+    void assignPrefixAllowsConsistentReassignment() throws Exception {
+        var map = newMapping();
 
-        var ex = assertThrows(CMFException.class, () -> map.assignPrefix("b", SRC_NS));
-        assertTrue(ex.getMessage().contains("uri already mapped"));
+        assertDoesNotThrow(() -> map.assignPrefix("nc", NC_NS));
+        assertDoesNotThrow(() -> map.assignPrefix("nc", NC_NS));
     }
 
     @Test
-    void assignPrefixRejectsDifferentUriForSamePrefix() throws Exception {
-        var map = new Mapping();
-        map.assignPrefix("a", "http://example.com/one/");
+    void assignPrefixRejectsNullOrBlankValues() throws Exception {
+        var map = newMapping();
 
-        var ex = assertThrows(CMFException.class, () -> map.assignPrefix("a", "http://example.com/two/"));
-        assertTrue(ex.getMessage().contains("prefix already assigned"));
+        var ex1 = assertThrows(CMFException.class, () -> map.assignPrefix(null, NC_NS));
+        assertTrue(ex1.getMessage().contains("blank or null prefix"));
+
+        var ex2 = assertThrows(CMFException.class, () -> map.assignPrefix(" ", NC_NS));
+        assertTrue(ex2.getMessage().contains("blank or null prefix"));
+
+        var ex3 = assertThrows(CMFException.class, () -> map.assignPrefix("nc", null));
+        assertTrue(ex3.getMessage().contains("blank or null URI"));
+
+        var ex4 = assertThrows(CMFException.class, () -> map.assignPrefix("nc", " "));
+        assertTrue(ex4.getMessage().contains("blank or null URI"));
     }
 
     @Test
-    void addMappingPopulatesAllLookupMethods() throws Exception {
-        var map = basicMap();
+    void assignPrefixRejectsConflictingAssignments() throws Exception {
+        var map = newMapping();
+        map.assignPrefix("nc", NC_NS);
 
-        map.addMapping("src:PersonName", "tgt:name");
+        var ex1 = assertThrows(CMFException.class, () -> map.assignPrefix("nc", ALT_NS));
+        assertTrue(ex1.getMessage().contains("prefix already assigned"));
 
-        var fromU = makeURI(SRC_NS, "PersonName");
-        var toU = makeURI(TGT_NS, "name");
+        var map2 = newMapping();
+        map2.assignPrefix("nc", NC_NS);
 
-        assertTrue(map.isMappedQ("src:PersonName"));
-        assertTrue(map.isMappedU(fromU));
-
-        assertEquals("tgt:name", map.qnToTargetQN("src:PersonName"));
-        assertEquals("tgt:name", map.uriToTargetQN(fromU));
-        assertEquals(TGT_NS, map.uriToTargetNSU(fromU));
-        assertEquals(toU, map.uriToTargetURI(fromU));
-
-        assertEquals("src:PersonName", map.targetQtoSourceQN("tgt:name"));
-        assertEquals(fromU, map.targetUToSourceURI(toU));
-
-        assertFalse(map.isMappedQ("src:Other"));
-        assertNull(map.qnToTargetQN("src:Other"));
-        assertNull(map.uriToTargetQN(makeURI(SRC_NS, "Other")));
-        assertNull(map.uriToTargetNSU(makeURI(SRC_NS, "Other")));
-        assertNull(map.uriToTargetURI(makeURI(SRC_NS, "Other")));
-        assertNull(map.targetQtoSourceQN("tgt:other"));
-        assertNull(map.targetUToSourceURI(makeURI(TGT_NS, "other")));
+        var ex2 = assertThrows(CMFException.class, () -> map2.assignPrefix("alt", NC_NS));
+        assertTrue(ex2.getMessage().contains("uri already mapped"));
     }
 
     @Test
-    void addMappingIgnoresXsdSourceNamespace() throws Exception {
-        var map = new Mapping();
-        map.assignPrefix("xs", XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        map.assignPrefix(TGT_PREFIX, TGT_NS);
+    void addMappingWithPrefixedTargetStoresExpectedRecord() throws Exception {
+        var map = newMappingWithNcAndSx();
 
-        map.addMapping("xs:string", "tgt:string");
+        map.addMapping("nc:PersonSurName", "sx:lname");
 
-        var xsdStringU = makeURI(XMLConstants.W3C_XML_SCHEMA_NS_URI, "string");
-        var tgtStringU = makeURI(TGT_NS, "string");
-
-        assertFalse(map.isMappedQ("xs:string"));
-        assertFalse(map.isMappedU(xsdStringU));
-        assertNull(map.qnToTargetQN("xs:string"));
-        assertNull(map.uriToTargetQN(xsdStringU));
-        assertNull(map.targetQtoSourceQN("tgt:string"));
-        assertNull(map.targetUToSourceURI(tgtStringU));
+        var rec = map.uriToMapRec(ncUri("PersonSurName"));
+        assertNotNull(rec);
+        assertEquals("nc:PersonSurName", rec.sourceQN());
+        assertEquals("sx", rec.prefix());
+        assertEquals("lname", rec.localName());
+        assertEquals("sx:lname", rec.qname());
+        assertEquals("sx:lname", rec.targetArgument());
+        assertEquals(makeURI(SX_NS, "lname"), rec.uri());
+        assertEquals(SX_NS, rec.namespace());
+        assertTrue(map.isMappedU(ncUri("PersonSurName")));
     }
 
     @Test
-    void addMappingRejectsInvalidSourceQName() throws Exception {
-        var map = basicMap();
+    void addMappingWithUnprefixedTargetUsesNullNamespace() throws Exception {
+        var map = newMappingWithNcAndSx();
 
-        var ex = assertThrows(CMFException.class, () -> map.addMapping("not-a-qname", "tgt:name"));
-        assertTrue(ex.getMessage().contains("Invalid source QName"));
+        map.addMapping("nc:personNameInitialIndicator", "isInitial");
+
+        var rec = map.uriToMapRec(ncUri("personNameInitialIndicator"));
+        assertNotNull(rec);
+        assertEquals("nc:personNameInitialIndicator", rec.sourceQN());
+        assertEquals("", rec.prefix());
+        assertEquals("isInitial", rec.localName());
+        assertEquals("isInitial", rec.qname());
+        assertEquals("isInitial", rec.targetArgument());
+        assertEquals("isInitial", rec.uri());
+        assertEquals(NULL_NS_URI, rec.namespace());
     }
 
     @Test
-    void addMappingRejectsInvalidTargetQName() throws Exception {
-        var map = basicMap();
+    void addMappingAllowsReaddingSameMapping() throws Exception {
+        var map = newMappingWithNcAndSx();
 
-        var ex = assertThrows(CMFException.class, () -> map.addMapping("src:PersonName", "not-a-qname"));
-        assertTrue(ex.getMessage().contains("Invalid source QName"));
+        assertDoesNotThrow(() -> map.addMapping("nc:PersonSurName", "sx:lname"));
+        assertDoesNotThrow(() -> map.addMapping("nc:PersonSurName", "sx:lname"));
+
+        var rec = map.uriToMapRec(ncUri("PersonSurName"));
+        assertNotNull(rec);
+        assertEquals("sx:lname", rec.targetArgument());
     }
 
     @Test
-    void addMappingRejectsUndeclaredSourcePrefix() throws Exception {
-        var map = new Mapping();
-        map.assignPrefix(TGT_PREFIX, TGT_NS);
+    void addMappingRejectsDifferentTargetForSameSource() throws Exception {
+        var map = newMappingWithNcAndSx();
+        map.assignPrefix("alt", ALT_NS);
+        map.addMapping("nc:PersonSurName", "sx:lname");
 
-        var ex = assertThrows(CMFException.class, () -> map.addMapping("src:PersonName", "tgt:name"));
-        assertTrue(ex.getMessage().contains("Undeclared source prefix"));
-    }
+        var ex = assertThrows(
+            CMFException.class,
+            () -> map.addMapping("nc:PersonSurName", "alt:otherName")
+        );
 
-    @Test
-    void addMappingRejectsUndeclaredTargetPrefix() throws Exception {
-        var map = new Mapping();
-        map.assignPrefix(SRC_PREFIX, SRC_NS);
-
-        assertThrows(CMFException.class, () -> map.addMapping("src:PersonName", "tgt:name"));
-    }
-
-    @Test
-    void addMappingRejectsConflictingSourceRemap() throws Exception {
-        var map = basicMap();
-        map.addMapping("src:PersonName", "tgt:name");
-
-        var ex = assertThrows(CMFException.class, () -> map.addMapping("src:PersonName", "tgt:fullName"));
         assertTrue(ex.getMessage().contains("already mapped"));
     }
 
     @Test
-    void addMappingRejectsConflictingTargetReuse() throws Exception {
-        var map = basicMap();
-        map.addMapping("src:PersonName", "tgt:name");
+    void addMappingRejectsSameTargetForDifferentSource() throws Exception {
+        var map = newMappingWithNcAndSx();
+        map.addMapping("nc:PersonSurName", "sx:lname");
 
-        var ex = assertThrows(CMFException.class, () -> map.addMapping("src:GivenName", "tgt:name"));
+        var ex = assertThrows(
+            CMFException.class,
+            () -> map.addMapping("nc:PersonGivenName", "sx:lname")
+        );
+
         assertTrue(ex.getMessage().contains("already mapped"));
     }
 
     @Test
-    void writeOutputsPrefixesAndMappingsButOmitsXsdPrefix() throws Exception {
-        var map = new Mapping();
-        map.assignPrefix("xs", XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        map.assignPrefix(SRC_PREFIX, SRC_NS);
-        map.assignPrefix(TGT_PREFIX, TGT_NS);
+    void addMappingRejectsInvalidOrUndeclaredNames() throws Exception {
+        var map = newMappingWithNcAndSx();
 
-        map.addMapping("src:Alpha", "tgt:alpha");
-        map.addMapping("src:BetaType", "tgt:betaType");
+        var ex1 = assertThrows(CMFException.class, () -> map.addMapping("badQName", "sx:lname"));
+        assertTrue(ex1.getMessage().contains("Invalid source QName"));
+
+        var ex2 = assertThrows(CMFException.class, () -> map.addMapping("nc:PersonName", "bad:name:again"));
+        assertTrue(ex2.getMessage().contains("Invalid target name"));
+
+        var ex3 = assertThrows(CMFException.class, () -> map.addMapping("zz:PersonName", "sx:lname"));
+        assertTrue(ex3.getMessage().contains("Undeclared source prefix"));
+
+        var ex4 = assertThrows(CMFException.class, () -> map.addMapping("nc:PersonName", "zz:lname"));
+        assertTrue(ex4.getMessage().contains("Undeclared target prefix"));
+    }
+
+    @Test
+    void uriToMapRecReturnsNullForUnknownSourceUri() throws Exception {
+        var map = newMappingWithNcAndSx();
+
+        assertFalse(map.isMappedU(ncUri("Unknown")));
+        assertNull(map.uriToMapRec(ncUri("Unknown")));
+    }
+
+    @Test
+    void writeAndReadRoundTripPreservesMappings() throws Exception {
+        var map = newMappingWithNcAndSx();
+        map.addMapping("nc:PersonSurName", "sx:lname");
+        map.addMapping("nc:personNameInitialIndicator", "isInitial");
+
+        var out = new StringWriter();
+        map.write(out);
+
+        var reparsed = Mapping.read(new StringReader(out.toString()));
+
+        var rec1 = reparsed.uriToMapRec(ncUri("PersonSurName"));
+        assertNotNull(rec1);
+        assertEquals("sx", rec1.prefix());
+        assertEquals("lname", rec1.localName());
+        assertEquals("sx:lname", rec1.qname());
+        assertEquals(makeURI(SX_NS, "lname"), rec1.uri());
+        assertEquals(SX_NS, rec1.namespace());
+
+        var rec2 = reparsed.uriToMapRec(ncUri("personNameInitialIndicator"));
+        assertNotNull(rec2);
+        assertEquals("", rec2.prefix());
+        assertEquals("isInitial", rec2.localName());
+        assertEquals("isInitial", rec2.qname());
+        assertEquals("isInitial", rec2.uri());
+        assertEquals(NULL_NS_URI, rec2.namespace());
+    }
+
+    @Test
+    void writeOmitsXmlSchemaNamespacePrefixLine() throws Exception {
+        var map = newMapping();
+        map.assignPrefix("xsd", W3C_XML_SCHEMA_NS_URI);
+        map.assignPrefix("nc", NC_NS);
+        map.assignPrefix("sx", SX_NS);
+        map.addMapping("nc:PersonSurName", "sx:lname");
 
         var out = new StringWriter();
         map.write(out);
         var text = out.toString();
 
-        assertTrue(text.contains("PREFIX src"));
-        assertTrue(text.contains("PREFIX tgt"));
-        assertFalse(text.contains("PREFIX xs"));
-
-        assertTrue(text.contains("# FromQName"));
-        assertTrue(text.contains("src:Alpha"));
-        assertTrue(text.contains("tgt:alpha"));
-        assertTrue(text.contains("src:BetaType"));
-        assertTrue(text.contains("tgt:betaType"));
+        assertTrue(text.contains("PREFIX nc"));
+        assertTrue(text.contains("PREFIX sx"));
+        assertFalse(text.contains(W3C_XML_SCHEMA_NS_URI));
     }
 
     @Test
-    void readParsesPrefixesMappingsCommentsAndBom() throws Exception {
-        var text =
-            "\uFEFFPREFIX src " + SRC_NS + "\n" +
-            "PREFIX tgt " + TGT_NS + "   # target namespace\n" +
+    void readSupportsBomCommentsAndInlineComments() throws Exception {
+        String text =
+            "\uFEFFPREFIX nc " + NC_NS + "\n" +
+            "PREFIX sx " + SX_NS + "   # target namespace\n" +
             "\n" +
-            "# mapping lines\n" +
-            "src:PersonName    tgt:name\n";
+            "# comment line\n" +
+            "nc:PersonSurName sx:lname # inline comment\n" +
+            "nc:personNameInitialIndicator isInitial\n";
 
         var map = Mapping.read(new StringReader(text));
 
-        var fromU = makeURI(SRC_NS, "PersonName");
-        var toU = makeURI(TGT_NS, "name");
+        var rec1 = map.uriToMapRec(ncUri("PersonSurName"));
+        assertNotNull(rec1);
+        assertEquals("sx:lname", rec1.targetArgument());
 
-        assertEquals(SRC_NS, map.prefixToURI("src"));
-        assertEquals(TGT_NS, map.prefixToURI("tgt"));
-        assertEquals("tgt:name", map.qnToTargetQN("src:PersonName"));
-        assertEquals("src:PersonName", map.targetQtoSourceQN("tgt:name"));
-        assertEquals("tgt:name", map.uriToTargetQN(fromU));
-        assertEquals(fromU, map.targetUToSourceURI(toU));
+        var rec2 = map.uriToMapRec(ncUri("personNameInitialIndicator"));
+        assertNotNull(rec2);
+        assertEquals("isInitial", rec2.targetArgument());
+        assertEquals(NULL_NS_URI, rec2.namespace());
+    }
+
+    @Test
+    void readWrapsSemanticErrorsWithLineNumber() {
+        String text =
+            "PREFIX nc " + NC_NS + "\n" +
+            "nc:PersonName sx:lname\n";
+
+        var ex = assertThrows(CMFException.class, () -> Mapping.read(new StringReader(text)));
+        assertTrue(ex.getMessage().contains("Line 2"));
+        assertTrue(ex.getMessage().contains("Undeclared target prefix"));
     }
 
     @Test
     void readRejectsInvalidSyntaxWithLineNumber() {
-        var text =
-            "PREFIX src " + SRC_NS + "\n" +
-            "this is not valid\n";
+        String text =
+            "PREFIX nc " + NC_NS + "\n" +
+            "this is not valid mapping syntax\n";
 
         var ex = assertThrows(CMFException.class, () -> Mapping.read(new StringReader(text)));
         assertTrue(ex.getMessage().contains("Line 2"));
@@ -228,73 +293,20 @@ class MappingTest {
     }
 
     @Test
-    void readWrapsPrefixAssignmentErrorWithLineNumber() {
-        var text =
-            "PREFIX a http://example.com/one/\n" +
-            "PREFIX b http://example.com/one/\n";
+    void readFileReadsFromDisk(@TempDir Path tempDir) throws IOException, CMFException {
+        String text =
+            "PREFIX nc " + NC_NS + "\n" +
+            "PREFIX sx " + SX_NS + "\n" +
+            "nc:PersonSurName sx:lname\n";
 
-        var ex = assertThrows(CMFException.class, () -> Mapping.read(new StringReader(text)));
-        assertTrue(ex.getMessage().contains("Line 2"));
-    }
-
-    @Test
-    void readWrapsMappingErrorWithLineNumber() {
-        var text =
-            "PREFIX src " + SRC_NS + "\n" +
-            "src:PersonName tgt:name\n";
-
-        var ex = assertThrows(CMFException.class, () -> Mapping.read(new StringReader(text)));
-        assertTrue(ex.getMessage().contains("Line 2"));
-    }
-
-    @Test
-    void writeAndReadRoundTripPreservesMappings() throws Exception {
-        var original = basicMap();
-        original.addMapping("src:PersonName", "tgt:name");
-        original.addMapping("src:GivenName", "tgt:givenName");
-
-        var out = new StringWriter();
-        original.write(out);
-
-        var roundTripped = Mapping.read(new StringReader(out.toString()));
-
-        var personNameU = makeURI(SRC_NS, "PersonName");
-        var givenNameU = makeURI(SRC_NS, "GivenName");
-
-        assertEquals(SRC_NS, roundTripped.prefixToURI("src"));
-        assertEquals(TGT_NS, roundTripped.prefixToURI("tgt"));
-
-        assertEquals("tgt:name", roundTripped.qnToTargetQN("src:PersonName"));
-        assertEquals("tgt:givenName", roundTripped.qnToTargetQN("src:GivenName"));
-
-        assertEquals("tgt:name", roundTripped.uriToTargetQN(personNameU));
-        assertEquals("tgt:givenName", roundTripped.uriToTargetQN(givenNameU));
-    }
-
-    @Test
-    void readFileReadsMappingFile(@TempDir Path tempDir) throws IOException, CMFException {
-        var file = tempDir.resolve("mapping.txt");
-        var text =
-            "PREFIX src " + SRC_NS + "\n" +
-            "PREFIX tgt " + TGT_NS + "\n" +
-            "src:PersonName tgt:name\n";
-
-        Files.writeString(file, text);
+        Path file = tempDir.resolve("mapping.txt");
+        Files.writeString(file, text, StandardCharsets.UTF_8);
 
         var map = Mapping.readFile(file.toFile());
 
-        assertEquals(SRC_NS, map.prefixToURI("src"));
-        assertEquals(TGT_NS, map.prefixToURI("tgt"));
-        assertEquals("tgt:name", map.qnToTargetQN("src:PersonName"));
-    }
-
-    private static Mapping basicMap() throws CMFException {
-        var map = new Mapping();
-        map.assignPrefix(SRC_PREFIX, SRC_NS);
-        map.assignPrefix(TGT_PREFIX, TGT_NS);
-        return map;
+        var rec = map.uriToMapRec(ncUri("PersonSurName"));
+        assertNotNull(rec);
+        assertEquals("sx:lname", rec.targetArgument());
+        assertEquals(makeURI(SX_NS, "lname"), rec.uri());
     }
 }
-
-
-

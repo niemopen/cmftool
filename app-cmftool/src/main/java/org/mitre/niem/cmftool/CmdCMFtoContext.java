@@ -163,15 +163,6 @@ public class CmdCMFtoContext implements Callable<Integer> {
                 return 1;
             }
         }
-        // Validate mapping against the model if one was provided
-        if (null != map) {
-            try {
-                map.validateAgainstModel(model);
-            } catch (CMFException ex) {
-                System.err.println("Invalid mapping for model: " + ex.getMessage());
-                return 1;
-            }
-        }
         // Get message property objects (if specified)
         Set<ObjectProperty> msgPropS = new HashSet<>();
         if (null != msgQA) {

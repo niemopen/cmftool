@@ -1002,13 +1002,14 @@ public class ModelToJSONSchema {
     
     // Returns the correct key string for the input QName, which is:
     // * the input QName, if not mapped
-    // * the mapped QName, if map.noPrefix() is false.
-    // * the mapped local name, if map.noPrefix() is true.
+    // * the mapped QName, if noPrefix() is false.
+    // * the mapped local name, if noPrefix() is true.
     public String qnToKey (String qn) {
-        var res = map.qnToTargetQN(qn);
+        var uri = m.qnToURI(qn);
+        var res = map.uriToMapRec(uri);
         if (null == res) return qn;
-        if (noPrefix) return qnToName(res);
-        return res;
+        if (noPrefix) return res.localName();
+        return res.qname();
     }
     
     // Parses JSON text to create a JsonObject containing a pair

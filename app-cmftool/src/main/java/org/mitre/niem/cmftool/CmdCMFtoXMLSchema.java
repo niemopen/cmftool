@@ -50,17 +50,25 @@ package org.mitre.niem.cmftool;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.mitre.niem.cmf.CMFException;
+import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
+import org.mitre.niem.cmf.ObjectProperty;
+import org.mitre.niem.cmf.Property;
 import org.mitre.niem.utility.StagedDirectoryWriter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
+import org.mitre.niem.xsd.ModelToMappedXMLSchema;
 import org.mitre.niem.xsd.ModelToXMLSchema;
 import org.mitre.niem.xsd.NamespaceKind;
 import picocli.CommandLine;
@@ -86,12 +94,18 @@ import picocli.CommandLine.Parameters;
 public class CmdCMFtoXMLSchema implements Callable<Integer> {
 
     @Option(
-        names = {"-o", "--output-dir"},
-        paramLabel = "<dir>",
-        description = "write schema pile into this directory",
-        defaultValue = "."
+        names = {"-m", "--msg"},
+        split = ",",
+        paramLabel = "<QName>",
+        description = "build schema to validate these message properties"
     )
-    private Path outputDir;
+    private List<String> msgQA = new ArrayList<>();
+    
+    @Option(
+        names = {"--map"},
+        description = "mapping file for property keys"
+    )
+    private Path mapPath = null;
 
     @Option(
         names = {"-c"},
@@ -125,6 +139,14 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
     )
     private boolean debugFlag = false;
 
+    @Option(
+        names = {"-o", "--output-dir"},
+        paramLabel = "<dir>",
+        description = "write schema pile into this directory",
+        defaultValue = "."
+    )
+    private Path outputDir;
+    
     @Option(
         names = {"--force"},
         description = "replace existing output directory by moving it aside and promoting staged output"
@@ -223,11 +245,38 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
             );
             return 2;
         }
+        
+        // Read the mapping file if one was provided
+        Mapping map = null;
+        if (null != mapPath) {
+            try {
+                map = Mapping.readFile(mapPath.toFile());
+            } catch (IOException | CMFException ex) {
+                System.err.println(
+                    String.format("Can't read mapping file %s: %s", mapPath, ex.getMessage())
+                );
+                return 1;
+            }
+        }
 
-        var m2x = new ModelToXMLSchema(model);
-        m2x.setArchVersion(archVers);
-        m2x.setCatalogPath(catPath == null ? null : catPath.toString());
-        m2x.setRootNamespace(rootNSarg);
+        // Get message property object (if specified)
+        Set<ObjectProperty> msgPropS = new HashSet<>();
+        if (null != msgQA) {
+            for (var msgQ : msgQA) {
+                var p = model.qnToObjectProperty(msgQ);
+                if (null == p) {
+                    System.err.println("Property " + msgQ + " is not in model");
+                    return 1;
+                }
+                msgPropS.add(p);
+            }
+        }
+        var m2x = new ModelToMappedXMLSchema(model, map, msgPropS);
+//        m2x.setArchVersion(archVers);
+//        m2x.setCatalogPath(catPath == null ? null : catPath.toString());
+//        m2x.setRootNamespace(rootNSarg);
+//        m2x.setMapping(map);
+//        m2x.setMessageProperties(msgPropA);
 
         try {
             Path target = outputDir.toAbsolutePath().normalize();
