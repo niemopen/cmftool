@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2025 The MITRE Corporation.
+ * Copyright 2025-6 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,120 +25,101 @@
 package org.mitre.niem.utility;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * A class to obtain a File, URI, or InputStream object for a project resource.  
- * Does the right thing when running from the IDE and when running from the JAR.
- * 
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
+ * Utility for loading project resources from the runtime classpath.
+ *
+ * Resource names may be supplied with or without a leading "/".
+ * Internally they are resolved as absolute classpath resources.
+ *
+ * This works both when running from an IDE/classes directory and from a JAR.
  */
 public class ResourceManager {
+
     private static final Logger LOG = LogManager.getLogger(ResourceManager.class);
-    private final Class rc;
-    private final String jarPath;
-    private final String resPath;
-    
-    public static boolean isDebuggerAttached() {
-        // Check if a debugger is attached
-        String args = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString();
-        boolean isDebuggerAttached = args.contains("-Xdebug") || args.contains("-agentlib:jdwp");
-        return isDebuggerAttached;
+
+    private final Class<?> anchorClass;
+
+    public ResourceManager() {
+        this(ResourceManager.class);
     }
 
-    public ResourceManager () {
-        rc = ResourceManager.class;
-        jarPath = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-//        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
-        resPath = FilenameUtils.concat(jarPath, "../../../resources/main");    
+    public ResourceManager(Class<?> anchorClass) {
+        this.anchorClass = Objects.requireNonNull(anchorClass, "anchorClass must not be null");
     }
-    
-    public ResourceManager (Class c) {
-        rc = c;
-        jarPath = c.getProtectionDomain().getCodeSource().getLocation().getPath();
-//        resPath = FilenameUtils.concat(jarPath, isDebuggerAttached() ? "" : "../../../resources/main");
-        resPath = FilenameUtils.concat(jarPath, "../../../resources/main");  
+
+    /**
+     * Returns an InputStream for the named classpath resource.
+     *
+     * @param name resource name, with or without leading "/"
+     * @return input stream for the resource
+     * @throws IOException if the resource cannot be found or opened
+     */
+    public InputStream getResourceStream(String name) throws IOException {
+        var url = requireResourceUrl(name);
+        return url.openStream();
     }
-    
-    public InputStream getResourceStream (String name) throws IOException {
-        InputStream res = null;
-        
-        // Running from IDE?  Open stream on resource file in project directory
-        if (!jarPath.endsWith(".jar")) {
-            //var rf = getResourceFile(name);
-            var rf = new File(resPath, name);
-            try {
-                res = new FileInputStream(rf);
-            } catch (FileNotFoundException ex) {
-                //LOG.error("Can't find resource {}", name); //IGNORE
-            }
-            return res;
+
+    /**
+     * Copies the named resource to the given output file.
+     *
+     * @param name resource name, with or without leading "/"
+     * @param outFile destination file
+     * @throws IOException if the resource cannot be found or copied
+     */
+    public void copyResourceToFile(String name, File outFile) throws IOException {
+        Objects.requireNonNull(outFile, "outFile must not be null");
+
+        var outPath = outFile.toPath();
+        var parent = outPath.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
         }
-        // Running from JAR? Get resource stream
-        LOG.debug("Running from JAR, resource is {}", name);
-        res = rc.getResourceAsStream(name);
-        return res;
+
+        try (var in = getResourceStream(name)) {
+            Files.copy(in, outPath, StandardCopyOption.REPLACE_EXISTING);
+        }
     }
-    
-    
-    public File getResourceFile (String name) throws IOException {   
-        // Running from IDE?  Return file object in project directory
-        if (!jarPath.endsWith(".jar")) {
-            var rF = new File(resPath, name);
-            if (rF.canRead()) return rF;
+
+    /**
+     * Returns a URI for the named resource, or null if it cannot be resolved.
+     *
+     * @param name resource name, with or without leading "/"
+     * @return resource URI, or null on failure
+     */
+    public URI getResourceURI(String name) {
+        try {
+            return requireResourceUrl(name).toURI();
+        } catch (IOException | URISyntaxException ex) {
+            LOG.error("Unable to resolve resource URI for {}: {}", name, ex.getMessage());
             return null;
         }
-        var rF = File.createTempFile("cmfTool", "resource");
-        copyResourceToFile(name, rF);
-        return rF;
     }
-    
-    
-    public void copyResourceToFile (String name, File outF) throws IOException {
-        var istr = getResourceStream(name);
-        var outW = new FileWriter(outF);
-        if (null == istr) {
-            LOG.error("Can't find resource {}", name);
-            return;
+
+    private URL requireResourceUrl(String name) throws IOException {
+        var normName = normalizeName(name);
+        var url = anchorClass.getResource(normName);
+        if (url == null) {
+            throw new FileNotFoundException("Resource not found: " + normName);
         }
-        IOUtils.copy(istr, outW, "UTF-8");
-        istr.close();
-        outW.close();    
-    }    
-    
-    public URI getResourceURI (String name) {
-        return uri(name);
+        return url;
     }
-    
-    private URI uri (String name) {
-        if (jarPath.endsWith(".jar")) {
-            try {
-                var cls    = getClass();
-                var cldr   = cls.getClassLoader();
-                var res    = cldr.getResource(name);
-//                System.err.println("class="+cls);
-//                System.err.println("cldr="+cldr);
-//                System.err.println("res="+res);
-                var result = res.toURI();
-                return result;
-            } catch (URISyntaxException ex) {
-                LOG.error(ex.getMessage());
-            }
-            return null;
+
+    private static String normalizeName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("resource name must not be null or blank");
         }
-        var resF = new File(resPath, name);
-        return resF.toURI();
+        return name.startsWith("/") ? name : "/" + name;
     }
 }

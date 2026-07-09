@@ -98,8 +98,7 @@ public class ModelXMLWriter {
             var doc  = db.newDocument();
             var root = genModel(doc, m, nsS);
             doc.appendChild(root);
-            var xw   = new XMLWriter();
-            xw.writeXML(doc, w);
+            XMLWriter.writeXML(doc, w);
         } catch (ParserConfigurationException ex) {
             LOG.error("Internal parser error: {}", ex.getMessage());
             return false;

@@ -62,8 +62,7 @@ public class CanonicalXSD {
         Element iroot = idom.getDocumentElement();
         String ns = iroot.getNamespaceURI();
         if (!W3C_XML_SCHEMA_NS_URI.equals(ns) || !"schema".equals(iroot.getLocalName())) {
-            var xmlw = new XMLWriter();
-            xmlw.writeXML(idom, ow);
+            XMLWriter.writeXML(idom, ow);
             return;
         }
         
@@ -135,8 +134,8 @@ public class CanonicalXSD {
         for (var e : attributes)  oroot.appendChild(e);
         for (var e : elements)    oroot.appendChild(e);
 
-        var xsdw = new XSDWriter();
-        xsdw.writeXML(odom, ow);
+        var xw = new XSDWriter();
+        xw.writeXML(odom, ow);
     }
 
 }

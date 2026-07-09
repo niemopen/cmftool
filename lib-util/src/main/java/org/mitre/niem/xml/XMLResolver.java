@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,100 +40,181 @@ import org.xmlresolver.XMLResolverConfiguration;
  * A class for an XML Catalog resolver for XML Schema assembly.
  * Useful when you want to ensure that only local resources are used.
  * Also provides some diagnostics about catalogs and resolutions.
- * 
- * Doesn't do anything with public or system IDs.  Those resolve to null.
- * 
+ *
+ * Doesn't do anything with public or system IDs. Those resolve to null.
+ *
  * The only thing it will resolve is a namespace URI, and it only resolves
  * those to a local resource (file:/path/). If the catalogs specify anything
  * else, it returns null.
- * 
+ *
  * You can ask for a list of all catalog files, including those added by
- * nextCatalog elements.  You can ask for a list of validation errors for 
- * each of those files.  This doesn't use a lazy evaluation, it follows all 
+ * nextCatalog elements. You can ask for a list of validation errors for
+ * each of those files. This doesn't use a lazy evaluation, it follows all
  * the nextCatalog elements, needed or not.
- * 
+ *
  * You can also ask for a map of all namespace URI resolutions performed so far.
- * 
+ *
+ * <p>At present, catalog diagnostics are limited to resolver errors and the
+ * initial catalog list supplied to the constructor.
+ *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class XMLResolver implements LSResourceResolver {
-    static final Logger LOG = LogManager.getLogger(XMLResolver.class);    
-    
-    public static final String NO_MAP = "NO MAP";                   // object for URI with no resolution
-    public static final String REMOTE_MAP = "REMOTE MAP";           // object for URI with nonlocal resolution
-    private final HashMap<String,String> resmap = new HashMap<>();  // cached namespace URI resolutions
-    private final List<String> initCatalogs;                        // initial catalog files, as file URI strings
-    private final Set<String> allCatalogs;                          // all catalog files encountered
-    private List<String> msgs = null;                               // all catalog parse errors     
-    private XMLResolverConfiguration config;
-    private org.xmlresolver.XMLResolver del;
-    
-    protected XMLResolver () {                      // no public default constructor
-        initCatalogs = new ArrayList<>();
-        allCatalogs  = new HashSet<>();
+
+    static final Logger LOG = LogManager.getLogger(XMLResolver.class);
+
+    public static final String NO_MAP = "NO MAP";           // object for URI with no resolution
+    public static final String REMOTE_MAP = "REMOTE MAP";   // object for URI with nonlocal resolution
+
+    private final HashMap<String, String> resmap = new HashMap<>();   // cached namespace URI resolutions
+    private final List<String> initCatalogs;                          // initial catalog files, as file URI strings
+    private final Set<String> allCatalogs;                            // all catalog files encountered
+    private final List<String> msgs = new ArrayList<>();              // resolver/catalog messages
+
+    private final XMLResolverConfiguration config;
+    private final org.xmlresolver.XMLResolver del;
+
+    protected XMLResolver() {                      // no public default constructor
+        initCatalogs = List.of();
+        allCatalogs = new HashSet<>();
         config = new XMLResolverConfiguration();
-//        config.setFeature(ResolverFeature.ACCESS_EXTERNAL_DOCUMENT, "");
-//        config.setFeature(ResolverFeature.ACCESS_EXTERNAL_ENTITY, "");
-        del = new org.xmlresolver.XMLResolver(config);
-    } 
-    
-    public XMLResolver (List<String> catalogs) {
-        initCatalogs = new ArrayList<>(catalogs);
-        allCatalogs  = new HashSet<>(catalogs);
-        config = new XMLResolverConfiguration(catalogs);
-//        config.setFeature(ResolverFeature.ACCESS_EXTERNAL_DOCUMENT, "");
-//        config.setFeature(ResolverFeature.ACCESS_EXTERNAL_ENTITY, "");
         del = new org.xmlresolver.XMLResolver(config);
     }
 
+    /**
+     * Constructs a resolver from a list of catalog file URI strings.
+     *
+     * <p>The supplied list is copied. Catalogs are used to resolve namespace URIs
+     * to local file URIs only.
+     *
+     * @param catalogs list of catalog file URI strings
+     */
+    public XMLResolver(List<String> catalogs) {
+        initCatalogs = (catalogs == null) ? List.of() : List.copyOf(catalogs);
+        allCatalogs = new HashSet<>(initCatalogs);
+        config = new XMLResolverConfiguration(initCatalogs);
+        del = new org.xmlresolver.XMLResolver(config);
+    }
+
+    /**
+     * Resolves a schema resource request.
+     *
+     * <p>This resolver ignores public IDs and system IDs. Only the namespace URI
+     * is considered, and only resolutions to local file URIs are accepted.
+     *
+     * <p>If the namespace URI cannot be resolved, or resolves to a non-local
+     * resource, this method returns {@code null}.
+     *
+     * @param type the resource type
+     * @param namespaceURI the namespace URI to resolve
+     * @param publicId the public identifier, ignored
+     * @param systemId the system identifier, ignored
+     * @param baseURI the base URI for the request
+     * @return an LSInput for the resolved local resource, or {@code null}
+     */
     @Override
-    public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
+    public LSInput resolveResource(
+        String type,
+        String namespaceURI,
+        String publicId,
+        String systemId,
+        String baseURI) {
+
+        if (namespaceURI == null || namespaceURI.isBlank()) return null;
+
         var resU = resolveURI(namespaceURI);
-        if (null == resU) return null;
         if (NO_MAP.equals(resU)) return null;
         if (REMOTE_MAP.equals(resU)) return null;
-        return new DOMInputImpl(publicId, resU, baseURI);        
-    }
-    
-    public String resolveURI (String u) {
-        var res  = del.lookupUri(u);
-        if (null == res) return(NO_MAP);
-        if (!res.isResolved()) return(NO_MAP);
-        var resURI = res.getURI();
-        if (null == resURI.getScheme() || !"file".equals(resURI.getScheme())) return(REMOTE_MAP);
-        if (null != resURI.getHost()) return(REMOTE_MAP);
-        var resU = resURI.toString();
-        return resU;
-    }
-    
-    /**
-     * Returns a mapping of all catalog resolutions performed (URI to file://)
-     * @return resolution map
-     */
-    public Map<String,String> allResolutions () {
-        return resmap;
-    }
-    
-    /**
-     * Returns a set of all catalog files, including those added by nextCatalog
-     * elements.
-     * @return set of catalog file URI strings
-     */
-    public Set<String> allCatalogs () {
-//        validateCatalogs();
-        return allCatalogs;
-    }
-    
-    /**
-     * Validates all catalog files, including those added by nextCatalog elements,
-     * and returns a list of i/o and parsing errors encountered.
-     * @return list of error message strings.
-     */
-    public List<String> allMessages () {
-//        validateCatalogs();
-//        return msgs;
-        return new ArrayList<>();
+
+        var input = new DOMInputImpl();
+        input.setPublicId(publicId);
+        input.setSystemId(resU);
+        input.setBaseURI(baseURI);
+        return input;
     }
 
+    /**
+     * Resolves a namespace URI using the configured XML catalogs.
+     *
+     * <p>If the URI cannot be resolved, this returns {@link #NO_MAP}. If the URI
+     * resolves to a non-local resource, this returns {@link #REMOTE_MAP}. Only
+     * local {@code file:} URIs are accepted as successful resolutions.
+     *
+     * <p>Resolution results are cached and can later be retrieved with
+     * {@link #allResolutions()}.
+     *
+     * @param u namespace URI string
+     * @return resolved local file URI string, {@link #NO_MAP}, or {@link #REMOTE_MAP}
+     */
+    public synchronized String resolveURI(String u) {
+        if (u == null || u.isBlank()) return NO_MAP;
+
+        var cached = resmap.get(u);
+        if (cached != null) return cached;
+
+        String result = NO_MAP;
+        try {
+            var res = del.lookupUri(u);
+            if (res != null && res.isResolved()) {
+                var resURI = res.getURI();
+                if (resURI == null) {
+                    result = NO_MAP;
+                } else if (!"file".equalsIgnoreCase(resURI.getScheme())) {
+                    result = REMOTE_MAP;
+                } else {
+                    var host = resURI.getHost();
+                    if (host != null && !host.isBlank() && !"localhost".equalsIgnoreCase(host)) {
+                        result = REMOTE_MAP;
+                    } else {
+                        result = resURI.toString();
+                    }
+                }
+            }
+        } catch (RuntimeException ex) {
+            var msg = String.format("Catalog resolution error for %s: %s", u, ex.getMessage());
+            LOG.warn(msg);
+            msgs.add(msg);
+            result = NO_MAP;
+        }
+
+        resmap.put(u, result);
+        return result;
+    }
+
+    /**
+     * Returns a mapping of all catalog resolutions performed so far.
+     *
+     * <p>The returned map associates each namespace URI that has been resolved
+     * with either a local file URI, {@link #NO_MAP}, or {@link #REMOTE_MAP}.
+     *
+     * @return immutable map of cached resolution results
+     */
+    public synchronized Map<String, String> allResolutions() {
+        return Map.copyOf(resmap);
+    }
+
+    /**
+     * Returns the set of all catalog files known to this resolver.
+     *
+     * <p>This currently includes the initial catalog files supplied to the
+     * constructor.
+     *
+     * @return immutable set of catalog file URI strings
+     */
+    public synchronized Set<String> allCatalogs() {
+        return Set.copyOf(allCatalogs);
+    }
+
+    /**
+     * Returns a list of resolver and catalog-related messages collected so far.
+     *
+     * <p>At present this list contains resolver errors encountered during
+     * resolution attempts.
+     *
+     * @return immutable list of message strings
+     */
+    public synchronized List<String> allMessages() {
+        return List.copyOf(msgs);
+    }
 }

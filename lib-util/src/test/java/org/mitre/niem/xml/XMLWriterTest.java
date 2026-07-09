@@ -24,112 +24,137 @@
 package org.mitre.niem.xml;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.StringWriter;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
 
 class XMLWriterTest {
 
-    private static final String CMF_NS = "https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/";
-    private static final String STRUCTURES_NS = "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/";
-    private static final String XSI_NS = XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
-    private static final String XMLNS_NS = XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
-
     @Test
-    void writesDefaultNamespaceDeclarationFirstOnRoot() throws Exception {
-        Document doc = newDocument();
-        Element model = doc.createElementNS(CMF_NS, "Model");
-        doc.appendChild(model);
+    void writeXmlDocumentProducesExpectedPrettyOutput() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <r:Root xmlns:z="urn:z" b="2" xmlns="urn:def" a10="10" xmlns:a="urn:a" a2="2" xmlns:r="urn:r">
+              <child z="1">text</child>
+              <!--c-->
+              <?pi data?>
+            </r:Root>
+            """);
 
-        model.setAttributeNS(XMLNS_NS, "xmlns", CMF_NS);
-        model.setAttributeNS(XMLNS_NS, "xmlns:cmf", CMF_NS);
-        model.setAttributeNS(XMLNS_NS, "xmlns:structures", STRUCTURES_NS);
-        model.setAttributeNS(XMLNS_NS, "xmlns:xsi", XSI_NS);
-        model.setAttributeNS(XMLConstants.XML_NS_URI, "xml:lang", "en-US");
+        var out = new StringWriter();
+        XMLWriter.writeXML(dom, out);
 
-        String xml = write(doc);
-
-        assertEquals(
-                """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <Model
-                  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
-                  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
-                  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xml:lang="en-US"/>
-                """,
-                xml);
+        assertEquals("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <r:Root
+              xmlns="urn:def"
+              xmlns:a="urn:a"
+              xmlns:r="urn:r"
+              xmlns:z="urn:z"
+              a2="2"
+              a10="10"
+              b="2">
+              <child z="1">text</child>
+              <!--c-->
+              <?pi data?>
+            </r:Root>
+            """, out.toString());
     }
 
     @Test
-    void standaloneElementCopiesInScopeDefaultNamespaceDeclaration() throws Exception {
-        Document doc = newDocument();
+    void writeXmlElementAsStandaloneCopiesAncestorNamespaces() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root xmlns="urn:def" xmlns:p="urn:p">
+              <p:child attr="v"/>
+            </root>
+            """);
 
-        Element wrapper = doc.createElement("wrapper");
-        doc.appendChild(wrapper);
-        wrapper.setAttributeNS(XMLNS_NS, "xmlns", CMF_NS);
-        wrapper.setAttributeNS(XMLNS_NS, "xmlns:cmf", CMF_NS);
-        wrapper.setAttributeNS(XMLNS_NS, "xmlns:structures", STRUCTURES_NS);
-        wrapper.setAttributeNS(XMLNS_NS, "xmlns:xsi", XSI_NS);
+        var child = (Element) dom.getDocumentElement()
+            .getElementsByTagNameNS("urn:p", "child")
+            .item(0);
 
-        Element model = doc.createElementNS(CMF_NS, "Model");
-        model.setAttributeNS(XMLConstants.XML_NS_URI, "xml:lang", "en-US");
-        wrapper.appendChild(model);
+        var out = new StringWriter();
+        XMLWriter.writeXML(child, out);
 
-        String xml = write(model);
-
-        assertEquals(
-                """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <Model
-                  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
-                  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
-                  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xml:lang="en-US"/>
-                """,
-                xml);
+        assertEquals("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <p:child
+              xmlns="urn:def"
+              xmlns:p="urn:p"
+              attr="v"/>
+            """, out.toString());
     }
 
     @Test
-    void doesNotSynthesizeDefaultNamespaceDeclarationWhenMissing() throws Exception {
-        Document doc = newDocument();
-        Element model = doc.createElementNS(CMF_NS, "Model");
-        doc.appendChild(model);
+    void writeXmlEscapesAttributeAndTextContent() throws Exception {
+        var dom = newDocument();
+        var root = dom.createElement("root");
+        dom.appendChild(root);
 
-        model.setAttributeNS(XMLNS_NS, "xmlns:xsi", XSI_NS);
+        root.setAttribute("attr", "a&b<\"c\n\r\t");
+        root.appendChild(dom.createTextNode("x<y & z\r"));
 
-        String xml = write(doc);
+        var out = new StringWriter();
+        XMLWriter.writeXML(dom, out);
+        var text = out.toString();
 
-        assertEquals(
-                """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <Model
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>
-                """,
-                xml);
+        assertTrue(text.contains("attr=\"a&amp;b&lt;&quot;c&#xA;&#xD;&#x9;\""));
+        assertTrue(text.contains(">x&lt;y &amp; z&#xD;</root>"));
+    }
+
+    @Test
+    void nodeToTextSerializesDocumentElementAndComment() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root xmlns="urn:test"><child>value</child></root>
+            """);
+
+        var docText = XMLWriter.nodeToText(dom);
+        var elemText = XMLWriter.nodeToText(dom.getDocumentElement());
+
+        Comment comment = dom.createComment("hello");
+        var commentText = XMLWriter.nodeToText(comment);
+
+        assertTrue(docText.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        assertTrue(elemText.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        assertEquals("<!--hello-->\n", commentText);
+    }
+
+    @Test
+    void writeXmlToFileWritesUtf8Content(@TempDir Path tempDir) throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root><child>value</child></root>
+            """);
+
+        var outFile = tempDir.resolve("out.xml").toFile();
+        XMLWriter.writeXML(dom, outFile);
+
+        var text = Files.readString(outFile.toPath(), StandardCharsets.UTF_8);
+        assertEquals("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root>
+              <child>value</child>
+            </root>
+            """, text);
+    }
+
+    private static Document parseXml(String xml) throws Exception {
+        var db = ParserBootstrap.docBuilder();
+        return db.parse(new InputSource(new java.io.StringReader(xml)));
     }
 
     private static Document newDocument() throws Exception {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        return dbf.newDocumentBuilder().newDocument();
-    }
-
-    private static String write(Document doc) throws Exception {
-        StringWriter sw = new StringWriter();
-        new XMLWriter().writeXML(doc, sw);
-        return sw.toString();
-    }
-
-    private static String write(Element elem) throws Exception {
-        StringWriter sw = new StringWriter();
-        new XMLWriter().writeXML(elem, sw);
-        return sw.toString();
+        return ParserBootstrap.docBuilder().newDocument();
     }
 }

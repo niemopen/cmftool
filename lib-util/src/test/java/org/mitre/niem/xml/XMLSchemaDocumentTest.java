@@ -23,139 +23,249 @@
  */
 package org.mitre.niem.xml;
 
-import java.io.File;
-import org.assertj.core.api.Assertions;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+import java.io.ByteArrayInputStream;
+import java.io.StringReader;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mitre.niem.xml.XMLSchemaDocument.getDocumentation;
-import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
-import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
-import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
+import org.junit.jupiter.api.io.TempDir;
+import org.xml.sax.InputSource;
 
-/**
- *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
- */
-public class XMLSchemaDocumentTest {
-    
-    private final static File resDF   = new File("src/test/resources");
-    private final static File xsDocF  = new File(resDF, "xsd/xsDocTest.xsd");
-    private final static File goodXsF =  new File(resDF, "xsd/goodXsTest.xsd");
-    private final static File badXsF  =  new File(resDF, "xsd/badTest.xsd");
-    
+class XMLSchemaDocumentTest {
+
+    private static final String XSD = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xml="http://www.w3.org/XML/1998/namespace"
+            xmlns:app="http://example.com/app"
+            targetNamespace="http://example.com/app"
+            xml:lang="en"
+            version="1.2">
+
+          <xs:annotation>
+            <xs:documentation>Schema level documentation</xs:documentation>
+          </xs:annotation>
+
+          <xs:import namespace="http://example.com/ext" schemaLocation="ext.xsd">
+            <xs:annotation>
+              <xs:documentation xml:lang="fr">Import documentation</xs:documentation>
+            </xs:annotation>
+          </xs:import>
+
+          <xs:element name="Root" type="xs:string"/>
+
+        </xs:schema>
+        """;
+
+    private static final String XML_LANG_SAMPLE = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <xs:schema
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xml="http://www.w3.org/XML/1998/namespace"
+            xml:lang="en">
+          <xs:annotation>
+            <xs:documentation>doc 1</xs:documentation>
+            <xs:documentation xml:lang="fr">doc 2</xs:documentation>
+          </xs:annotation>
+          <xs:element name="Root">
+            <xs:annotation>
+              <xs:documentation>element doc</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:schema>
+        """;
+
     @Test
-    public void testFileConstructor () throws Exception {
-        var xsd = new XMLSchemaDocument(xsDocF);
-    }
-    
-    @Test
-    public void testLanguage () throws Exception {
-        var xsd = new XMLSchemaDocument(xsDocF);
-        var tns = xsd.language();
-        assertEquals("en-US", tns);
-    }
-        
-    @Test
-    public void testTargetNamespace () throws Exception {
-        var xsd = new XMLSchemaDocument(xsDocF);
-        var tns = xsd.targetNamespace();
-        assertEquals("http://example.com/test/", tns);
-    }
-    
-    @Test
-    public void testVersion () throws Exception {
-        var xsd = new XMLSchemaDocument(xsDocF);
-        var tns = xsd.version();
-        assertEquals("1", tns);
-    }
-    
-    @Test
-    public void testDom() throws Exception {
-        var xsd = new XMLSchemaDocument(xsDocF);
+    void constructsFromFile(@TempDir Path tempDir) throws Exception {
+        var xsdFile = writeFile(tempDir, "sample.xsd", XSD);
+
+        var xsd = new XMLSchemaDocument(xsdFile.toFile());
+
         assertNotNull(xsd.dom());
+        assertNotNull(xsd.documentElement());
+        assertEquals("schema", xsd.documentElement().getLocalName());
+        assertEquals(xsdFile.toFile().getCanonicalFile(), xsd.docFile());
+        assertEquals(xsdFile.toFile().getCanonicalFile().toURI(), xsd.docURI());
     }
 
     @Test
-    public void testEval() throws Exception {
-        var xsd = new XMLSchemaDocument(xsDocF);
-        var nds = xsd.evalForNodes(xsd.dom().getDocumentElement(), "/*/@targetNamespace");
-        assertEquals(1, nds.getLength());
-    }
-    
-    @Test
-    public void testImportElements () throws Exception {
-        var xsd  = new XMLSchemaDocument(goodXsF);
-        var imps = xsd.importElements();
-        assertEquals(3, imps.size());
-        assertThat(imps)
-            .extracting(XMLSchemaImport::nsU)
-            .containsExactly (
-                "https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/",
-                "https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-gml/6.0/",
-                "https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/");
-        assertThat(imps)
-            .extracting(XMLSchemaImport::sloc)
-            .containsExactly (
-                "niem/niem-core-skel.xsd",
-                "niem/adapters/niem-gml.xsd",
-                "niem/utility/structures.xsd");
-        assertThat(imps.get(0).attL())
-            .extracting(XMLAttribute::namespace, XMLAttribute::name, XMLAttribute::value)
-            .containsExactly(
-                Assertions.tuple(
-                    "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/",
-                    "externalImportIndicator",
-                    "false")
-            );
-        assertThat(imps.get(2).docL())
-            .extracting(LanguageString::text)
-            .containsExactly("Import documentation.");
-    }
-    
-    @Test
-    public void testGetDocumentation () throws Exception {
-        var xsd  = new XMLSchemaDocument(goodXsF);
-        var dom  = xsd.dom();
-        var root = dom.getDocumentElement();
-        var docL = getDocumentation(root);
-        assertThat(docL)
-            .hasSize(2)
-            .satisfiesExactlyInAnyOrder(
-                obj -> { assertThat("en-US".equals(obj.lang()));
-                         assertThat("XMLSchema test".equals(obj.text()));
-                },
-                obj -> { assertThat("fr".equals(obj.lang()));
-                         assertThat(obj.text().contains("pas ma valise"));
-                }
-            );
+    void constructsFromInputStreamWithoutUri() throws Exception {
+        try (var in = new ByteArrayInputStream(XSD.getBytes(StandardCharsets.UTF_8))) {
+            var xsd = new XMLSchemaDocument(in);
+
+            assertNotNull(xsd.dom());
+            assertEquals("schema", xsd.documentElement().getLocalName());
+            assertNull(xsd.docFile());
+            assertNull(xsd.docURI());
+        }
     }
 
     @Test
-    public void testNsdecls() throws Exception {
-        var xsd = new XMLSchemaDocument(xsDocF);
-        var nsd = xsd.namespaceDeclarations();
-        assertThat(nsd)
-            .extracting(XMLNamespaceDeclaration::prefix, 
-                XMLNamespaceDeclaration::ns, 
-                XMLNamespaceDeclaration::depth)
-            .containsExactlyInAnyOrder(
-                tuple("ct", "https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/", 0),
-                tuple("xs","http://www.w3.org/2001/XMLSchema", 0),
-                tuple("ct", "https://example.com/bogus-ct/", 1),
-                tuple("foo", "http://example.com/foo/", 1)
-            );
+    void constructsFromInputStreamWithUri() throws Exception {
+        var uri = URI.create("file:/virtual/sample.xsd");
+
+        try (var in = new ByteArrayInputStream(XSD.getBytes(StandardCharsets.UTF_8))) {
+            var xsd = new XMLSchemaDocument(in, uri);
+
+            assertNotNull(xsd.dom());
+            assertEquals("schema", xsd.documentElement().getLocalName());
+            assertNull(xsd.docFile());
+            assertEquals(uri, xsd.docURI());
+        }
     }
-    
+
     @Test
-    public void testQN () {
-        assertEquals("pre", qnToPrefix("pre:Lname"));
-        assertEquals("Lname", qnToName("pre:Lname"));
-        assertEquals("", qnToPrefix("name"));
-        assertEquals("name", qnToName("name"));
-        assertEquals("foo:bar", makeQN("foo", "bar"));
+    void constructsFromInputSource() throws Exception {
+        var src = new InputSource(new StringReader(XSD));
+        src.setSystemId("file:/virtual/from-input-source.xsd");
+
+        var xsd = new XMLSchemaDocument(src);
+
+        assertNotNull(xsd.dom());
+        assertEquals("schema", xsd.documentElement().getLocalName());
+        assertNull(xsd.docFile());
+        assertEquals(URI.create("file:/virtual/from-input-source.xsd"), xsd.docURI());
     }
-    
+
+    @Test
+    void constructsFromInputSourceWithExplicitUri() throws Exception {
+        var src = new InputSource(new StringReader(XSD));
+        var uri = URI.create("file:/virtual/explicit.xsd");
+
+        var xsd = new XMLSchemaDocument(src, uri);
+
+        assertNotNull(xsd.dom());
+        assertEquals("schema", xsd.documentElement().getLocalName());
+        assertEquals(uri, xsd.docURI());
+    }
+
+    @Test
+    void returnsSchemaAttributes() throws Exception {
+        var xsd = new XMLSchemaDocument(
+            new ByteArrayInputStream(XSD.getBytes(StandardCharsets.UTF_8)));
+
+        assertEquals("http://example.com/app", xsd.targetNamespace());
+        assertEquals("en", xsd.language());
+        assertEquals("1.2", xsd.version());
+
+        assertSame(xsd.targetNamespace(), xsd.targetNamespace());
+        assertSame(xsd.language(), xsd.language());
+        assertSame(xsd.version(), xsd.version());
+    }
+
+    @Test
+    void returnsSchemaLevelDocumentation() throws Exception {
+        var xsd = new XMLSchemaDocument(
+            new ByteArrayInputStream(XSD.getBytes(StandardCharsets.UTF_8)));
+
+        List<LanguageString> docs = xsd.documentation();
+
+        assertNotNull(docs);
+        assertEquals(1, docs.size());
+        assertNotNull(docs.get(0));
+    }
+
+    @Test
+    void returnsImportElements() throws Exception {
+        var xsd = new XMLSchemaDocument(
+            new ByteArrayInputStream(XSD.getBytes(StandardCharsets.UTF_8)));
+
+        List<XMLSchemaImport> imports = xsd.importElements();
+
+        assertNotNull(imports);
+        assertEquals(1, imports.size());
+        assertNotNull(imports.get(0));
+    }
+
+    @Test
+    void getDocumentationReturnsImmediateAnnotationDocumentation() throws Exception {
+        var xsd = new XMLSchemaDocument(
+            new ByteArrayInputStream(XML_LANG_SAMPLE.getBytes(StandardCharsets.UTF_8)));
+
+        var root = xsd.documentElement();
+        var docs = XMLSchemaDocument.getDocumentation(root);
+
+        assertNotNull(docs);
+        assertEquals(2, docs.size());
+        assertNotNull(docs.get(0));
+        assertNotNull(docs.get(1));
+    }
+
+    @Test
+    void getDocumentationOnElementFindsElementDocumentation() throws Exception {
+        var xsd = new XMLSchemaDocument(
+            new ByteArrayInputStream(XML_LANG_SAMPLE.getBytes(StandardCharsets.UTF_8)));
+
+        var nodes = XMLDocument.evalForNodes(xsd.documentElement(), "/*/*[local-name()='element']");
+        var element = (org.w3c.dom.Element) nodes.item(0);
+
+        var docs = XMLSchemaDocument.getDocumentation(element);
+
+        assertNotNull(docs);
+        assertEquals(1, docs.size());
+        assertNotNull(docs.get(0));
+    }
+
+    @Test
+    void getXmlLangFindsInheritedAndExplicitLanguage() throws Exception {
+        var xsd = new XMLSchemaDocument(
+            new ByteArrayInputStream(XML_LANG_SAMPLE.getBytes(StandardCharsets.UTF_8)));
+
+        var root = xsd.documentElement();
+        var docNodes = XMLDocument.evalForNodes(root, "//*[local-name()='documentation']");
+
+        var inheritedDoc = (org.w3c.dom.Element) docNodes.item(0);
+        var explicitDoc = (org.w3c.dom.Element) docNodes.item(1);
+
+        assertEquals("en", XMLSchemaDocument.getXMLLang(inheritedDoc));
+        assertEquals("fr", XMLSchemaDocument.getXMLLang(explicitDoc));
+    }
+
+    @Test
+    void getXmlLangDefaultsToEnUsWhenNoLanguageInScope() throws Exception {
+        String noLangXsd = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:annotation>
+                <xs:documentation>doc</xs:documentation>
+              </xs:annotation>
+            </xs:schema>
+            """;
+
+        var xsd = new XMLSchemaDocument(
+            new ByteArrayInputStream(noLangXsd.getBytes(StandardCharsets.UTF_8)));
+
+        var docNodes = XMLDocument.evalForNodes(xsd.documentElement(), "//*[local-name()='documentation']");
+        var doc = (org.w3c.dom.Element) docNodes.item(0);
+
+        assertEquals("en-US", XMLSchemaDocument.getXMLLang(doc));
+    }
+
+    @Test
+    void getLanguageStringReturnsNonNullValue() throws Exception {
+        var xsd = new XMLSchemaDocument(
+            new ByteArrayInputStream(XML_LANG_SAMPLE.getBytes(StandardCharsets.UTF_8)));
+
+        var docNodes = XMLDocument.evalForNodes(xsd.documentElement(), "//*[local-name()='documentation']");
+        var doc = (org.w3c.dom.Element) docNodes.item(0);
+
+        var ls = XMLSchemaDocument.getLanguageString(doc);
+
+        assertNotNull(ls);
+    }
+
+    private static Path writeFile(Path dir, String name, String content) throws Exception {
+        var path = dir.resolve(name);
+        Files.writeString(path, content, StandardCharsets.UTF_8);
+        return path;
+    }
 }

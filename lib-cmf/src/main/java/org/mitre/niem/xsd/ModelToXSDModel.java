@@ -59,6 +59,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import static org.w3c.dom.Node.ELEMENT_NODE;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
@@ -532,10 +533,11 @@ public class ModelToXSDModel extends ModelToXSD {
     protected void writeProxyDocument(String vers, String pnsU, String rname, File outF) {
         XMLSchemaDocument sch;
         File resF;
-        var xw   = new XSDWriter();
-        try {
-            resF = rmgr.getResourceFile(rname);
-            sch = new XMLSchemaDocument(resF);
+        var uri = rmgr.getResourceURI(rname);
+        try (var in = rmgr.getResourceStream(rname)) {
+            var src = new InputSource(in);
+            if (uri != null) src.setSystemId(uri.toString());
+            sch = new XMLSchemaDocument(src);
         } catch (ParserConfigurationException ex) {
             LOG.error("Parser configuration error: {}", ex.getMessage());
             return;
@@ -545,7 +547,7 @@ public class ModelToXSDModel extends ModelToXSD {
         } catch (IOException ex) {
             LOG.error("Can't read proxy file from resource {} file: {}", rname, ex.getMessage());
             return;
-        }          
+        }        
         // Compute relative path from niem-xs.xsd to structures.xsd
         var structU  = NamespaceKind.builtinNSU(vers, "STRUCTURES");
         var proxyU   = NamespaceKind.builtinNSU(vers, "NIEM-XS");
@@ -591,6 +593,7 @@ public class ModelToXSDModel extends ModelToXSD {
         }
         for (var cn : delS) root.removeChild(cn);
         try {         
+            var xw = new XSDWriter();
             xw.writeXML(dom, outF);
         } catch (IOException ex) {
             LOG.error("Can't write proxy document {}: {}", outF.toString(), ex.getMessage());

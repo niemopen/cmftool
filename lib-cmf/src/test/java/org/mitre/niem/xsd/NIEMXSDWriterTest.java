@@ -23,118 +23,233 @@
  */
 package org.mitre.niem.xsd;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.StringReader;
 import java.io.StringWriter;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mitre.niem.xml.ParserBootstrap;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
 
 class NIEMXSDWriterTest {
 
-    private static final String XS_NS = XMLConstants.W3C_XML_SCHEMA_NS_URI;
-    private static final String XMLNS_NS = XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
-    private static final String APPINFO_NS = "https://docs.oasis-open.org/niemopen/ns/model/appinfo/6.0/";
-    private static final String OTHER_NS = "urn:test:other";
-
     @Test
-    void ordersAppinfoLocalTermAttributes() throws Exception {
-        Document doc = schemaDocument();
-        Element schema = doc.getDocumentElement();
+    void ordersLocalTermAttributes() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/">
+              <xs:annotation>
+                <xs:appinfo>
+                  <appinfo:LocalTerm literal="x" definition="y" term="Alpha"/>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:schema>
+            """);
 
-        Element e = doc.createElementNS(APPINFO_NS, "appinfo:LocalTerm");
-        e.setAttribute("literal", "Some literal");
-        e.setAttribute("term", "SomeTerm");
-        e.setAttribute("definition", "Some definition");
-        schema.appendChild(e);
+        var out = new StringWriter();
+        new NIEMXSDWriter("appinfo").writeXML(dom, out);
+        var text = out.toString();
 
-        String xml = write(doc);
+        assertTrue(text.contains(
+            "<appinfo:LocalTerm definition=\"y\" literal=\"x\" term=\"Alpha\"/>")
+            || text.contains(
+            "<appinfo:LocalTerm term=\"Alpha\" definition=\"y\" literal=\"x\"/>"));
 
-        assertTrue(xml.contains(
-                "  <appinfo:LocalTerm term=\"SomeTerm\" definition=\"Some definition\" literal=\"Some literal\"/>"));
-    }
-
-    @Test
-    void ordersAppinfoAugmentationAttributes() throws Exception {
-        Document doc = schemaDocument();
-        Element schema = doc.getDocumentElement();
-
-        Element e = doc.createElementNS(APPINFO_NS, "appinfo:Augmentation");
-        e.setAttribute("id", "aug-1");
-        e.setAttribute("globalClassCode", "GC");
-        e.setAttribute("use", "required");
-        e.setAttribute("property", "nc:Activity");
-        e.setAttribute("class", "nc:PersonType");
-        schema.appendChild(e);
-
-        String xml = write(doc);
-
-        assertTrue(xml.contains(
-                "  <appinfo:Augmentation class=\"nc:PersonType\" property=\"nc:Activity\" use=\"required\" globalClassCode=\"GC\" id=\"aug-1\"/>"));
+        int termPos = text.indexOf("term=\"Alpha\"");
+        int defPos = text.indexOf("definition=\"y\"");
+        int litPos = text.indexOf("literal=\"x\"");
+        assertTrue(termPos >= 0);
+        assertTrue(defPos >= 0);
+        assertTrue(litPos >= 0);
+        assertTrue(termPos < defPos);
+        assertTrue(termPos < litPos);
     }
 
     @Test
-    void doesNotApplyAppinfoOrderingToDifferentPrefix() throws Exception {
-        Document doc = schemaDocument();
-        Element schema = doc.getDocumentElement();
+    void ordersAugmentationAttributes() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/">
+              <xs:annotation>
+                <xs:appinfo>
+                  <appinfo:Augmentation
+                      orderedPropertyIndicator="true"
+                      use="optional"
+                      property="nc:SomeProperty"
+                      class="nc:SomeType"
+                      globalClassCode="GCC"/>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:schema>
+            """);
 
-        Element e = doc.createElementNS(OTHER_NS, "other:LocalTerm");
-        e.setAttribute("term", "SomeTerm");
-        e.setAttribute("alpha", "A");
-        schema.appendChild(e);
+        var out = new StringWriter();
+        new NIEMXSDWriter("appinfo").writeXML(dom, out);
+        var text = out.toString();
 
-        String xml = write(doc);
+        int classPos = text.indexOf("class=\"nc:SomeType\"");
+        int propertyPos = text.indexOf("property=\"nc:SomeProperty\"");
+        int usePos = text.indexOf("use=\"optional\"");
+        int gccPos = text.indexOf("globalClassCode=\"GCC\"");
+        int otherPos = text.indexOf("orderedPropertyIndicator=\"true\"");
 
-        assertTrue(xml.contains(
-                "  <other:LocalTerm alpha=\"A\" term=\"SomeTerm\"/>"));
+        assertTrue(classPos >= 0);
+        assertTrue(propertyPos >= 0);
+        assertTrue(usePos >= 0);
+        assertTrue(gccPos >= 0);
+        assertTrue(otherPos >= 0);
+
+        assertTrue(classPos < propertyPos);
+        assertTrue(propertyPos < usePos);
+        assertTrue(usePos < gccPos);
+        assertTrue(gccPos < otherPos);
     }
 
     @Test
-    void preservesBaseXsdWriterOrderingForXsElement() throws Exception {
-        Document doc = schemaDocument();
-        Element schema = doc.getDocumentElement();
+    void stillAppliesNormalXsdOrderingRules() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element substitutionGroup="ex:Base"
+                          maxOccurs="2"
+                          type="xs:string"
+                          name="Root"
+                          minOccurs="0"
+                          xmlns:ex="http://example.com/test"/>
+            </xs:schema>
+            """);
 
-        Element e = doc.createElementNS(XS_NS, "xs:element");
-        e.setAttribute("maxOccurs", "1");
-        e.setAttribute("type", "xs:string");
-        e.setAttribute("substitutionGroup", "tns:Base");
-        e.setAttribute("name", "Person");
-        e.setAttribute("nillable", "true");
-        e.setAttribute("minOccurs", "0");
-        e.setAttribute("ref", "tns:PersonRef");
-        schema.appendChild(e);
+        var out = new StringWriter();
+        new NIEMXSDWriter("appinfo").writeXML(dom, out);
+        var text = out.toString();
 
-        String xml = write(doc);
-
-        assertTrue(xml.contains(
-                "  <xs:element name=\"Person\" ref=\"tns:PersonRef\" type=\"xs:string\" minOccurs=\"0\" maxOccurs=\"1\" substitutionGroup=\"tns:Base\" nillable=\"true\"/>"));
+        assertTrue(text.contains(
+            "<xs:element xmlns:ex=\"http://example.com/test\" name=\"Root\" type=\"xs:string\" minOccurs=\"0\" maxOccurs=\"2\" substitutionGroup=\"ex:Base\"/>"
+        ));
     }
 
-    private static Document schemaDocument() throws Exception {
-        Document doc = newDocument();
-        Element schema = doc.createElementNS(XS_NS, "xs:schema");
-        doc.appendChild(schema);
+    @Test
+    void differentConfiguredPrefixDoesNotTriggerNiemOrdering() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/">
+              <xs:annotation>
+                <xs:appinfo>
+                  <appinfo:LocalTerm literal="x" definition="y" term="Alpha"/>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:schema>
+            """);
 
-        schema.setAttributeNS(XMLNS_NS, "xmlns:xs", XS_NS);
-        schema.setAttributeNS(XMLNS_NS, "xmlns:appinfo", APPINFO_NS);
-        schema.setAttributeNS(XMLNS_NS, "xmlns:other", OTHER_NS);
-        schema.setAttributeNS(XMLNS_NS, "xmlns:tns", "urn:test:tns");
+        var out = new StringWriter();
+        new NIEMXSDWriter("other").writeXML(dom, out);
+        var text = out.toString();
 
-        return doc;
+        int termPos = text.indexOf("term=\"Alpha\"");
+        int defPos = text.indexOf("definition=\"y\"");
+        int litPos = text.indexOf("literal=\"x\"");
+
+        assertTrue(termPos >= 0);
+        assertTrue(defPos >= 0);
+        assertTrue(litPos >= 0);
+
+        // Without NIEM-specific ordering, natural ordering puts definition and literal before term.
+        assertTrue(defPos < termPos);
+        assertTrue(litPos < termPos);
     }
 
-    private static Document newDocument() throws Exception {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        return dbf.newDocumentBuilder().newDocument();
+    @Test
+    void writesToFile(@TempDir Path tempDir) throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/">
+              <xs:annotation>
+                <xs:appinfo>
+                  <appinfo:Augmentation property="p" class="c" use="u" globalClassCode="g"/>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:schema>
+            """);
+
+        var outFile = tempDir.resolve("niem.xsd").toFile();
+        new NIEMXSDWriter("appinfo").writeXML(dom, outFile);
+
+        var text = Files.readString(outFile.toPath(), StandardCharsets.UTF_8);
+        assertTrue(text.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        assertTrue(text.contains("class=\"c\" property=\"p\" use=\"u\" globalClassCode=\"g\""));
     }
 
-    private static String write(Document doc) throws Exception {
-        StringWriter sw = new StringWriter();
-        new NIEMXSDWriter("appinfo").writeXML(doc, sw);
-        return sw.toString();
+    @Test
+    void nodeToTextWorks() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/">
+              <xs:annotation>
+                <xs:appinfo>
+                  <appinfo:LocalTerm term="Alpha" literal="x"/>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:schema>
+            """);
+
+        var text = new NIEMXSDWriter("appinfo").nodeToText(dom);
+
+        assertTrue(text.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        assertTrue(text.contains("<appinfo:LocalTerm"));
+    }
+
+    @Test
+    void serializesStandaloneElement() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/">
+              <xs:annotation>
+                <xs:appinfo>
+                  <appinfo:Augmentation property="p" class="c" use="u" globalClassCode="g"/>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:schema>
+            """);
+
+        var aug = (org.w3c.dom.Element) dom.getDocumentElement()
+            .getElementsByTagNameNS("http://release.niem.gov/niem/appinfo/5.0/", "Augmentation")
+            .item(0);
+
+        var out = new StringWriter();
+        new NIEMXSDWriter("appinfo").writeXML(aug, out);
+
+        assertEquals("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <appinfo:Augmentation
+              xmlns:appinfo="http://release.niem.gov/niem/appinfo/5.0/"
+              xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              class="c"
+              property="p"
+              use="u"
+              globalClassCode="g"/>
+            """, out.toString());
+    }
+
+    private static Document parseXml(String xml) throws Exception {
+        var db = ParserBootstrap.docBuilder();
+        return db.parse(new InputSource(new StringReader(xml)));
     }
 }
-

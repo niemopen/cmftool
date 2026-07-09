@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,13 @@ package org.mitre.niem.xml;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
+
 public class XMLSchemaException extends Exception {
-    public XMLSchemaException (String msg) { super(msg); }
+    public XMLSchemaException(String msg) {
+        super(msg);
+    }
+
+    public XMLSchemaException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 }

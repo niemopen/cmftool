@@ -50,9 +50,8 @@ public class JSONMsgToXMLTest {
         var j2x = new JSONMsgToXML(m);
         var jsn = JsonParser.parseString(json).getAsJsonObject();
         var doc = j2x.convert(jsn);
-        var xw  = new XMLWriter();
         var sw  = new StringWriter();
-        xw.writeXML(doc, sw);
+        XMLWriter.writeXML(doc, sw);
         return sw.toString();
     }
     

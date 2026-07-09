@@ -67,13 +67,13 @@ import org.w3c.dom.ProcessingInstruction;
  * <p>This writer is intended for data-centric XML. If a DOM contains
  * significant mixed content, formatting may not match the original lexical form.
  */
-public class XMLWriter {
+public final class XMLWriter {
 
     private static final Logger LOG = LogManager.getLogger(XMLWriter.class);
     private static final String NL = "\n";
     private static final String INDENT = "  ";
 
-    private static final Comparator<String> XML_NAME_ORDER = (a, b) -> compareNaturalIgnoreCase(a, b);
+    private static final Comparator<String> XML_NAME_ORDER = XMLWriter::compareNaturalIgnoreCase;
 
     private static final Comparator<String> NS_DECL_ORDER = (a, b) -> {
         int ra = namespaceDeclarationRank(a);
@@ -89,9 +89,18 @@ public class XMLWriter {
         return a.compareTo(b);
     };
 
-    public XMLWriter() { }
+    private XMLWriter() {
+        throw new AssertionError("No instances");
+    }
 
-    public void writeXML(Document dom, File outF) throws IOException {
+    /**
+     * Write the Document to a UTF-8 file.
+     *
+     * @param dom DOM document
+     * @param outF destination file
+     * @throws IOException if writing fails
+     */
+    public static void writeXML(Document dom, File outF) throws IOException {
         Objects.requireNonNull(outF, "outF must not be null");
         try (Writer w = Files.newBufferedWriter(outF.toPath(), StandardCharsets.UTF_8)) {
             writeXML(dom, w);
@@ -105,7 +114,7 @@ public class XMLWriter {
      * @param w destination writer
      * @throws IOException if writing fails
      */
-    public void writeXML(Document dom, Writer w) throws IOException {
+    public static void writeXML(Document dom, Writer w) throws IOException {
         Objects.requireNonNull(dom, "dom must not be null");
         Objects.requireNonNull(w, "writer must not be null");
 
@@ -119,7 +128,14 @@ public class XMLWriter {
         }
     }
 
-    public void writeXML(Element elem, File outF) throws IOException {
+    /**
+     * Write an Element as a standalone UTF-8 XML document.
+     *
+     * @param elem element to serialize
+     * @param outF destination file
+     * @throws IOException if writing fails
+     */
+    public static void writeXML(Element elem, File outF) throws IOException {
         Objects.requireNonNull(outF, "outF must not be null");
         try (Writer w = Files.newBufferedWriter(outF.toPath(), StandardCharsets.UTF_8)) {
             writeXML(elem, w);
@@ -136,7 +152,7 @@ public class XMLWriter {
      * @param w destination writer
      * @throws IOException if writing fails
      */
-    public void writeXML(Element elem, Writer w) throws IOException {
+    public static void writeXML(Element elem, Writer w) throws IOException {
         Objects.requireNonNull(elem, "elem must not be null");
         Objects.requireNonNull(w, "writer must not be null");
 
@@ -159,14 +175,13 @@ public class XMLWriter {
 
         try {
             StringWriter sw = new StringWriter();
-            XMLWriter xw = new XMLWriter();
 
             if (n.getNodeType() == Node.DOCUMENT_NODE) {
-                xw.writeXML((Document) n, sw);
+                writeXML((Document) n, sw);
             } else if (n.getNodeType() == Node.ELEMENT_NODE) {
-                xw.writeXML((Element) n, sw);
+                writeXML((Element) n, sw);
             } else {
-                xw.writeNode(n, sw, 0);
+                writeNode(n, sw, 0);
             }
             return sw.toString();
         } catch (IOException ex) {
@@ -177,7 +192,7 @@ public class XMLWriter {
 
     // Writes top-level children of a Document, preserving comments, PIs, doctype,
     // and the document element.
-    protected void writeDocumentChild(Node n, Writer w) throws IOException {
+    private static void writeDocumentChild(Node n, Writer w) throws IOException {
         if (n == null) return;
 
         switch (n.getNodeType()) {
@@ -210,7 +225,7 @@ public class XMLWriter {
     }
 
     // Writes a non-document node with indentation appropriate to its nesting level.
-    protected void writeNode(Node n, Writer w, int level) throws IOException {
+    private static void writeNode(Node n, Writer w, int level) throws IOException {
         if (n == null) return;
 
         switch (n.getNodeType()) {
@@ -250,7 +265,7 @@ public class XMLWriter {
 
     // Writes an element from a Document. Only the document root gets the special
     // multi-line namespace-first attribute formatting.
-    protected void writeElement(Element elem, Writer w, int level, boolean isRoot) throws IOException {
+    private static void writeElement(Element elem, Writer w, int level, boolean isRoot) throws IOException {
         indent(w, level);
         w.write("<");
         w.write(elem.getTagName());
@@ -299,7 +314,7 @@ public class XMLWriter {
 
     // Writes an arbitrary Element as the root of a standalone XML document.
     // Namespace declarations inherited from ancestors are copied onto this root.
-    protected void writeStandaloneElement(Element elem, Writer w, int level) throws IOException {
+    private static void writeStandaloneElement(Element elem, Writer w, int level) throws IOException {
         indent(w, level);
         w.write("<");
         w.write(elem.getTagName());
@@ -343,7 +358,7 @@ public class XMLWriter {
 
     // Writes root-element namespace declarations first, then ordinary attributes,
     // each on its own indented line.
-    protected void writeRootAttributes(
+    private static void writeRootAttributes(
             TreeMap<String, String> nsDecls,
             TreeMap<String, String> attrs,
             Writer w,
@@ -363,7 +378,7 @@ public class XMLWriter {
     }
 
     // Writes namespace declarations and attributes inline on a single start tag.
-    protected void writeInlineAttributes(
+    private static void writeInlineAttributes(
             TreeMap<String, String> nsDecls,
             TreeMap<String, String> attrs,
             Writer w) throws IOException {
@@ -380,7 +395,7 @@ public class XMLWriter {
     }
 
     // Writes a single attribute with XML-escaped value text.
-    protected void writeAttribute(String name, String value, Writer w) throws IOException {
+    private static void writeAttribute(String name, String value, Writer w) throws IOException {
         w.write(name);
         w.write("=\"");
         w.write(escapeAttribute(value));
@@ -388,7 +403,7 @@ public class XMLWriter {
     }
 
     // Writes a document type declaration if one is present in the DOM.
-    protected void writeDocType(DocumentType dt, Writer w) throws IOException {
+    private static void writeDocType(DocumentType dt, Writer w) throws IOException {
         w.write("<!DOCTYPE ");
         w.write(dt.getName());
 
@@ -422,7 +437,7 @@ public class XMLWriter {
     }
 
     // Writes an XML comment on its own line.
-    protected void writeComment(Comment comment, Writer w, int level) throws IOException {
+    private static void writeComment(Comment comment, Writer w, int level) throws IOException {
         indent(w, level);
         w.write("<!--");
         w.write(comment.getData());
@@ -431,7 +446,7 @@ public class XMLWriter {
     }
 
     // Writes a processing instruction on its own line.
-    protected void writeProcessingInstruction(ProcessingInstruction pi, Writer w, int level) throws IOException {
+    private static void writeProcessingInstruction(ProcessingInstruction pi, Writer w, int level) throws IOException {
         indent(w, level);
         w.write("<?");
         w.write(pi.getTarget());
@@ -444,7 +459,7 @@ public class XMLWriter {
     }
 
     // Writes a CDATA section on its own line.
-    protected void writeCDATA(CDATASection cdata, Writer w, int level) throws IOException {
+    private static void writeCDATA(CDATASection cdata, Writer w, int level) throws IOException {
         indent(w, level);
         w.write("<![CDATA[");
         w.write(cdata.getData());
@@ -453,7 +468,7 @@ public class XMLWriter {
     }
 
     // Writes text content with indentation, skipping blank text nodes.
-    protected void writeIndentedText(String text, Writer w, int level) throws IOException {
+    private static void writeIndentedText(String text, Writer w, int level) throws IOException {
         if (text == null || text.isBlank()) return;
         indent(w, level);
         w.write(escapeText(text));
@@ -462,7 +477,7 @@ public class XMLWriter {
 
     // Returns child nodes that should be written. If the element has structured
     // children, blank formatting-only text nodes are removed.
-    protected List<Node> significantChildren(Element elem) {
+    private static List<Node> significantChildren(Element elem) {
         List<Node> raw = new ArrayList<>();
         boolean hasStructuredChildren = false;
 
@@ -496,7 +511,7 @@ public class XMLWriter {
 
     // Returns true if all children are text or CDATA so the element can be
     // written on a single logical line.
-    protected boolean isTextOnly(List<Node> children) {
+    private static boolean isTextOnly(List<Node> children) {
         if (children.isEmpty()) return false;
         for (Node child : children) {
             short t = child.getNodeType();
@@ -508,7 +523,7 @@ public class XMLWriter {
     }
 
     // Writes text-only child content inline between start and end tags.
-    protected void writeInlineChildren(List<Node> children, Writer w) throws IOException {
+    private static void writeInlineChildren(List<Node> children, Writer w) throws IOException {
         for (Node child : children) {
             switch (child.getNodeType()) {
                 case Node.TEXT_NODE:
@@ -529,7 +544,7 @@ public class XMLWriter {
 
     // Splits an element's own attributes into namespace declarations and
     // ordinary attributes.
-    protected void splitAttributes(
+    private static void splitAttributes(
             Element elem,
             TreeMap<String, String> nsDecls,
             TreeMap<String, String> attrs) {
@@ -550,7 +565,7 @@ public class XMLWriter {
 
     // Collects all namespace declarations in scope for an element by walking
     // up the ancestor chain. The nearest declaration for a prefix wins.
-    protected TreeMap<String, String> inScopeNamespaceDeclarations(Element elem) {
+    private static TreeMap<String, String> inScopeNamespaceDeclarations(Element elem) {
         TreeMap<String, String> nsDecls = new TreeMap<>(NS_DECL_ORDER);
 
         for (Node cur = elem; cur != null && cur.getNodeType() == Node.ELEMENT_NODE; cur = cur.getParentNode()) {
@@ -567,7 +582,7 @@ public class XMLWriter {
     }
 
     // Collects only non-namespace attributes declared directly on the element.
-    protected TreeMap<String, String> nonNamespaceAttributes(Element elem) {
+    private static TreeMap<String, String> nonNamespaceAttributes(Element elem) {
         TreeMap<String, String> attrs = new TreeMap<>(XML_NAME_ORDER);
 
         NamedNodeMap nnm = elem.getAttributes();
@@ -584,7 +599,7 @@ public class XMLWriter {
     // Returns true if an attribute is a namespace declaration. This handles
     // both parsed DOMs and programmatically constructed DOMs where "xmlns"
     // may have been created without a namespace URI.
-    protected boolean isNamespaceDeclaration(Attr attr) {
+    private static boolean isNamespaceDeclaration(Attr attr) {
         if (attr == null) return false;
         if (XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(attr.getNamespaceURI())) return true;
 
@@ -593,14 +608,14 @@ public class XMLWriter {
     }
 
     // Writes indentation using two spaces per nesting level.
-    protected void indent(Writer w, int level) throws IOException {
+    private static void indent(Writer w, int level) throws IOException {
         for (int i = 0; i < level; i++) {
             w.write(INDENT);
         }
     }
 
     // Escapes character data for element text content.
-    protected String escapeText(String s) {
+    private static String escapeText(String s) {
         if (s == null || s.isEmpty()) return "";
         StringBuilder sb = new StringBuilder(s.length() + 16);
         for (int i = 0; i < s.length(); i++) {
@@ -627,7 +642,7 @@ public class XMLWriter {
     }
 
     // Escapes character data for attribute values.
-    protected String escapeAttribute(String s) {
+    private static String escapeAttribute(String s) {
         if (s == null || s.isEmpty()) return "";
         StringBuilder sb = new StringBuilder(s.length() + 16);
         for (int i = 0; i < s.length(); i++) {
@@ -660,7 +675,7 @@ public class XMLWriter {
     }
 
     // Default namespace declaration sorts before all prefixed namespace declarations.
-    protected static int namespaceDeclarationRank(String name) {
+    private static int namespaceDeclarationRank(String name) {
         if ("xmlns".equals(name)) return 0;
         if (name != null && name.startsWith("xmlns:")) return 1;
         return 2;
@@ -668,7 +683,7 @@ public class XMLWriter {
 
     // Returns the sortable prefix part of a namespace declaration name.
     // "xmlns" sorts as the empty prefix; "xmlns:xs" sorts as "xs".
-    protected static String namespaceSortKey(String name) {
+    private static String namespaceSortKey(String name) {
         if ("xmlns".equals(name)) return "";
         if (name != null && name.startsWith("xmlns:")) return name.substring(6);
         return name;
@@ -678,7 +693,7 @@ public class XMLWriter {
     // compared by numeric value, so "foo2" sorts before "foo12". Ties are broken
     // using the original string's case-sensitive order so distinct XML names do
     // not collide in a TreeMap.
-    protected static int compareNaturalIgnoreCase(String a, String b) {
+    private static int compareNaturalIgnoreCase(String a, String b) {
         if (a == b) return 0;
         if (a == null) return -1;
         if (b == null) return 1;

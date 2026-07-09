@@ -23,26 +23,36 @@
  */
 package org.mitre.niem.xml;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.xml.XMLConstants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Attr;
+import org.w3c.dom.CDATASection;
+import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentType;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.ProcessingInstruction;
 
 /**
  * Writes readable XML Schema documents directly from a DOM.
  *
- * <p>This writer preserves the pretty-printing behavior of {@link XMLWriter},
- * but applies XSD-specific attribute ordering rules:
+ * <p>This writer applies XSD-specific attribute ordering rules:
  *
  * <ul>
  *   <li>xs:element: name, ref, type, minOccurs, maxOccurs, substitutionGroup, then others</li>
@@ -55,12 +65,18 @@ import org.w3c.dom.Node;
  *
  * <p>The writer also ensures the serialized root includes
  * {@code xmlns:xs="http://www.w3.org/2001/XMLSchema"}.
+ *
+ * <p>This class is designed for subclassing. Override {@link #attributeRank(Element, String)}
+ * to customize attribute ordering for specific element types.
  */
-public class XSDWriter extends XMLWriter {
+public class XSDWriter {
 
-    private static final String XSD_NS = XMLConstants.W3C_XML_SCHEMA_NS_URI;
+    protected static final Logger LOG = LogManager.getLogger(XSDWriter.class);
+    protected static final String XSD_NS = XMLConstants.W3C_XML_SCHEMA_NS_URI;
+    protected static final String NL = "\n";
+    protected static final String INDENT = "  ";
 
-    private static final Comparator<NameValue> DEFAULT_NS_DECL_ORDER = (a, b) -> {
+    protected static final Comparator<NameValue> DEFAULT_NS_DECL_ORDER = (a, b) -> {
         int ra = namespaceDeclarationRank(a.name);
         int rb = namespaceDeclarationRank(b.name);
         if (ra != rb) return Integer.compare(ra, rb);
@@ -74,7 +90,7 @@ public class XSDWriter extends XMLWriter {
         return a.name.compareTo(b.name);
     };
 
-    private static final Comparator<NameValue> SCHEMA_NS_DECL_ORDER = (a, b) -> {
+    protected static final Comparator<NameValue> SCHEMA_NS_DECL_ORDER = (a, b) -> {
         int dra = namespaceDeclarationRank(a.name);
         int drb = namespaceDeclarationRank(b.name);
         if (dra != drb) return Integer.compare(dra, drb);
@@ -92,41 +108,152 @@ public class XSDWriter extends XMLWriter {
         return a.name.compareTo(b.name);
     };
 
-    public XSDWriter() {
-        super();
+    public XSDWriter() { }
+
+    public void writeXML(Document dom, File outF) throws IOException {
+        Objects.requireNonNull(outF, "outF must not be null");
+        try (Writer w = Files.newBufferedWriter(outF.toPath(), StandardCharsets.UTF_8)) {
+            writeXML(dom, w);
+        }
     }
 
-    public static String nodeToText(Node n) {
+    public void writeXML(Document dom, Writer w) throws IOException {
+        Objects.requireNonNull(dom, "dom must not be null");
+        Objects.requireNonNull(w, "writer must not be null");
+
+        w.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        w.write(NL);
+
+        NodeList kids = dom.getChildNodes();
+        for (int i = 0; i < kids.getLength(); i++) {
+            writeDocumentChild(kids.item(i), w);
+        }
+    }
+
+    public void writeXML(Element elem, File outF) throws IOException {
+        Objects.requireNonNull(outF, "outF must not be null");
+        try (Writer w = Files.newBufferedWriter(outF.toPath(), StandardCharsets.UTF_8)) {
+            writeXML(elem, w);
+        }
+    }
+
+    public void writeXML(Element elem, Writer w) throws IOException {
+        Objects.requireNonNull(elem, "elem must not be null");
+        Objects.requireNonNull(w, "writer must not be null");
+
+        w.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        w.write(NL);
+
+        writeStandaloneElement(elem, w, 0);
+    }
+
+    /**
+     * Serializes a DOM node using this writer's formatting rules.
+     * For a Document or Element, includes the XML declaration.
+     * For other node types, returns a fragment.
+     *
+     * @param n DOM node
+     * @return text representation
+     */
+    public String nodeToText(Node n) {
         if (n == null) return "";
 
         try {
             StringWriter sw = new StringWriter();
-            XSDWriter xw = new XSDWriter();
 
             if (n.getNodeType() == Node.DOCUMENT_NODE) {
-                xw.writeXML((Document) n, sw);
+                writeXML((Document) n, sw);
             } else if (n.getNodeType() == Node.ELEMENT_NODE) {
-                xw.writeXML((Element) n, sw);
+                writeXML((Element) n, sw);
             } else {
-                xw.writeNode(n, sw, 0);
+                writeNode(n, sw, 0);
             }
             return sw.toString();
         } catch (IOException ex) {
+            LOG.error("Error serializing DOM node", ex);
             return "";
         }
     }
 
-    @Override
+    protected void writeDocumentChild(Node n, Writer w) throws IOException {
+        if (n == null) return;
+
+        switch (n.getNodeType()) {
+            case Node.DOCUMENT_TYPE_NODE:
+                writeDocType((DocumentType) n, w);
+                break;
+
+            case Node.ELEMENT_NODE:
+                writeElement((Element) n, w, 0, true);
+                break;
+
+            case Node.COMMENT_NODE:
+                writeComment((Comment) n, w, 0);
+                break;
+
+            case Node.PROCESSING_INSTRUCTION_NODE:
+                writeProcessingInstruction((ProcessingInstruction) n, w, 0);
+                break;
+
+            case Node.TEXT_NODE:
+                if (!n.getNodeValue().isBlank()) {
+                    writeIndentedText(n.getNodeValue(), w, 0);
+                }
+                break;
+
+            default:
+                LOG.debug("Ignoring unsupported document child node type {}", n.getNodeType());
+                break;
+        }
+    }
+
+    protected void writeNode(Node n, Writer w, int level) throws IOException {
+        if (n == null) return;
+
+        switch (n.getNodeType()) {
+            case Node.ELEMENT_NODE:
+                writeElement((Element) n, w, level, false);
+                break;
+
+            case Node.TEXT_NODE:
+                writeIndentedText(n.getNodeValue(), w, level);
+                break;
+
+            case Node.CDATA_SECTION_NODE:
+                writeCDATA((CDATASection) n, w, level);
+                break;
+
+            case Node.COMMENT_NODE:
+                writeComment((Comment) n, w, level);
+                break;
+
+            case Node.PROCESSING_INSTRUCTION_NODE:
+                writeProcessingInstruction((ProcessingInstruction) n, w, level);
+                break;
+
+            case Node.ENTITY_REFERENCE_NODE:
+                indent(w, level);
+                w.write("&");
+                w.write(n.getNodeName());
+                w.write(";");
+                w.write(NL);
+                break;
+
+            default:
+                LOG.debug("Ignoring unsupported node type {}", n.getNodeType());
+                break;
+        }
+    }
+
     protected void writeElement(Element elem, Writer w, int level, boolean isRoot) throws IOException {
         writeElementInternal(elem, w, level, isRoot, false);
     }
 
-    @Override
     protected void writeStandaloneElement(Element elem, Writer w, int level) throws IOException {
         writeElementInternal(elem, w, level, true, true);
     }
 
-    private void writeElementInternal(
+    protected void writeElementInternal(
             Element elem,
             Writer w,
             int level,
@@ -168,7 +295,7 @@ public class XSDWriter extends XMLWriter {
 
         if (children.isEmpty()) {
             w.write("/>");
-            w.write("\n");
+            w.write(NL);
             return;
         }
 
@@ -178,12 +305,12 @@ public class XSDWriter extends XMLWriter {
             w.write("</");
             w.write(elem.getTagName());
             w.write(">");
-            w.write("\n");
+            w.write(NL);
             return;
         }
 
         w.write(">");
-        w.write("\n");
+        w.write(NL);
 
         for (Node child : children) {
             writeNode(child, w, level + 1);
@@ -193,7 +320,7 @@ public class XSDWriter extends XMLWriter {
         w.write("</");
         w.write(elem.getTagName());
         w.write(">");
-        w.write("\n");
+        w.write(NL);
     }
 
     protected void writeRootAttributes(
@@ -203,13 +330,13 @@ public class XSDWriter extends XMLWriter {
             int level) throws IOException {
 
         for (NameValue nv : nsDecls) {
-            w.write("\n");
+            w.write(NL);
             indent(w, level + 1);
             writeAttribute(nv.name, nv.value, w);
         }
 
         for (NameValue nv : attrs) {
-            w.write("\n");
+            w.write(NL);
             indent(w, level + 1);
             writeAttribute(nv.name, nv.value, w);
         }
@@ -231,7 +358,7 @@ public class XSDWriter extends XMLWriter {
         }
     }
 
-    private void writeSchemaRootAttributes(
+    protected void writeSchemaRootAttributes(
             List<NameValue> nsDecls,
             List<NameValue> attrs,
             Writer w,
@@ -249,25 +376,25 @@ public class XSDWriter extends XMLWriter {
         }
 
         if (targetNamespace != null) {
-            w.write("\n");
+            w.write(NL);
             indent(w, level + 1);
             writeAttribute(targetNamespace.name, targetNamespace.value, w);
         }
 
         for (NameValue nv : nsDecls) {
-            w.write("\n");
+            w.write(NL);
             indent(w, level + 1);
             writeAttribute(nv.name, nv.value, w);
         }
 
         for (NameValue nv : otherAttrs) {
-            w.write("\n");
+            w.write(NL);
             indent(w, level + 1);
             writeAttribute(nv.name, nv.value, w);
         }
     }
 
-    private void writeSchemaInlineAttributes(
+    protected void writeSchemaInlineAttributes(
             List<NameValue> nsDecls,
             List<NameValue> attrs,
             Writer w) throws IOException {
@@ -299,7 +426,144 @@ public class XSDWriter extends XMLWriter {
         }
     }
 
-    private List<NameValue> ownNamespaceDeclarations(Element elem) {
+    protected void writeAttribute(String name, String value, Writer w) throws IOException {
+        w.write(name);
+        w.write("=\"");
+        w.write(escapeAttribute(value));
+        w.write("\"");
+    }
+
+    protected void writeDocType(DocumentType dt, Writer w) throws IOException {
+        w.write("<!DOCTYPE ");
+        w.write(dt.getName());
+
+        String publicId = dt.getPublicId();
+        String systemId = dt.getSystemId();
+        String subset = dt.getInternalSubset();
+
+        if (publicId != null) {
+            w.write(" PUBLIC \"");
+            w.write(publicId);
+            w.write("\"");
+            if (systemId != null) {
+                w.write(" \"");
+                w.write(systemId);
+                w.write("\"");
+            }
+        } else if (systemId != null) {
+            w.write(" SYSTEM \"");
+            w.write(systemId);
+            w.write("\"");
+        }
+
+        if (subset != null && !subset.isBlank()) {
+            w.write(" [");
+            w.write(subset);
+            w.write("]");
+        }
+
+        w.write(">");
+        w.write(NL);
+    }
+
+    protected void writeComment(Comment comment, Writer w, int level) throws IOException {
+        indent(w, level);
+        w.write("<!--");
+        w.write(comment.getData());
+        w.write("-->");
+        w.write(NL);
+    }
+
+    protected void writeProcessingInstruction(ProcessingInstruction pi, Writer w, int level) throws IOException {
+        indent(w, level);
+        w.write("<?");
+        w.write(pi.getTarget());
+        if (pi.getData() != null && !pi.getData().isEmpty()) {
+            w.write(" ");
+            w.write(pi.getData());
+        }
+        w.write("?>");
+        w.write(NL);
+    }
+
+    protected void writeCDATA(CDATASection cdata, Writer w, int level) throws IOException {
+        indent(w, level);
+        w.write("<![CDATA[");
+        w.write(cdata.getData());
+        w.write("]]>");
+        w.write(NL);
+    }
+
+    protected void writeIndentedText(String text, Writer w, int level) throws IOException {
+        if (text == null || text.isBlank()) return;
+        indent(w, level);
+        w.write(escapeText(text));
+        w.write(NL);
+    }
+
+    protected List<Node> significantChildren(Element elem) {
+        List<Node> raw = new ArrayList<>();
+        boolean hasStructuredChildren = false;
+
+        NodeList kids = elem.getChildNodes();
+        for (int i = 0; i < kids.getLength(); i++) {
+            Node child = kids.item(i);
+            raw.add(child);
+
+            short t = child.getNodeType();
+            if (t == Node.ELEMENT_NODE
+                    || t == Node.COMMENT_NODE
+                    || t == Node.PROCESSING_INSTRUCTION_NODE
+                    || t == Node.ENTITY_REFERENCE_NODE) {
+                hasStructuredChildren = true;
+            }
+        }
+
+        if (!hasStructuredChildren) {
+            return raw;
+        }
+
+        List<Node> filtered = new ArrayList<>();
+        for (Node child : raw) {
+            if (child.getNodeType() == Node.TEXT_NODE && child.getNodeValue().isBlank()) {
+                continue;
+            }
+            filtered.add(child);
+        }
+        return filtered;
+    }
+
+    protected boolean isTextOnly(List<Node> children) {
+        if (children.isEmpty()) return false;
+        for (Node child : children) {
+            short t = child.getNodeType();
+            if (t != Node.TEXT_NODE && t != Node.CDATA_SECTION_NODE) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected void writeInlineChildren(List<Node> children, Writer w) throws IOException {
+        for (Node child : children) {
+            switch (child.getNodeType()) {
+                case Node.TEXT_NODE:
+                    w.write(escapeText(child.getNodeValue()));
+                    break;
+
+                case Node.CDATA_SECTION_NODE:
+                    w.write("<![CDATA[");
+                    w.write(((CDATASection) child).getData());
+                    w.write("]]>");
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+
+    protected List<NameValue> ownNamespaceDeclarations(Element elem) {
         List<NameValue> out = new ArrayList<>();
         NamedNodeMap nnm = elem.getAttributes();
 
@@ -312,7 +576,7 @@ public class XSDWriter extends XMLWriter {
         return out;
     }
 
-    private List<NameValue> nonNamespaceAttributesList(Element elem) {
+    protected List<NameValue> nonNamespaceAttributesList(Element elem) {
         List<NameValue> out = new ArrayList<>();
         NamedNodeMap nnm = elem.getAttributes();
 
@@ -325,7 +589,7 @@ public class XSDWriter extends XMLWriter {
         return out;
     }
 
-    private List<NameValue> inScopeNamespaceDeclarationsList(Element elem) {
+    protected List<NameValue> inScopeNamespaceDeclarationsList(Element elem) {
         Map<String, String> seen = new HashMap<>();
 
         for (Node cur = elem; cur != null && cur.getNodeType() == Node.ELEMENT_NODE; cur = cur.getParentNode()) {
@@ -345,10 +609,36 @@ public class XSDWriter extends XMLWriter {
         return out;
     }
 
+    protected Comparator<NameValue> attributeOrderFor(Element elem) {
+        return (a, b) -> {
+            int ra = attributeRank(elem, a.name);
+            int rb = attributeRank(elem, b.name);
+
+            if (ra != rb) return Integer.compare(ra, rb);
+
+            int c = compareNaturalIgnoreCase(a.name, b.name);
+            if (c != 0) return c;
+
+            return a.name.compareTo(b.name);
+        };
+    }
+
+    /**
+     * Returns the sort rank for an attribute on the specified element.
+     *
+     * <p>Subclasses can override this method to add element-specific ordering
+     * rules while still delegating to {@code super.attributeRank(...)} for the
+     * default XSD ordering.
+     *
+     * @param elem owning element
+     * @param attrName attribute local or qualified name
+     * @return sort rank; lower values sort first
+     */
     protected int attributeRank(Element elem, String attrName) {
+        if (elem == null || attrName == null) return Integer.MAX_VALUE;
         if (!isSchemaElement(elem)) return Integer.MAX_VALUE;
 
-        String local = schemaLocalName(elem);
+        String local = elementLocalName(elem);
 
         switch (local) {
             case "element":
@@ -398,20 +688,6 @@ public class XSDWriter extends XMLWriter {
         return Integer.MAX_VALUE;
     }
 
-    private Comparator<NameValue> attributeOrderFor(Element elem) {
-        return (a, b) -> {
-            int ra = attributeRank(elem, a.name);
-            int rb = attributeRank(elem, b.name);
-
-            if (ra != rb) return Integer.compare(ra, rb);
-
-            int c = compareNaturalIgnoreCase(a.name, b.name);
-            if (c != 0) return c;
-
-            return a.name.compareTo(b.name);
-        };
-    }
-
     protected boolean isNamespaceDeclaration(Attr attr) {
         if (attr == null) return false;
         if (XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(attr.getNamespaceURI())) return true;
@@ -420,13 +696,13 @@ public class XSDWriter extends XMLWriter {
         return "xmlns".equals(name) || (name != null && name.startsWith("xmlns:"));
     }
 
-    private void ensureXSNamespaceDeclaration(List<NameValue> nsDecls) {
+    protected void ensureXSNamespaceDeclaration(List<NameValue> nsDecls) {
         if (!containsName(nsDecls, "xmlns:xs")) {
             nsDecls.add(new NameValue("xmlns:xs", XSD_NS));
         }
     }
 
-    private boolean containsName(List<NameValue> values, String name) {
+    protected boolean containsName(List<NameValue> values, String name) {
         for (NameValue nv : values) {
             if (nv.name.equals(name)) return true;
         }
@@ -434,10 +710,19 @@ public class XSDWriter extends XMLWriter {
     }
 
     protected boolean isSchemaElement(Element elem) {
-        return XSD_NS.equals(elem.getNamespaceURI());
+        return elem != null && XSD_NS.equals(elem.getNamespaceURI());
     }
 
-    protected String schemaLocalName(Element elem) {
+    protected String elementPrefix(Element elem) {
+        String pfx = elem.getPrefix();
+        if (pfx != null) return pfx;
+
+        String tn = elem.getTagName();
+        int c = tn.indexOf(':');
+        return c >= 0 ? tn.substring(0, c) : "";
+    }
+
+    protected String elementLocalName(Element elem) {
         String ln = elem.getLocalName();
         if (ln != null) return ln;
 
@@ -446,10 +731,80 @@ public class XSDWriter extends XMLWriter {
         return c >= 0 ? tn.substring(c + 1) : tn;
     }
 
+    protected void indent(Writer w, int level) throws IOException {
+        for (int i = 0; i < level; i++) {
+            w.write(INDENT);
+        }
+    }
+
+    protected String escapeText(String s) {
+        if (s == null || s.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder(s.length() + 16);
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            switch (ch) {
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '\r':
+                    sb.append("&#xD;");
+                    break;
+                default:
+                    sb.append(ch);
+                    break;
+            }
+        }
+        return sb.toString();
+    }
+
+    protected String escapeAttribute(String s) {
+        if (s == null || s.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder(s.length() + 16);
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            switch (ch) {
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '"':
+                    sb.append("&quot;");
+                    break;
+                case '\n':
+                    sb.append("&#xA;");
+                    break;
+                case '\r':
+                    sb.append("&#xD;");
+                    break;
+                case '\t':
+                    sb.append("&#x9;");
+                    break;
+                default:
+                    sb.append(ch);
+                    break;
+            }
+        }
+        return sb.toString();
+    }
+
     protected static int namespaceDeclarationRank(String name) {
         if ("xmlns".equals(name)) return 0;
         if (name != null && name.startsWith("xmlns:")) return 1;
         return 2;
+    }
+
+    protected static String namespaceSortKey(String name) {
+        if ("xmlns".equals(name)) return "";
+        if (name != null && name.startsWith("xmlns:")) return name.substring(6);
+        return name;
     }
 
     protected static int schemaNamespaceRank(String name) {
@@ -458,7 +813,73 @@ public class XSDWriter extends XMLWriter {
         return 0;
     }
 
-    protected static final class NameValue {
+    protected static int compareNaturalIgnoreCase(String a, String b) {
+        if (a == b) return 0;
+        if (a == null) return -1;
+        if (b == null) return 1;
+
+        int ia = 0;
+        int ib = 0;
+        int na = a.length();
+        int nb = b.length();
+
+        while (ia < na && ib < nb) {
+            char ca = a.charAt(ia);
+            char cb = b.charAt(ib);
+
+            if (Character.isDigit(ca) && Character.isDigit(cb)) {
+                int sa = ia;
+                int sb = ib;
+
+                while (ia < na && a.charAt(ia) == '0') ia++;
+                while (ib < nb && b.charAt(ib) == '0') ib++;
+
+                int za = ia - sa;
+                int zb = ib - sb;
+
+                int ea = ia;
+                int eb = ib;
+
+                while (ea < na && Character.isDigit(a.charAt(ea))) ea++;
+                while (eb < nb && Character.isDigit(b.charAt(eb))) eb++;
+
+                int lena = ea - ia;
+                int lenb = eb - ib;
+
+                if (lena != lenb) return (lena < lenb) ? -1 : 1;
+
+                for (int i = 0; i < lena; i++) {
+                    char da = a.charAt(ia + i);
+                    char db = b.charAt(ib + i);
+                    if (da != db) return (da < db) ? -1 : 1;
+                }
+
+                if (lena == 0 && lenb == 0) {
+                    if (za != zb) return (za < zb) ? -1 : 1;
+                } else if (za != zb) {
+                    return (za < zb) ? -1 : 1;
+                }
+
+                ia = ea;
+                ib = eb;
+                continue;
+            }
+
+            int fa = Character.toLowerCase(ca);
+            int fb = Character.toLowerCase(cb);
+            if (fa != fb) return (fa < fb) ? -1 : 1;
+
+            ia++;
+            ib++;
+        }
+
+        if (ia < na) return 1;
+        if (ib < nb) return -1;
+
+        return a.compareTo(b);
+    }
+
+    protected static class NameValue {
         protected final String name;
         protected final String value;
 

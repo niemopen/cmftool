@@ -68,8 +68,7 @@ public class XMLCatalogCreator {
             entry.setAttribute("uri", uris);
             root.appendChild(entry);
         }
-        var xw = new XMLWriter();
-        xw.writeXML(dom, w);
+        XMLWriter.writeXML(dom, w);
         
     }
 }

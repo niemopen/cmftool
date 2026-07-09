@@ -71,23 +71,4 @@ public class NIEMXSDWriter extends XSDWriter {
 
         return super.attributeRank(elem, attrName);
     }
-
-    protected String elementPrefix(Element elem) {
-        String pfx = elem.getPrefix();
-        if (pfx != null) return pfx;
-
-        String tn = elem.getTagName();
-        int c = tn.indexOf(':');
-        return c >= 0 ? tn.substring(0, c) : "";
-    }
-
-    protected String elementLocalName(Element elem) {
-        String ln = elem.getLocalName();
-        if (ln != null) return ln;
-
-        String tn = elem.getTagName();
-        int c = tn.indexOf(':');
-        return c >= 0 ? tn.substring(c + 1) : tn;
-    }
 }
-

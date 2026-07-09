@@ -317,8 +317,7 @@ public class CmdJSONtoXML implements Callable<Integer> {
 
     private void writeXMLMessage(JSONMsgToXML converter, JsonObject msgObj, Path sourcePath, Writer xmlW) throws IOException, NIEMTranException, ParserConfigurationException {
         var doc = converter.convert(msgObj);
-        var xw  = new XMLWriter();
-        xw.writeXML(doc, xmlW);
+        XMLWriter.writeXML(doc, xmlW);
     }
 }
 

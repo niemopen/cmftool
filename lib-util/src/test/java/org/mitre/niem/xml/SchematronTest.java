@@ -23,92 +23,127 @@
  */
 package org.mitre.niem.xml;
 
-import java.io.File;
-import java.io.FileReader;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.xml.transform.stream.StreamSource;
-import nl.altindag.log.LogCaptor;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-import static org.mitre.niem.utility.URIfuncs.FileToCanonicalURI;
+import org.junit.jupiter.api.io.TempDir;
 import org.xml.sax.InputSource;
 
-/**
- *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
- */
-public class SchematronTest {
-    
-    public static List<LogCaptor> logs;    
-    private static final String resDN  = "src/test/resources/sch/";
-    private static final File resDF    = new File(resDN);
-    private static final String resDUs = FileToCanonicalURI(resDF).toString();    
-    
-    @BeforeAll
-    public static void setupLogCaptor () {
-        logs = new ArrayList<>();
-        logs.add(LogCaptor.forClass(XMLSchema.class));
-        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
-    }
-    
-    @AfterEach
-    public void clearLogs () {
-        for (var log : logs) log.clearLogs();;
-    }
-    
-    @AfterAll
-    public static void tearDown () {
-        for (var log : logs) log.close();
-    }     
-    
-    
-    public SchematronTest() {
+class SchematronTest {
+
+    private static final String SIMPLE_SCHEMATRON = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <schema xmlns="http://purl.oclc.org/dsdl/schematron" queryBinding="xslt2">
+          <pattern id="p1">
+            <rule context="/root">
+              <assert test="@ok='true'">root must have ok='true'</assert>
+            </rule>
+            <rule context="/root/item">
+              <report test="true()">item encountered</report>
+            </rule>
+          </pattern>
+        </schema>
+        """;
+
+    private static final String FAILING_XML = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <root>
+          <item/>
+        </root>
+        """;
+
+    @Test
+    void compileSchematronRejectsMissingSystemId() throws Exception {
+        var sch = new Schematron();
+        var src = new StreamSource(new StringReader(SIMPLE_SCHEMATRON));
+
+        var ex = assertThrows(IllegalArgumentException.class, () -> sch.compileSchematron(src));
+        assertTrue(ex.getMessage().contains("systemId"));
     }
 
     @Test
-    public void testCompileSchematron () throws Exception {
-        var schF = new File(resDF, "refTarget.sch");
-        var schS = new StreamSource(schF);
-        var strW = new StringWriter();
-        var s    = new Schematron();
-        schS.setSystemId(schF);
-        s.compileSchematron(schS, strW);
-        var res = strW.toString();
-        assertTrue(res.contains("xsl:stylesheet"));
+    void compileSchematronToWriterProducesXslt(@TempDir Path tempDir) throws Exception {
+        var schFile = writeFile(tempDir, "simple.sch", SIMPLE_SCHEMATRON);
+        var sch = new Schematron();
+        var src = new StreamSource(schFile.toFile());
+        src.setSystemId(schFile.toUri().toString());
+
+        var out = new StringWriter();
+        sch.compileSchematron(src, out);
+
+        var xslt = out.toString();
+        assertTrue(xslt.contains("xsl:stylesheet") || xslt.contains("xsl:transform"));
     }
-    
+
     @Test
-    public void testApplySchematron () throws Exception {
-        var schF = new File(resDF, "refTarget.sch");
-        var schS = new StreamSource(schF);
-        var strW = new StringWriter();
-        var s    = new Schematron();
-        schS.setSystemId(schF);
-        var xslt = s.compileSchematron(schS);      
-        
-        var xmlF = new File(resDF, "7-10.xsd");
-        var xmlR = new FileReader(xmlF);
-        var xmlS = new StreamSource(xmlR);
-        var ow   = new StringWriter();
-        xmlS.setSystemId(schF);
-        s.applyXslt(xmlS, xslt, ow);
-        
-        var svrlR = new StringReader(ow.toString());
-        var svrlS = new InputSource(svrlR);
-        var msgW  = new StringWriter();
-        xmlR      = new FileReader(xmlF);
-        var xS    = new InputSource(xmlR);
-        xS.setSystemId(xmlF.toURI().toString());
-        s.SVRLtoMessages(svrlS, xS, msgW);
-        var res = msgW.toString();
-        assertTrue(res.contains("WARN  7-10.xsd:19:54"));
+    void annotateDocumentAddsLocationAttribute(@TempDir Path tempDir) throws Exception {
+        var xmlFile = writeFile(tempDir, "sample.xml", FAILING_XML);
+        var sch = new Schematron();
+
+        var doc = sch.annotateDocument(new InputSource(xmlFile.toUri().toString()));
+
+        var root = doc.getDocumentElement();
+        assertNotNull(root);
+
+        var loc = root.getAttributeNS(Schematron.SCHEVAL_NS, "location");
+        assertTrue(loc.matches("sample\\.xml:\\d+:\\d+"), "location was: " + loc);
+
+        var child = (org.w3c.dom.Element) root.getElementsByTagName("item").item(0);
+        var childLoc = child.getAttributeNS(Schematron.SCHEVAL_NS, "location");
+        assertTrue(childLoc.matches("sample\\.xml:\\d+:\\d+"), "child location was: " + childLoc);
     }
-    
+
+    @Test
+    void endToEndCompileApplyAndFormatMessages(@TempDir Path tempDir) throws Exception {
+        var schFile = writeFile(tempDir, "simple.sch", SIMPLE_SCHEMATRON);
+        var xmlFile = writeFile(tempDir, "sample.xml", FAILING_XML);
+
+        var schematron = new Schematron();
+
+        var schSrc = new StreamSource(schFile.toFile());
+        schSrc.setSystemId(schFile.toUri().toString());
+
+        var compiled = schematron.compileSchematron(schSrc);
+        assertNotNull(compiled);
+
+        var xmlSrc = new StreamSource(xmlFile.toFile());
+        xmlSrc.setSystemId(xmlFile.toUri().toString());
+
+        var svrlOut = new StringWriter();
+        assertDoesNotThrow(() -> schematron.applyXslt(xmlSrc, compiled, svrlOut));
+
+        var svrl = svrlOut.toString();
+        assertTrue(svrl.contains("failed-assert"));
+        assertTrue(svrl.contains("successful-report"));
+        assertTrue(svrl.contains("root must have ok='true'"));
+        assertTrue(svrl.contains("item encountered"));
+
+        var msgOut = new StringWriter();
+        var svrlInput = new InputSource(new StringReader(svrl));
+        var xmlInput = new InputSource(xmlFile.toUri().toString());
+
+        schematron.SVRLtoMessages(svrlInput, xmlInput, msgOut);
+
+        var msgs = msgOut.toString();
+        assertTrue(msgs.contains("ERROR"));
+        assertTrue(msgs.contains("WARN "));
+        assertTrue(msgs.contains("sample.xml:"));
+        assertTrue(msgs.contains("root must have ok='true'"));
+        assertTrue(msgs.contains("item encountered"));
+    }
+
+    private static Path writeFile(Path dir, String name, String content) throws Exception {
+        var path = dir.resolve(name);
+        Files.writeString(path, content, StandardCharsets.UTF_8);
+        return path;
+    }
 }
