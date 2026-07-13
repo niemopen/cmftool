@@ -1282,7 +1282,10 @@ public class ModelFromXSD {
     // Accounts for namespace URIs that don't end in "/" (grrr.)
     private XSAttributeDeclaration uriToXSAttribute (String uri) {
         int indx = uri.lastIndexOf("/");
-        if (indx < 0 || indx >= uri.length()) return null;
+        if (indx < 0 || indx >= uri.length()) {
+            indx = uri.lastIndexOf(":");
+        }
+        if (indx < 0 || indx >= uri.length()) return null; //FIXME
         var nsuri = uri.substring(0, indx+1);
         var name  = uri.substring(indx+1);
         var xobj  = xs.getAttributeDeclaration(name, nsuri);
@@ -1291,7 +1294,10 @@ public class ModelFromXSD {
     }    
     private XSTypeDefinition uriToXSType (String uri) {
         int indx = uri.lastIndexOf("/");
-        if (indx < 0 || indx >= uri.length()) return null;
+        if (indx < 0 || indx >= uri.length()) {
+            indx = uri.lastIndexOf(":");
+        }
+        if (indx < 0 || indx >= uri.length()) return null; //FIXME
         var nsuri = uri.substring(0, indx+1);
         var name  = uri.substring(indx+1);
         var xobj  = xs.getTypeDefinition(name, nsuri);
