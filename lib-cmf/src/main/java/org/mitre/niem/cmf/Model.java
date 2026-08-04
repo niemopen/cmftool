@@ -310,28 +310,30 @@ public class Model extends CMFObject {
     // Augmentation points and augmentation elements are not model objects
     // and are not included here.
 
+    /**
+     * Returns the set of Property objects that are a subproperty of the
+     * argument.  Set doesn't include the argument object.
+     * @param p
+     * @return set of direct subproperties
+     */
     public Set<Property> directSubProps (Property p) {
         if (null == dirSubS) {
             dirSubS = new MapToSet<>();
             for (var pp : propMap.values()) {
                 for (var spof : pp.subPropertyOfS()) {
-                    dirSubS.add(spof, pp);
+                    dirSubS.add(spof, pp);              // pp is a direct subprop of spof
                 }
             }
-//            var pL = propertyL();
-//            Collections.sort(pL);
-//            for (var xp : pL) {
-//                var xsubs = dirSubS.get(xp);
-//                if (xsubs.isEmpty()) continue;
-//                System.err.println("directSubProps("+xp.qname()+")");
-//                for (var zp : dirSubS.get(xp)) {
-//                    System.err.println("  "+zp.qname());
-//                }
-//            }
         }
         return dirSubS.get(p);
     }
     
+    /**
+     * Returns the set including the argument Property, all of its 
+     * subproperties, and their subproperties, to infinity and beyond!
+     * @param p
+     * @return set of all subproperties
+     */
     public Set<Property> allSubProps (Property p) {
         if (null == allSubS) allSubS = new MapToSet<>();
         if (allSubS.containsKey(p)) return allSubS.get(p);
@@ -346,11 +348,11 @@ public class Model extends CMFObject {
             seen.add(np);
             todo.addAll(directSubProps(np));
         }
-        res.remove(p);
         return res;
     }
     
-    public void changeSubProps () { 
+    // Call this to invalidate the subproperty cache.
+    public void subPropChange () { 
         dirSubS = null;
         allSubS = null;
     }
@@ -372,7 +374,7 @@ public class Model extends CMFObject {
      * Returns the set of model components required for the specified
      * message properties.  That is the message property, its class, all of
      * the properties of that class, the class or datatype of those properties,
-     * and so forth.
+     * and so forth.  Also includes any augmentations to those classes.
      * @param msgPropS set of message properties
      * @return set of model components
      */

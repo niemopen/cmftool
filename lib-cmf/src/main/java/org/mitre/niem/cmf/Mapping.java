@@ -38,6 +38,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import static javax.xml.XMLConstants.NULL_NS_URI;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
+import static org.apache.commons.lang3.StringUtils.capitalize;
+import static org.mitre.niem.utility.StringUtils.replaceSuffix;
 import static org.mitre.niem.xml.XMLDocument.makeQN;
 import static org.mitre.niem.xml.XMLDocument.makeURI;
 import static org.mitre.niem.xml.XMLDocument.qnToName;
@@ -126,8 +128,7 @@ public class Mapping {
 
 //    private static final MapRec NULL_REC = new MapRec("", "", "", "", "", "");
 
-    public Mapping() {
-    }
+    public Mapping() { }
 
     /**
      * Returns true if the argument source URI is mapped.
@@ -355,15 +356,44 @@ public class Mapping {
         nsm.assignPrefix(defPrefix, defURI);
 
         // Make a list of properties and classes needed for specified message types
-        List<Component> compL;
-        if (null == msgPropS || msgPropS.isEmpty()) compL = new ArrayList<>(m.componentList());
-        else compL = new ArrayList<>(m.messageComponents(msgPropS));
+        Set<Component> compS;
+        if (null == msgPropS || msgPropS.isEmpty()) compS = m.componentSet();
+        else compS = m.messageComponents(msgPropS);
 
+        // Augmentation properties and elements must be mapped
+        for (var ns : m.namespaceSet()) {
+            for (var arec : ns.augL()) {
+                if (!needsMapping(arec.property(), includeTypes)) continue;
+                var base = "";
+                var ct = arec.classType();
+                var gcS  = new HashSet<>(arec.codeS());
+                gcS.add("CLASS");
+                for (var gc : gcS) {
+                    switch (gc) {
+                    case "CLASS":
+                        if (compS.contains(ct) && !arec.property().isAttribute()) 
+                            base = replaceSuffix(ct.name(), "Type", "");
+                        break;
+                    case "ASSOCIATION":
+                    case "OBJECT":
+                        base = capitalize(gc.toLowerCase());
+                        break;
+                    }
+                    if (!base.isEmpty()) {
+                        var p = new Property(arec.namespace(), base + "Augmentation");
+                        compS.add(p);
+                    }  
+                }
+                if (null == ct || compS.contains(ct)) {
+                    compS.add(arec.property());
+                }
+            }
+        }
         // Count number of times each local name appears among mapped components.
         // Also account for structures attributes if there are referencable classes.
         var lnct = new HashMap<String, Integer>();
         var structUs = new HashSet<String>();           // all structures namespace URIs
-        for (var c : compL) {
+        for (var c : compS) {
             if (needsMapping(c, includeTypes)) {
                 var lct = lnct.getOrDefault(c.name(), 0);
                 lnct.put(c.name(), lct + 1);
@@ -388,14 +418,17 @@ public class Mapping {
             }
         }
         // Create mappings for model components.
-        for (var c : compL) {
+        for (var c : compS) {
             if (needsMapping(c, includeTypes)) {
-                var cns = c.namespace();
-                var cln = c.name();
+                var cns  = c.namespace();
+                var cln  = c.name();
                 var cpre = cns.prefix();
-                int num = lnct.getOrDefault(cln, 1);
-                if (num > 1) map.addMapping(c.qname(), makeQN(defPrefix, cpre + "_" + cln));
-                else map.addMapping(c.qname(), makeQN(defPrefix, cln));
+                int num  = lnct.getOrDefault(cln, 1);
+                var tpre = defPrefix;
+                if (c instanceof Property p)
+                    if (p.isAttribute()) tpre = "";
+                if (num > 1) map.addMapping(c.qname(), makeQN(tpre, cpre + "_" + cln));
+                else map.addMapping(c.qname(), makeQN(tpre, cln));
             }
         }
         // Create mappings for reference attributes in structures namespace if needed
@@ -405,8 +438,8 @@ public class Mapping {
                 var fromQ = makeQN(structP, cln);
                 var toQ = "";
                 int num = lnct.getOrDefault(cln, 1);
-                if (num > 1) toQ = makeQN(defPrefix, structP + "_" + cln);
-                else         toQ = makeQN(defPrefix, cln);
+                if (num > 1) toQ = makeQN("", structP + "_" + cln);
+                else         toQ = makeQN("", cln);
                 map.addMapping(fromQ, toQ);
             }
         }

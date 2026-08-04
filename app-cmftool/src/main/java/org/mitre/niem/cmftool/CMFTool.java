@@ -43,6 +43,9 @@ public class CMFTool implements Runnable {
     CommandSpec spec;
 
     public static void main(String[] args) {
+//        if (args.length == 0) {
+//            args = new String[]{"x2m", "/Work/Stuff/USMTF/Comspot-niem5/exchange/message.xsd" };
+//        }
         int rc = newCommandLine().execute(args);
         System.exit(rc);
     }

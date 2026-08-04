@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Model
+  xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
+  xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xml:lang="en-US">
+  <Namespace structures:id="cli">
+    <NamespaceURI>https://docs.oasis-open.org/niemopen/ns/specification/code-lists/6.0/instance/</NamespaceURI>
+    <NamespacePrefixText>cli</NamespacePrefixText>
+    <DocumentationText>Definitions for the use of the NIEM Code Lists Specification, version 5.0, in XML message instances.</DocumentationText>
+    <DocumentationText>
+      NIEM Model Version 6.0
+      Project Specification 02
+      1 January 2025
+      Copyright (c) OASIS Open 2025. All Rights Reserved.
+      Source: https://docs.oasis-open.org/niemopen/niem-model/v6.0/ps02/xsd/
+      Latest stage of narrative specification:https://docs.oasis-open.org/niemopen/niem-model/v6.0/niem-model-v6.0.html
+      NIEMOpen IPR Statement:https://github.com/niemopen/oasis-open-project/blob/main/IPR-STATEMENT.md
+      License: https://github.com/niemopen/niem-model/blob/main/LICENSE.md.
+ 
+      This work is licensed under a Creative Commons Attribution 4.0 International License:
+      CC BY 4.0: Attribution 4.0 International, https://creativecommons.org/licenses/by/4.0/.
+      In addition to the above license, each Contributor also agrees in the CLA to provide the
+      additional Specification Non-Assertion Covenants to support finally-approved for any Project
+      Specifications, as explained in Section 15.3 of the OASIS Open Project Rules.    
+    </DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ReferenceSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>niem/utility/code-lists-instance.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>CLI</NamespaceCategoryCode>
+    <NamespaceVersionText>ps02</NamespaceVersionText>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="test">
+    <NamespaceURI>http://example.com/test/</NamespaceURI>
+    <NamespacePrefixText>test</NamespacePrefixText>
+    <DocumentationText>
+      Code list instance test schema
+    </DocumentationText>
+    <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
+    <DocumentFilePathText>cli.xsd</DocumentFilePathText>
+    <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
+    <NamespaceVersionText>1</NamespaceVersionText>
+    <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
+    <NamespaceLanguageName>en-US</NamespaceLanguageName>
+  </Namespace>
+  <Namespace structures:id="xs">
+    <NamespaceURI>http://www.w3.org/2001/XMLSchema</NamespaceURI>
+    <NamespacePrefixText>xs</NamespacePrefixText>
+    <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
+  </Namespace>
+  <DataProperty structures:id="cli.codeListColumnName">
+    <Name>codeListColumnName</Name>
+    <Namespace structures:ref="cli" xsi:nil="true"/>
+    <DocumentationText>A local name for a code list column within a code list.</DocumentationText>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="cli.codeListConstrainingIndicator">
+    <Name>codeListConstrainingIndicator</Name>
+    <Namespace structures:ref="cli" xsi:nil="true"/>
+    <DocumentationText>True if a code list binding constrains the validity of a code list value; false otherwise.</DocumentationText>
+    <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="cli.codeListURI">
+    <Name>codeListURI</Name>
+    <Namespace structures:ref="cli" xsi:nil="true"/>
+    <DocumentationText>A universal identifier for a code list.</DocumentationText>
+    <Datatype structures:ref="xs.anyURI" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="test.CodeLiteral">
+    <Name>CodeLiteral</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>A data type for a code with codes sourced from an external code list.</DocumentationText>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+  </DataProperty>
+  <Class structures:id="test.CodeType">
+    <Name>CodeType</Name>
+    <Namespace structures:ref="test" xsi:nil="true"/>
+    <DocumentationText>A data type for a code with codes sourced from an external code list.</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="test.CodeLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="cli.codeListColumnName" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="cli.codeListConstrainingIndicator" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="cli.codeListURI" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Datatype structures:id="xs.anyURI">
+    <Name>anyURI</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.boolean">
+    <Name>boolean</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.string">
+    <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+</Model>

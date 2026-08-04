@@ -91,7 +91,7 @@ public class ModelToXMLSchemaTest {
         var cmF  = new File("../app-niemtran/src/test/resources/refs.cmf");
         var rdr  = new ModelXMLReader();
         var m    = rdr.readFiles(cmF);
-        var mtx  = new ModelToXMLSchema(m);
+        var mtx  = new OldModelToXMLSchema(m);
         var outD = new File(tmpD, "msg.xsd");
         mtx.writeModelXSD(outD);
     }
@@ -178,9 +178,9 @@ public class ModelToXMLSchemaTest {
         isTrue("count(./xs:sequence/xs:choice[@minOccurs='0'][@maxOccurs='unbounded'])=1", e);
         e = evalE("./xs:sequence/xs:choice", e);
         isTrue("count(./xs:element)=3", e);
-        isTrue("./xs:element[1][@ref='t:EducationAugmentation']", e);
-        isTrue("./xs:element[2][@ref='t:TestAugElement']", e);        
-        isTrue("./xs:element[3][@ref='j:EducationAugmentation']", e);
+        isTrue("./xs:element[1][@ref='j:EducationAugmentation']", e);
+        isTrue("./xs:element[2][@ref='t:EducationAugmentation']", e);
+        isTrue("./xs:element[3][@ref='t:TestAugElement']", e);        
         isFalse("./xs:element[@minOccurs]", e);
         isFalse("./xs:element[@maxOccurs]", e);
     }    
@@ -454,9 +454,20 @@ public class ModelToXMLSchemaTest {
         isFalse("./xs:choice/xs:element[@maxOccurs]", e);
         
         e = evalE("//xs:complexType[@name='T3Type']", doc);    
-        isTrue("./xs:sequence/xs:element[1][@ref='t:Prop1']", e);
-        isTrue("./xs:sequence/xs:element[2][@ref='t:Prop2']", e);         
-        isTrue("./xs:sequence/xs:element[3][@ref='t:Prop3']", e);
+        isTrue("./xs:sequence/*[1][self::xs:element][@ref='t:Prop1']", e);
+        isTrue("./xs:sequence/*[2][self::xs:element][@ref='t:AugProp1']", e);        
+        isTrue("./xs:sequence/*[3][self::xs:element][@ref='t:Prop2']", e);
+
+        isTrue("./xs:sequence/*[4][self::xs:choice][@minOccurs='0']", e);        
+        isTrue("./xs:sequence/*[4][self::xs:choice][@maxOccurs='unbounded']", e);     
+        isTrue("./xs:sequence/*[4][self::xs:choice]/*[1][self::xs:element][@ref='t:OtherAugProp2']", e);
+        isTrue("./xs:sequence/*[4][self::xs:choice]/*[2][self::xs:element][@ref='t:T2Augmentation']", e);
+        
+        isTrue("./xs:sequence/*[5][self::xs:element][@ref='t:Prop3']", e);
+
+        isTrue("./xs:attribute[@ref='t:aprop1']", e);        
+        isTrue("./xs:attribute[@ref='t:aprop2']", e);
+        
         isTrue("./xs:attribute[@ref='structures:id']", e);
         isTrue("./xs:attribute[@ref='structures:ref']", e);
         isFalse("./xs:attribute[@ref='structures:uri']", e);   
@@ -498,7 +509,11 @@ public class ModelToXMLSchemaTest {
         e = evalE("//xs:complexType[@name='FiveType']", doc);
         isFalse(".//xs:extension", e);
         isFalse("//xs:attribute[@ref='structures:*']", e);
-        isTrue("count(./xs:sequence/xs:element[@ref='t:DataProperty'])=5", e);
+        isTrue("//xs:sequence/xs:element[@ref='t:DataProp1']", e);
+        isTrue("//xs:sequence/xs:element[@ref='t:DataProp2']", e);
+        isTrue("//xs:sequence/xs:element[@ref='t:DataProp3']", e);
+        isTrue("//xs:sequence/xs:element[@ref='t:DataProp4']", e);
+        isTrue("//xs:sequence/xs:element[@ref='t:DataProp5']", e);
         
         e = evalE("//xs:complexType[@name='URIRefType']", doc);
         isFalse(".//xs:extension", e);        
@@ -583,7 +598,7 @@ public class ModelToXMLSchemaTest {
         ow.close();
         
         // Create a new XSD pile from CMF
-        var mtxsd = new ModelToXMLSchema(model);
+        var mtxsd = new OldModelToXMLSchema(model);
         if (null != model.namespaceObj("test")) mtxsd.setRootNamespace("test");
         else if (null != model.namespaceObj("t")) mtxsd.setRootNamespace("t");
         mtxsd.setCatalogPath("xml-catalog.xml");

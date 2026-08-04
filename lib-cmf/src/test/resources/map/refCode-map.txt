@@ -1,0 +1,18 @@
+PREFIX structures   https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/
+PREFIX t            http://example.com/refCode/
+PREFIX sr           http://example.com/refCode/xsimple
+# FromQName       ToName
+t:DataProperty    sr:DataProperty
+t:FiveProp        sr:FiveProp
+t:FourProp        sr:FourProp
+t:ThreeProp       sr:ThreeProp
+t:AnyRefType      sr:AnyRefType
+t:FiveType        sr:FiveType
+t:FourType        sr:FourType
+t:OneType         sr:OneType
+t:ThreeType       sr:ThreeType
+t:TwoType         sr:TwoType
+t:URIRefType      sr:URIRefType
+structures:id     sr:id
+structures:ref    sr:ref
+structures:uri    sr:uri

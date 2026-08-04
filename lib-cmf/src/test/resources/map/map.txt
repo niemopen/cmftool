@@ -1,0 +1,16 @@
+PREFIX msg   http://example.com/ReqRes/1.0/
+PREFIX nc    https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/
+PREFIX sj    http://example.com/xsimple
+# FromQName            ToName
+msg:Request            sj:request
+msg:RequestedItem      sj:item
+msg:RequestID          sj:id
+nc:ItemName            sj:name
+nc:ItemQuantity        sj:quantity
+nc:QuantityLiteral     sj:amount
+msg:RequestType        sj:RequestType
+nc:ItemType            sj:ItemType
+nc:NumericType         sj:NumericType
+nc:QuantityType        sj:QuantityType
+nc:TextType            sj:TextType
+nc:quantityUnitText    sj:units

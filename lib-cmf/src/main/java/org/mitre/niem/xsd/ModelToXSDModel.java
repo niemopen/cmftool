@@ -213,6 +213,7 @@ public class ModelToXSDModel extends ModelToXSD {
             else if (p.isChoice()) {
                 pE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:choice");
                 var choiceL = new ArrayList<>(p.allSubProps());
+                choiceL.remove(p);
                 Collections.sort(choiceL);
                 for (var chp : choiceL) {
                     var chE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");

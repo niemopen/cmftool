@@ -68,8 +68,8 @@ import org.mitre.niem.cmf.Property;
 import org.mitre.niem.utility.StagedDirectoryWriter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
-import org.mitre.niem.xsd.ModelToMappedXMLSchema;
 import org.mitre.niem.xsd.ModelToXMLSchema;
+import org.mitre.niem.xsd.OldModelToXMLSchema;
 import org.mitre.niem.xsd.NamespaceKind;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -271,10 +271,10 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
                 msgPropS.add(p);
             }
         }
-        var m2x = new ModelToMappedXMLSchema(model, map, msgPropS);
+        var m2x = new ModelToXMLSchema(model);
 //        m2x.setArchVersion(archVers);
 //        m2x.setCatalogPath(catPath == null ? null : catPath.toString());
-//        m2x.setRootNamespace(rootNSarg);
+        m2x.setRootNamespace(rootNSarg);
 //        m2x.setMapping(map);
 //        m2x.setMessageProperties(msgPropA);
 
