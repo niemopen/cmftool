@@ -381,16 +381,22 @@ public class Model extends CMFObject {
     public Set<Component> messageComponents (Set<ObjectProperty> msgPropS) {
         var todo = new Stack<Component>();
         var res  = new HashSet<Component>();
+        var wlkF = true;
         for (var p : msgPropS) todo.push(p);
-        walkComponents(todo, res);
-        for (var ns : namespaceSet()) {
-            for (var arec : ns.augL()) {
-                if (res.contains(arec.classType()) || !arec.codeS().isEmpty())
-                    res.add(arec.property());
+        while (wlkF) {
+            wlkF = false;
+            walkComponents(todo, res);
+            for (var ns : namespaceSet()) {
+                for (var arec : ns.augL()) {
+                    if (res.contains(arec.classType()) || !arec.codeS().isEmpty()) {
+                        if (!res.contains(arec.property())) {
+                            todo.add(arec.property());
+                            wlkF = true;
+                        }
+                    }
+                }
             }
         }
-        todo.addAll(res);
-        walkComponents(todo, res);
         return res;
     }
     
@@ -399,11 +405,15 @@ public class Model extends CMFObject {
             var c  = todo.pop();
             if (null == c) continue;
             if (res.contains(c)) continue;
+            var cU = c.uri();
             res.add(c);
             if (c instanceof DataProperty dp)        todo.push(dp.datatype());
             else if (c instanceof ObjectProperty op) todo.push(op.classType());
-            else if (c instanceof Datatype dt)       todo.push(dt.base());
+            else if (c instanceof ListType lt)       todo.push(lt.itemType());
+            else if (c instanceof Union u)           for (var mt : u.memberL()) todo.push(mt);
+            else if (c instanceof Restriction r)     todo.push(r.base());
             else if (c instanceof ClassType ct) {
+                todo.push(ct.subClassOf());
                 for (var pa : ct.propAssocL()) {
                     todo.push(pa.property());
                 }

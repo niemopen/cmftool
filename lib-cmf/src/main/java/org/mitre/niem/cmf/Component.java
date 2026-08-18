@@ -123,6 +123,9 @@ public abstract class Component extends CMFObject implements Comparable<Componen
         return nsuri + "/" + name;
     }    
     
+    @Override
+    public String toString () { return uri(); }
+    
     /**
      * Returns the @structures:id value for this compnent; eg. "nc.TextType"
      */

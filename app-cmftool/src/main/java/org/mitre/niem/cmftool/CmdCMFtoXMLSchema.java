@@ -247,7 +247,7 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
         }
         
         // Read the mapping file if one was provided
-        Mapping map = null;
+        Mapping map = new Mapping();
         if (null != mapPath) {
             try {
                 map = Mapping.readFile(mapPath.toFile());
@@ -271,7 +271,9 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
                 msgPropS.add(p);
             }
         }
-        var m2x = new ModelToXMLSchema(model);
+        else msgPropS = null;
+        
+        var m2x = new ModelToXMLSchema(model, map, msgPropS);
 //        m2x.setArchVersion(archVers);
 //        m2x.setCatalogPath(catPath == null ? null : catPath.toString());
         m2x.setRootNamespace(rootNSarg);

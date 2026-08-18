@@ -100,6 +100,12 @@ public class ModelToXMLSchema {
         this.propS = null;
     }
     
+    public ModelToXMLSchema (Model m, Mapping map, ObjectProperty prop) {
+        this.model = m;
+        this.map = map;
+        this.propS = Set.of(prop);
+    }
+
     public ModelToXMLSchema (Model m, Mapping map, Set<ObjectProperty> propS) {
         this.model = m;
         this.map = map;
@@ -186,8 +192,8 @@ public class ModelToXMLSchema {
 //                atypes.append("  " + pa.property().qname() + "\n");
 //            }
 //        }
-//        var comps = new StringBuilder();
-//        for (var c : compS) comps.append(c.uri() + "\n");
+        var comps = new StringBuilder();
+        for (var c : compS) comps.append(c.uri() + "\n");
 //        
 //        var maps = new StringBuilder();
 //        for (var nsu : nsU2compS.keySet()) {
@@ -459,10 +465,14 @@ public class ModelToXMLSchema {
             var ns = model.namespaceObj(nsU);
             if (null != ns) path = ns.documentFilePath();
             if (path.isEmpty()) {
+                var kind = NamespaceKind.namespaceToKindCode(nsU);
+                if (!kind.isBlank()) path = NamespaceKind.builtinPath().getOrDefault(kind, "");
+            }                
+            if (path.isEmpty()) {
                 var prefix = nsmap.getPrefix(nsU);
                 path = prefix + ".xsd";
             }
-            path = "./" + path;
+//            path = "./" + path;
             var upath = uset.add(path);
             nsU2path.put(nsU, upath);      
         }

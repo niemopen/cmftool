@@ -42,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.cmf.ModelXMLWriter;
 import org.mitre.niem.xml.XMLDocument;
@@ -88,10 +89,12 @@ public class ModelToXMLSchemaTest {
     @Test
     public void testOne () throws Exception {
         var fnam = "augment";
-        var cmF  = new File("../app-niemtran/src/test/resources/refs.cmf");
+        var cmF  = new File("src/test/resources/xsd6/mapMessage.cmf");
         var rdr  = new ModelXMLReader();
         var m    = rdr.readFiles(cmF);
-        var mtx  = new OldModelToXMLSchema(m);
+        var map  = new Mapping();
+        var msgE = m.qnToObjectProperty("t:Message");
+        var mtx  = new ModelToXMLSchema(m, map, msgE);
         var outD = new File(tmpD, "msg.xsd");
         mtx.writeModelXSD(outD);
     }
