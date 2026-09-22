@@ -8,7 +8,7 @@ dependencies {
     implementation("xerces:xercesImpl:2.12.2")
     implementation("xalan:xalan:2.7.3")
     implementation("xalan:serializer:2.7.3")
-    implementation("commons-io:commons-io:2.18.0")
+    implementation("commons-io:commons-io:2.22.0")
     implementation("com.google.code.gson:gson:2.13.1")
     implementation("org.apache.commons:commons-lang3:3.20.0")
     implementation("org.apache.logging.log4j:log4j-core:2.24.3")

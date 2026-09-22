@@ -212,6 +212,14 @@ public class Model extends CMFObject {
         n.setModel(this);
     }
     
+    public void addComponent (Component c) {
+        if (c instanceof ClassType ct)           addClassType(ct);
+        else if (c instanceof Datatype dt)       addDatatype(dt);
+        else if (c instanceof DataProperty dp)   addProperty(dp);
+        else if (c instanceof ObjectProperty op) addProperty(op);
+        else if (c instanceof Property p)        addProperty(p);
+    }
+    
     public void addClassType (ClassType c) {
         if (null == c) return;
         compMap.put(c.uri(), c); 

@@ -103,6 +103,7 @@ public class ModelAssertions {
         var jns = m.namespaceObj("j");
         var ncns = m.namespaceObj("nc");
         var tns = m.namespaceObj("t");
+        var nslist = m.namespaceList();
         
         assertThat(m.namespaceList())
             .extracting(Namespace::prefix)

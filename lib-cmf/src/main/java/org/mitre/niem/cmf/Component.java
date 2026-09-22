@@ -75,8 +75,9 @@ public abstract class Component extends CMFObject implements Comparable<Componen
     public void setOutsideURI (String u)        { outsideURI = u; }
     public void setIsDeprecated (boolean f)     { isDeprecated = f; }
     
+    public void addDocumentation (String doc)   { addDocumentation(doc, "en-US"); }
     public void addDocumentation (String doc, String lang) {
-        docL.add(new LanguageString(doc, lang));
+        if (null != doc) docL.add(new LanguageString(doc, lang));
     }
     public void setDocumentation (List<LanguageString> dL) {
         docL.clear();

@@ -22,6 +22,11 @@ plugins {
     base
 }
 
+allprojects {
+    group = "org.mitre.niem"
+    version = "1.1-alpha.8"
+}
+
 abstract class RenderPandocDocs @Inject constructor(
     private val execOperations: ExecOperations
 ) : DefaultTask() {
@@ -130,7 +135,7 @@ subprojects {
     pluginManager.withPlugin("java-library") {
         extensions.configure<JavaPluginExtension> {
             withSourcesJar()
-            withJavadocJar()
+//             withJavadocJar()
         }
     }
 
@@ -154,7 +159,7 @@ val docsSourceDir = layout.projectDirectory.dir("docs")
 val renderedDocsRoot = layout.buildDirectory.dir("generated-docs/rendered")
 val stagedDocsRoot = layout.buildDirectory.dir("generated-docs/staged")
 
-val test by tasks.registering {
+val test = tasks.register("test") {
     group = "verification"
     description = "Runs tests for all subprojects"
 }
