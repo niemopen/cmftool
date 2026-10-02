@@ -75,7 +75,7 @@ public class PropertyAssociation extends CMFObject  {
     
     public String definition ()             { return docL.isEmpty() ? null : docL.get(0).text(); }    
     public void addDocumentation (String doc, String lang) {
-        docL.add(new LanguageString(doc, lang));
+        if (null != doc) docL.add(new LanguageString(doc, lang));
     }
     public void setDocumentation (List<LanguageString> dL) {
         docL.clear();

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/Request/1.0/xsimple"
+  xmlns:msg="http://example.com/Request/1.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:sj="http://example.com/Request/1.0/xsimple"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import namespace="http://example.com/Request/1.0/" schemaLocation="request.xsd"/>
+  <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/" schemaLocation="niem/niem-core.xsd"/>
+  <xs:attribute name="units" type="xs:string">
+    <xs:annotation>
+      <xs:documentation>A unit of counting or tallying for a quantity.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+  <xs:element name="id" type="xs:token">
+    <xs:annotation>
+      <xs:documentation>An identifier for a request.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="item" type="nc:ItemType">
+    <xs:annotation>
+      <xs:documentation>A request for a specified quantity of an item.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="name" type="nc:TextType">
+    <xs:annotation>
+      <xs:documentation>A name of an item.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="quantity" type="nc:QuantityType">
+    <xs:annotation>
+      <xs:documentation>A count of the individual units which make up an item.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="request" type="msg:RequestType">
+    <xs:annotation>
+      <xs:documentation>A request for one or more items.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+</xs:schema>

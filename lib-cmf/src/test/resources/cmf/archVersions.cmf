@@ -365,6 +365,7 @@
   <Class structures:id="test.OneTestType">
     <Name>OneTestType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
+    <ReferenceCode>INTERNAL</ReferenceCode>
     <ChildPropertyAssociation>
       <ObjectProperty structures:ref="nc.PersonName" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>

@@ -64,11 +64,9 @@ import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.cmf.ObjectProperty;
-import org.mitre.niem.cmf.Property;
 import org.mitre.niem.utility.StagedDirectoryWriter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
-import org.mitre.niem.xsd.ModelToMappedXMLSchema;
 import org.mitre.niem.xsd.ModelToXMLSchema;
 import org.mitre.niem.xsd.NamespaceKind;
 import picocli.CommandLine;
@@ -99,7 +97,7 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
         paramLabel = "<QName>",
         description = "build schema to validate these message properties"
     )
-    private List<String> msgQA = new ArrayList<>();
+    private List<String> msgQA = null;
     
     @Option(
         names = {"--map"},
@@ -247,7 +245,7 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
         }
         
         // Read the mapping file if one was provided
-        Mapping map = null;
+        Mapping map = new Mapping();
         if (null != mapPath) {
             try {
                 map = Mapping.readFile(mapPath.toFile());
@@ -271,10 +269,12 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
                 msgPropS.add(p);
             }
         }
-        var m2x = new ModelToMappedXMLSchema(model, map, msgPropS);
+        else msgPropS = null;
+        
+        var m2x = new ModelToXMLSchema(model, map, msgPropS);
 //        m2x.setArchVersion(archVers);
 //        m2x.setCatalogPath(catPath == null ? null : catPath.toString());
-//        m2x.setRootNamespace(rootNSarg);
+        m2x.setRootNamespace(rootNSarg);
 //        m2x.setMapping(map);
 //        m2x.setMessageProperties(msgPropA);
 
@@ -298,7 +298,7 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
         for (var ns : model.namespaceSet()) {
             if ("EXTERNAL".equals(ns.kindCode())) {
                 System.out.println(String.format(
-                    "You must copy all schema documents required for %s to %s",
+                    "You must copy all external schema documents required for %s to %s",
                     ns.uri(),
                     ns.documentFilePath()
                 ));

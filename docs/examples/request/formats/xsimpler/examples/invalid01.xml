@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <request
-  xmlns:sj="http://example.com/Request/1.0/xsimple"
-  xmlns="http://example.com/Request/1.0/xsimple">
+  xmlns:sj="http://example.com/Request/1.0/xsimpler"
+  xmlns="http://example.com/Request/1.0/xsimpler">
   <id>R012</id>
   <item>
-    <name>Wrench</name>
+    <!--<name>Wrench</name> this element is required -->
     <quantity>1</quantity>
   </item>
   <item>

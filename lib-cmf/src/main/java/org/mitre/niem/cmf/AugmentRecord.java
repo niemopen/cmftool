@@ -74,9 +74,11 @@ public class AugmentRecord extends PropertyAssociation implements Comparable<Aug
     public String toString () {
         var res = new StringBuilder();
         res.append("AR[");
+        if (null != namespace) res.append(namespace.prefix()+",");
         res.append(property().qname());
         if (null != classType) res.append(","+classType.qname());
-        else res.append("GLOB");
+        else res.append(",GLOB");
+        res.append(","+index);
         res.append("]");
         return res.toString();
     }

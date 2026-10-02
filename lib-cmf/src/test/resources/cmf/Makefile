@@ -1,4 +1,5 @@
-CT = /mnt/c/Windows/System32/cmd.exe /c c:\\work\\netbeans\\cmftool\\app-cmftool\\build\\install\\cmftool\\bin\\cmftool.bat
+CT = /c/Work/NetBeans/CMFTool/app-cmftool/build/install/app-cmftool/bin/cmftool.bat
+#CT = /mnt/c/Windows/System32/cmd.exe /c c:\\work\\netbeans\\cmftool\\app-cmftool\\build\\install\\cmftool\\bin\\cmftool.bat
 
 XSD_DIR := ../xsd6
 XSD := $(wildcard $(XSD_DIR)/*.xsd)

@@ -212,6 +212,14 @@ public class Model extends CMFObject {
         n.setModel(this);
     }
     
+    public void addComponent (Component c) {
+        if (c instanceof ClassType ct)           addClassType(ct);
+        else if (c instanceof Datatype dt)       addDatatype(dt);
+        else if (c instanceof DataProperty dp)   addProperty(dp);
+        else if (c instanceof ObjectProperty op) addProperty(op);
+        else if (c instanceof Property p)        addProperty(p);
+    }
+    
     public void addClassType (ClassType c) {
         if (null == c) return;
         compMap.put(c.uri(), c); 
@@ -310,28 +318,30 @@ public class Model extends CMFObject {
     // Augmentation points and augmentation elements are not model objects
     // and are not included here.
 
+    /**
+     * Returns the set of Property objects that are a subproperty of the
+     * argument.  Set doesn't include the argument object.
+     * @param p
+     * @return set of direct subproperties
+     */
     public Set<Property> directSubProps (Property p) {
         if (null == dirSubS) {
             dirSubS = new MapToSet<>();
             for (var pp : propMap.values()) {
                 for (var spof : pp.subPropertyOfS()) {
-                    dirSubS.add(spof, pp);
+                    dirSubS.add(spof, pp);              // pp is a direct subprop of spof
                 }
             }
-//            var pL = propertyL();
-//            Collections.sort(pL);
-//            for (var xp : pL) {
-//                var xsubs = dirSubS.get(xp);
-//                if (xsubs.isEmpty()) continue;
-//                System.err.println("directSubProps("+xp.qname()+")");
-//                for (var zp : dirSubS.get(xp)) {
-//                    System.err.println("  "+zp.qname());
-//                }
-//            }
         }
         return dirSubS.get(p);
     }
     
+    /**
+     * Returns the set including the argument Property, all of its 
+     * subproperties, and their subproperties, to infinity and beyond!
+     * @param p
+     * @return set of all subproperties
+     */
     public Set<Property> allSubProps (Property p) {
         if (null == allSubS) allSubS = new MapToSet<>();
         if (allSubS.containsKey(p)) return allSubS.get(p);
@@ -346,11 +356,11 @@ public class Model extends CMFObject {
             seen.add(np);
             todo.addAll(directSubProps(np));
         }
-        res.remove(p);
         return res;
     }
     
-    public void changeSubProps () { 
+    // Call this to invalidate the subproperty cache.
+    public void subPropChange () { 
         dirSubS = null;
         allSubS = null;
     }
@@ -372,23 +382,29 @@ public class Model extends CMFObject {
      * Returns the set of model components required for the specified
      * message properties.  That is the message property, its class, all of
      * the properties of that class, the class or datatype of those properties,
-     * and so forth.
+     * and so forth.  Also includes any augmentations to those classes.
      * @param msgPropS set of message properties
      * @return set of model components
      */
     public Set<Component> messageComponents (Set<ObjectProperty> msgPropS) {
         var todo = new Stack<Component>();
         var res  = new HashSet<Component>();
+        var wlkF = true;
         for (var p : msgPropS) todo.push(p);
-        walkComponents(todo, res);
-        for (var ns : namespaceSet()) {
-            for (var arec : ns.augL()) {
-                if (res.contains(arec.classType()) || !arec.codeS().isEmpty())
-                    res.add(arec.property());
+        while (wlkF) {
+            wlkF = false;
+            walkComponents(todo, res);
+            for (var ns : namespaceSet()) {
+                for (var arec : ns.augL()) {
+                    if (res.contains(arec.classType()) || !arec.codeS().isEmpty()) {
+                        if (!res.contains(arec.property())) {
+                            todo.add(arec.property());
+                            wlkF = true;
+                        }
+                    }
+                }
             }
         }
-        todo.addAll(res);
-        walkComponents(todo, res);
         return res;
     }
     
@@ -397,11 +413,15 @@ public class Model extends CMFObject {
             var c  = todo.pop();
             if (null == c) continue;
             if (res.contains(c)) continue;
+            var cU = c.uri();
             res.add(c);
             if (c instanceof DataProperty dp)        todo.push(dp.datatype());
             else if (c instanceof ObjectProperty op) todo.push(op.classType());
-            else if (c instanceof Datatype dt)       todo.push(dt.base());
+            else if (c instanceof ListType lt)       todo.push(lt.itemType());
+            else if (c instanceof Union u)           for (var mt : u.memberL()) todo.push(mt);
+            else if (c instanceof Restriction r)     todo.push(r.base());
             else if (c instanceof ClassType ct) {
+                todo.push(ct.subClassOf());
                 for (var pa : ct.propAssocL()) {
                     todo.push(pa.property());
                 }

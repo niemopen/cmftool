@@ -91,18 +91,11 @@ public class Property extends Component {
     public void addSubPropertyOf (Property p) {
         if (subpropOfS.contains(p)) return;
         subpropOfS.add(p);
-        model().changeSubProps();
+        model().subPropChange();
     }
     
     public void removeSubPropertyOf (Property p) {
-        subpropOfS.remove(p);
-        model().changeSubProps();
-    }
-    
-    // Returns a set of all properties that have this property in their
-    // subPropertyOf set.
-    public Set<Property> directSubProps () {
-        return model().directSubProps(this);
+        if (subpropOfS.remove(p)) model().subPropChange();
     }
     
     // Returns a set of all direct and indirect subproperties of this object.
