@@ -87,19 +87,6 @@ public class ModelToXMLSchemaTest {
     }
     
     @Test
-    public void testOne () throws Exception {
-        var fnam = "augment";
-        var cmF  = new File("src/test/resources/xsd6/mapMessage.cmf");
-        var rdr  = new ModelXMLReader();
-        var m    = rdr.readFiles(cmF);
-        var map  = new Mapping();
-        var msgE = m.qnToObjectProperty("t:Message");
-        var mtx  = new ModelToXMLSchema(m, map, msgE);
-        var outD = new File(tmpD, "msg.xsd");
-        mtx.writeModelXSD(outD);
-    }
-    
-    @Test
     public void testAny () throws Exception {
         var fnam = "any";
         var pile = makePile(fnam);

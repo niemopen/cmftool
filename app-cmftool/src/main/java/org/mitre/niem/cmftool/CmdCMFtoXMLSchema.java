@@ -64,12 +64,10 @@ import org.mitre.niem.cmf.Mapping;
 import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.cmf.ObjectProperty;
-import org.mitre.niem.cmf.Property;
 import org.mitre.niem.utility.StagedDirectoryWriter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
 import org.mitre.niem.xsd.ModelToXMLSchema;
-import org.mitre.niem.xsd.OldModelToXMLSchema;
 import org.mitre.niem.xsd.NamespaceKind;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -99,7 +97,7 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
         paramLabel = "<QName>",
         description = "build schema to validate these message properties"
     )
-    private List<String> msgQA = new ArrayList<>();
+    private List<String> msgQA = null;
     
     @Option(
         names = {"--map"},
@@ -300,7 +298,7 @@ public class CmdCMFtoXMLSchema implements Callable<Integer> {
         for (var ns : model.namespaceSet()) {
             if ("EXTERNAL".equals(ns.kindCode())) {
                 System.out.println(String.format(
-                    "You must copy all schema documents required for %s to %s",
+                    "You must copy all external schema documents required for %s to %s",
                     ns.uri(),
                     ns.documentFilePath()
                 ));

@@ -10,7 +10,7 @@
     <NamespacePrefixText>j</NamespacePrefixText>
     <DocumentationText>Justice</DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>niem/domains/justice-skel.xsd</DocumentFilePathText>
+    <DocumentFilePathText>niem/domains/justice-skel-mapMsg.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>DOMAIN</NamespaceCategoryCode>
     <NamespaceVersionText>subset-1</NamespaceVersionText>
     <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
@@ -40,52 +40,18 @@
   <Namespace structures:id="t">
     <NamespaceURI>http://example.com/test/</NamespaceURI>
     <NamespacePrefixText>t</NamespacePrefixText>
-    <DocumentationText>Test schema for element augmentations.</DocumentationText>
+    <DocumentationText>Test schema for XML message schema creation with mappings.</DocumentationText>
     <ConformanceTargetURI>https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#ExtensionSchemaDocument</ConformanceTargetURI>
-    <DocumentFilePathText>augment.xsd</DocumentFilePathText>
+    <DocumentFilePathText>mapMessage.xsd</DocumentFilePathText>
     <NamespaceCategoryCode>EXTENSION</NamespaceCategoryCode>
     <NamespaceVersionText>1</NamespaceVersionText>
     <ArchitectureVersionName>NIEM6.0</ArchitectureVersionName>
     <NamespaceLanguageName>en-US</NamespaceLanguageName>
     <AugmentationRecord>
-      <Class structures:ref="nc.CommentType" xsi:nil="true"/>
-      <DataProperty structures:ref="t.CommentDestinationText" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
-      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-      <DataProperty structures:ref="t.CommentDestinationText" xsi:nil="true"/>
-      <MinOccursQuantity>1</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationIndex>0</AugmentationIndex>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-      <DataProperty structures:ref="nc.CommentText" xsi:nil="true"/>
+      <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+      <ObjectProperty structures:ref="t.Metadata" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationIndex>1</AugmentationIndex>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-      <DataProperty structures:ref="j.EducationTotalYearsText" xsi:nil="true"/>
-      <MinOccursQuantity>1</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationIndex>2</AugmentationIndex>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-      <DataProperty structures:ref="nc.personNameCommentText" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
-      <MaxOccursQuantity>1</MaxOccursQuantity>
-      <AugmentationIndex>3</AugmentationIndex>
-    </AugmentationRecord>
-    <AugmentationRecord>
-      <Class structures:ref="nc.EducationType" xsi:nil="true"/>
-      <DataProperty structures:ref="t.TestAugElement" xsi:nil="true"/>
-      <MinOccursQuantity>0</MinOccursQuantity>
-      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </AugmentationRecord>
   </Namespace>
   <Namespace structures:id="xs">
@@ -117,24 +83,24 @@
     <DocumentationText>A person's educational background.</DocumentationText>
     <Class structures:ref="nc.EducationType" xsi:nil="true"/>
   </ObjectProperty>
-  <DataProperty structures:id="nc.PersonFullName">
+  <ObjectProperty structures:id="nc.PersonFullName">
     <Name>PersonFullName</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A complete name of a person.</DocumentationText>
-    <Datatype structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-  </DataProperty>
-  <DataProperty structures:id="nc.PersonGivenName">
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonGivenName">
     <Name>PersonGivenName</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A first name of a person.</DocumentationText>
-    <Datatype structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-  </DataProperty>
-  <DataProperty structures:id="nc.PersonMiddleName">
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="nc.PersonMiddleName">
     <Name>PersonMiddleName</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A middle name of a person.</DocumentationText>
-    <Datatype structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-  </DataProperty>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
   <ObjectProperty structures:id="nc.PersonName">
     <Name>PersonName</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
@@ -155,24 +121,33 @@
     <Datatype structures:ref="xs.boolean" xsi:nil="true"/>
     <AttributeIndicator>true</AttributeIndicator>
   </DataProperty>
-  <DataProperty structures:id="nc.PersonSurName">
+  <DataProperty structures:id="nc.PersonNameTextLiteral">
+    <Name>PersonNameTextLiteral</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a name by which a person is known, referred, or addressed.</DocumentationText>
+    <Datatype structures:ref="nc.ProperNameTextType" xsi:nil="true"/>
+  </DataProperty>
+  <ObjectProperty structures:id="nc.PersonSurName">
     <Name>PersonSurName</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A last name or family name of a person.</DocumentationText>
-    <Datatype structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
-  </DataProperty>
-  <DataProperty structures:id="t.CommentDestinationText">
-    <Name>CommentDestinationText</Name>
+    <Class structures:ref="nc.PersonNameTextType" xsi:nil="true"/>
+  </ObjectProperty>
+  <DataProperty structures:id="t.AccessCode">
+    <Name>AccessCode</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>
-    <DocumentationText>An intended recipient of the comment.</DocumentationText>
-    <Datatype structures:ref="xs.string" xsi:nil="true"/>
-  </DataProperty>
-  <DataProperty structures:id="t.TestAugElement">
-    <Name>TestAugElement</Name>
-    <Namespace structures:ref="t" xsi:nil="true"/>
-    <DocumentationText>An augmentation element not part of an augmentation type.</DocumentationText>
     <Datatype structures:ref="xs.token" xsi:nil="true"/>
   </DataProperty>
+  <ObjectProperty structures:id="t.Message">
+    <Name>Message</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.MessageType" xsi:nil="true"/>
+  </ObjectProperty>
+  <ObjectProperty structures:id="t.Metadata">
+    <Name>Metadata</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Class structures:ref="t.MetadataType" xsi:nil="true"/>
+  </ObjectProperty>
   <Class structures:id="nc.CommentType">
     <Name>CommentType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
@@ -193,22 +168,32 @@
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
+  <Class structures:id="nc.PersonNameTextType">
+    <Name>PersonNameTextType</Name>
+    <Namespace structures:ref="nc" xsi:nil="true"/>
+    <DocumentationText>A data type for a name by which a person is known, referred, or addressed.</DocumentationText>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="nc.PersonNameTextLiteral" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
   <Class structures:id="nc.PersonNameType">
     <Name>PersonNameType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>
     <DocumentationText>A data type for a combination of names and/or titles by which a person is known.</DocumentationText>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="nc.PersonGivenName" xsi:nil="true"/>
+      <ObjectProperty structures:ref="nc.PersonGivenName" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </ChildPropertyAssociation>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="nc.PersonMiddleName" xsi:nil="true"/>
+      <ObjectProperty structures:ref="nc.PersonMiddleName" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </ChildPropertyAssociation>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="nc.PersonSurName" xsi:nil="true"/>
+      <ObjectProperty structures:ref="nc.PersonSurName" xsi:nil="true"/>
       <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </ChildPropertyAssociation>
@@ -233,12 +218,35 @@
       <MaxOccursQuantity>unbounded</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
-  <Restriction structures:id="nc.PersonNameTextType">
-    <Name>PersonNameTextType</Name>
-    <Namespace structures:ref="nc" xsi:nil="true"/>
-    <DocumentationText>A data type for a name by which a person is known, referred, or addressed.</DocumentationText>
-    <RestrictionBase structures:ref="nc.ProperNameTextType" xsi:nil="true"/>
-  </Restriction>
+  <Class structures:id="t.MessageType">
+    <Name>MessageType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.PersonFullName" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="nc.PersonEducation" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <ObjectProperty structures:ref="t.Metadata" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
+      <MaxOccursQuantity>unbounded</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
+  <Class structures:id="t.MetadataType">
+    <Name>MetadataType</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <ReferenceCode>IDREF</ReferenceCode>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.AccessCode" xsi:nil="true"/>
+      <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+  </Class>
   <Restriction structures:id="nc.ProperNameTextType">
     <Name>ProperNameTextType</Name>
     <Namespace structures:ref="nc" xsi:nil="true"/>

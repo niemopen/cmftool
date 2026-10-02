@@ -1,29 +1,5 @@
-/*
- * NOTICE
- *
- * This software was produced for the U. S. Government
- * under Basic Contract No. W56KGU-18-D-0004, and is
- * subject to the Rights in Noncommercial Computer Software
- * and Noncommercial Computer Software Documentation
- * Clause 252.227-7014 (FEB 2012)
- *
- * Copyright 2020-2026 The MITRE Corporation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.mitre.niem.cmf;
 
-import static javax.xml.XMLConstants.NULL_NS_URI;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -123,20 +99,15 @@ class MappingTest {
     }
 
     @Test
-    void addMappingWithUnprefixedTargetUsesNullNamespace() throws Exception {
+    void addMappingRejectsUnprefixedTarget() throws Exception {
         var map = newMappingWithNcAndSx();
 
-        map.addMapping("nc:personNameInitialIndicator", "isInitial");
+        var ex = assertThrows(
+            CMFException.class,
+            () -> map.addMapping("nc:personNameInitialIndicator", "isInitial")
+        );
 
-        var rec = map.uriToMapRec(ncUri("personNameInitialIndicator"));
-        assertNotNull(rec);
-        assertEquals("nc:personNameInitialIndicator", rec.sourceQN());
-        assertEquals("", rec.prefix());
-        assertEquals("isInitial", rec.localName());
-        assertEquals("isInitial", rec.qname());
-        assertEquals("isInitial", rec.targetArgument());
-        assertEquals("isInitial", rec.uri());
-        assertEquals(NULL_NS_URI, rec.namespace());
+        assertTrue(ex.getMessage().contains("Invalid target QName"));
     }
 
     @Test
@@ -186,7 +157,7 @@ class MappingTest {
         assertTrue(ex1.getMessage().contains("Invalid source QName"));
 
         var ex2 = assertThrows(CMFException.class, () -> map.addMapping("nc:PersonName", "bad:name:again"));
-        assertTrue(ex2.getMessage().contains("Invalid target name"));
+        assertTrue(ex2.getMessage().contains("Invalid target QName"));
 
         var ex3 = assertThrows(CMFException.class, () -> map.addMapping("zz:PersonName", "sx:lname"));
         assertTrue(ex3.getMessage().contains("Undeclared source prefix"));
@@ -207,7 +178,7 @@ class MappingTest {
     void writeAndReadRoundTripPreservesMappings() throws Exception {
         var map = newMappingWithNcAndSx();
         map.addMapping("nc:PersonSurName", "sx:lname");
-        map.addMapping("nc:personNameInitialIndicator", "isInitial");
+        map.addMapping("nc:personNameInitialIndicator", "sx:isInitial");
 
         var out = new StringWriter();
         map.write(out);
@@ -224,11 +195,11 @@ class MappingTest {
 
         var rec2 = reparsed.uriToMapRec(ncUri("personNameInitialIndicator"));
         assertNotNull(rec2);
-        assertEquals("", rec2.prefix());
+        assertEquals("sx", rec2.prefix());
         assertEquals("isInitial", rec2.localName());
-        assertEquals("isInitial", rec2.qname());
-        assertEquals("isInitial", rec2.uri());
-        assertEquals(NULL_NS_URI, rec2.namespace());
+        assertEquals("sx:isInitial", rec2.qname());
+        assertEquals(makeURI(SX_NS, "isInitial"), rec2.uri());
+        assertEquals(SX_NS, rec2.namespace());
     }
 
     @Test
@@ -256,7 +227,7 @@ class MappingTest {
             "\n" +
             "# comment line\n" +
             "nc:PersonSurName sx:lname # inline comment\n" +
-            "nc:personNameInitialIndicator isInitial\n";
+            "nc:personNameInitialIndicator sx:isInitial\n";
 
         var map = Mapping.read(new StringReader(text));
 
@@ -266,8 +237,8 @@ class MappingTest {
 
         var rec2 = map.uriToMapRec(ncUri("personNameInitialIndicator"));
         assertNotNull(rec2);
-        assertEquals("isInitial", rec2.targetArgument());
-        assertEquals(NULL_NS_URI, rec2.namespace());
+        assertEquals("sx:isInitial", rec2.targetArgument());
+        assertEquals(SX_NS, rec2.namespace());
     }
 
     @Test
@@ -289,6 +260,18 @@ class MappingTest {
 
         var ex = assertThrows(CMFException.class, () -> Mapping.read(new StringReader(text)));
         assertTrue(ex.getMessage().contains("Line 2"));
+        assertTrue(ex.getMessage().contains("invalid mapping syntax"));
+    }
+
+    @Test
+    void readRejectsUnprefixedTargetWithLineNumber() {
+        String text =
+            "PREFIX nc " + NC_NS + "\n" +
+            "PREFIX sx " + SX_NS + "\n" +
+            "nc:PersonName lname\n";
+
+        var ex = assertThrows(CMFException.class, () -> Mapping.read(new StringReader(text)));
+        assertTrue(ex.getMessage().contains("Line 3"));
         assertTrue(ex.getMessage().contains("invalid mapping syntax"));
     }
 

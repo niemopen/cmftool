@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="http://example.com/Request/1.0/"
+  xmlns:sj="http://example.com/Request/1.0/xsimple"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import namespace="http://example.com/Request/1.0/xsimple" schemaLocation="sj.xsd"/>
+  <xs:complexType name="RequestType">
+    <xs:annotation>
+      <xs:documentation>A data type for a request of one or more items.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="sj:id"/>
+      <xs:element ref="sj:item" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

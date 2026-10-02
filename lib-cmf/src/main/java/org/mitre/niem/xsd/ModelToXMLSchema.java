@@ -84,7 +84,7 @@ import org.w3c.dom.Element;
  */
 public class ModelToXMLSchema {
 
-    private final Model model;                              // actual model object; don't change
+    private final Model model;                              // actual model object; don't change it
     private final Mapping map;                              // canonical to simple name map, if provided
     private final Set<ObjectProperty> propS;                // message properties, or null for whole model
     
@@ -128,19 +128,28 @@ public class ModelToXMLSchema {
         pathSpec = new HashMap<>(paths);
     }
 
-    // Call this to use a single architecture version in the generated schema
-    // documents instead of the version in the namespace objects.  This controls
-    // the utility schema documents (eg. structures.xsd) in the pile.  It doesn't
-    // change the namespace URI of any model component.  Takes values like "NIEM5.0".
+    /**
+     * Call this to use a single architecture version in the generated schema
+     * documents instead of the version in the namespace objects.  This controls
+     * the utility schema documents (eg. structures.xsd) in the pile.  It doesn't
+     * change the namespace URI of any model component.  Takes values like "NIEM5.0".
+     * 
+     * @param vers architecture for schema documents
+     * @throws CMFException 
+     */
     public void setArchVersion (String vers) throws CMFException {
         if (!NamespaceKind.knownVersions().contains(vers))
             throw new CMFException("Unknown NIEM architecture: " + vers);
         useArchVersion = vers;
     }
 
-    // Call this to specify the "root namespace".  The schema document for that
-    // namespace will include extra xs:import elements as needed to ensure that
-    // the entire schema can be assembled from this document alone.
+    /**
+     * Call this to specify the "root namespace".  The schema document for that
+     * namespace will include extra xs:import elements as needed to ensure that
+     * the entire schema can be assembled from this document alone. 
+     * 
+     * @param nsPrefixOrURI root namespace designation
+     */
     public void setRootNamespace (String nsPrefixOrURI) {
         if (null == nsPrefixOrURI) return;
         rootNS = nsPrefixOrURI;
@@ -168,50 +177,12 @@ public class ModelToXMLSchema {
         assignComponentsToNamespaces();
         establishFilePaths();
         
-//        var arecs = new StringBuilder();
-//        for (var cu : ctU2augL.keySet()) {
-//            arecs.append(cu + ":\n");
-//            for (var arec : ctU2augL.get(cu)) {
-//                arecs.append("  " + arec.toString() + "\n");
-//            }
-//        }
-//        
-//        var augs = new StringBuilder();
-//        for (var cu : ctU2augChoiceS.keySet()) {
-//            augs.append(cu + ":\n");
-//            for (var p : ctU2augChoiceS.get(cu)) {
-//                augs.append("  " + p.qname() + "\n");
-//            }
-//        }
-//        var atypes = new StringBuilder();
-//        for (var c : compS) {
-//            if (!c.name().endsWith("AugmentationType")) continue;
-//            atypes.append(c.uri() + ":\n");
-//            var ct = (ClassType)c;
-//            for (var pa : ct.propAssocL()) {
-//                atypes.append("  " + pa.property().qname() + "\n");
-//            }
-//        }
-        var comps = new StringBuilder();
-        for (var c : compS) comps.append(c.uri() + "\n");
-//        
-//        var maps = new StringBuilder();
-//        for (var nsu : nsU2compS.keySet()) {
-//            maps.append(nsu + ":\n");
-//            for (var c : nsU2compS.get(nsu)) {
-//                var curi = c.uri();
-//                var mqn  = compU2qn.get(curi);
-//                maps.append("  " + curi + " --> " + mqn + "\n");
-//            }
-//        }
-//        var paths = new StringBuilder();
-//        nsU2path.forEach((nsU,path) -> {
-//            paths.append(nsU + " --> " + path + "\n");
-//        });
-        
+        // Write all the schema documents.
+        // Don't try to write a schema document for XML Schema namespace.
         nsU2compS.removeKey(W3C_XML_SCHEMA_NS_URI);
-        for (var nsU : nsU2compS.keySet()) 
+        for (var nsU : nsU2compS.keySet()) {
             writeSchemaDocument(nsU, outLoc);
+        }
     }
     
     // Create property and class objects for augmentation properties that are
@@ -535,6 +506,7 @@ public class ModelToXMLSchema {
         for (var cE : defns) root.appendChild(cE);
         for (var cE : decls) root.appendChild(cE);
         
+        // Write document to the specified file
         var outF = new File(outLoc, nsloc);
         outF.getParentFile().mkdirs();
         var os = new FileOutputStream(outF);
@@ -542,11 +514,6 @@ public class ModelToXMLSchema {
         var xsdW = new NIEMXSDWriter("appinfo");
         xsdW.writeXML(doc, ow);
         ow.close();        
-        
-//        var sw = new StringWriter();
-//        var xw = new NIEMXSDWriter("appinfo");
-//        xw.writeXML(doc, sw);
-//        var debug = sw.toString();
     }
     
     // Construct an xs:complexType element for the given class object.
@@ -766,7 +733,6 @@ public class ModelToXMLSchema {
     }
     
     // Adds elements for a set of properties to the parent element.
-    // 
     private void addChoiceSet (PropertyAssociation pa, Set<Property>pS, Element parent, Set<String> qrefs) {
         if (pS.isEmpty()) return;
         var pE  = parent;

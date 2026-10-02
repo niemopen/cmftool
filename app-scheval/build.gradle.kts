@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":lib-cmf"))
+
     implementation(project(":lib-util"))
 
     implementation("net.sf.saxon:Saxon-HE:12.5")

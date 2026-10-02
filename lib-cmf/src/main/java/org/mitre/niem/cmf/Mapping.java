@@ -1,26 +1,3 @@
-/*
- * NOTICE
- *
- * This software was produced for the U. S. Government
- * under Basic Contract No. W56KGU-18-D-0004, and is
- * subject to the Rights in Noncommercial Computer Software
- * and Noncommercial Computer Software Documentation
- * Clause 252.227-7014 (FEB 2012)
- *
- * Copyright 2020-2026 The MITRE Corporation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.mitre.niem.cmf;
 
 import java.io.BufferedReader;
@@ -36,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import static javax.xml.XMLConstants.NULL_NS_URI;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.mitre.niem.utility.StringUtils.replaceSuffix;
@@ -51,8 +27,8 @@ import org.mitre.niem.xsd.NamespaceKind;
  * to their synonym names and URIs.
  *
  * Used to specify property names for simple (vs.canonical) message formats;
- * for example, a simple format might have "msg:lname" or just "lname" instead
- * of "nc:PersonSurName".
+ * for example, a simple format might have "msg:lname"
+ * instead of "nc:PersonSurName".
  *
  * Also used to specify mappings for class names, when creating a
  * single-namespace simple XML message format.
@@ -69,10 +45,9 @@ import org.mitre.niem.xsd.NamespaceKind;
  * PREFIX sx http://example.com/Refs/1.0/
  * # FROM TO
  * nc:PersonSurName sx:lname
- * nc:personNameInitialIndicator isInitial
+ * nc:personNameInitialIndicator sx:isInitial
  *
- * A target without a prefix is assumed to be in the null namespace. This can
- * be useful for single-namespace simple XML.
+ * Every target must be a QName with a declared prefix.
  *
  * Mapping lookup takes a source URI and returns:<ul>
  * <li> the target URI</li>
@@ -95,19 +70,18 @@ public class Mapping {
     private final Map<String, String> prefix2uri = new HashMap<>();
     private final Map<String, String> uri2prefix = new HashMap<>();
 
-    private final Map<String, String> targetU2sourceU = new HashMap<>();  // target URI   -> source URI
-
+    private final Map<String, String> targetU2sourceU = new HashMap<>();  // target URI -> source URI
     private final Map<String, MapRec> sourceU2mapRec = new HashMap<>();
 
     // Everything known about the mapping for a source component.
     public record MapRec(
-        String sourceQN,            // given by addMapping()
-        String prefix,              // target prefix, or "" if none
-        String localName,           // target local name; eg. "bar" for target "foo:bar"
-        String qname,               // target QName, with or without prefix
-        String targetArgument,      // target argument passed to addMappping()
-        String uri,                 // target component URI; local name for target w/o prefix
-        String namespace)           // target namespace URI
+        String sourceQN,
+        String prefix,
+        String localName,
+        String qname,
+        String targetArgument,
+        String uri,
+        String namespace)
         implements Comparable<MapRec> {
 
         @Override
@@ -118,15 +92,13 @@ public class Mapping {
 
             boolean thisEndsWithType = this.localName() != null && this.localName().endsWith("Type");
             boolean otherEndsWithType = other.localName() != null && other.localName().endsWith("Type");
-            if (thisEndsWithType != otherEndsWithType)  return thisEndsWithType ? 1 : -1;
-        
+            if (thisEndsWithType != otherEndsWithType) return thisEndsWithType ? 1 : -1;
+
             int cmp = String.CASE_INSENSITIVE_ORDER.compare(this.sourceQN(), other.sourceQN());
             if (cmp != 0) return cmp;
-            return(this.sourceQN().compareTo(other.sourceQN()));
+            return this.sourceQN().compareTo(other.sourceQN());
         }
     }
-
-//    private static final MapRec NULL_REC = new MapRec("", "", "", "", "", "");
 
     public Mapping() { }
 
@@ -144,7 +116,7 @@ public class Mapping {
      * Returns the map record for the argument URI.
      * Returns null if argument is not mapped.
      *
-     * @param fromU
+     * @param fromU source URI
      * @return map record or null
      */
     public MapRec uriToMapRec(String fromU) {
@@ -158,15 +130,16 @@ public class Mapping {
      *
      * @param prefix desired prefix
      * @param uri URI for prefix
-     * @throws CMFException if the assignment is inconsistent with an existing
-     * one
+     * @throws CMFException if the assignment is inconsistent with an existing one
      */
     public void assignPrefix(String prefix, String uri) throws CMFException {
-        if (null == prefix || prefix.isBlank())
+        if (null == prefix || prefix.isBlank()) {
             throw new CMFException("assignPrefix: blank or null prefix");
-        if (null == uri || uri.isBlank())
+        }
+        if (null == uri || uri.isBlank()) {
             throw new CMFException("assignPrefix: blank or null URI");
-        
+        }
+
         var mpre = uri2prefix.get(uri);
         if (null != mpre && !mpre.equals(prefix)) {
             throw new CMFException(String.format(
@@ -182,30 +155,23 @@ public class Mapping {
     }
 
     /**
-     * Adds a mapping from the model component QName to a target XML name.
-     * The source must be a QName whose prefix has already been assigned via
-     * {@link #assignPrefix}. The target may be either:
-     *
-     * <ul>
-     * <li>a QName whose prefix has already been assigned, or</li>
-     * <li>an unprefixed local name, which is interpreted as being in the
-     * null namespace</li>
-     * </ul>
+     * Adds a mapping from the model component QName to a target QName.
+     * The source and target must both be QNames whose prefixes have already
+     * been assigned via {@link #assignPrefix}.
      *
      * Throws an exception if the source is already mapped to a different
      * target.
      *
      * @param fromQ model component QName
-     * @param toN target QName or local name
-     * @throws CMFException if prefixes are undeclared or the mapping is
-     * inconsistent
+     * @param toQ target QName
+     * @throws CMFException if prefixes are undeclared or the mapping is inconsistent
      */
-    public void addMapping(String fromQ, String toN) throws CMFException {
+    public void addMapping(String fromQ, String toQ) throws CMFException {
         if (!isQName(fromQ)) {
             throw new CMFException("Invalid source QName: " + fromQ);
         }
-        if (!isQName(toN) && !isLocalName(toN)) {
-            throw new CMFException("Invalid target name: " + toN);
+        if (!isQName(toQ)) {
+            throw new CMFException("Invalid target QName: " + toQ);
         }
 
         var fromPre = qnToPrefix(fromQ);
@@ -216,37 +182,26 @@ public class Mapping {
         }
         var fromU = makeURI(fromNS, fromLN);
 
-        final String toLN;
-        final String toNS;
-        String toPre = "";
-        String toQN = "";
-        String toString = toN;
-        if (isQName(toN)) {
-            toQN = toN;
-            toPre = qnToPrefix(toN);
-            toLN = qnToName(toN);
-            toNS = prefix2uri.get(toPre);
-            if (null == toNS) {
-                throw new CMFException("Undeclared target prefix: " + toPre);
-            }
-        } else {
-            toLN = toN;
-            toQN = toLN;
-            toNS = NULL_NS_URI;
+        var toPre = qnToPrefix(toQ);
+        var toLN = qnToName(toQ);
+        var toNS = prefix2uri.get(toPre);
+        if (null == toNS) {
+            throw new CMFException("Undeclared target prefix: " + toPre);
         }
-        var toU = makeTargetURI(toNS, toLN);
-        
+        var toU = makeURI(toNS, toLN);
+
         var s2t = sourceU2mapRec.get(fromU);
         var t2s = targetU2sourceU.get(toU);
         if (null != s2t && !s2t.uri().equals(toU)) {
             throw new CMFException(String.format(
-                "Can't map %s to %s (%s already mapped to %s)", fromQ, toN, fromQ, s2t.uri()));
+                "Can't map %s to %s (%s already mapped to %s)", fromQ, toQ, fromQ, s2t.uri()));
         }
         if (null != t2s && !t2s.equals(fromU)) {
             throw new CMFException(String.format(
-                "Can't map %s to %s (%s already mapped to %s)", fromQ, toN, t2s, toN));
+                "Can't map %s to %s (%s already mapped to %s)", fromQ, toQ, t2s, toQ));
         }
-        var mrec = new MapRec(fromQ, toPre, toLN, toQN, toString, toU, toNS);
+
+        var mrec = new MapRec(fromQ, toPre, toLN, toQ, toQ, toU, toNS);
         sourceU2mapRec.put(fromU, mrec);
         targetU2sourceU.put(toU, fromU);
     }
@@ -287,27 +242,23 @@ public class Mapping {
         Model m, Set<ObjectProperty> msgPropS, String defPrefix, String defURI,
         boolean includeTypes) throws CMFException {
 
-        // Keep all namespace prefix assignments from the model
-        // Throw an exception if the defPrefix -> defURI assignment conflicts.
         var map = new Mapping();
         for (var ns : m.namespaceSet()) {
             map.assignPrefix(ns.prefix(), ns.uri());
         }
         map.assignPrefix(defPrefix, defURI);
 
-        // Make a list of properties and classes needed for specified message types
         List<Component> compL;
         if (null == msgPropS || msgPropS.isEmpty()) compL = new ArrayList<>(m.componentList());
         else compL = new ArrayList<>(m.messageComponents(msgPropS));
 
-        // Count number of mappings required to create pleasing target local names
         int nmap = 0;
         for (var c : compL) {
             if (needsMapping(c, includeTypes)) nmap++;
         }
         var digits = Long.toString(Math.max(nmap, 1)).length();
         var tfmt = "TEMP%0" + digits + "d";
-        
+
         var cnum = 0;
         for (var c : compL) {
             if (needsMapping(c, includeTypes)) {
@@ -325,7 +276,7 @@ public class Mapping {
      * skipped.
      *
      * Uses the source namespace prefix to mung property names in case of
-     * collision.  For example, if your model has nc:PersonName and foo:PersonName, 
+     * collision. For example, if your model has nc:PersonName and foo:PersonName,
      * then the mapping will have my:nc_PersonName and my:foo_PersonName.
      *
      * If your model includes object references, then the result will include
@@ -343,9 +294,6 @@ public class Mapping {
         Model m, Set<ObjectProperty> msgPropS, String defPrefix, String defURI,
         boolean includeTypes) throws CMFException {
 
-        // Keep all namespace prefix assignments from the model
-        // Throw an exception if the defPrefix -> defURI assignment conflicts.
-        // Also create a NamespaceMap; we might mung structures prefix later.
         var map = new Mapping();
         var nsm = new NamespaceMap();
         for (var ns : m.namespaceSet()) {
@@ -355,24 +303,23 @@ public class Mapping {
         map.assignPrefix(defPrefix, defURI);
         nsm.assignPrefix(defPrefix, defURI);
 
-        // Make a list of properties and classes needed for specified message types
         Set<Component> compS;
         if (null == msgPropS || msgPropS.isEmpty()) compS = m.componentSet();
         else compS = m.messageComponents(msgPropS);
 
-        // Augmentation properties and elements must be mapped
         for (var ns : m.namespaceSet()) {
             for (var arec : ns.augL()) {
                 if (!needsMapping(arec.property(), includeTypes)) continue;
                 var base = "";
                 var ct = arec.classType();
-                var gcS  = new HashSet<>(arec.codeS());
+                var gcS = new HashSet<>(arec.codeS());
                 gcS.add("CLASS");
                 for (var gc : gcS) {
                     switch (gc) {
                     case "CLASS":
-                        if (compS.contains(ct) && !arec.property().isAttribute()) 
+                        if (compS.contains(ct) && !arec.property().isAttribute()) {
                             base = replaceSuffix(ct.name(), "Type", "");
+                        }
                         break;
                     case "ASSOCIATION":
                     case "OBJECT":
@@ -382,25 +329,21 @@ public class Mapping {
                     if (!base.isEmpty()) {
                         var p = new Property(arec.namespace(), base + "Augmentation");
                         compS.add(p);
-                    }  
+                    }
                 }
                 if (null == ct || compS.contains(ct)) {
                     compS.add(arec.property());
                 }
             }
         }
-        // Count number of times each local name appears among mapped components.
-        // Also account for structures attributes if there are referencable classes.
+
         var lnct = new HashMap<String, Integer>();
-        var structUs = new HashSet<String>();           // all structures namespace URIs
+        var structUs = new HashSet<String>();
         for (var c : compS) {
             if (needsMapping(c, includeTypes)) {
                 var lct = lnct.getOrDefault(c.name(), 0);
                 lnct.put(c.name(), lct + 1);
-              
-                // If this is a referencable class, we will want to map its
-                // the structures:id, ref, and uri attributes, so add them
-                // to the lname counts.
+
                 if (c instanceof ClassType ct) {
                     if (!"NONE".equals(ct.effectiveReferenceCode())) {
                         var vers = ct.namespace().archVersion();
@@ -412,34 +355,32 @@ public class Mapping {
                             lnct.put("id", lnct.getOrDefault("id", 0) + 1);
                             lnct.put("ref", lnct.getOrDefault("ref", 0) + 1);
                             lnct.put("uri", lnct.getOrDefault("uri", 0) + 1);
-                        }                      
+                        }
                     }
                 }
             }
         }
-        // Create mappings for model components.
+
         for (var c : compS) {
             if (needsMapping(c, includeTypes)) {
-                var cns  = c.namespace();
-                var cln  = c.name();
+                var cns = c.namespace();
+                var cln = c.name();
                 var cpre = cns.prefix();
-                int num  = lnct.getOrDefault(cln, 1);
-                var tpre = defPrefix;
-                if (c instanceof Property p)
-                    if (p.isAttribute()) tpre = "";
-                if (num > 1) map.addMapping(c.qname(), makeQN(tpre, cpre + "_" + cln));
-                else map.addMapping(c.qname(), makeQN(tpre, cln));
+                int num = lnct.getOrDefault(cln, 1);
+
+                if (num > 1) map.addMapping(c.qname(), makeQN(defPrefix, cpre + "_" + cln));
+                else map.addMapping(c.qname(), makeQN(defPrefix, cln));
             }
         }
-        // Create mappings for reference attributes in structures namespace if needed
+
         for (var structU : structUs) {
             var structP = nsm.getPrefix(structU);
             for (var cln : Set.of("id", "ref", "uri")) {
                 var fromQ = makeQN(structP, cln);
-                var toQ = "";
+                String toQ;
                 int num = lnct.getOrDefault(cln, 1);
-                if (num > 1) toQ = makeQN("", structP + "_" + cln);
-                else         toQ = makeQN("", cln);
+                if (num > 1) toQ = makeQN(defPrefix, structP + "_" + cln);
+                else toQ = makeQN(defPrefix, cln);
                 map.addMapping(fromQ, toQ);
             }
         }
@@ -448,15 +389,12 @@ public class Mapping {
 
     /**
      * Writes the mapping object to a file.
-     * If a target is in the null namespace, it is written as an unprefixed
-     * local name.
+     * Targets are always written as prefixed QNames.
      *
      * @param w output writer
      * @throws IOException if output fails
      */
     public void write(Writer w) throws IOException {
-        
-        // Write prefix lines for namespace assignments
         var prefixL = new ArrayList<>(prefix2uri.keySet());
         var maxLen = 0;
         Collections.sort(prefixL);
@@ -471,18 +409,17 @@ public class Mapping {
                 w.write(String.format(fmt, pre, uri));
             }
         }
-        // Create ordered list of mappings
+
         var mapL = new ArrayList<>(sourceU2mapRec.values());
         Collections.sort(mapL);
-        
-        // Compute length of longest source QName
+
         maxLen = 1;
         for (var mrec : mapL) {
             maxLen = Math.max(maxLen, mrec.sourceQN().length());
         }
         fmt = "%-" + maxLen + "s    %s\n";
-        w.write(String.format(fmt, "# FromQName", "ToName"));
-        
+        w.write(String.format(fmt, "# FromQName", "ToQName"));
+
         for (var mrec : mapL) {
             w.write(String.format(fmt, mrec.sourceQN(), mrec.targetArgument()));
         }
@@ -513,18 +450,13 @@ public class Mapping {
         Pattern.UNICODE_CHARACTER_CLASS
     );
 
-    private static final Pattern LOCAL_PAT = Pattern.compile(
-        "^" + LOCAL + "$",
-        Pattern.UNICODE_CHARACTER_CLASS
-    );
-
     private static final Pattern WRITE_PREFIX_PAT = Pattern.compile(
         "^PREFIX\\s+(" + PREFIX + ")\\s+(\\S+)(?:\\s+#.*)?\\s*$",
         Pattern.UNICODE_CHARACTER_CLASS
     );
 
     private static final Pattern WRITE_MAPPING_PAT = Pattern.compile(
-        "^(" + PREFIXED_NAME + ")\\s+(" + PREFIXED_NAME + "|" + LOCAL + ")(?:\\s+#.*)?\\s*$",
+        "^(" + PREFIXED_NAME + ")\\s+(" + PREFIXED_NAME + ")(?:\\s+#.*)?\\s*$",
         Pattern.UNICODE_CHARACTER_CLASS
     );
 
@@ -571,9 +503,9 @@ public class Mapping {
             var mm = WRITE_MAPPING_PAT.matcher(line);
             if (mm.matches()) {
                 var fromQ = mm.group(1);
-                var toN = mm.group(2);
+                var toQ = mm.group(2);
                 try {
-                    map.addMapping(fromQ, toN);
+                    map.addMapping(fromQ, toQ);
                 } catch (CMFException ex) {
                     throw new CMFException("Line " + lnum + ": " + ex.getMessage());
                 }
@@ -593,22 +525,10 @@ public class Mapping {
         return QNAME_PAT.matcher(s).matches();
     }
 
-    private static boolean isLocalName(String s) {
-        return LOCAL_PAT.matcher(s).matches();
-    }
-    
-    private static boolean needsMapping (Component c, boolean includeTypes) {
+    private static boolean needsMapping(Component c, boolean includeTypes) {
         if (isXSDComponent(c)) return false;
         if (c.isAbstract()) return false;
         if (!c.isProperty() && !includeTypes) return false;
         return true;
     }
-
-    private static String makeTargetURI(String nsU, String localName) {
-        if (null == nsU || NULL_NS_URI.equals(nsU)) {
-            return localName;
-        }
-        return makeURI(nsU, localName);
-    }
-
 }
