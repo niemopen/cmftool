@@ -78,8 +78,10 @@ abstract class RenderPandocDocs @Inject constructor(
                     execOperations.exec {
                         commandLine(
                             "pandoc",
-                            "--from", "gfm",
+                            "--standalone",
+                            "--from", "gfm+raw_html",
                             "--to", "html",
+                            "-V", "maxwidth=100%",
                             md.absolutePath,
                             "-o", html.absolutePath
                         )
@@ -98,6 +100,27 @@ abstract class RenderPandocDocs @Inject constructor(
 
 abstract class GenerateBundleReadme : DefaultTask() {
 
+    @get:Input
+    abstract val bundleDisplayName: Property<String>
+
+    @get:Input
+    abstract val bundleVersionText: Property<String>
+
+    @get:Input
+    abstract val cmftoolVersionText: Property<String>
+
+    @get:Input
+    abstract val niemtranVersionText: Property<String>
+
+    @get:Input
+    abstract val schevalVersionText: Property<String>
+
+    @get:Input
+    abstract val libCmfVersionText: Property<String>
+
+    @get:Input
+    abstract val libUtilVersionText: Property<String>
+
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
 
@@ -106,38 +129,29 @@ abstract class GenerateBundleReadme : DefaultTask() {
         val file = outputFile.get().asFile
         file.parentFile.mkdirs()
 
-        val root = project.rootProject
-
-        val cmftoolVersion = root.project(":app-cmftool").version.toString()
-        val niemtranVersion = root.project(":app-niemtran").version.toString()
-        val schevalVersion = root.project(":app-scheval").version.toString()
-        val libCmfVersion = root.project(":lib-cmf").version.toString()
-        val libUtilVersion = root.project(":lib-util").version.toString()
-        val bundleVersion = root.version.toString()
-        val bundleDisplayName = root.name
-
         file.writeText(
             """
-            # ${bundleDisplayName} bundle contents
+            # ${bundleDisplayName.get()} bundle contents
 
             This release bundle includes:
 
-            - CMFTool application: $cmftoolVersion
-            - NIEMTran application: $niemtranVersion
-            - SCHEval application: $schevalVersion
+            - CMFTool application: ${cmftoolVersionText.get()}
+            - NIEMTran application: ${niemtranVersionText.get()}
+            - SCHEval application: ${schevalVersionText.get()}
 
             Included libraries:
 
-            - lib-cmf: $libCmfVersion
-            - lib-util: $libUtilVersion
+            - lib-cmf: ${libCmfVersionText.get()}
+            - lib-util: ${libUtilVersionText.get()}
 
             Bundle version:
 
-            - $bundleDisplayName: $bundleVersion
+            - ${bundleDisplayName.get()}: ${bundleVersionText.get()}
             """.trimIndent() + "\n"
         )
     }
 }
+
 
 abstract class GenerateBundleSbom @Inject constructor(
     private val execOperations: ExecOperations
@@ -295,6 +309,26 @@ abstract class GenerateSbomMarkdownReports : DefaultTask() {
     }
 }
 
+abstract class VerifyReleaseVersions : DefaultTask() {
+
+    @get:Input
+    abstract val versionsByPath: MapProperty<String, String>
+
+    @TaskAction
+    fun verify() {
+        val offenders = versionsByPath.get()
+            .filterValues { it.endsWith("-SNAPSHOT", ignoreCase = true) }
+            .map { (path, version) -> "$path -> $version" }
+
+        if (offenders.isNotEmpty()) {
+            error(
+                "Release build cannot use SNAPSHOT versions:\n" +
+                    offenders.joinToString("\n")
+            )
+        }
+    }
+}
+
 data class AppSpec(
     val projectPath: String,
     val launcherName: String,
@@ -402,32 +436,18 @@ subprojects {
     }
 }
 
-val verifyReleaseVersions by tasks.registering {
+val verifyReleaseVersions by tasks.registering(VerifyReleaseVersions::class) {
     group = "verification"
     description = "Fails if the release bundle would use a SNAPSHOT version"
 
-    doLast {
-        val checked = listOf(
-            rootProject to rootProject.version.toString(),
-            project(":lib-util") to project(":lib-util").version.toString(),
-            project(":lib-cmf") to project(":lib-cmf").version.toString(),
-            project(":app-cmftool") to project(":app-cmftool").version.toString(),
-            project(":app-niemtran") to project(":app-niemtran").version.toString(),
-            project(":app-scheval") to project(":app-scheval").version.toString()
-        )
-
-        val offenders = checked
-            .filter { (_, v) -> v.isSnapshotVersion() }
-            .map { (p, v) -> "${p.path.ifEmpty { ":" }} -> $v" }
-
-        if (offenders.isNotEmpty()) {
-            error(
-                "Release build cannot use SNAPSHOT versions:\n" +
-                    offenders.joinToString("\n")
-            )
-        }
-    }
+    versionsByPath.put(":", rootProject.version.toString())
+    versionsByPath.put(":lib-util", project(":lib-util").version.toString())
+    versionsByPath.put(":lib-cmf", project(":lib-cmf").version.toString())
+    versionsByPath.put(":app-cmftool", project(":app-cmftool").version.toString())
+    versionsByPath.put(":app-niemtran", project(":app-niemtran").version.toString())
+    versionsByPath.put(":app-scheval", project(":app-scheval").version.toString())
 }
+
 
 val renderDocs by tasks.registering(RenderPandocDocs::class) {
     group = "documentation"
@@ -517,8 +537,17 @@ val generateBundleReadme by tasks.registering(GenerateBundleReadme::class) {
     group = "distribution"
     description = "Generate a bundle readme listing included component versions"
 
+    bundleDisplayName.set(rootProject.name)
+    bundleVersionText.set(rootProject.version.toString())
+    cmftoolVersionText.set(project(":app-cmftool").version.toString())
+    niemtranVersionText.set(project(":app-niemtran").version.toString())
+    schevalVersionText.set(project(":app-scheval").version.toString())
+    libCmfVersionText.set(project(":lib-cmf").version.toString())
+    libUtilVersionText.set(project(":lib-util").version.toString())
+
     outputFile.set(layout.buildDirectory.file("generated-release-metadata/README-BUNDLE.md"))
 }
+
 
 val allAppsImage by tasks.registering(Sync::class) {
     group = "distribution"
