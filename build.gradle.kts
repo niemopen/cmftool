@@ -79,8 +79,9 @@ abstract class RenderPandocDocs @Inject constructor(
                         commandLine(
                             "pandoc",
                             "--standalone",
-                            "--from", "gfm+raw_html",
+                            "--from", "gfm",
                             "--to", "html",
+                            "--css", "styles.css",
                             "-V", "maxwidth=100%",
                             md.absolutePath,
                             "-o", html.absolutePath

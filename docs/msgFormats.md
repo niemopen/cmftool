@@ -585,6 +585,8 @@ Date: 2026-10-02
 h1 { font-size: 14pt; }
 h2,h3,h4 { font-size: 12pt;  }
 h3,h4 { font-style: italic; font-weight: normal }
+h1,h2 { margin-top: 1em; }
+h3 { margin-top: 0.5em; }
 code { font-family: "Source Code Pro", "Liberation Mono", monospace; font-size: 11pt; }
 pre { background-color:#f0f0f0; padding: 6px; page-break-after: avoid; }
 pre > code { font-size: 9pt; margin-left:auto; margin-right:auto; page-break-after: avoid; }
