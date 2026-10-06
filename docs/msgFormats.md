@@ -38,8 +38,7 @@ A *message* is a package of data that can be exchanged at runtime.  Here are two
 
 Both of those messages are instances of the same *message type*.  A message type specifies the mandatory and optional content of conforming messages and defines the meaning of that content.  That specification is captured in a *message model*, which may be represented as a CMF file or as an XML Schema (XSD) document pile.  A message type also specifies the *message property*, the root node of the message data; in this message type, `msg:Request`.
 
-<pre class="blk"><code>
-$ tree request
+<pre><code>$ tree request
 ├── <a href="examples/request/README.md">README.md</a>
 ├── formats                      <i>-- message formats will be created under this directory</i>
 ├── <a href="examples/request/model.cmf">model.cmf</a>                    <i>-- the message model in CMF</i>
@@ -59,8 +58,7 @@ $ tree request
 
 A message type does not itself specify the syntax of conforming messages.  That is done by a message format.  A message format has a *message schema*, which may be used to validate instance messages.  That schema will be in XSD for XML messages, in JSON Schema for JSON messages, etc.  [Example 3](#ex3) shows the message format for the XML message in [example 1](#ex1).  (Examples showing the CMFTool commands to generate a message format from a message type are provided later on.)
 
-<pre class="blk"><code>
-$ tree formats/xcanon
+<pre><code>$ tree formats/xcanon
 ├── examples
 │   ├── <a href="examples/request/formats/xcanon/examples/invalid01.xml">invalid01.xml</a>
 │   └── <a href="examples/request/formats/xcanon/examples/valid01.xml">valid01.xml</a>
@@ -125,8 +123,7 @@ The following sections provide a walk-through of constructing canonical and simp
 
 Every message format begins with the message model.  For the time being, message designers will usually build their message model in XSD.  However, most CMFTool operations work on CMF, so the first step is to convert the XSD schema document pile into a CMF model file.  The **cmftool x2m** command builds a model from a list of XSD files, and writes the model as CMF.
 
-<pre class="blk"><code>
-$ cmftool x2m model.xsd/request.xsd -o model.cmf
+<pre><code>$ cmftool x2m model.xsd/request.xsd -o model.cmf
 Namespaces claiming conformance:
   http://example.com/Request/1.0/ [NIEM version='NIEM6.0']
   https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/ [NIEM version='NIEM6.0']
@@ -151,8 +148,7 @@ $ tree .
 
 This is done with the **cmftool m2context** command.
 
-<pre class="blk"><code>
-$ cd formats/jcanon
+<pre><code>$ cd formats/jcanon
 $ cmftool m2context ../../model.cmf -o context.json
 $ cat context.json
 {
@@ -167,8 +163,7 @@ $ cat context.json
 
 The **cmftool m2jmsg** command creates JSON Schema from the message model.  You supply the QName of the message property with the `-m` option.  You may supply the URI of the context resource with the `-c` option.
 
-<pre class="blk"><code>
-$ cmftool m2jmsg ../../model.cmf -m msg:Request -c http://example.com/Request/1.0/@context -o message.schema.json 
+<pre><code>$ cmftool m2jmsg ../../model.cmf -m msg:Request -c http://example.com/Request/1.0/@context -o message.schema.json 
 $ tree .
 ├── <a href="examples/request/formats/jcanon/context.json">context.json</a>
 ├── examples
@@ -353,8 +348,7 @@ $ cat context.json
 
 The **cmftool m2jmsg** command accepts a mapping file as an argument, and uses those mappings to build JSON Schema that expects the mapped keys.
 
-<pre class="blk"><code>
-$ cmftool m2jmsg ../../model.cmf --map=map.txt -m msg:Request -c http://example.com/Request/1.0/jsimple --noprefix -o message.schema.json 
+<pre><code>$ cmftool m2jmsg ../../model.cmf --map=map.txt -m msg:Request -c http://example.com/Request/1.0/jsimple --noprefix -o message.schema.json 
 $ tree .
 ├── <a href="examples/request/formats/jsimple/context.json">context.json</a>
 ├── examples
@@ -427,8 +421,7 @@ We begin with the message model in CMF.  First construct a message schema, then 
 
 The **cmftool m2xmsg** command creates the message schema in the form of an XML Schema document pile.
 
-<pre class="blk"><code>
-$ cmftool m2xmsg ../../model.cmf -o message.xsd
+<pre><code>$ cmftool m2xmsg ../../model.cmf -o message.xsd
 $ tree .
 ├── examples
 │   ├── <a href="examples/request/formats/xcanon/examples/invalid01.xml">invalid01.xml</a>
@@ -495,8 +488,7 @@ With a change to the target namespace, the [map.txt](examples/request/formats/js
 
 The mapping file becomes an argument to the **cmftool m2xmsg** command.
 
-<pre class="blk"><code>
-$ cmftool m2xmsg ../../model.cmf --map=map.txt -o message.xsd
+<pre><code>$ cmftool m2xmsg ../../model.cmf --map=map.txt -o message.xsd
 $ tree .
 .
 ├── examples
@@ -561,8 +553,7 @@ This mapping file can be used as is, or edited for simple property names (that i
 
 This new mapping file becomes an argument to the **cmftool m2xmsg** command. The resulting message schema is written into a single schema document (*sj.xsd*) under the *message.xsd* directory.
 
-<pre class="blk"><code>
-$ cmftool m2xmsg ../../model.cmf -m msg:Request --map=map.txt -o message.xsd
+<pre><code>$ cmftool m2xmsg ../../model.cmf -m msg:Request --map=map.txt -o message.xsd
 $ tree .
 .
 ├── examples
@@ -581,6 +572,7 @@ This is the width of a code block in the PDF version
 Author: Scott Renner\
 Date: 2026-10-02
 
+<!-->Following style element is for VSC markdown preview-->
 <style>
 h1 { font-size: 14pt; }
 h2,h3,h4 { font-size: 12pt;  }
@@ -589,9 +581,6 @@ h1,h2 { margin-top: 1em; }
 h3 { margin-top: 0.5em; }
 code { font-family: "Source Code Pro", "Liberation Mono", monospace; font-size: 11pt; }
 pre { background-color:#f0f0f0; padding: 6px; page-break-after: avoid; }
-pre > code { font-size: 9pt; margin-left:auto; margin-right:auto; page-break-after: avoid; }
-pre.blk code { display: block; transform: translateY(-1.5em); }
-pre.blk { padding-bottom: 0; }
 figcaption { text-align:center; font-style:italic; margin-top: 10pt; margin-bottom:10pt;  page-break-before: avoid;  }
 figcaption > a { color: #000 }
 body { font-family: LiberationSans, Arial, Helvetica, sans-serif; font-size: 12pt; line-height: 1.2; }

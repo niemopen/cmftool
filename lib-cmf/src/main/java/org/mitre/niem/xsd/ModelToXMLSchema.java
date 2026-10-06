@@ -438,6 +438,8 @@ public class ModelToXMLSchema {
             if (path.isEmpty()) {
                 var kind = NamespaceKind.namespaceToKindCode(nsU);
                 if (!kind.isBlank()) path = NamespaceKind.builtinPath().getOrDefault(kind, "");
+                if (!path.isEmpty()) path = "niem/" + path;
+                System.err.println("kind="+kind+", path="+path);
             }                
             if (path.isEmpty()) {
                 var prefix = nsmap.getPrefix(nsU);
@@ -741,8 +743,8 @@ public class ModelToXMLSchema {
         tpa.setMinOccurs("1");
         if (pS.size() > 1) {
             pE = parent.getOwnerDocument().createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:choice");
-            pE.setAttribute("minOccurs", pa.minOccurs());
-            pE.setAttribute("maxOccurs", pa.maxOccurs());
+            if (!"1".equals(pa.minOccurs())) pE.setAttribute("minOccurs", pa.minOccurs());
+            if (!"1".equals(pa.maxOccurs())) pE.setAttribute("maxOccurs", pa.maxOccurs());
             parent.appendChild(pE);
         }
         var pL = new ArrayList<>(pS);

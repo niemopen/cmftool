@@ -3,11 +3,15 @@ import org.gradle.api.distribution.DistributionContainer
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.file.RelativePath
 import org.gradle.api.plugins.JavaApplication
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.Sync
@@ -32,7 +36,6 @@ group = providers.gradleProperty("projectGroup").get()
 version = providers.gradleProperty("bundleVersion").get()
 
 val bundleName = providers.gradleProperty("bundleName").get()
-val bundleDisplayName = rootProject.name
 val javaVersion = providers.gradleProperty("javaVersion").get().toInt()
 val cmfVersion = providers.gradleProperty("cmfVersion").get()
 val utilVersion = providers.gradleProperty("utilVersion").get()
@@ -45,6 +48,9 @@ abstract class RenderPandocDocs @Inject constructor(
     @get:InputDirectory
     abstract val sourceDir: DirectoryProperty
 
+    @get:InputFile
+    abstract val stylesheetFile: RegularFileProperty
+
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -54,6 +60,7 @@ abstract class RenderPandocDocs @Inject constructor(
     @TaskAction
     fun render() {
         val sourceRoot = sourceDir.get().asFile
+        val cssFile = stylesheetFile.get().asFile
         val outRoot = outputDir.get().asFile
 
         if (outRoot.exists()) {
@@ -79,9 +86,10 @@ abstract class RenderPandocDocs @Inject constructor(
                         commandLine(
                             "pandoc",
                             "--standalone",
+                            "--embed-resources",
                             "--from", "gfm",
                             "--to", "html",
-                            "--css", "styles.css",
+                            "--css", cssFile.absolutePath,
                             "-V", "maxwidth=100%",
                             md.absolutePath,
                             "-o", html.absolutePath
@@ -95,7 +103,6 @@ abstract class RenderPandocDocs @Inject constructor(
         appNames.get().forEach { appName ->
             renderBucket(appName, sourceRoot.resolve(appName))
         }
-
     }
 }
 
@@ -153,10 +160,15 @@ abstract class GenerateBundleReadme : DefaultTask() {
     }
 }
 
-
 abstract class GenerateBundleSbom @Inject constructor(
     private val execOperations: ExecOperations
 ) : DefaultTask() {
+
+    @get:Input
+    abstract val sourceName: Property<String>
+
+    @get:Input
+    abstract val sourceVersion: Property<String>
 
     @get:InputDirectory
     abstract val sourceDir: DirectoryProperty
@@ -174,6 +186,8 @@ abstract class GenerateBundleSbom @Inject constructor(
         execOperations.exec {
             commandLine(
                 "syft",
+                "--source-name", sourceName.get(),
+                "--source-version", sourceVersion.get(),
                 "dir:${source.absolutePath}",
                 "-o",
                 "cyclonedx-json=${outFile.absolutePath}"
@@ -242,9 +256,7 @@ abstract class GenerateSbomMarkdownReports : DefaultTask() {
 
         jsonFiles.forEach { jsonFile ->
             val relativePath = jsonFile.relativeTo(inRoot)
-            val outFile = outRoot.resolve(
-                relativePath.path.removeSuffix(".json") + ".md"
-            )
+            val outFile = outRoot.resolve(relativePath.path.removeSuffix(".json") + ".md")
             outFile.parentFile.mkdirs()
 
             @Suppress("UNCHECKED_CAST")
@@ -296,11 +308,11 @@ abstract class GenerateSbomMarkdownReports : DefaultTask() {
                 val type = esc(str(c["type"]))
                 val group = esc(str(c["group"]))
                 val name = esc(str(c["name"]))
-                val version = esc(str(c["version"]))
+                val versionText = esc(str(c["version"]))
                 val license = esc(licenseString(c))
                 val purl = str(c["purl"]).let { if (it.isBlank()) "" else "`$it`" }
 
-                lines += "| $type | $group | $name | $version | $license | $purl |"
+                lines += "| $type | $group | $name | $versionText | $license | $purl |"
             }
 
             lines += ""
@@ -319,7 +331,7 @@ abstract class VerifyReleaseVersions : DefaultTask() {
     fun verify() {
         val offenders = versionsByPath.get()
             .filterValues { it.endsWith("-SNAPSHOT", ignoreCase = true) }
-            .map { (path, version) -> "$path -> $version" }
+            .map { (path, versionText) -> "$path -> $versionText" }
 
         if (offenders.isNotEmpty()) {
             error(
@@ -363,9 +375,6 @@ val sbomProjectPaths = listOf(
 
 fun String.capitalized(): String =
     replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-
-fun String.isSnapshotVersion(): Boolean =
-    endsWith("-SNAPSHOT", ignoreCase = true)
 
 subprojects {
     group = rootProject.group
@@ -439,7 +448,7 @@ subprojects {
 
 val verifyReleaseVersions by tasks.registering(VerifyReleaseVersions::class) {
     group = "verification"
-    description = "Fails if the release bundle would use a SNAPSHOT version"
+    description = "Fails if any release artifact would use a SNAPSHOT version"
 
     versionsByPath.put(":", rootProject.version.toString())
     versionsByPath.put(":lib-util", project(":lib-util").version.toString())
@@ -449,17 +458,17 @@ val verifyReleaseVersions by tasks.registering(VerifyReleaseVersions::class) {
     versionsByPath.put(":app-scheval", project(":app-scheval").version.toString())
 }
 
-
 val renderDocs by tasks.registering(RenderPandocDocs::class) {
     group = "documentation"
     description = "Render shared and app-specific markdown to HTML with pandoc"
 
     sourceDir.set(docsSourceDir)
+    stylesheetFile.set(docsSourceDir.file("styles.css"))
     outputDir.set(renderedDocsRoot)
     appNames.set(appSpecs.map { it.launcherName })
 }
 
-val stageDocsTasks =
+val stageDocsTasks: Map<String, TaskProvider<Sync>> =
     appSpecs.associate { spec ->
         spec.launcherName to tasks.register<Sync>("stage${spec.launcherName.capitalized()}Docs") {
             group = "documentation"
@@ -549,16 +558,15 @@ val generateBundleReadme by tasks.registering(GenerateBundleReadme::class) {
     outputFile.set(layout.buildDirectory.file("generated-release-metadata/README-BUNDLE.md"))
 }
 
-
 val allAppsImage by tasks.registering(Sync::class) {
     group = "distribution"
-    description = "Assemble merged install image for all applications at build/install/$bundleName"
+    description = "Assemble merged install image for all applications at build/install/allApps"
 
     dependsOn(stageAllDocs)
     dependsOn(generateBundleReadme)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    into(layout.buildDirectory.dir("install/$bundleName"))
+    into(layout.buildDirectory.dir("install/allApps"))
 
     from(stageAllDocs) {
         into("docs")
@@ -598,28 +606,37 @@ val collectSubprojectSboms by tasks.registering(Sync::class) {
     description = "Collect subproject SBOMs into one directory"
 
     dependsOn(sbomSubprojects)
+    duplicatesStrategy = DuplicatesStrategy.FAIL
 
     into(layout.buildDirectory.dir("reports/sbom/projects"))
 
     sbomProjectPaths.forEach { projectPath ->
-        val p = project(projectPath)
+        val subproject = project(projectPath)
+        val subprojectName = subproject.name
+        val cyclonedxBomTask = subproject.tasks.named("cyclonedxBom")
 
-        from(p.layout.buildDirectory.dir("reports")) {
-            include("bom.json")
-            include("bom.xml")
-            into(p.name)
+        from(cyclonedxBomTask.map { it.outputs.files }) {
+            include("**/bom.json")
+            include("**/bom.xml")
+            includeEmptyDirs = false
+
+            eachFile {
+                relativePath = RelativePath(true, subprojectName, name)
+            }
         }
     }
 }
 
 val bundleSbom by tasks.registering(GenerateBundleSbom::class) {
     group = "reporting"
-    description = "Generate a CycloneDX SBOM for the assembled $bundleName bundle"
+    description = "Generate a CycloneDX SBOM for the assembled allApps bundle"
 
     dependsOn(allAppsImage)
 
-    sourceDir.set(layout.buildDirectory.dir("install/$bundleName"))
-    outputFile.set(layout.buildDirectory.file("reports/sbom/$bundleName-bundle.cdx.json"))
+    sourceName.set("allApps")
+    sourceVersion.set(project.version.toString())
+    sourceDir.set(layout.buildDirectory.dir("install/allApps"))
+    outputFile.set(layout.buildDirectory.file("reports/sbom/allApps-bundle.cdx.json"))
 }
 
 val sbom by tasks.registering {
@@ -640,17 +657,54 @@ val sbomMarkdown by tasks.registering(GenerateSbomMarkdownReports::class) {
     outputRoot.set(layout.buildDirectory.dir("reports/sbom-markdown"))
 }
 
-val releaseZip by tasks.registering(Zip::class) {
+val releaseZips by tasks.registering {
     group = "distribution"
-    description = "Build $bundleName-${project.version}.zip"
+    description = "Build application and allApps release zip files"
+}
+
+appSpecs.forEach { spec ->
+    val appProject = project(spec.projectPath)
+
+    appProject.pluginManager.withPlugin("application") {
+        val appInstallDist = appProject.tasks.named<Sync>("installDist")
+        val appVersion = appProject.version.toString()
+
+        val appReleaseZip = tasks.register<Zip>("${spec.launcherName}ReleaseZip") {
+            group = "distribution"
+            description = "Build ${spec.launcherName}-$appVersion.zip"
+
+            dependsOn(verifyReleaseVersions)
+            dependsOn(appInstallDist)
+
+            archiveFileName.set("${spec.launcherName}-$appVersion.zip")
+            destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+
+            from(appInstallDist) {
+                into("${spec.launcherName}-$appVersion")
+            }
+        }
+
+        releaseZips.configure {
+            dependsOn(appReleaseZip)
+        }
+    }
+}
+
+val allAppsZip by tasks.registering(Zip::class) {
+    group = "distribution"
+    description = "Build allApps.zip"
 
     dependsOn(verifyReleaseVersions)
     dependsOn(allAppsImage)
 
-    archiveFileName.set("$bundleName-${project.version}.zip")
+    archiveFileName.set("allApps-${project.version}.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
 
     from(allAppsImage) {
-        into("$bundleName-${project.version}")
+        into("allApps-${project.version}")
     }
+}
+
+releaseZips.configure {
+    dependsOn(allAppsZip)
 }

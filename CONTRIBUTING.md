@@ -1,5 +1,50 @@
 # Contributing
 
+## Branching model
+
+This repository uses a simple workflow:
+
+- `main` is always intended to be stable and releasable
+- work is done in short-lived branches
+- releases are tagged from `main`
+- release branches are only used when a release needs stabilization
+
+## Branch naming
+
+Use one of these prefixes:
+
+- `feature/<short-description>` for new functionality
+- `fix/<short-description>` for bug fixes
+- `hotfix/<short-description>` for urgent post-release fixes
+- `chore/<short-description>` for maintenance
+- `docs/<short-description>` for documentation
+- `refactor/<short-description>` for code cleanup
+- `test/<short-description>` for test-only changes
+- `release/<version>` for release stabilization
+
+Examples:
+
+- `feature/add-csv-export`
+- `fix/null-pointer-on-startup`
+- `chore/gradle-8-upgrade`
+- `release/1.1`
+
+## Development workflow
+
+1. Start from the latest `main`
+2. Create a branch for one focused change
+3. Make changes with tests
+4. Open a pull request
+5. Merge after CI passes
+6. Delete the branch
+
+Example:
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/add-csv-export
+
 ## Public Participation Invited
 
 NIEMOpen is an [OASIS Open Project](https://www.oasis-open.org/open-projects/) and welcomes participation by anyone, whether affiliated with OASIS or not. Substantive contributions and feedback are invited from all parties, following the common conventions for participation in GitHub public repository projects.

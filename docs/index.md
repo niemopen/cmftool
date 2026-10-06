@@ -13,11 +13,11 @@ This distribution contains command-line tools and supporting libraries for worki
 
 This distribution may include one or more of these tools:
 
-* [*cmftool*](app-cmftool/README.md) is a Java application project for *cmftool*, a command-line tool for transforming NIEM XSD into CMF, and vice versa.  *cmftool* can also generate useful artifacts for message developers; for example, message schemas in XSD and JSON Schema to validate XML and JSON messages.
+* [*cmftool*](./cmftool.html) is a Java application project for *cmftool*, a command-line tool for transforming NIEM XSD into CMF, and vice versa.  *cmftool* can also generate useful artifacts for message developers; for example, message schemas in XSD and JSON Schema to validate XML and JSON messages.
 
-* [*niemtran*](app-niemtran/README.md) is a Java application project for *niemtran*, a command-line tool for converting NIEM messages from one format to another; for example, converting a NIEM XML message into the equivalent NIEM JSON message.
+* [*niemtran*](./niemtran.html) is a Java application project for *niemtran*, a command-line tool for converting NIEM messages from one format to another; for example, converting a NIEM XML message into the equivalent NIEM JSON message.
 
-* [*scheval*](app-scheval/README.md) is a Java application project for *scheval*, a command-line tool for compiling and evaluating Schematron rules.  It has special features required for evaluating NIEM naming and design rules written in Schematron.
+* [*scheval*](./scheval.html) is a Java application project for *scheval*, a command-line tool for compiling and evaluating Schematron rules.  It has special features required for evaluating NIEM naming and design rules written in Schematron.
 
 Use the launcher scripts in `bin/` to run the tools.
 
@@ -30,17 +30,3 @@ Use the launcher scripts in `bin/` to run the tools.
 
 * [Request message specification](./examples/request) \
   A simple message type asking for a quantity of one or more items.
-
-<style>
-h1 { font-size: 14pt; }
-h2,h3,h4 { font-size: 12pt;  }
-h3,h4 { font-style: italic; font-weight: normal }
-code { font-family: "Source Code Pro", "Liberation Mono", monospace; font-size: 11pt; }
-pre { background-color:#f0f0f0; padding: 6px; page-break-after: avoid; }
-pre > code { font-size: 9pt; margin-left:auto; margin-right:auto; page-break-after: avoid; }
-pre.blk code { display: block; transform: translateY(-1.5em); }
-pre.blk { padding-bottom: 0; }
-figcaption { text-align:center; font-style:italic; margin-top: 10pt; margin-bottom:10pt;  page-break-before: avoid;  }
-figcaption > a { color: #000 }
-body { font-family: LiberationSans, Arial, Helvetica, sans-serif; font-size: 12pt; line-height: 1.2; }
-</style>

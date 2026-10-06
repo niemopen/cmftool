@@ -1,6 +1,6 @@
 <img src="https://github.com/niemopen/oasis-open-project/blob/main/artwork/NIEM-NO-Logo-v5.png" width="200">
 
-# Schematron Evaluation (SCHEval) tool, version 1.0
+# Schematron Evaluation (SCHEval) tool, version 1.1.0
 
 This subproject is part of the CMFTool project repository.  It contains the NIEMOpen Schematron evaluation tool (SCHEval).
 
@@ -71,21 +71,25 @@ Try `./gradlew build`
 
 SCHEval depends on the *lib-cmf* and *lib-util* subprojects in this repository.  It also depends on the following libraries, all of which are unmodified, and can be found at [mvnrepository.com](https://mvnrepository.com):
 
-| Library                  | Version        | License                        |
-|--------------------------|---------------|-------------------------------|
-| commons-lang3 | 3.17.0 | Apache-2.0 |
-| cyclonedx-gradle-plugin | 3.2.4 | - |
-| javatuples | 1.2 | Apache-2.0 |
-| lib-util | 1.1-alpha.7 | - |
-| log4j-api | 2.24.3 | Apache-2.0 |
-| log4j-core | 2.24.3 | Apache-2.0 |
-| picocli | 4.7.7 | Apache-2.0 |
-| Saxon-HE | 12.5 | MPL-2.0 |
-| serializer | 2.7.3 | - |
-| xalan | 2.7.3 | - |
-| xercesImpl | 2.12.2 | Apache-2.0 |
-| xml-apis | 1.4.01 | Apache-2.0, SAX-PD, The W3C License |
-| xmlresolver | 6.0.14 | Apache-2.0 |
+| Type | Group | Name | Version | License | PURL |
+|---|---|---|---|---|---|
+| library | commons-io | commons-io | 2.22.0 | Apache-2.0 | `pkg:maven/commons-io/commons-io@2.22.0?type=jar` |
+| library | info.picocli | picocli | 4.7.7 | Apache-2.0 | `pkg:maven/info.picocli/picocli@4.7.7?type=jar` |
+| library | net.sf.saxon | Saxon-HE | 12.5 | MPL-2.0 | `pkg:maven/net.sf.saxon/Saxon-HE@12.5?type=jar` |
+| library | org.apache.commons | commons-lang3 | 3.20.0 | Apache-2.0 | `pkg:maven/org.apache.commons/commons-lang3@3.20.0?type=jar` |
+| library | org.apache.logging.log4j | log4j-api | 2.24.3 | Apache-2.0 | `pkg:maven/org.apache.logging.log4j/log4j-api@2.24.3?type=jar` |
+| library | org.apache.logging.log4j | log4j-core | 2.24.3 | Apache-2.0 | `pkg:maven/org.apache.logging.log4j/log4j-core@2.24.3?type=jar` |
+| library | org.apiguardian | apiguardian-api | 1.1.2 | Apache-2.0 | `pkg:maven/org.apiguardian/apiguardian-api@1.1.2?type=jar` |
+| library | org.javatuples | javatuples | 1.2 | Apache-2.0 | `pkg:maven/org.javatuples/javatuples@1.2?type=jar` |
+| library | org.mitre.niem | lib-util | 1.1.0 |  | `pkg:maven/org.mitre.niem/lib-util@1.1.0?project_path=%3Alib-util` |
+| library | org.opentest4j | opentest4j | 1.3.0 | Apache-2.0 | `pkg:maven/org.opentest4j/opentest4j@1.3.0?type=jar` |
+| library | org.xmlresolver | xmlresolver | 5.2.2 | Apache-2.0 | `pkg:maven/org.xmlresolver/xmlresolver@5.2.2?type=jar` |
+| library | org.xmlresolver | xmlresolver | 6.0.14 | Apache-2.0 | `pkg:maven/org.xmlresolver/xmlresolver@6.0.14?type=jar` |
+| library | xalan | serializer | 2.7.3 |  | `pkg:maven/xalan/serializer@2.7.3?type=jar` |
+| library | xalan | xalan | 2.7.3 |  | `pkg:maven/xalan/xalan@2.7.3?type=jar` |
+| library | xerces | xercesImpl | 2.12.2 | Apache-2.0 | `pkg:maven/xerces/xercesImpl@2.12.2?type=jar` |
+| library | xml-apis | xml-apis | 1.4.01 | Apache-2.0, SAX-PD, The W3C License | `pkg:maven/xml-apis/xml-apis@1.4.01?type=jar` |
+
 
 ## About NIEMOpen
 
