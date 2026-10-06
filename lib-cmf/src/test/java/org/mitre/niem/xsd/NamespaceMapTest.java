@@ -23,6 +23,7 @@
  */
 package org.mitre.niem.xsd;
 
+import org.mitre.niem.cmf.NamespaceMap;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;

@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import static org.mitre.niem.utility.StringUtils.replaceSuffix;
 import org.mitre.niem.xml.LanguageString;
-import static org.mitre.niem.xsd.ModelFromXSD.replaceSuffix;
 import org.mitre.niem.xsd.NamespaceKind;
 
 /**
@@ -139,7 +139,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
     }
     public void setConformanceTargets (String ctarg) {
         ctargL.clear();
-        for (var ct : ctarg.trim().split("\\s+")) addConformanceTarget(ct);
+        for (var ct : ctarg.strip().split("\\s+")) addConformanceTarget(ct);
     }
     public void setConformanceTargets (List<String> ctL) {
         ctargL.clear();
@@ -147,7 +147,10 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
         for (var ct : ctL) addConformanceTarget(ct);
     }
     public void addLocalTerm (LocalTerm lt)     { locTermL.add(lt); }
-    public void addAugmentRecord (AugmentRecord a) { augL.add(a); }
+    public void addAugmentRecord (AugmentRecord a) { 
+        augL.add(a);
+        a.setNamespace(this);
+    }
     
     
     // Following routines ensure each namespace prefix maps to at most one URI.
@@ -172,6 +175,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
             throw new CMFException(String.format(
                 "can't change prefix of URI %s to %s (already assigned to %s)",
                 uri, p, model.prefixToNSU(p)));
+        model().changeNamespace();
     }
     
     public void setURI (String u) throws CMFException {
@@ -184,6 +188,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
                 prefix, u, model.nsUToPrefix(u)));    
     }
     
+    // Following routines are used to build model from CMF-XML.
     
     @Override
     public boolean addChild(String eln, String loc, CMFObject child) throws CMFException {
@@ -222,6 +227,7 @@ public class Namespace extends CMFObject implements Comparable<Namespace> {
         return addToDatatype(eln, loc, u);
     }
 
+    // Namespaces are ordered by prefix, ignoring case.
     @Override
     public int compareTo(Namespace o) {
         return this.prefix.compareToIgnoreCase(o.prefix);

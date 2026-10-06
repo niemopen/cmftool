@@ -1,34 +1,20 @@
 <img src="https://github.com/niemopen/oasis-open-project/blob/main/artwork/NIEM-NO-Logo-v5.png" width="200">
 
-# NIEM Message Translation (NIEMTran) tool, version 1.0
+# NIEM Message Translation (NIEMTran) tool, version 1.1.0
 
 This subproject is part of the CMFTool project repository.  It contains the NIEMOpen message translation tool (NIEMTran).
 
-At present, NIEM supports two message serializations:  XML and JSON.  A message in one can be transformed to the equivalent message in the other.  NIEMTran uses the information in the message model to drive the transformation.  It is a multi-level command-line tool; at present, one subcommand is implemeted:
-
-*  [*x2j*](#convert-niem-xml-to-json) -- convert a NIEM message from XML to JSON
-
-### Convert NIEM XML to JSON
-
-*Usage:* **niemtran x2j** *[options]* *model.cmf message.xml ...*
-
-Converts each *message.xml* file to the equivalent *message.json*.
-
-| Options: | |
-| -- | -- |
-| `-c, --context` |  generate complete @context in the result |
-| `--curi URI`   |  include "@context:" URI pair in the result |
-| `-f, --force` |  overwrite existing .json files |
+At present, NIEM supports two message serializations:  XML and JSON.  A message in one can be transformed to the equivalent message in the other.  NIEMTran uses the information in the message model to drive the transformation.
 
 ## Getting started
 
-1. You must have a Java runtime environment.  JRE21 or later will work.  JRE17 might work.  
+1. You must have a Java runtime environment.  JRE25 or later will work.  JRE17 might work.  
    - Try `java –-version` from the command line.  If that works, you should be OK
    - Otherwise make sure your `JAVA_HOME` environment variable points to your JRE
 
 2. Unpack the executable distribution from the Assets tab on the [Release page](https://github.com/niemopen/cmftool/releases)
-   - The *niemtran* program by itself is in *niemtran-1.0.zip*
-   - All three programs from this repo are in *cmftool-allApps-1.0.zip*
+   - The *niemtran* program by itself is in *niemtran-1.1.0.zip*
+   - All three programs from this repo are in *cmftool-1.1.0.zip*
 
 3. Put the *bin* directory into your PATH, create a shell alias, etc.
 4. Try `cmftool help` from the command line
@@ -44,22 +30,64 @@ Try `./gradlew build`
 
 ## Software Bill of Materials
 
-NIEMTran depends on the *lib-cmf* and *lib-util* subprojects in this repository.  It also depends on the following libraries, all of which are unmodified, and can be found at [mvnrepository.com](https://mvnrepository.com):
+NIEMTran depends on the *lib-cmf* and *lib-util* subprojects in this repository.  It also depends on the following libraries:
 
-| Library                  | Version        | License                        |
-|--------------------------|---------------|-------------------------------|
-| commons-io               | 2.18.0        | Apache-2.0                    |
-| commons-lang3            | 3.17.0        | Apache-2.0                    |
-| error_prone_annotations  | 2.38.0        | Apache-2.0                    |
-| javatuples               | 1.2           | Apache-2.0                    |
-| jcommander               | 2.0           | Apache-2.0                    |
-| log4j-api                | 2.24.3        | Apache-2.0                    |
-| log4j-core               | 2.24.3        | Apache-2.0                    |
-| Saxon-HE                 | 12.5          | MPL-2.0                       |
-| xalan                    | 2.7.3         | Apache-2.0                    |
-| xercesImpl               | 2.12.2        | Apache-2.0                    |
-| xml-apis                 | 1.4.01        | Apache-2.0                    |
-| xmlresolver              | 6.0.14        | Apache-2.0                    |
+| Type | Group | Name | Version | License | PURL |
+|---|---|---|---|---|---|
+| library | ch.qos.logback | logback-classic | 1.3.14 | EPL-1.0, LGPL-2.1-only | `pkg:maven/ch.qos.logback/logback-classic@1.3.14?type=jar` |
+| library | ch.qos.logback | logback-classic | 1.5.16 | EPL-1.0, LGPL-2.1-only | `pkg:maven/ch.qos.logback/logback-classic@1.5.16?type=jar` |
+| library | ch.qos.logback | logback-core | 1.3.14 | EPL-1.0, LGPL-2.1-only | `pkg:maven/ch.qos.logback/logback-core@1.3.14?type=jar` |
+| library | ch.qos.logback | logback-core | 1.5.16 | EPL-1.0, LGPL-2.1-only | `pkg:maven/ch.qos.logback/logback-core@1.5.16?type=jar` |
+| library | com.apicatalog | titanium-jcs | 1.1.1 | Apache-2.0 | `pkg:maven/com.apicatalog/titanium-jcs@1.1.1?type=jar` |
+| library | com.apicatalog | titanium-json-ld | 1.7.0 | Apache-2.0 | `pkg:maven/com.apicatalog/titanium-json-ld@1.7.0?type=jar` |
+| library | com.apicatalog | titanium-rdf-api | 1.0.0 | Apache-2.0 | `pkg:maven/com.apicatalog/titanium-rdf-api@1.0.0?type=jar` |
+| library | com.apicatalog | titanium-rdf-n-quads | 1.0.2 | Apache-2.0 | `pkg:maven/com.apicatalog/titanium-rdf-n-quads@1.0.2?type=jar` |
+| library | com.github.andrewoma.dexx | collection | 0.7 | MIT | `pkg:maven/com.github.andrewoma.dexx/collection@0.7?type=jar` |
+| library | com.github.ben-manes.caffeine | caffeine | 3.2.2 | Apache-2.0 | `pkg:maven/com.github.ben-manes.caffeine/caffeine@3.2.2?type=jar` |
+| library | com.google.code.gson | gson | 2.13.2 | Apache-2.0 | `pkg:maven/com.google.code.gson/gson@2.13.2?type=jar` |
+| library | com.google.errorprone | error_prone_annotations | 2.41.0 | Apache-2.0 | `pkg:maven/com.google.errorprone/error_prone_annotations@2.41.0?type=jar` |
+| library | com.google.protobuf | protobuf-java | 4.32.1 | BSD-3-Clause | `pkg:maven/com.google.protobuf/protobuf-java@4.32.1?type=jar` |
+| library | commons-codec | commons-codec | 1.19.0 | Apache-2.0 | `pkg:maven/commons-codec/commons-codec@1.19.0?type=jar` |
+| library | commons-io | commons-io | 2.22.0 | Apache-2.0 | `pkg:maven/commons-io/commons-io@2.22.0?type=jar` |
+| library | info.picocli | picocli | 4.7.7 | Apache-2.0 | `pkg:maven/info.picocli/picocli@4.7.7?type=jar` |
+| library | io.github.hakky54 | logcaptor | 2.9.3 | Apache-2.0 | `pkg:maven/io.github.hakky54/logcaptor@2.9.3?type=jar` |
+| library | net.bytebuddy | byte-buddy | 1.14.16 | Apache-2.0 | `pkg:maven/net.bytebuddy/byte-buddy@1.14.16?type=jar` |
+| library | net.bytebuddy | byte-buddy-agent | 1.14.15 | Apache-2.0 | `pkg:maven/net.bytebuddy/byte-buddy-agent@1.14.15?type=jar` |
+| library | net.sf.saxon | Saxon-HE | 12.5 | MPL-2.0 | `pkg:maven/net.sf.saxon/Saxon-HE@12.5?type=jar` |
+| library | org.apache.commons | commons-collections4 | 4.5.0 | Apache-2.0 | `pkg:maven/org.apache.commons/commons-collections4@4.5.0?type=jar` |
+| library | org.apache.commons | commons-compress | 1.28.0 | Apache-2.0 | `pkg:maven/org.apache.commons/commons-compress@1.28.0?type=jar` |
+| library | org.apache.commons | commons-csv | 1.14.1 | Apache-2.0 | `pkg:maven/org.apache.commons/commons-csv@1.14.1?type=jar` |
+| library | org.apache.commons | commons-lang3 | 3.20.0 | Apache-2.0 | `pkg:maven/org.apache.commons/commons-lang3@3.20.0?type=jar` |
+| library | org.apache.jena | jena-arq | 5.6.0 | Apache-2.0 | `pkg:maven/org.apache.jena/jena-arq@5.6.0?type=jar` |
+| library | org.apache.jena | jena-base | 5.6.0 | Apache-2.0 | `pkg:maven/org.apache.jena/jena-base@5.6.0?type=jar` |
+| library | org.apache.jena | jena-core | 5.6.0 | Apache-2.0 | `pkg:maven/org.apache.jena/jena-core@5.6.0?type=jar` |
+| library | org.apache.jena | jena-iri | 5.6.0 | Apache-2.0 | `pkg:maven/org.apache.jena/jena-iri@5.6.0?type=jar` |
+| library | org.apache.jena | jena-iri3986 | 5.6.0 | Apache-2.0 | `pkg:maven/org.apache.jena/jena-iri3986@5.6.0?type=jar` |
+| library | org.apache.jena | jena-langtag | 5.6.0 | Apache-2.0 | `pkg:maven/org.apache.jena/jena-langtag@5.6.0?type=jar` |
+| library | org.apache.logging.log4j | log4j-api | 2.24.3 | Apache-2.0 | `pkg:maven/org.apache.logging.log4j/log4j-api@2.24.3?type=jar` |
+| library | org.apache.logging.log4j | log4j-core | 2.24.3 | Apache-2.0 | `pkg:maven/org.apache.logging.log4j/log4j-core@2.24.3?type=jar` |
+| library | org.apache.logging.log4j | log4j-to-slf4j | 2.23.1 | Apache-2.0 | `pkg:maven/org.apache.logging.log4j/log4j-to-slf4j@2.23.1?type=jar` |
+| library | org.apache.thrift | libthrift | 0.22.0 | Apache-2.0 | `pkg:maven/org.apache.thrift/libthrift@0.22.0?type=jar` |
+| library | org.apiguardian | apiguardian-api | 1.1.2 | Apache-2.0 | `pkg:maven/org.apiguardian/apiguardian-api@1.1.2?type=jar` |
+| library | org.assertj | assertj-core | 3.26.0 | Apache-2.0 | `pkg:maven/org.assertj/assertj-core@3.26.0?type=jar` |
+| library | org.glassfish | jakarta.json | 2.0.1 | EPL-2.0, GPL-2.0-with-classpath-exception | `pkg:maven/org.glassfish/jakarta.json@2.0.1?type=jar` |
+| library | org.javatuples | javatuples | 1.2 | Apache-2.0 | `pkg:maven/org.javatuples/javatuples@1.2?type=jar` |
+| library | org.jspecify | jspecify | 1.0.0 | Apache-2.0 | `pkg:maven/org.jspecify/jspecify@1.0.0?type=jar` |
+| library | org.mitre.niem | lib-cmf | 1.1.0 |  | `pkg:maven/org.mitre.niem/lib-cmf@1.1.0?project_path=%3Alib-cmf` |
+| library | org.mitre.niem | lib-util | 1.1.0 |  | `pkg:maven/org.mitre.niem/lib-util@1.1.0?project_path=%3Alib-util` |
+| library | org.mockito | mockito-core | 5.12.0 | MIT | `pkg:maven/org.mockito/mockito-core@5.12.0?type=jar` |
+| library | org.mockito | mockito-junit-jupiter | 5.12.0 | MIT | `pkg:maven/org.mockito/mockito-junit-jupiter@5.12.0?type=jar` |
+| library | org.objenesis | objenesis | 3.3 | Apache-2.0 | `pkg:maven/org.objenesis/objenesis@3.3?type=jar` |
+| library | org.opentest4j | opentest4j | 1.3.0 | Apache-2.0 | `pkg:maven/org.opentest4j/opentest4j@1.3.0?type=jar` |
+| library | org.roaringbitmap | RoaringBitmap | 1.3.0 | Apache-2.0 | `pkg:maven/org.roaringbitmap/RoaringBitmap@1.3.0?type=jar` |
+| library | org.slf4j | jcl-over-slf4j | 2.0.17 | Apache-2.0 | `pkg:maven/org.slf4j/jcl-over-slf4j@2.0.17?type=jar` |
+| library | org.slf4j | jul-to-slf4j | 2.0.13 | MIT | `pkg:maven/org.slf4j/jul-to-slf4j@2.0.13?type=jar` |
+| library | org.slf4j | slf4j-api | 2.0.17 | MIT | `pkg:maven/org.slf4j/slf4j-api@2.0.17?type=jar` |
+| library | org.xmlresolver | xmlresolver | 6.0.14 | Apache-2.0 | `pkg:maven/org.xmlresolver/xmlresolver@6.0.14?type=jar` |
+| library | xalan | serializer | 2.7.3 |  | `pkg:maven/xalan/serializer@2.7.3?type=jar` |
+| library | xalan | xalan | 2.7.3 |  | `pkg:maven/xalan/xalan@2.7.3?type=jar` |
+| library | xerces | xercesImpl | 2.12.2 | Apache-2.0 | `pkg:maven/xerces/xercesImpl@2.12.2?type=jar` |
+| library | xml-apis | xml-apis | 1.4.01 | Apache-2.0, SAX-PD, The W3C License | `pkg:maven/xml-apis/xml-apis@1.4.01?type=jar` |
 
 ## About NIEMOpen
 

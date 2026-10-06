@@ -43,11 +43,11 @@ import org.mitre.niem.xml.LanguageString;
 public class ModelAssertions {
     
     public static void checkAny (Model model) {
-        var ct1 = model.qnToClassType("test:Test1Type");
-        var ct2 = model.qnToClassType("test:Test2Type");
-        var ct3 = model.qnToClassType("test:Test3Type");
-        var ct4 = model.qnToClassType("test:Test4Type");
-        var ct5 = model.qnToClassType("test:Test5Type");
+        var ct1 = model.qnToClassType("t:Test1Type");
+        var ct2 = model.qnToClassType("t:Test2Type");
+        var ct3 = model.qnToClassType("t:Test3Type");
+        var ct4 = model.qnToClassType("t:Test4Type");
+        var ct5 = model.qnToClassType("t:Test5Type");
         
         var ap = ct1.anyL().get(0);
         assertThat(ct1.anyL()).hasSize(1);
@@ -74,39 +74,40 @@ public class ModelAssertions {
     }
         
     public static void checkAttAugment (Model m) {
-        var tns = m.prefixToNamespaceObj("test");
-        var op = m.qnToProperty("test:ObjProp");
+        var tns = m.namespaceObj("t");
+        var op = m.qnToProperty("t:ObjProp");
         assertThat(tns.augL())
             .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
                 AugmentRecord::maxOccurs, AugmentRecord::index)
             .containsExactlyInAnyOrder(
                 Assertions.tuple(
-                    m.qnToClassType("test:CCOneType"),
-                    m.qnToProperty("test:attProp"),
-                    "0", "1", ""),
+                    m.qnToClassType("t:CCOneType"),
+                    m.qnToProperty("t:attProp"),
+                    "0", "1", -1),
                 Assertions.tuple(
-                    m.qnToClassType("test:CCTwoType"),
-                    m.qnToProperty("test:attProp"),
-                    "1", "1", ""),
+                    m.qnToClassType("t:CCTwoType"),
+                    m.qnToProperty("t:attProp"),
+                    "1", "1", -1),
                 Assertions.tuple(
-                    m.qnToClassType("test:SCOneType"),
-                    m.qnToProperty("test:attProp"),
-                    "0", "1", ""),
+                    m.qnToClassType("t:SCOneType"),
+                    m.qnToProperty("t:attProp"),
+                    "0", "1", -1),
                  Assertions.tuple(
-                    m.qnToClassType("test:SCTwoType"),
-                    m.qnToProperty("test:ObjProp"),
-                    "0", "1", "")
+                    m.qnToClassType("t:SCTwoType"),
+                    m.qnToProperty("t:ObjProp"),
+                    "0", "1", -1)
                  );  
     }
     
     public static void checkAugment (Model m) {
-        var jns = m.prefixToNamespaceObj("j");
-        var ncns = m.prefixToNamespaceObj("nc");
-        var tns = m.prefixToNamespaceObj("test");
+        var jns = m.namespaceObj("j");
+        var ncns = m.namespaceObj("nc");
+        var tns = m.namespaceObj("t");
+        var nslist = m.namespaceList();
         
         assertThat(m.namespaceList())
             .extracting(Namespace::prefix)
-            .containsExactly("j", "nc", "test", "xml", "xs");
+            .containsExactly("j", "nc", "t", "xml", "xs");
 
         assertThat(jns.augL())
             .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
@@ -115,7 +116,7 @@ public class ModelAssertions {
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("j:EducationTotalYearsText"),
-                    "0", "unbounded", "0", "")
+                    "0", "unbounded", 0, "")
             );
         assertThat(tns.augL())
             .extracting(AugmentRecord::classType, AugmentRecord::property, AugmentRecord::minOccurs, 
@@ -124,30 +125,58 @@ public class ModelAssertions {
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("nc:personNameCommentText"),
-                    "0", "1", "-1", ""),
+                    "0", "1", 3, ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
-                    m.qnToProperty("test:CommentDestinationText"),
-                    "1", "1", "0", ""),
+                    m.qnToProperty("t:CommentDestinationText"),
+                    "1", "1", 0, ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("nc:CommentText"),
-                    "0", "1", "1", ""),
+                    "0", "1", 1, ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
                     m.qnToProperty("j:EducationTotalYearsText"),
-                    "1", "1", "2", ""),
+                    "1", "1", 2, ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:EducationType"),
-                    m.qnToProperty("test:TestAugElement"),
-                    "0", "unbounded", "", ""),
+                    m.qnToProperty("t:TestAugElement"),
+                    "0", "unbounded", -1, ""),
                 Assertions.tuple(
                     m.qnToClassType("nc:CommentType"),
-                    m.qnToProperty("test:CommentDestinationText"),
-                    "0", "unbounded", "", "")           
+                    m.qnToProperty("t:CommentDestinationText"),
+                    "0", "unbounded", -1, "")           
             );            
         assertTrue(jns.augL().get(0).codeS().isEmpty());
         assertThat(tns.augL().get(0).codeS().isEmpty());
+    }
+    
+    public static void checkChoice (Model m) {
+        var cp1 = m.qnToProperty("t:ChoiceAbstract_1");
+        var cp2 = m.qnToProperty("t:ChoiceAbstract_2");
+        var p1  = m.qnToDataProperty("t:Prop1");
+        var p2  = m.qnToDataProperty("t:Prop2");
+        var p3  = m.qnToDataProperty("t:Prop3");
+        var c1  = m.qnToClassType("t:T1Type");
+        var c2  = m.qnToClassType("t:T2Type");
+        var c3  = m.qnToClassType("t:T3Type");
+        var c4  = m.qnToClassType("t:T4Type");
+        var c5  = m.qnToClassType("t:T5Type");
+                
+        assertTrue(cp1.isAbstract());
+        assertTrue(cp1.isChoice());
+        assertTrue(cp2.isAbstract());
+        assertTrue(cp2.isChoice());
+        
+        assertThat(p1.subPropertyOfS()).containsExactlyInAnyOrder(cp1, cp2);
+        assertThat(p2.subPropertyOfS()).containsExactlyInAnyOrder(cp1, cp2);
+        assertThat(p3.subPropertyOfS()).containsExactlyInAnyOrder(cp2);
+
+        assertEquals(c1.propAssocL().get(0).property(), p1);        
+        assertEquals(c2.propAssocL().get(0).property(), p1);        
+        assertEquals(c3.propAssocL().get(0).property(), cp1);        
+        assertEquals(c4.propAssocL().get(0).property(), cp1);
+        assertEquals(c5.propAssocL().get(0).property(), cp2);       
     }
     
     public static void checkComponent (Model m) {
@@ -201,10 +230,10 @@ public class ModelAssertions {
         var ct4 = m.qnToClassType("test:Test4Type");
         var ct5 = m.qnToClassType("test:Test5Type");
         
-        var cp = ct1.propL().get(0);
+        var cp = ct1.propAssocL().get(0);
         assertTrue(ct1.isAbstract());
         assertNull(ct1.subClassOf());
-        assertThat(ct1.propL()).hasSize(1);
+        assertThat(ct1.propAssocL()).hasSize(1);
         assertEquals("test:AnElement", cp.property().qname());
         assertEquals("0", cp.minOccurs());
         assertEquals("1", cp.maxOccurs());
@@ -217,10 +246,10 @@ public class ModelAssertions {
         assertEquals("http://someNS/ http://otherNS/", ap.nsConstraint());
         assertFalse(ap.isAttribute());
         
-        cp = ct2.propL().get(0);
+        cp = ct2.propAssocL().get(0);
         assertFalse(ct2.isAbstract());
         assertNull(ct2.subClassOf());
-        assertThat(ct2.propL()).hasSize(1);
+        assertThat(ct2.propAssocL()).hasSize(1);
         assertEquals("test:AnElement", cp.property().qname());
         assertEquals("1", cp.minOccurs());
         assertEquals("1", cp.maxOccurs());
@@ -231,10 +260,10 @@ public class ModelAssertions {
         assertEquals("", ap.nsConstraint());
         assertTrue(ap.isAttribute());
         
-        cp = ct3.propL().get(0);
+        cp = ct3.propAssocL().get(0);
         assertFalse(ct3.isAbstract());
         assertEquals("test:Test1Type", ct3.subClassOf().qname());
-        assertThat(ct3.propL()).hasSize(1);
+        assertThat(ct3.propAssocL()).hasSize(1);
         assertEquals("test:AnotherElement", cp.property().qname());
         assertEquals("1", cp.minOccurs());
         assertEquals("1", cp.maxOccurs());
@@ -517,16 +546,16 @@ public class ModelAssertions {
     }
     
     public static void checkExternals (Model m) throws Exception {
-        assertNotNull(m.prefixToNamespaceObj("gml"));
-        assertNotNull(m.prefixToNamespaceObj("niem-gml"));
+        assertNotNull(m.namespaceObj("gml"));
+        assertNotNull(m.namespaceObj("niem-gml"));
         
-        var pL = m.qnToClassType("niem-gml:PointAdapterType").propL();
+        var pL = m.qnToClassType("niem-gml:PointAdapterType").propAssocL();
         var p  = pL.get(0).property();
         var op = (ObjectProperty)p;
         assertEquals("gml:Point", p.qname());
         assertNull(op.classType());    
 
-        pL = m.qnToClassType("niem-gml:PolygonAdapterType").propL();
+        pL = m.qnToClassType("niem-gml:PolygonAdapterType").propAssocL();
         p  = pL.get(0).property();
         op = (ObjectProperty)p;
         assertEquals("gml:Polygon", p.qname());
@@ -534,7 +563,7 @@ public class ModelAssertions {
     }
 
     public static void checkGaLitAtt (Model m) throws Exception {
-        var tns = m.prefixToNamespaceObj("test");
+        var tns = m.namespaceObj("test");
         var op = m.qnToProperty("test:ObjProp");
         assertNull(m.qnToDatatype("test:SCOneType"));
         assertNull(m.qnToDatatype("test:SCTwoType"));
@@ -545,12 +574,12 @@ public class ModelAssertions {
                 Assertions.tuple(
                     null,
                     m.qnToDataProperty("test:attProp"),
-                    "0", "1", "", "LITERAL")
+                    "0", "1", -1, "LITERAL")
                  );         
     }
     
     public static void checkGaLitObj (Model m) throws Exception {
-        var tns = m.prefixToNamespaceObj("test");
+        var tns = m.namespaceObj("test");
         var op = m.qnToProperty("test:ObjProp");
         assertNull(m.qnToDatatype("test:SCOneType"));
         assertNull(m.qnToDatatype("test:SCTwoType"));
@@ -561,12 +590,12 @@ public class ModelAssertions {
                 Assertions.tuple(
                     null,
                     m.qnToObjectProperty("test:ObjProp"),
-                    "0", "1", "", "LITERAL")
+                    "0", "1", -1, "LITERAL")
                  );          
     }
     
     public static void checkGaObjAtt (Model m) throws Exception {
-        var tns = m.prefixToNamespaceObj("test");
+        var tns = m.namespaceObj("test");
         var op = m.qnToProperty("test:ObjProp");
         assertNotNull(m.qnToDatatype("test:SCOneType"));
         assertNotNull(m.qnToDatatype("test:SCTwoType"));
@@ -577,12 +606,12 @@ public class ModelAssertions {
                 Assertions.tuple(
                     null,
                     m.qnToDataProperty("test:attProp"),
-                    "0", "1", "", "OBJECT")
+                    "0", "1", -1, "OBJECT")
                  );         
     }
     
     public static void checkGaObjObj (Model m) throws Exception {
-        var tns = m.prefixToNamespaceObj("test");
+        var tns = m.namespaceObj("test");
         var op = m.qnToProperty("test:ObjProp");
         assertNotNull(m.qnToDatatype("test:SCOneType"));
         assertNotNull(m.qnToDatatype("test:SCTwoType"));
@@ -593,20 +622,20 @@ public class ModelAssertions {
                 Assertions.tuple(
                     null,
                     m.qnToDataProperty("test:DataProp"),
-                    "1", "1", "1", "OBJECT"),
+                    "1", "1", 1, "OBJECT"),
                  Assertions.tuple(
                     null,
                     m.qnToObjectProperty("test:ObjProp"),
-                    "1", "1", "0", "OBJECT")
+                    "1", "1", 0, "OBJECT")
                  );         
     }
     
     public static void checkImports (Model m) {
-        var test = m.prefixToNamespaceObj("test");
-        var nc   = m.prefixToNamespaceObj("nc");
-        var j    = m.prefixToNamespaceObj("j");
-        var xml  = m.prefixToNamespaceObj("xml");
-        var gml  = m.prefixToNamespaceObj("gml");
+        var test = m.namespaceObj("test");
+        var nc   = m.namespaceObj("nc");
+        var j    = m.namespaceObj("j");
+        var xml  = m.namespaceObj("xml");
+        var gml  = m.namespaceObj("gml");
         
         assertEquals("NIEM6.0", test.archVersion());
         assertEquals("NIEM6.0", nc.archVersion());
@@ -634,7 +663,7 @@ public class ModelAssertions {
     }
         
     public static void checkLiteralClass (Model m) throws Exception {
-        assertNotNull(m.prefixToNamespaceObj("xml"));
+        assertNotNull(m.namespaceObj("xml"));
         assertNotNull(m.qnToClassType("test:PersonNameTextType"));
         assertNotNull(m.qnToClassType("test:ProperNameTextType"));
         assertNotNull(m.qnToClassType("test:TextType"));   
@@ -667,7 +696,7 @@ public class ModelAssertions {
     // Test the model built from xsd?/localTerm.xsd or read from cmf/localTerm.cmf
     // Test term, literal, sourceURI, citation, documentation
     public static void checkLocalTerm (Model m) {
-        Namespace ns = m.prefixToNamespaceObj("test");
+        Namespace ns = m.namespaceObj("test");
         List<LocalTerm> lts = ns.locTermL();
         assertEquals(3, lts.size());
         assertThat(lts).extracting(LocalTerm::term)
@@ -709,7 +738,7 @@ public class ModelAssertions {
             .extracting(Namespace::prefix)
             .containsExactlyInAnyOrder("t", "nc", "xml", "xs");
         
-        Namespace ns = m.prefixToNamespaceObj("t");
+        Namespace ns = m.namespaceObj("t");
         assertEquals("t", ns.prefix());
         assertEquals("http://example.com/namespace/", ns.uri());
         assertEquals("namespace.xsd", ns.documentFilePath());
@@ -726,18 +755,18 @@ public class ModelAssertions {
                 Assertions.tuple("Namespace test schema.", "en-US"),
                 Assertions.tuple("Test CTAs, documentation, language, filepath, kind, version, NIEMVersion, importDocumentation.", "en-US"));
         
-        ns = m.prefixToNamespaceObj("nc");       
+        ns = m.namespaceObj("nc");       
         assertEquals("niem/niem-core-skel.xsd", ns.documentFilePath());
         assertEquals("CORE", ns.kindCode());
         assertEquals("ps02", ns.version());
         assertEquals("NIEM6.0", ns.archVersion());
         assertEquals("en-US", ns.language());
 
-        ns = m.prefixToNamespaceObj("xml");       
+        ns = m.namespaceObj("xml");       
         assertEquals("niem/external/xml.xsd", ns.documentFilePath());
         assertEquals("XML", ns.kindCode());
 
-        ns = m.prefixToNamespaceObj("xs");       
+        ns = m.namespaceObj("xs");       
         assertEquals("", ns.documentFilePath());
         assertEquals("XSD", ns.kindCode());
     }
@@ -774,15 +803,19 @@ public class ModelAssertions {
         assertTrue(op4.isOrdered());
         assertFalse(op5.isOrdered());        
         
-        assertNull(op1.subPropertyOf());
-        assertNull(op2.subPropertyOf());
-        assertNull(op3.subPropertyOf());
-        assertNull(op4.subPropertyOf());
-        assertEquals("test:OProp1", op5.subPropertyOf().qname());
+        assertTrue(op1.subPropertyOfS().isEmpty());
+        assertTrue(op2.subPropertyOfS().isEmpty());
+        assertTrue(op3.subPropertyOfS().isEmpty()); 
+        assertTrue(op4.subPropertyOfS().isEmpty());
+        assertThat(op5.subPropertyOfS())
+            .extracting(Component::qname)
+            .containsExactly("test:OProp1");
+            
+//        assertEquals("test:OProp1", op5.subPropertyOf().qname());
     }  
 
     public static void checkPropAssoc (Model m) {
-        var propList = m.qnToClassType("test:T2Type").propL();
+        var propList = m.qnToClassType("test:T2Type").propAssocL();
         for (var pa: propList) {
             switch (pa.property().name()) {
             case "OProp2": 
@@ -842,8 +875,8 @@ public class ModelAssertions {
         assertEquals("INTERNAL", t4.referenceCode());
         assertEquals("INTERNAL", t4.effectiveReferenceCode());
         
-        assertEquals("", t5.referenceCode());
-        assertEquals("INTERNAL", t5.effectiveReferenceCode());
+        assertEquals("NONE", t5.referenceCode());
+        assertEquals("NONE", t5.effectiveReferenceCode());
         
         var p3 = m.qnToObjectProperty("t:ThreeProp");
         var p4 = m.qnToObjectProperty("t:FourProp");
@@ -866,6 +899,17 @@ public class ModelAssertions {
         assertEquals("xs:string", oneDt.base().qname());
         assertEquals("t:OneType", twoDt.base().qname());
         assertEquals("xs:integer", fooDt.base().qname());       
+    }
+    
+    public static void checkSubProps (Model m) {
+        var oneP = m.qnToProperty("test:AnElement");
+        var twoP = m.qnToProperty("test:AnotherElement");
+        var threeP = m.qnToProperty("test:AThirdElement");
+        assertTrue(oneP.isChoice());
+        assertFalse(twoP.isChoice());
+        assertThat(twoP.subPropertyOfS()).isEmpty();;
+        assertThat(threeP.subPropertyOfS())
+            .containsExactlyInAnyOrder(oneP, twoP);
     }
     
     public static void checkUnion (Model m) {

@@ -23,26 +23,52 @@
  */
 package org.mitre.niem.xsd;
 
-import java.util.List;
-import java.util.Map;
-import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
+import java.util.Objects;
 import org.mitre.niem.xml.XSDWriter;
+import org.w3c.dom.Element;
 
 /**
+ * XML Schema writer with additional NIEM appinfo-specific attribute ordering.
  *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
+ * <p>The constructor takes the QName prefix used for NIEM appinfo elements.
+ * For example, if the prefix is {@code "appinfo"}, then:
+ *
+ * <ul>
+ *   <li>{@code appinfo:LocalTerm}: {@code term}, then all others</li>
+ *   <li>{@code appinfo:Augmentation}: {@code class}, {@code property},
+ *       {@code use}, {@code globalClassCode}, then all others</li>
+ * </ul>
+ *
+ * <p>All normal {@link XSDWriter} ordering rules still apply to other elements.
  */
 public class NIEMXSDWriter extends XSDWriter {
-    
-    public NIEMXSDWriter () { }
-    
-    public NIEMXSDWriter (Map<String,String> bc2pre) {
+
+    private final String appinfoPrefix;
+
+    public NIEMXSDWriter(String appinfoPrefix) {
         super();
-        var aPre = bc2pre.get("APPINFO");
-        var ltQ  = makeQN(aPre, "LocalTerm");
-        var augQ = makeQN(aPre, "Augmentation");
-        reorderMap.add(ltQ, "term");
-        reorderMap.addAll(augQ, List.of("class", "property", "use", "globalClassCode"));
+        this.appinfoPrefix = Objects.requireNonNull(appinfoPrefix, "appinfoPrefix must not be null");
+    }
+
+    @Override
+    protected int attributeRank(Element elem, String attrName) {
+        if (elem == null || attrName == null) {
+            return super.attributeRank(elem, attrName);
+        }
+
+        String prefix = elementPrefix(elem);
+        String local = elementLocalName(elem);
+
+        if (appinfoPrefix.equals(prefix)) {
+            if ("LocalTerm".equals(local)) {
+                return rank(attrName, "term");
+            }
+
+            if ("Augmentation".equals(local)) {
+                return rank(attrName, "class", "property", "use", "globalClassCode");
+            }
+        }
+
+        return super.attributeRank(elem, attrName);
     }
 }

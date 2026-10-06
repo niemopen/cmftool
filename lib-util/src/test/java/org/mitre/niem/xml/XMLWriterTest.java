@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,51 +23,138 @@
  */
 package org.mitre.niem.xml;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
- */
-public class XMLWriterTest {
-    
-    private static final String resDN = "src/test/resources";
-    
-    @TempDir
-    File tempDF;
-    
-    public XMLWriterTest() {
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.w3c.dom.Comment;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
+
+class XMLWriterTest {
+
+    @Test
+    void writeXmlDocumentProducesExpectedPrettyOutput() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <r:Root xmlns:z="urn:z" b="2" xmlns="urn:def" a10="10" xmlns:a="urn:a" a2="2" xmlns:r="urn:r">
+              <child z="1">text</child>
+              <!--c-->
+              <?pi data?>
+            </r:Root>
+            """);
+
+        var out = new StringWriter();
+        XMLWriter.writeXML(dom, out);
+
+        assertEquals("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <r:Root
+              xmlns="urn:def"
+              xmlns:a="urn:a"
+              xmlns:r="urn:r"
+              xmlns:z="urn:z"
+              a2="2"
+              a10="10"
+              b="2">
+              <child z="1">text</child>
+              <!--c-->
+              <?pi data?>
+            </r:Root>
+            """, out.toString());
     }
 
     @Test
-    public void testWriteXML () throws Exception {
-        doTest(new File(resDN, "xml/test1.xml"));
-        doTest(new File(resDN, "xml/test2.xml"));
-        doTest(new File(resDN, "xml/test3.xml"));
-    }
-    
-    public void doTest (File xmlF) throws Exception {
-        var dbf  = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        var db   = dbf.newDocumentBuilder();
-        var doc  = db.parse(xmlF);
-        var outF = new File(tempDF, "output.xml");
-        var os   = new FileOutputStream(outF);
-        var ow   = new OutputStreamWriter(os, "UTF-8");
-        var xw   = new XMLWriter();
-        xw.writeXML(doc, ow);
-        ow.close();
-        var same = FileUtils.contentEqualsIgnoreEOL(xmlF, outF, "UTF-8");
-        assertTrue(same);        
+    void writeXmlElementAsStandaloneCopiesAncestorNamespaces() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root xmlns="urn:def" xmlns:p="urn:p">
+              <p:child attr="v"/>
+            </root>
+            """);
+
+        var child = (Element) dom.getDocumentElement()
+            .getElementsByTagNameNS("urn:p", "child")
+            .item(0);
+
+        var out = new StringWriter();
+        XMLWriter.writeXML(child, out);
+
+        assertEquals("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <p:child
+              xmlns="urn:def"
+              xmlns:p="urn:p"
+              attr="v"/>
+            """, out.toString());
     }
 
-    
+    @Test
+    void writeXmlEscapesAttributeAndTextContent() throws Exception {
+        var dom = newDocument();
+        var root = dom.createElement("root");
+        dom.appendChild(root);
+
+        root.setAttribute("attr", "a&b<\"c\n\r\t");
+        root.appendChild(dom.createTextNode("x<y & z\r"));
+
+        var out = new StringWriter();
+        XMLWriter.writeXML(dom, out);
+        var text = out.toString();
+
+        assertTrue(text.contains("attr=\"a&amp;b&lt;&quot;c&#xA;&#xD;&#x9;\""));
+        assertTrue(text.contains(">x&lt;y &amp; z&#xD;</root>"));
+    }
+
+    @Test
+    void nodeToTextSerializesDocumentElementAndComment() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root xmlns="urn:test"><child>value</child></root>
+            """);
+
+        var docText = XMLWriter.nodeToText(dom);
+        var elemText = XMLWriter.nodeToText(dom.getDocumentElement());
+
+        Comment comment = dom.createComment("hello");
+        var commentText = XMLWriter.nodeToText(comment);
+
+        assertTrue(docText.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        assertTrue(elemText.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        assertEquals("<!--hello-->\n", commentText);
+    }
+
+    @Test
+    void writeXmlToFileWritesUtf8Content(@TempDir Path tempDir) throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root><child>value</child></root>
+            """);
+
+        var outFile = tempDir.resolve("out.xml").toFile();
+        XMLWriter.writeXML(dom, outFile);
+
+        var text = Files.readString(outFile.toPath(), StandardCharsets.UTF_8);
+        assertEquals("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <root>
+              <child>value</child>
+            </root>
+            """, text);
+    }
+
+    private static Document parseXml(String xml) throws Exception {
+        var db = ParserBootstrap.docBuilder();
+        return db.parse(new InputSource(new java.io.StringReader(xml)));
+    }
+
+    private static Document newDocument() throws Exception {
+        return ParserBootstrap.docBuilder().newDocument();
+    }
 }

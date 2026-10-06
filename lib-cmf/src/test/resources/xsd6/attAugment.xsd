@@ -5,7 +5,7 @@
   xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
   xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
-  xmlns:test="http://example.com/test/"
+  xmlns:t="http://example.com/test/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument"
   version="1"
@@ -15,10 +15,10 @@
       Attribute augmentation appinfo test
     </xs:documentation>
     <xs:appinfo>
-      <appinfo:Augmentation class="test:CCOneType" property="test:attProp"/>
-      <appinfo:Augmentation class="test:CCTwoType" property="test:attProp" use="required"/>
-      <appinfo:Augmentation class="test:SCOneType" property="test:attProp"/>
-      <appinfo:Augmentation class="test:SCTwoType" property="test:ObjProp"/>
+      <appinfo:Augmentation class="t:CCOneType" property="t:attProp"/>
+      <appinfo:Augmentation class="t:CCTwoType" property="t:attProp" use="required"/>
+      <appinfo:Augmentation class="t:SCOneType" property="t:attProp"/>
+      <appinfo:Augmentation class="t:SCTwoType" property="t:ObjProp"/>
     </xs:appinfo>
   </xs:annotation>
   <xs:import namespace="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/" schemaLocation="niem/adapters/niem-xs.xsd"/>
@@ -27,8 +27,8 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="test:DataProp"/>
-          <xs:element ref="test:CCOneAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="t:DataProp"/>
+          <xs:element ref="t:CCOneAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -37,8 +37,8 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="test:DataProp"/>
-          <xs:element ref="test:CCTwoAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="t:DataProp"/>
+          <xs:element ref="t:CCTwoAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -47,8 +47,8 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="test:DataProp"/>
-          <xs:element ref="test:ObjAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="t:DataProp"/>
+          <xs:element ref="t:ObjAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -80,5 +80,5 @@
       <xs:documentation>An augmentation point for ObjType.</xs:documentation>
     </xs:annotation>
   </xs:element>
-  <xs:element name="ObjProp" type="test:ObjType" nillable="true"/>
+  <xs:element name="ObjProp" type="t:ObjType" nillable="true"/>
 </xs:schema>

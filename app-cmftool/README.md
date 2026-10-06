@@ -1,151 +1,21 @@
 <img src="https://github.com/niemopen/oasis-open-project/blob/main/artwork/NIEM-NO-Logo-v5.png" width="200">
 
-# Common Model Format Tool (CMFTool), version 1.0
+# Common Model Format Tool (CMFTool), version 1.1.0
 
 This subproject is part of the CMFTool project repository.  It contains the NIEMOpen Common Model Format Tool (CMF). 
 
-The NIEM [*Common Model Format (CMF)*](https://github.com/niemopen/common-model-format) is a data modeling formalism for NIEM-conforming data exchange specifications.  CMFTool is a multi-level command-line tool for the designers of those specifications. CMFTool subcommands are:
-
-*  [*x2m*](#convert-a-niem-model-from-xsd-to-cmf) -- convert a NIEM model from XSD to CMF
-*  [*m2x*](#convert-a-niem-model-from-cmf-to-xsd) -- convert a NIEM model from CMF to XSD
-*  [*m2xmsg*](#generate-an-xml-message-schema-from-cmf) -- generate an XML message schema from CMF
-*  [*m2jmsg*](#generate-a-json-message-schema-from-cmf) -- generate a JSON message chema from CMF
-*  [*m2m*](#canonicalize-cmf-or-extract-namespaces-from-cmf) -- canonicalize or extract CMF from CMF
-*  [*m2r*](#generate-model-rdf-from-cmf-experimental) -- generate model RDF from CMF (Experimental)
-*  [*mval*](#validate-a-cmf-model-file) -- validate a CMF model file
-*  [*xval*](#validate-xml-documents) -- validate XML documents
-*  [*xcanon*](#canonicalize-an-xml-schema-document) -- canonicalize an XML Schema document
-
-Documentation for the subcommands appears below.  Jump to [Getting Started](#getting-started) to see how to download and run the software.
-
-### Convert a NIEM model from XSD to CMF
-
-*Usage:* **cmftool x2m** *[options]* *{XSD file, namespace URI, or XML catalog} ...*
-
-This subcommand converts the NIEM model represented by an XML schema to the equivalent CMF representation.  The XML schema is formed by assembling a schema document pile as follows:
-
-* Beginning with the empty set
-* Add one or more specified initial schema documents
-* As each schema document is added, find each <xs:import> element contained therein, and add the schema document specified by that element to the set, which MUST be a local resource.
-
-The initial schema documents are specified by the command arguments, which may be any of:
-
-* a file containing a XML schema document
-* a namespace URI, which will be resolved to a XSD file using...
-* an XML Catalog file
-
-Examples:
-
-* `cmftool x2m CrashDriver.xsd`
-* `cmftool x2m http://example.com/CrashDriver/1.3/ catalog.xml`
-
-Options:
-
-* `-o` *file* -- output file for CMF; for example, `-o model.cmf`
-* `--only` *URI or prefix...* -- include only components from these namespaces; for example, `--only nc,j`
-
-### Convert a NIEM model from CMF to XSD
-
-*Usage:* **cmftool m2x** *[options]* *modelFile.cmf*
-
-This subcommand converts the CMF representation of a NIEM model to the equivalent XSD representation.
-
-Options:
-
-* `-o` *dir* -- write the XML schema document pile into this directory; for example, `-o model.xsd`
-* `-c` -- create an XML Catalog for the pile in *xml-catalog.xml*
-* `--catalog` *catFile* -- create an XML Catalog in *catFile*; for example, `--catalog cat.xml`
-* `-r`, `--root` *URI or prefix* -- make this the root namespace; for example, `--root exch`
-* `-v`, `--archVersion` *NIEMversion* -- use builtin schema documents from this NIEM version; for example, `-v NIEM4.0`
-
-The `-r` option causes the schema document for the specified namespace to include `xs:import` elements as needed to ensure the entire model will be assembled from this document alone.
-
-The `-v` option causes *cmftool* to ignore the default NIEM version (`NIEM6.0`) and any version information in the CMF model, and instead use the builtin schema documents from the specified version.  For example, `-v NIEM4.0` will cause the schema document for each model namespace to import `http://release.niem.gov/niem/structures/4.0/`.
-
-### Generate an XML message schema from CMF
-
-*Usage:* **cmftool m2xmsg** *[options]* *modelFile.cmf*
-
-This subcommand creates an XML message schema from a CMF model.  The message schema is not a model representation, but is suitable for validating NIEM XML messages that conform to the model, or for driving XML code binding tools.
-
-Options:
-
-* `-o` *dir* -- write the XML schema document pile into this directory; for example, `-o model.xsd`
-* `-c` -- create an XML Catalog for the pile in *xml-catalog.xml*
-* `--catalog` *catFile* -- create an XML Catalog in *catFile*; for example, `--catalog cat.xml`
-* `-r`, `--root` *URI or prefix* -- make this the root namespace; for example, `--root exch`
-* `-v`, `--archVersion` *NIEMversion* -- use builtin schema documents from this NIEM version; for example, `-v NIEM4.0`
-
-### Generate a JSON message schema from CMF
-
-*Usage:* **cmftool m2jmsg** *[options]* *modelFile.cmf*
-
-This subcommand creates a JSON message schema from a CMF model.  The result is a JSON Schema file that is suitable for validating NIEM JSON messages that conform to the model.
-
-Options:
-
-* `-o` *file* -- JSON Schema output file; for example, `-o message.schema.json`
-
-### Canonicalize CMF, or extract namespaces from CMF
-
-*Usage:* **cmftool m2m** *[options]* *modelFile.cmf*
-
-This subcommand converts a CMF model into a standard (canonical) CMF format.  It can also be used to extract specified namespaces from a CMF model.  The resulting CMF file contains only components from the specified namespaces; other components appear only as URI references.
-
-Options:
-
-* `-o` *file* -- output file for CMF; for example, `-o model.cmf`
-* `--only` *URI or prefix...* -- include only components from these namespaces; for example, `--only nc,j`
-
-### Generate model RDF from CMF
-
-*Usage:* **cmftool m2r** *[options]* *modelFile.cmf*
-
-This subcommand creates an RDF file (in Turtle syntax) containing the triples entailed by the CMF model file.  *(See [NDR 6.1 §14.1](https://docs.oasis-open.org/niemopen/ndr/v6.0/ndr-v6.0.html#141-rdf-interpretation-of-niem-models).)*
-
-Options:
-
-* `-o` *file* -- RDF output file; for example, `-o model.ttl`
-
-### Validate a CMF model file
-
-*Usage:* **cmftool mval** *modelFile.cmf*
-
-This subcommand tests a CMF file for conformance.
-
-### Validate XML documents
-
-*Usage:* **cmftool xval --schema** *schema.xsd* **--file** *doc.xml ...*
-
-This subcommand assembles an XML schema from a single initial schema document, and then uses that schema to validate zero or more XML documents.
-
-Examples:
-
-* `cmftool xval model.xsd` -- tests XSD validity of *model.xsd*
-* `cmftool xval model.xsd msg1.xml msg2.xml` -- tests *msg1.xml* and *msg2.xml* against *model.xsd* schema
-
-### Canonicalize an XML Schema document
-
-*Usage:* **cmftool xcanon** *[options]* *schemaDoc.xsd ...*
-
-This subcommand converts the XML schema document for a NIEM model namespace into a standard (canonical) format.
-
-Options:
-
-* `-o file` -- output file for the canonical version of a single XSD document; for example, `-o canon.xsd`
-* `-i` -- canonicalize in place; for example, `cmftool xcanon -i *.xsd`
-* `-ibak` -- canonicalize in place, but keep originals with .bak suffix
+The NIEM [*Common Model Format (CMF)*](https://github.com/niemopen/common-model-format) is a data modeling formalism for NIEM-conforming data exchange specifications.  CMFTool is a multi-level command-line tool for the designers of those specifications.
 
 ## Getting started
 
-1. You must have a Java runtime environment.  JRE21 or later will work.  JRE17 might work.  
+1. You must have a Java runtime environment.  JRE25 or later will work.  JRE17 might work.  
    - Try `java –-version` from the command line.  If that works, you should be OK
    - Otherwise make sure your `JAVA_HOME` environment variable points to your JRE
 
 2. Unpack the executable distribution from the Assets tab on the [Release page](https://github.com/niemopen/cmftool/releases)
-   - The *cmftool* program is in *cmftool-1.0.zip*
-   - The *niemtran* program is in *niemtran-1.0.zip*
-   - The *scheval* program is in *scheval-1.0.zip*
+   - The *cmftool* program is in *cmftool-1.1.0.zip*
+   - The *niemtran* program is in *niemtran-1.1.0.zip*
+   - The *scheval* program is in *scheval-1.1.0.zip*
    - You only need the *cmftool* zip file.  But it's OK to combine the *bin* and *lib* directories from all three.
 
 3. Put the *bin* directory into your PATH, create a shell alias, etc.
@@ -166,23 +36,26 @@ Try `./gradlew build`
 
 CMFTool depends on the *lib-cmf* and *lib-util* subprojects in this repository.  It also depends on the following libraries, all of which are unmodified, and can be found at [mvnrepository.com](https://mvnrepository.com):
 
-| Library                  | Version        | License                        |
-|--------------------------|---------------|-------------------------------|
-| commons-io               | 2.18.0        | Apache-2.0                    |
-| commons-lang3            | 3.17.0        | Apache-2.0                    |
-| error_prone_annotations  | 2.38.0        | Apache-2.0                    |
-| gson                     | 2.13.1        | Apache-2.0                    |
-| javatuples               | 1.2           | Apache-2.0                    |
-| jcommander               | 2.0           | Apache-2.0                    |
-| lib-cmf                  | 1.0           | Apache-2.0                    |
-| lib-util                 | 1.0           | Apache-2.0                    |
-| log4j-api                | 2.24.3        | Apache-2.0                    |
-| log4j-core               | 2.24.3        | Apache-2.0                    |
-| Saxon-HE                 | 12.5          | MPL-2.0                       |
-| xalan                    | 2.7.3         | Apache-2.0                    |
-| xercesImpl               | 2.12.2        | Apache-2.0                    |
-| xml-apis                 | 1.4.01        | Apache-2.0                    |
-| xmlresolver              | 6.0.14        | Apache-2.0                    |
+| Type | Group | Name | Version | License | PURL |
+|---|---|---|---|---|---|
+| library | com.google.code.gson | gson | 2.13.2 | Apache-2.0 | `pkg:maven/com.google.code.gson/gson@2.13.2?type=jar` |
+| library | com.google.errorprone | error_prone_annotations | 2.41.0 | Apache-2.0 | `pkg:maven/com.google.errorprone/error_prone_annotations@2.41.0?type=jar` |
+| library | commons-io | commons-io | 2.22.0 | Apache-2.0 | `pkg:maven/commons-io/commons-io@2.22.0?type=jar` |
+| library | info.picocli | picocli | 4.7.7 | Apache-2.0 | `pkg:maven/info.picocli/picocli@4.7.7?type=jar` |
+| library | net.sf.saxon | Saxon-HE | 12.5 | MPL-2.0 | `pkg:maven/net.sf.saxon/Saxon-HE@12.5?type=jar` |
+| library | org.apache.commons | commons-lang3 | 3.20.0 | Apache-2.0 | `pkg:maven/org.apache.commons/commons-lang3@3.20.0?type=jar` |
+| library | org.apache.logging.log4j | log4j-api | 2.24.3 | Apache-2.0 | `pkg:maven/org.apache.logging.log4j/log4j-api@2.24.3?type=jar` |
+| library | org.apache.logging.log4j | log4j-core | 2.24.3 | Apache-2.0 | `pkg:maven/org.apache.logging.log4j/log4j-core@2.24.3?type=jar` |
+| library | org.apiguardian | apiguardian-api | 1.1.2 | Apache-2.0 | `pkg:maven/org.apiguardian/apiguardian-api@1.1.2?type=jar` |
+| library | org.javatuples | javatuples | 1.2 | Apache-2.0 | `pkg:maven/org.javatuples/javatuples@1.2?type=jar` |
+| library | org.mitre.niem | lib-cmf | 1.1.0 |  | `pkg:maven/org.mitre.niem/lib-cmf@1.1.0?project_path=%3Alib-cmf` |
+| library | org.mitre.niem | lib-util | 1.1.0 |  | `pkg:maven/org.mitre.niem/lib-util@1.1.0?project_path=%3Alib-util` |
+| library | org.opentest4j | opentest4j | 1.3.0 | Apache-2.0 | `pkg:maven/org.opentest4j/opentest4j@1.3.0?type=jar` |
+| library | org.xmlresolver | xmlresolver | 6.0.14 | Apache-2.0 | `pkg:maven/org.xmlresolver/xmlresolver@6.0.14?type=jar` |
+| library | xalan | serializer | 2.7.3 |  | `pkg:maven/xalan/serializer@2.7.3?type=jar` |
+| library | xalan | xalan | 2.7.3 |  | `pkg:maven/xalan/xalan@2.7.3?type=jar` |
+| library | xerces | xercesImpl | 2.12.2 | Apache-2.0 | `pkg:maven/xerces/xercesImpl@2.12.2?type=jar` |
+| library | xml-apis | xml-apis | 1.4.01 | Apache-2.0, SAX-PD, The W3C License | `pkg:maven/xml-apis/xml-apis@1.4.01?type=jar` |
 
 ## About NIEMOpen
 

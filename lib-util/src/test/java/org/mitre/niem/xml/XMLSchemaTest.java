@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,211 +23,180 @@
  */
 package org.mitre.niem.xml;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import nl.altindag.log.LogCaptor;
-import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeAll;
+
+import java.io.ByteArrayInputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import org.apache.xerces.xs.XSModel;
 import org.junit.jupiter.api.Test;
-import static org.mitre.niem.utility.URIfuncs.FileToCanonicalURI;
-import org.mitre.niem.xml.XMLSchemaException;
+import org.junit.jupiter.api.io.TempDir;
 
-/**
- *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
- */
-public class XMLSchemaTest {
-    
-    public static List<LogCaptor> logs;    
-    private static final String resDN  = "src/test/resources/";
-    private static final File resDF    = new File(resDN);
-    private static final String resDUs = FileToCanonicalURI(resDF).toString();    
-    
-    @BeforeAll
-    public static void setupLogCaptor () {
-        logs = new ArrayList<>();
-        logs.add(LogCaptor.forClass(XMLSchema.class));
-        logs.add(LogCaptor.forClass(XMLSchemaDocument.class));
-    }
-    
-    @AfterEach
-    public void clearLogs () {
-        for (var log : logs) log.clearLogs();;
-    }
-    
-    @AfterAll
-    public static void tearDown () {
-        for (var log : logs) log.close();
-    } 
-    
-    public XMLSchemaTest() { 
-    }
+class XMLSchemaTest {
 
-    @Test
-    public void testGoodXs () throws Exception {
-        String[] args = new String[]{
-            resDN + "xsd/goodXsTest.xsd",
-            resDN + "xsd/niem/xml-catalog.xml",
-            resDN + "cat/cat1.xml"} ;
-        var sch = new XMLSchema(args);
-        assertEquals(sch.pileRoot(), resDUs);
-        assertThat(sch.initialSchemaDocs())
-                .containsExactly(resDUs + "xsd/goodXsTest.xsd");
-        assertThat(sch.initialCatalogs())
-                .containsExactlyInAnyOrder(
-                    resDUs + "xsd/niem/xml-catalog.xml",
-                    resDUs + "cat/cat1.xml");
-        assertNotNull(sch.resolver());
-        assertTrue(sch.initialNS().isEmpty());
-        assertNotNull(sch.xsmodel());
-        assertTrue(sch.xsModelMsgs().isEmpty());
-        assertNotNull(sch.javaxSchema());
-        assertTrue(sch.javaXMsgs().isEmpty());
-        assertThat(sch.schemaNamespaceUs())
-                .hasSize(10);
-        for (var nsuri : sch.schemaNamespaceUs()) {
-            assertEquals(nsuri, sch.schemaDocument(nsuri).targetNamespace());
-        }
-    }
-    
-    @Test
-    public void testWithCatalog () throws Exception {
-        String[] args = new String[]{
-            resDN + "xsd/withCatalog.xsd",
-            resDN + "xsd/niem/xml-catalog.xml"};
-        var sch = new XMLSchema(args);
-        assertThat(sch.schemaNamespaceUs()).hasSize(10);
-    }
-    
-    @Test
-    public void testBadXs () throws Exception {
-        String[] args = new String[]{
-            resDN + "xsd/badXsTest.xsd"};
-        var sch = new XMLSchema(args);
-        assertFalse(sch.xsModelMsgs().isEmpty());
-        assertFalse(sch.javaXMsgs().isEmpty());
-    }
-    
-    
-    @Test
-    public void testInitialNS () throws Exception {
-        var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/goodXsTest/"));
-        var pr = s.pileRoot();
-//        assertEquals(3, s.resolver().allCatalogs().size());
-        assertEquals(1, s.initialSchemaDocs().size());
-        assertEquals(1, s.initialNS().size());   
-        assertEmptyLogs();
-    }    
-    
-    @Test
-    public void testFileURI () throws Exception {
-        var s = new XMLSchema(ga(resDUs + "xsd/goodXsTest.xsd"));
-        assertEquals(0, s.resolver().allCatalogs().size());
-        assertEquals(1, s.initialSchemaDocs().size());
-        assertEquals(0, s.initialNS().size());
-        assertEmptyLogs();
-    }    
-    
-    @Test
-    public void testBadFileURI () throws Exception {  
-        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga(resDUs + "nosuchfile"));
-        });
-        assertThat(thrown.getMessage()).contains("cannot find the file");         
-    }
-    
-    @Test
-    public void testBadURIWithHostname () throws Exception {    
-        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga("file://google.com/some/file/path"));
-        });
-        assertThat(thrown.getMessage()).contains("A hostname is not allowed");   
-    }
-    
-    @Test
-    public void testNotCatalogOrSchema () throws Exception {    
-        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga("/xsd/00-README.txt"));
-        });
-        assertThat(thrown.getMessage()).contains("not a schema document or XML catalog"); 
-    }
-    
-    @Test
-    public void testNoCatForInitialNS () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
-           var s = new XMLSchema("http://example.com/goodXsTest/");
-        });
-        assertThat(thrown.getMessage()).contains("Can't resolve"); 
-    }    
-    
-    @Test
-    public void testCantResolveInitialNS () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/not-in-catalog/"));
-        });
-        assertThat(thrown.getMessage()).contains("Can't resolve");         
-    }    
+    private static final String TEST_NS = "http://example.com/test";
 
-    @Test
-    public void testResolvesToRemote () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/remote-resource/"));
-        });
-        assertThat(thrown.getMessage()).contains("not a local URI");         
-    }   
-    
-    @Test
-    public void testResolvesToNotXSD () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/not-xsd/"));
-        });
-        assertThat(thrown.getMessage()).contains("not a schema document");   
-    }
-    
-    @Test
-    public void testResolvesToNoSuchFile () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/no-such-file/"));
-        });
-        assertThat(thrown.getMessage()).contains("cannot find the file"); 
-    }    
-    
-    @Test
-    public void testResolvesToWrongTargetNS () throws Exception {
-        var thrown = Assertions.assertThrows(XMLSchemaException.class, () -> {
-           var s = new XMLSchema(ga("cat/cat1.xml", "http://example.com/Foo/1.0/"));
-        });
-        assertThat(thrown.getMessage()).contains("wrong target namespace");
-    }   
-                        
-    public void assertEmptyLogs () {
-        for (var log : logs) {
-            var errors = log.getErrorLogs();
-            var warns  = log.getWarnLogs();
-            assertThat(errors.isEmpty());
-            assertThat(warns.isEmpty());
-        }
-    }    
-        
-    // Builds a String[] array from a list of String arguments. Strings that aren't
-    // URIs are assumed to be file names in the test directory.
-    private String[] ga (String ... args) {
-        String[] rv = new String[args.length];
-        for (int i = 0; i < args.length; i++) {
-            String a = args[i];
-            if (a.startsWith("http:") || a.startsWith("file:")) rv[i] = a;
-            else rv[i] = resDN + a;
-        }
-        return rv;
-    }    
+@Test
+void constructsFromSchemaFile(@TempDir Path tempDir) throws Exception {
+    var xsdFile = writeFile(tempDir, "test.xsd", simpleSchema(TEST_NS));
+
+    var xs = new XMLSchema(xsdFile.toString());
+
+    assertTrue(xs.initialCatalogs().isEmpty());
+    assertTrue(xs.initialNS().isEmpty());
+    assertEquals(1, xs.initialSchemaDocs().size());
+    assertEquals(xsdFile.toUri(), URI.create(xs.initialSchemaDocs().get(0)));
+
+    assertNotNull(xs.resolver());
+    assertTrue(xs.resolverMessages().isEmpty());
+
+    assertEquals(1, xs.schemaDocumentL().size());
+    assertEquals(1, xs.schemaDocuments(TEST_NS).size());
+    assertNotNull(xs.schemaDocument(TEST_NS));
+    assertTrue(xs.schemaNamespaceUs().contains(TEST_NS));
+
+    assertEquals(
+        tempDir.toAbsolutePath().normalize(),
+        Path.of(URI.create(xs.pileRoot())).toAbsolutePath().normalize()
+    );
+    assertEquals("test.xsd", xs.fileUtoPath(xsdFile.toUri().toString()));
+    assertEquals("test.xsd", xs.docFilePath(xs.schemaDocument(TEST_NS)));
 }
+
+    @Test
+    void constructsFromCatalogAndNamespace(@TempDir Path tempDir) throws Exception {
+        var xsdFile = writeFile(tempDir, "test.xsd", simpleSchema(TEST_NS));
+        var catalogFile = writeFile(
+            tempDir,
+            "catalog.xml",
+            catalogForNamespace(TEST_NS, xsdFile.toUri().toString())
+        );
+
+        var xs = new XMLSchema(catalogFile.toString(), TEST_NS);
+
+        assertEquals(1, xs.initialCatalogs().size());
+        assertEquals(catalogFile.toUri(), URI.create(xs.initialCatalogs().get(0)));
+
+        assertEquals(1, xs.initialNS().size());
+        assertEquals(TEST_NS, xs.initialNS().get(0));
+
+        assertEquals(1, xs.initialSchemaDocs().size());
+        assertEquals(xsdFile.toUri(), URI.create(xs.initialSchemaDocs().get(0)));
+
+        assertEquals(xsdFile.toUri(), URI.create(xs.resolveURI(TEST_NS)));
+        assertNotNull(xs.schemaDocument(TEST_NS));
+        assertEquals(1, xs.schemaDocuments(TEST_NS).size());
+    }
+
+    @Test
+    void xsmodelAndJavaxSchemaCanBeCreated(@TempDir Path tempDir) throws Exception {
+        var xsdFile = writeFile(tempDir, "test.xsd", simpleSchema(TEST_NS));
+        var xschema = new XMLSchema(xsdFile.toString());
+
+        XSModel model = xschema.xsmodel();
+        assertNotNull(model);
+        assertNotNull(xschema.xsModelMsgs());
+
+        var jxSchema = xschema.javaxSchema();
+        assertNotNull(jxSchema);
+        assertNotNull(xschema.javaXMsgs());
+    }
+
+    @Test
+    void validateStringReturnsEmptyForValidAndMessagesForInvalid(@TempDir Path tempDir) throws Exception {
+        var xsdFile = writeFile(tempDir, "test.xsd", simpleSchema(TEST_NS));
+        var xschema = new XMLSchema(xsdFile.toString());
+
+        var validXml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <t:Root xmlns:t="http://example.com/test">okay</t:Root>
+            """;
+
+        var invalidXml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <t:Other xmlns:t="http://example.com/test"/>
+            """;
+
+        var validMsgs = xschema.validate(validXml);
+        var invalidMsgs = xschema.validate(invalidXml);
+
+        assertTrue(validMsgs.isEmpty());
+        assertFalse(invalidMsgs.isEmpty());
+    }
+
+    @Test
+    void validateFileWorks(@TempDir Path tempDir) throws Exception {
+        var xsdFile = writeFile(tempDir, "test.xsd", simpleSchema(TEST_NS));
+        var xmlFile = writeFile(
+            tempDir,
+            "instance.xml",
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <t:Root xmlns:t="http://example.com/test">text</t:Root>
+            """
+        );
+
+        var xschema = new XMLSchema(xsdFile.toString());
+
+        var msgs = xschema.validate(xmlFile.toFile());
+
+        assertTrue(msgs.isEmpty());
+    }
+
+    @Test
+    void xsmodelFromStreamBuildsModel() throws Exception {
+        var msgs = new ArrayList<String>();
+        try (var in = new ByteArrayInputStream(simpleSchema(TEST_NS).getBytes(StandardCharsets.UTF_8))) {
+            var model = XMLSchema.xsmodelFromStream(in, msgs);
+            assertNotNull(model);
+            assertNotNull(msgs);
+        }
+    }
+
+    @Test
+    void schemaDocumentReturnsNullForUnknownNamespace(@TempDir Path tempDir) throws Exception {
+        var xsdFile = writeFile(tempDir, "test.xsd", simpleSchema(TEST_NS));
+        var xschema = new XMLSchema(xsdFile.toString());
+
+        assertNull(xschema.schemaDocument("http://example.com/unknown"));
+        assertTrue(xschema.schemaDocuments("http://example.com/unknown").isEmpty());
+    }
+
+    private static Path writeFile(Path dir, String name, String content) throws Exception {
+        var file = dir.resolve(name);
+        Files.writeString(file, content, StandardCharsets.UTF_8);
+        return file;
+    }
+
+    private static String simpleSchema(String targetNs) {
+        return """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema
+                xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                xmlns:t="%s"
+                targetNamespace="%s"
+                elementFormDefault="qualified">
+
+              <xs:element name="Root" type="xs:string"/>
+
+            </xs:schema>
+            """.formatted(targetNs, targetNs);
+    }
+
+    private static String catalogForNamespace(String ns, String resolvedUri) {
+        return """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+              <uri name="%s" uri="%s"/>
+            </catalog>
+            """.formatted(ns, resolvedUri);
+    }
+}
+

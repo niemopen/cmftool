@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+  targetNamespace="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:nc="https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  version="psd01"
+  xml:lang="en-US">
+  <xs:annotation>
+    <xs:documentation>NIEM Core.</xs:documentation>
+  </xs:annotation>
+  <xs:complexType name="ItemType">
+    <xs:annotation>
+      <xs:documentation>A data type for an article or thing.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="nc:ItemName"/>
+      <xs:element ref="nc:ItemQuantity"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:simpleType name="NumericType">
+    <xs:annotation>
+      <xs:documentation>A data type for a number value.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:decimal"/>
+  </xs:simpleType>
+  <xs:complexType name="QuantityType">
+    <xs:annotation>
+      <xs:documentation>A data type for a count or tally.</xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="nc:NumericType">
+        <xs:attribute ref="nc:quantityUnitText"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:simpleType name="TextType">
+    <xs:annotation>
+      <xs:documentation>A data type for a character string.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+  <xs:attribute name="quantityUnitText" type="xs:string">
+    <xs:annotation>
+      <xs:documentation>A unit of counting or tallying for a quantity.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+  <xs:element name="CommentText" type="nc:TextType">
+    <xs:annotation>
+      <xs:documentation>A comment, note, or remark providing additional information.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="ItemName" type="nc:TextType">
+    <xs:annotation>
+      <xs:documentation>A name of an item.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:element name="ItemQuantity" type="nc:QuantityType">
+    <xs:annotation>
+      <xs:documentation>A count of the individual units which make up an item.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+</xs:schema>

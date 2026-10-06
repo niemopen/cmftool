@@ -32,12 +32,10 @@ package org.mitre.niem.xml;
 public class XMLNamespaceDeclaration implements Comparable<XMLNamespaceDeclaration> {
     private final String decPrefix;           // xmlns:decPrefix="decURI"
     private final String decURI;              // xmlns:decPrefix="decURI"
-    private final int line;                   // decl appears on this line number
     private final int elementDepth;           // decl in root element has depth 0
     
     public String prefix ()         { return decPrefix; }
     public String ns ()             { return decURI; }
-    public int line ()              { return line; }
     public int depth ()             { return elementDepth; }
     
     public XMLNamespaceDeclaration (
@@ -48,15 +46,12 @@ public class XMLNamespaceDeclaration implements Comparable<XMLNamespaceDeclarati
     {
         this.decPrefix = decPrefix;
         this.decURI = decURI;
-        this.line = lineNum;
         this.elementDepth = elementDepth;
     }
 
     @Override
     public int compareTo(XMLNamespaceDeclaration o) {
-        if (this.elementDepth < o.elementDepth) return -1;
-        else if(this.elementDepth > o.elementDepth) return 1;
-        else return this.line - o.line;
+        return Integer.compare(this.elementDepth, o.elementDepth);
     }
 
 }

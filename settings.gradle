@@ -1,7 +1,0 @@
-rootProject.name = 'CMFTool'
-
-include 'app-scheval'
-include 'app-cmftool'
-include 'app-niemtran'
-include 'lib-util'
-include 'lib-cmf'

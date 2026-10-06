@@ -21,7 +21,7 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="t:DataProperty"/>
+          <xs:element ref="t:DataProp1"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -30,7 +30,7 @@
     <xs:complexContent>
       <xs:extension base="t:OneType">
         <xs:sequence>
-          <xs:element ref="t:DataProperty"/>
+          <xs:element ref="t:DataProp2"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -39,7 +39,7 @@
     <xs:complexContent>
       <xs:extension base="t:TwoType">
         <xs:sequence>
-          <xs:element ref="t:DataProperty"/>
+          <xs:element ref="t:DataProp3"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -48,16 +48,20 @@
     <xs:complexContent>
       <xs:extension base="t:ThreeType">
         <xs:sequence>
-          <xs:element ref="t:DataProperty"/>
+          <xs:element ref="t:DataProp4"/>
         </xs:sequence>
+        <xs:attribute ref="t:attProp"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="FiveType">
+  <xs:complexType name="FiveType" appinfo:referenceCode="NONE">
+    <xs:annotation>
+      <xs:documentation>Can't inherit; incompatible refCode</xs:documentation>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="t:FourType">
         <xs:sequence>
-          <xs:element ref="t:DataProperty"/>
+          <xs:element ref="t:DataProp5"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -66,7 +70,7 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="t:DataProperty"/>
+          <xs:element ref="t:DataProp1"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
@@ -75,12 +79,17 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="t:DataProperty"/>
+          <xs:element ref="t:DataProp1"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:element name="DataProperty" type="niem-xs:string"/>
+  <xs:attribute name="attProp" type="xs:token"/>
+  <xs:element name="DataProp1" type="niem-xs:string"/>
+  <xs:element name="DataProp2" type="niem-xs:string"/>
+  <xs:element name="DataProp3" type="niem-xs:string"/>
+  <xs:element name="DataProp4" type="niem-xs:string"/>
+  <xs:element name="DataProp5" type="niem-xs:string"/>
   <xs:element name="ThreeProp" type="t:ThreeType"/>
   <xs:element name="FourProp" type="t:FourType" appinfo:referenceCode="INTERNAL"/>
   <xs:element name="FiveProp" type="t:FiveType" appinfo:referenceCode="ANY"/>

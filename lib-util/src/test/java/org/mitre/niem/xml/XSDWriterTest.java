@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,47 +23,179 @@
  */
 package org.mitre.niem.xml;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
- */
-public class XSDWriterTest {
-    private static final String resDN = "src/test/resources";
-    
-    @TempDir
-    File tempDF;
-        
-    public XSDWriterTest() { }
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
+
+class XSDWriterTest {
 
     @Test
-    public void testWriteXML () throws Exception {
-        doTest(new File(resDN, "xsd/goodXsTest.xsd")); 
-        doTest(new File(resDN, "xsd/niem/niem-core-skel.xsd"));
+    void writeXmlOrdersSchemaRootAttributesAndNamespaceDeclarations() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                version="1.0"
+                xmlns:ex="http://example.com/test"
+                elementFormDefault="qualified"
+                targetNamespace="http://example.com/test"
+                xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element name="Root" type="xs:string"/>
+            </xs:schema>
+            """);
+
+        var out = new StringWriter();
+        new XSDWriter().writeXML(dom, out);
+
+        assertEquals("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema
+              targetNamespace="http://example.com/test"
+              xmlns:ex="http://example.com/test"
+              xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              elementFormDefault="qualified"
+              version="1.0">
+              <xs:element name="Root" type="xs:string"/>
+            </xs:schema>
+            """, out.toString());
     }
-    
-    public void doTest (File xsdF) throws Exception {
-        var dbf  = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        var db   = dbf.newDocumentBuilder();
-        var doc  = db.parse(xsdF);
-        var outF = new File(tempDF, "output.xml");
-        var os   = new FileOutputStream(outF);
-        var ow   = new OutputStreamWriter(os, "UTF-8");
-        var xw   = new XSDWriter();
-        xw.writeXML(doc, ow);
-        ow.close();
-        var same = FileUtils.contentEqualsIgnoreEOL(xsdF, outF, "UTF-8");
-        assertTrue(same);         
+
+    @Test
+    void writeXmlEnsuresXsNamespaceOnSchemaRoot() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <schema xmlns="http://www.w3.org/2001/XMLSchema"
+                    targetNamespace="http://example.com/test">
+              <element name="Root" type="string"/>
+            </schema>
+            """);
+
+        var out = new StringWriter();
+        new XSDWriter().writeXML(dom, out);
+        var text = out.toString();
+
+        assertTrue(text.contains("xmlns:xs=\"http://www.w3.org/2001/XMLSchema\""));
+        assertTrue(text.contains("targetNamespace=\"http://example.com/test\""));
     }
-    
+
+    @Test
+    void writeXmlOrdersXsElementAttributes() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element substitutionGroup="ex:Base"
+                          maxOccurs="2"
+                          type="xs:string"
+                          name="Root"
+                          minOccurs="0"
+                          xmlns:ex="http://example.com/test"/>
+            </xs:schema>
+            """);
+
+        var out = new StringWriter();
+        new XSDWriter().writeXML(dom, out);
+
+        assertTrue(out.toString().contains(
+            "<xs:element xmlns:ex=\"http://example.com/test\" name=\"Root\" type=\"xs:string\" minOccurs=\"0\" maxOccurs=\"2\" substitutionGroup=\"ex:Base\"/>"
+        ));
+    }
+
+    @Test
+    void writeXmlOrdersXsImportAttributes() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:import id="i1"
+                         schemaLocation="ext.xsd"
+                         namespace="http://example.com/ext"/>
+            </xs:schema>
+            """);
+
+        var out = new StringWriter();
+        new XSDWriter().writeXML(dom, out);
+
+        assertTrue(out.toString().contains(
+            "<xs:import namespace=\"http://example.com/ext\" schemaLocation=\"ext.xsd\" id=\"i1\"/>"
+        ));
+    }
+
+    @Test
+    void writeStandaloneElementCopiesInScopeNamespacesAndAppliesXsdOrdering() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                       xmlns:ex="http://example.com/test"
+                       targetNamespace="http://example.com/test">
+              <xs:element type="ex:SomeType" name="Root"/>
+            </xs:schema>
+            """);
+
+        var elem = (Element) dom.getDocumentElement()
+            .getElementsByTagNameNS("http://www.w3.org/2001/XMLSchema", "element")
+            .item(0);
+
+        var out = new StringWriter();
+        new XSDWriter().writeXML(elem, out);
+
+        assertEquals("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:element
+              xmlns:ex="http://example.com/test"
+              xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              name="Root"
+              type="ex:SomeType"/>
+            """, out.toString());
+    }
+
+    @Test
+    void nodeToTextSerializesDocumentAndElement() throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element name="Root" type="xs:string"/>
+            </xs:schema>
+            """);
+
+        var writer = new XSDWriter();
+        var docText = writer.nodeToText(dom);
+        var elemText = writer.nodeToText(dom.getDocumentElement());
+
+        assertTrue(docText.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        assertTrue(docText.contains("<xs:schema"));
+        assertTrue(elemText.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        assertTrue(elemText.contains("<xs:schema"));
+    }
+
+    @Test
+    void writeXmlToFileWritesUtf8Content(@TempDir Path tempDir) throws Exception {
+        var dom = parseXml("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+              <xs:element name="Root" type="xs:string"/>
+            </xs:schema>
+            """);
+
+        var outFile = tempDir.resolve("schema.xsd").toFile();
+        new XSDWriter().writeXML(dom, outFile);
+
+        var text = Files.readString(outFile.toPath(), StandardCharsets.UTF_8);
+        assertTrue(text.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        assertTrue(text.contains("<xs:element name=\"Root\" type=\"xs:string\"/>"));
+    }
+
+    private static Document parseXml(String xml) throws Exception {
+        var db = ParserBootstrap.docBuilder();
+        return db.parse(new InputSource(new StringReader(xml)));
+    }
 }

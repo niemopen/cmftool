@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ package org.mitre.niem.cmf;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -63,27 +64,30 @@ public class ModelXMLWriter {
      * @param os - OutputStream
      */
     public boolean writeXML (Model m, Writer w) {
-        return writeXML(m, m.namespaceSet(), w);
+        return writeXML(m, new HashSet<>(m.namespaceSet()), w);
     }
     
     /**
      * Writes components from a specified set of namespaces as CMF-XML to a stream.
      * Returns false on failure, with diagnostic messages written to Log4J2.
      * @param m - Model object
-     * @param nsparam - set of namespace URIs or prefix strings
+     * @param nsparam - collection of namespace URIs or prefix strings
      * @param os  - output stream
      */
-    public boolean writeXML (Model m, List<String> nsparam, Writer w) {
+    public boolean writeXML (Model m, Collection<String> nsparam, Writer w) {
         var nsS = new HashSet<Namespace>();
+        var bad = new ArrayList<String>();
         for (var s : nsparam) {
-            Namespace ns = null;
-            if (s.contains(":")) ns = m.nsUToNamespaceObj(s);
-            else ns = m.prefixToNamespaceObj(s);
-            if (null ==  ns) {
-                LOG.error("{}: no such namespace in model", s);
-                return false;
-            }
-            nsS.add(ns);
+            if (null == s) continue;
+            var key = s.strip();
+            if (key.isEmpty()) continue;
+            var ns = m.namespaceObj(key);
+            if (null == ns) bad.add(key);
+            else nsS.add(ns);
+        }
+        if (!bad.isEmpty()) {
+            LOG.error("No such namespace(s) in model: {}", String.join(", ", bad));
+            return false;
         }
         return writeXML(m, nsS, w);
     }
@@ -94,8 +98,7 @@ public class ModelXMLWriter {
             var doc  = db.newDocument();
             var root = genModel(doc, m, nsS);
             doc.appendChild(root);
-            var xw   = new XMLWriter();
-            xw.writeXML(doc, w);
+            XMLWriter.writeXML(doc, w);
         } catch (ParserConfigurationException ex) {
             LOG.error("Internal parser error: {}", ex.getMessage());
             return false;
@@ -108,14 +111,16 @@ public class ModelXMLWriter {
     
     private Element genModel (Document doc, Model m, Set<Namespace>nsS) {
         var e = doc.createElementNS(CMF_NS_URI, "Model");
+        e.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns", CMF_NS_URI);
         e.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:cmf", CMF_NS_URI);
         e.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:xsi", W3C_XML_SCHEMA_INSTANCE_NS_URI);
         e.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:structures", CMF_STRUCTURES_NS_URI);
         e.setAttributeNS(XML_NS_URI, "xml:lang", "en-US");
         for (var n : m.namespaceList()) appendNamespace(doc, e, n, nsS);
-        for (var c : m.componentList()) if (c.isProperty())     appendComponent(doc, e, c, nsS);
-        for (var c : m.componentList()) if (c.isClassType())    appendComponent(doc, e, c, nsS);
-        for (var c : m.componentList()) if (c.isDatatype())     appendComponent(doc, e, c, nsS);
+        var compL = m.componentList();
+        for (var c : compL) if (c.isProperty())     appendComponent(doc, e, c, nsS);
+        for (var c : compL) if (c.isClassType())    appendComponent(doc, e, c, nsS);
+        for (var c : compL) if (c.isDatatype())     appendComponent(doc, e, c, nsS);
         return e;
     }
     
@@ -126,7 +131,7 @@ public class ModelXMLWriter {
         e.setAttributeNS(CMF_STRUCTURES_NS_URI, "structures:id", x.prefix());
         appendSimpleChild(doc, e, "NamespaceURI", x.uri());
         appendSimpleChild(doc, e, "NamespacePrefixText", x.prefix());
-        if (NSK_XML != NamespaceKind.namespaceToKind(x.uri()))
+        if (NSK_XML != NamespaceKind.namespaceToKindValue(x.uri()))
             for (var dls : x.docL()) appendDocumentation(doc, e, dls);
         for (var cta : x.ctargL()) appendSimpleChild(doc, e, "ConformanceTargetURI", cta);
         appendSimpleChild(doc, e, "DocumentFilePathText", x.documentFilePath());
@@ -161,7 +166,7 @@ public class ModelXMLWriter {
         appendOptionalIndicator(doc, c, "AbstractIndicator", x.isAbstract());
         appendComponentReference(doc, c, "SubClassOf", x.subClassOf(), nsS);
         appendSimpleChild(doc, c, "ReferenceCode", x.referenceCode());
-        for (var cpa : x.propL()) appendPropertyAssociation(doc, c, cpa, nsS);
+        for (var cpa : x.propAssocL()) appendPropertyAssociation(doc, c, cpa, nsS);
         for (var ap : x.anyL()) appendAnyProperty(doc, c, ap, nsS);
     }
     
@@ -185,9 +190,12 @@ public class ModelXMLWriter {
     void addPropertyChildren (Document doc, Element c, Property x, Set<Namespace>nsS) {
         if (null == x) return;
         appendOptionalIndicator(doc, c, "AbstractIndicator", x.isAbstract());
-        appendComponentReference(doc, c, "SubPropertyOf", x.subPropertyOf(), nsS);
+        x.subPropertyOfS().stream().sorted().forEach((subp) -> {
+            appendComponentReference(doc, c, "SubPropertyOf", subp, nsS);
+        });
         appendOptionalIndicator(doc, c, "RelationshipIndicator", x.isRelationship());
         appendOptionalIndicator(doc, c, "OrderedPropertyIndicator", x.isOrdered());
+        appendOptionalIndicator(doc, c, "XSDChoiceIndicator", x.isChoice());
     }
     
     void addRestrictionChildren (Document doc, Element c, Restriction x, Set<Namespace>nsS) {
@@ -220,7 +228,8 @@ public class ModelXMLWriter {
         appendComponentReference(doc, c, x.property(), nsS);
         appendSimpleChild(doc, c, "MinOccursQuantity", x.minOccurs());
         appendSimpleChild(doc, c, "MaxOccursQuantity", x.maxOccurs());
-        appendSimpleChild(doc, c, "AugmentationIndex", x.index());
+        if (x.index() >= 0)
+            appendSimpleChild(doc, c, "AugmentationIndex", ""+x.index());
         var gccL = new ArrayList<>(x.codeS());
         Collections.sort(gccL);
         for (var code : gccL) appendSimpleChild(doc, c, "GlobalClassCode", code);

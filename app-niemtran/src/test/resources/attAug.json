@@ -1,0 +1,23 @@
+               {
+                 "t:Message": {
+                   "nc:Comment": {
+                     "nc:CommentText": [
+                       {
+                         "t:attProp": "abc",
+                         "nc:TextLiteral": "Comment"
+                       },
+                       {
+                         "t:attProp": "123",
+                         "nc:TextLiteral": "AnotherComment"
+                       }
+                     ]
+                   },
+                   "nc:PersonEducation": {
+                     "t:attProp": "foo",
+                     "nc:EducationDescriptionText": [
+                       { "nc:TextLiteral": "PhD" },
+                       { "nc:TextLiteral": "Higher and deeper" }
+                     ]
+                   }
+                 }
+               }

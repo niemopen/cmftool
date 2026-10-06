@@ -82,6 +82,16 @@ public class ModelXMLReaderTest extends ModelAssertions {
     }
     
     // ClassType object test
+    // Test xs:choice / XSDChoiceIndicator
+    @Test
+    public void testChoice () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "choice.cmf"));
+        checkChoice(model);
+        assertEmptyLogs();
+    }
+    
+    // ClassType object test
     // Test abstract, augmentable, reference code.
     @Test
     public void testClass () {
@@ -281,6 +291,14 @@ public class ModelXMLReaderTest extends ModelAssertions {
         var rdr   = new ModelXMLReader();
         var model = rdr.readFiles(new File(resDN, "simpleTypes.cmf"));
         checkSimpleTypes (model);
+        assertEmptyLogs();
+    }
+        
+    @Test
+    public void testSubProperty () {
+        var rdr   = new ModelXMLReader();
+        var model = rdr.readFiles(new File(resDN, "subprop.cmf"));
+        checkSubProps (model);
         assertEmptyLogs();
     }
     

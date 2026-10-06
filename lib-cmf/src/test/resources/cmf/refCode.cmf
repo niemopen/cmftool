@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Model 
+<Model
   xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
   xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
@@ -23,8 +23,34 @@
     <NamespacePrefixText>xs</NamespacePrefixText>
     <NamespaceCategoryCode>XSD</NamespaceCategoryCode>
   </Namespace>
-  <DataProperty structures:id="t.DataProperty">
-    <Name>DataProperty</Name>
+  <DataProperty structures:id="t.attProp">
+    <Name>attProp</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.token" xsi:nil="true"/>
+    <AttributeIndicator>true</AttributeIndicator>
+  </DataProperty>
+  <DataProperty structures:id="t.DataProp1">
+    <Name>DataProp1</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.DataProp2">
+    <Name>DataProp2</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.DataProp3">
+    <Name>DataProp3</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.DataProp4">
+    <Name>DataProp4</Name>
+    <Namespace structures:ref="t" xsi:nil="true"/>
+    <Datatype structures:ref="xs.string" xsi:nil="true"/>
+  </DataProperty>
+  <DataProperty structures:id="t.DataProp5">
+    <Name>DataProp5</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>
     <Datatype structures:ref="xs.string" xsi:nil="true"/>
   </DataProperty>
@@ -50,7 +76,7 @@
     <Namespace structures:ref="t" xsi:nil="true"/>
     <ReferenceCode>ANY</ReferenceCode>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp1" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
@@ -58,9 +84,11 @@
   <Class structures:id="t.FiveType">
     <Name>FiveType</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>
+    <DocumentationText>Can't inherit; incompatible refCode</DocumentationText>
     <SubClassOf structures:ref="t.FourType" xsi:nil="true"/>
+    <ReferenceCode>NONE</ReferenceCode>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp5" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
@@ -71,8 +99,13 @@
     <SubClassOf structures:ref="t.ThreeType" xsi:nil="true"/>
     <ReferenceCode>INTERNAL</ReferenceCode>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp4" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
+      <MaxOccursQuantity>1</MaxOccursQuantity>
+    </ChildPropertyAssociation>
+    <ChildPropertyAssociation>
+      <DataProperty structures:ref="t.attProp" xsi:nil="true"/>
+      <MinOccursQuantity>0</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
@@ -80,7 +113,7 @@
     <Name>OneType</Name>
     <Namespace structures:ref="t" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp1" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
@@ -90,7 +123,7 @@
     <Namespace structures:ref="t" xsi:nil="true"/>
     <SubClassOf structures:ref="t.TwoType" xsi:nil="true"/>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp3" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
@@ -101,7 +134,7 @@
     <SubClassOf structures:ref="t.OneType" xsi:nil="true"/>
     <ReferenceCode>NONE</ReferenceCode>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp2" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
@@ -111,13 +144,17 @@
     <Namespace structures:ref="t" xsi:nil="true"/>
     <ReferenceCode>ANYURI</ReferenceCode>
     <ChildPropertyAssociation>
-      <DataProperty structures:ref="t.DataProperty" xsi:nil="true"/>
+      <DataProperty structures:ref="t.DataProp1" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>
       <MaxOccursQuantity>1</MaxOccursQuantity>
     </ChildPropertyAssociation>
   </Class>
   <Datatype structures:id="xs.string">
     <Name>string</Name>
+    <Namespace structures:ref="xs" xsi:nil="true"/>
+  </Datatype>
+  <Datatype structures:id="xs.token">
+    <Name>token</Name>
     <Namespace structures:ref="xs" xsi:nil="true"/>
   </Datatype>
 </Model>

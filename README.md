@@ -22,7 +22,7 @@ There are five subprojects in this repository:
 
 ## Building CMFTool 
 
-This project was built with NetBeans 26, Gradle 8.12, and Oracle JDK 21.\
+This project was built with NetBeans 29, Gradle 9.5, and Oracle JDK 25.\
 Try `./gradlew build`
 
 ## About NIEMOpen

@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static javax.xml.XMLConstants.XML_NS_URI;
 import javax.xml.xpath.XPathExpression;
@@ -64,7 +65,6 @@ import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.CodeListBinding;
 import org.mitre.niem.cmf.Component;
-import static org.mitre.niem.cmf.Component.makeURI;
 import org.mitre.niem.cmf.DataProperty;
 import org.mitre.niem.cmf.Datatype;
 import org.mitre.niem.cmf.Facet;
@@ -79,10 +79,14 @@ import org.mitre.niem.cmf.PropertyAssociation;
 import org.mitre.niem.cmf.Restriction;
 import org.mitre.niem.cmf.Union;
 import org.mitre.niem.utility.MapToList;
+import org.mitre.niem.utility.MapToSet;
+import static org.mitre.niem.utility.StringUtils.replaceSuffix;
 import static org.mitre.niem.xml.XMLSchemaDocument.evalForNodes;
 import static org.mitre.niem.xml.XMLSchemaDocument.evalForString;
 import static org.mitre.niem.xml.XMLSchemaDocument.getDocumentation;
 import static org.mitre.niem.xml.XMLSchemaDocument.getLanguageString;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeURI;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import org.mitre.niem.xml.XMLSchemaException;
@@ -109,17 +113,16 @@ public class ModelFromXSD {
     private NIEMSchema sch = null;
     private XSModel xs = null;
 
-    private XPathExpression XPR_ANYATT = null;
-    private XPathExpression XPR_BASE = null;
-    private XPathExpression XPR_CHILDREN = null;
+    private final XPathExpression XPR_ANYATT;              // all the xs:anyAttribute descendants
+    private final XPathExpression XPR_BASE;                // first @base attribute in descendants
+    private final XPathExpression XPR_EXT_CHILDREN;        // all children of xs:extension
     
     public ModelFromXSD () throws XMLSchemaException {
         var XPF = XPathFactory.newInstance();
         try {
-            XPR_ANYATT   = XPF.newXPath().compile(".//*[local-name()='anyAttribute']");
-            XPR_BASE     = XPF.newXPath().compile("(.//*[@base != ''])[1]/@base");
-            XPR_CHILDREN = XPF.newXPath().compile(
-                ".//*[(local-name()='attribute' or local-name()='element' or local-name()='any' or local-name() = 'anyAttribute')]");
+            XPR_ANYATT       = XPF.newXPath().compile(".//*[local-name()='anyAttribute']");
+            XPR_BASE         = XPF.newXPath().compile("(.//*[@base != ''])[1]/@base");
+            XPR_EXT_CHILDREN = XPF.newXPath().compile("(.//*[local-name()='extension'])[1]/*");
         } catch (XPathExpressionException ex) {
             throw new XMLSchemaException(ex.getMessage());
         }
@@ -153,21 +156,18 @@ public class ModelFromXSD {
     // Construct a list of top-level type definition and component declaration
     // elements for each schema document.  Also collect the appinfo attributes for
     // all defs and decls in the schema.
-//    private Map<String,List<Element>> types         = new HashMap<>();  // list of type defns in namespace
-    private MapToList<String,Element> types         = new MapToList<>();
-    private Map<String,List<Element>> elements      = new HashMap<>();  // list of element decls in namespace
-    private Map<String,List<Element>> attributes    = new HashMap<>();  // list of attribute decls in namespace
+    private MapToList<String,Element> types         = new MapToList<>();// nsU -> list of type defns in namespace
+    private Map<String,List<Element>> elements      = new HashMap<>();  // nsU -> list of element decls in namespace
+    private Map<String,List<Element>> attributes    = new HashMap<>();  // nsU -> list of attribute decls in namespace
     private Map<String,Element> comp2Element        = new HashMap<>();  // component URI -> sdoc Element
-    private Map<String,Map<String,String>> appinfo  = new HashMap<>();  // component URI -> appinfo map
+    private Map<String,Map<String,String>> appinfo  = new HashMap<>();  // component URI -> map <appinfo name -> value>
     private void buildElementLists () {
         for (var sd : sch.schemaDocL()) {
             var vers  = sd.niemVersion();
             var nsU   = sd.targetNamespace();
-//            var tL    = new ArrayList<Element>();   // type definitions
             var eL    = new ArrayList<Element>();   // element declarations
             var aL    = new ArrayList<Element>();   // attribute declarations
             var appU = builtinNSU(vers, "APPINFO"); // appinfo namespace URI in this document
-//            types.put(nsU, tL);
             elements.put(nsU, eL);
             attributes.put(nsU, aL);
             var root  = sd.dom().getDocumentElement();
@@ -183,7 +183,6 @@ public class ModelFromXSD {
                 var ln = node.getLocalName();
                 switch(node.getLocalName()) {
                     case "complexType":
-//                    case "simpleType": tL.add(schE); break;
                     case "simpleType": types.add(nsU, schE); break;
                     case "element":    eL.add(schE); break;
                     case "attribute":  aL.add(schE); break;
@@ -199,10 +198,10 @@ public class ModelFromXSD {
     // is added later on demand.
     private void createNamespaces () throws CMFException {
         for (var sd : sch.schemaDocL()) {
+            var nsU = sd.targetNamespace();
             var kind = sch.namespaceKind(sd);
             var kcode = kindToCode(kind);
             if (!isModelKind(kind) && NSK_EXTERNAL != kind) continue;
-            var nsU = sd.targetNamespace();
             var pre = sch.namespaceMap().getPrefix(nsU);
             var ns  = new Namespace(pre, nsU);
             ns.setDocumentFilePath(sch.docFilePath(sd));
@@ -221,6 +220,8 @@ public class ModelFromXSD {
         }
     }
     
+    // Create LocalTerm objects for the Namespace object from top-level
+    // xs:annotation/xs:appinfo elements in the schema document.
     private void createLocalTerms (Namespace ns, NIEMSchemaDocument sd) {
         var vers = sd.niemVersion();
         var appU = builtinNSU(vers, "APPINFO");
@@ -290,7 +291,7 @@ public class ModelFromXSD {
                     attAugTypeUS.add(typeU);
                 }
                 else {
-                    var codeL = codes.trim().split("\\s+");
+                    var codeL = codes.strip().split("\\s+");
                     for (var code : codeL) {
                         if ("LITERAL".equals(code)) anyGlobalLitAugF = true;
                     }
@@ -310,7 +311,7 @@ public class ModelFromXSD {
     private final Set<String> litClassUs                        = new HashSet<>();  // literal class URIs
     private final Set<String> simpleDtUs                        = new HashSet<>();  // FooSimpleType datatypes
     private final Map<String,String> baseTypeU                  = new HashMap<>();  // base of this type
-    private final Map<String,Set<String>> hasBaseUs             = new HashMap<>();  // types with this base
+    private final MapToSet<String,String> hasBaseUs             = new MapToSet<>();  // types with this base
     private final Map<String,String> litPropTypeU               = new HashMap<>();  // literal prop uri -> datatype uri
 
     private void processTypeDefinitions () {
@@ -329,7 +330,7 @@ public class ModelFromXSD {
                 var baseU = qnToURI(schE, baseQ);
                 tU2XS.put(tU, xtype);
                 baseTypeU.put(tU, baseU);
-                if (sch.isModelComponentU(baseU)) addToStringSetMap(hasBaseUs, baseU, tU);
+                if (sch.isModelComponentU(baseU)) hasBaseUs.add(baseU, tU);
                 if ("simpleType".equals(schE.getLocalName())) {
                     sTUs.add(tU);
                     dtU2xstype.put(tU, (XSSimpleTypeDefinition)xtype);
@@ -348,8 +349,8 @@ public class ModelFromXSD {
             var xtype  = tU2XS.get(cscU);
             var xctype = (XSComplexTypeDefinition)xtype;
             var appi   = appinfo.get(cscU);
-            var rc     = appi.getOrDefault("referenceCode", "");
-            var litF   = "ANY".equals(rc) || "REF".equals(rc) || "URI".equals(rc);
+            var rc     = appi.getOrDefault("referenceCode", "NONE");
+            var litF   = !"NONE".equals(rc);
             if (!litF) litF = hasAttributes(xctype);
             if (!litF) litF = attAugTypeUS.contains(cscU);
             if (!litF) litF = anyGlobalLitAugF;
@@ -375,7 +376,7 @@ public class ModelFromXSD {
             var cscU  = replaceSuffix(stU, "SimpleType", "Type");
             var wrapU = "";
             var stnsU = sch.uriToNamespaceU(stU);
-            var hbUs  = hasBaseUs.getOrDefault(stU, EMPTY_STRING_SET);
+            var hbUs  = hasBaseUs.get(stU);
             for (var hbU : hbUs) {
                 if (!datatypeUs.contains(hbU)) continue;
                 var hbnsU = sch.uriToNamespaceU(hbU);
@@ -591,33 +592,8 @@ public class ModelFromXSD {
         // Case #4: @base is a proxy or primitive
         else dt = getDatatype(baseU);
 
-
         var dtname = dt.qname();
         r.setBase(dt);
-        // Get restriction base QN from schema document.  
-        // If it's a SimpleType QN and not in the model, then get the base from xstype.
-//        var rU = r.uri();
-//        var baseU = baseTypeU.get(rU);
-//        var renU  = stU2dtU.getOrDefault(baseU, baseU);
-//        var bdt   = getDatatype(renU);
-//        if (null != renU && renU.equals(rU)) {
-//            var xbtype = (XSSimpleTypeDefinition)xstype.getBaseType();
-//            baseU = xObjToURI(xbtype);
-//        }
-//        else if (null != renU && renU.endsWith("SimpleType")) {
-//            var sE = tU2element.get(renU);
-//            var bQ = sd.evalForString(sE, XPR_BASE);
-//            baseU = qnToURI(sE, bQ);
-//            int x = 0;
-//        }
-//        var bdt = getDatatype(baseU);
-//        if (null == bdt && baseQ.endsWith("SimpleType")) {
-//            var xbtype = xstype.getBaseType();
-//            if (SIMPLE_TYPE == xbtype.getTypeCategory()) {
-//                var xbstype = (XSSimpleTypeDefinition)xbtype;
-//                bdt = getDatatypeFromXStype(xbstype);
-//            }
-//        }
     }
     
     // Populates a Union object with appinfo from its CSC type definition plus
@@ -695,7 +671,7 @@ public class ModelFromXSD {
                 var dt    = getDatatype(typeU);
                 dp.setDatatype(dt);
                 if (sch.isExternal(nsU)) uri2externalProp.put(dp.uri(), dp);
-                else m.addDataProperty(dp);
+                else m.addProperty(dp);
             }
         }
     }
@@ -724,12 +700,12 @@ public class ModelFromXSD {
                         if (name.endsWith("AugmentationPoint")) augPointL.add(op);
                         else if (name.endsWith("Augmentation")) augPropL.add(op);
                         else if (sch.isExternal(nsU)) uri2externalProp.put(op.uri(), op);
-                        m.addObjectProperty(op);    // augmentation components are removed from model later                    
+                        m.addProperty(op);    // augmentation components are removed from model later                    
                     }
                     else {
                         var dp = new DataProperty(ns, name);
                         if (sch.isExternal(nsU)) uri2externalProp.put(dp.uri(), dp);
-                        else m.addDataProperty(dp);                    
+                        else m.addProperty(dp);                    
                     }           
                 }
             }
@@ -754,7 +730,6 @@ public class ModelFromXSD {
             }
         }
     }
- 
     
     // The model has (unpopulated) ClassType objects and (complete) Datatype objects,
     // so now we can create ObjectProperty and DataProperty objects from element
@@ -793,12 +768,12 @@ public class ModelFromXSD {
                 if (!subQ.isEmpty()) {
                     var subU   = schemaQNToURI(schE, subQ);
                     var subnsU = m.uriToNSU(subU);
-                    if (NSK_STRUCTURES == NamespaceKind.namespaceToKind(subnsU)) {
+                    if (NSK_STRUCTURES == NamespaceKind.namespaceToKindValue(subnsU)) {
                         globalAugS.add((ObjectProperty)p);
                     }
                     else {
                         var subp = m.uriToProperty(subU);
-                        p.setSubproperty(subp);
+                        p.addSubPropertyOf(subp);
                     }
                 }
                 var xedec = xs.getElementDeclaration(name, nsU);
@@ -823,7 +798,7 @@ public class ModelFromXSD {
             var appi   = new HashMap<String,String>();
             populateComponent(lp, schE, appi);
             lp.setDatatype(dt);
-            m.addDataProperty(lp);
+            m.addProperty(lp);
             var pa = new PropertyAssociation();
             pa.setProperty(lp);
             pa.setMaxOccurs("1");
@@ -834,16 +809,16 @@ public class ModelFromXSD {
     
     // Populate the ClassType objects from the xs:complexType element in the
     // schema document.  Can't get everything needed from the XSModel objects,
-    // or correlate them with with the schema DOM.  Does make you wonder if using
+    // or correlate those objects with with the schema DOM.  Does make you wonder if using
     // the Xerces XML Schema API was a mistake.  Not going to rewrite all that now!
     private void populateClassTypes () {
         for (var sd : sch.schemaDocL()) {
             if (!sch.isModelNamespace(sd)) continue;
-            var nsU  = sd.targetNamespace();               // namespace URI
+            var nsU  = sd.targetNamespace();                // namespace URI
             var vers = sd.niemVersion();
-            var appU = builtinNSU(vers, "APPINFO");        // appinfo ns URI in this document
+            var appU = builtinNSU(vers, "APPINFO");         // appinfo ns URI in this document
             var tL   = types.get(nsU);
-            for (var schE : tL) {
+            for (var schE : tL) {                           // xs:complexType element
                 var name = schE.getAttribute("name");
                 var ctU  = makeURI(nsU, name);
                 if (!allClassUs.contains(ctU)) continue;
@@ -861,68 +836,186 @@ public class ModelFromXSD {
                 if (null != basect) ct.setSubclass(basect);
                 ct.setIsAbstract(xctype.getAbstract());
                 ct.setReferenceCode(appi.getOrDefault("referenceCode", ""));
-            
-                var nodeL  = sd.evalForNodes(schE, XPR_CHILDREN);
-                for (int j = 0; j < nodeL.getLength(); j++) {
-                    var e = (Element)nodeL.item(j);
-                    var eref = e.getAttribute("ref");
-                    var docL = getDocumentation(e);
-                    var min  = e.getAttribute("minOccurs");
-                    var max  = e.getAttribute("maxOccurs");
-                    var use  = e.getAttribute("use");
-
+                
+                // Process child elements of xs:extension in this declaration.
+                // Usually one xs:sequence plus zero or more attribute references.
+                // But it could be a single xs:choice instead :-(
+                var nodeL = NIEMSchemaDocument.evalForNodes(schE, XPR_EXT_CHILDREN);
+                for (int i = 0; i < nodeL.getLength(); i++) {
+                    var e = (Element)nodeL.item(i);
                     switch (e.getLocalName()) {
-                    case "attribute":
-                    case "element":
-                        Property prop = null;
-                        var ref  = e.getAttribute("ref");
-                        var refU = sd.qnToURI(e, ref);
-                        if (ref.startsWith("xml:")) prop = getXMLproperty(ref);
-                        else if (uri2externalProp.containsKey(refU)) {
-                            prop = uri2externalProp.get(refU);
-                            m.addProperty(prop);
-                        }
-                        else {
-                            if (refU.isEmpty()) { 
-                                LOG.error("can't find QName {} in complex type {}", ref, ctU);
-                                break;
-                            }
-                            var rname  = qnToName(ref);
-                            var refnsU = m.uriToNSU(refU);
-                            if (refU.endsWith("AugmentationPoint")) break;
-                            if (!sch.isModelNamespace(refnsU)) break;
-                            prop = m.uriToProperty(refU);
-                        }
-                        var cpa  = new PropertyAssociation();
-                        cpa.setProperty(prop);
-                        cpa.setDocumentation(docL);
-                        if ("attribute".equals(e.getLocalName())) {
-                            cpa.setMaxOccurs("1");
-                            cpa.setMinOccurs("required".equals(use) ? "1" : "0");
-                        }
-                        else {
-                            var eapi = getAppinfoAttributes(e, appU);
-                            if (!max.isBlank()) cpa.setMaxOccurs(max);
-                            if (!min.isBlank()) cpa.setMinOccurs(min);
-                        }
-                        ct.propL().add(cpa);
-                        break;
-                    case "any":                 
-                    case "anyAttribute":
-                        var proc = e.getAttribute("processContents");
-                        var ncon = e.getAttribute("namespace");
-                        var ap   = new AnyProperty();
-                        if (!max.isBlank()) ap.setMaxOccurs(max);
-                        if (!min.isBlank()) ap.setMinOccurs(min);
-                        ap.setProcessCode(proc);
-                        ap.setNsConstraint(ncon);
-                        ap.setIsAttribute("anyAttribute".equals(e.getLocalName()));
-                        ct.addAnyProperty(ap);
-                        break;
+                        case "choice":       processChoice(ct, sd, e); break;
+                        case "sequence":     processSequence(ct, sd, e); break;
+                        case "attribute":    addPropAssoc(ct, sd, e); break;
+                        case "anyAttribute": addAny(ct, e); break;
                     }
                 }
             }
         }
+    }
+    
+    private Map<Set<Property>,Property> choiceSets = new HashMap<>();
+    
+    // Populate the ClassType object with a synthetic abstract property created 
+    // from the children of the xs:choice element.  If no children, do nothing.
+    // If one child, make a PropertyAssociation for it.  If more than one, make
+    // each choice a subproperty of the synthetic property.  Also remember this
+    // collection of choices so we can reuse the synthetic property.
+    private void processChoice (ClassType ct, NIEMSchemaDocument sd, Element choice) {
+        Element ref = null;
+        var min  = choice.getAttribute("minOccurs");
+        var max  = choice.getAttribute("maxOccurs");
+        var chS = new HashSet<Property>();
+        var chL = new ArrayList<Property>();
+        var nL  = choice.getChildNodes();
+        for (int i = 0; i < nL.getLength(); i++) {
+            var node = nL.item(i);
+            if (ELEMENT_NODE != node.getNodeType()) continue;
+            ref = (Element)node;
+            var prop = propFromElementRef(ct, sd, ref);
+            if (null == prop) continue;
+            chS.add(prop);
+            chL.add(prop);
+        }
+        if (0 == chS.size()) return;
+        if (1 == chS.size()) { 
+            addPropAssoc(ct, sd, ref, min, max);
+            return;
+        }
+        var synth = choiceSets.get(chS);
+        if (null == synth) {
+            var sns = ct.namespace();
+            var sname = "ChoiceAbstract_1";
+            var mct = 1;
+            while (null != m.qnToComponent(makeQN(sns.prefix(), sname))) {
+                sname = String.format("ChoiceAbstract_%d", ++mct);
+            }
+            var docS = "";
+            if (2 == chL.size()) docS = chL.get(0).qname() + " and " + chL.get(1).qname();
+            else {
+                var sj = new StringJoiner(", ");
+                for (int i = 0; i < chL.size()-1; i++)
+                    sj.add(chL.get(i).qname());
+                docS = sj + ", and " + chL.getLast().qname();
+            }
+            docS  = "A choice between " + docS;
+            synth = new Property(sns, sname);
+            synth.setIsAbstract(true);
+            synth.setIsChoice(true);
+            synth.addDocumentation(docS, "en-US");
+            for (var chP: chS) {
+                chP.addSubPropertyOf(synth);
+            }
+            m.addProperty(synth);
+            choiceSets.put(chS, synth);
+        }
+        var docL = getDocumentation(choice);        
+        var cpa = new PropertyAssociation();
+        cpa.setProperty(synth);
+        cpa.setDocumentation(docL);
+        if (!max.isBlank()) cpa.setMaxOccurs(max);
+        if (!min.isBlank()) cpa.setMinOccurs(min);
+        ct.propAssocL().add(cpa);
+    }
+    
+    // Populate the ClassType object from the children of the xs:sequence element.
+    // These can be xs:element, xs:any, or xs:choice elements.  We need the schema
+    // document object to correctly interpret the QNames in the descendants of 
+    // the xs:sequence.
+    private void processSequence (ClassType ct, NIEMSchemaDocument sd, Element seq) {
+        var childL = seq.getChildNodes();
+        for (int i = 0; i < childL.getLength(); i++) {
+            var node = childL.item(i);
+            if (ELEMENT_NODE != node.getNodeType()) continue;
+            var e = (Element)node;
+            switch (e.getLocalName()) {
+            case "choice":  processChoice(ct, sd, e); break;
+            case "element": addPropAssoc(ct, sd, e); break;       
+            case "any":     addAny(ct, e); break;
+            }
+        }
+    }
+    
+    // Populate the ClassType object with a PropertyAssociation created from
+    // the xs:element.  We need the schema document object to correctly interpret
+    // the QName in the @ref.
+    private void addPropAssoc(ClassType ct, NIEMSchemaDocument sd, Element e) {
+        var min  = e.getAttribute("minOccurs");
+        var max  = e.getAttribute("maxOccurs");
+        addPropAssoc(ct, sd, e, min, max);
+    }
+    
+    // Populate the ClassType object with a PropertyAssociation created from
+    // the xs:element.  We need the schema document object to correctly interpret
+    // the QName in the @ref.
+    private void addPropAssoc(ClassType ct, NIEMSchemaDocument sd, Element e, String min, String max) {
+        var eref = e.getAttribute("ref");
+        var docL = getDocumentation(e);
+        var use  = e.getAttribute("use");
+        var prop = propFromElementRef(ct, sd, e);
+        if (null == prop) return;
+
+        var cpa = new PropertyAssociation();
+        cpa.setProperty(prop);
+        cpa.setDocumentation(docL);
+        if ("attribute".equals(e.getLocalName())) {
+            cpa.setMaxOccurs("1");
+            cpa.setMinOccurs("required".equals(use) ? "1" : "0");
+        } 
+        else {
+            if (!max.isBlank()) cpa.setMaxOccurs(max);
+            if (!min.isBlank()) cpa.setMinOccurs(min);
+        }
+        ct.propAssocL().add(cpa);
+    }
+    
+    // Populate the ClassType object with an AnyPropery object created from 
+    // either an xs:any or xs:anyAttribute element.
+    private void addAny (ClassType ct, Element e) {
+        var proc = e.getAttribute("processContents");
+        var ncon = e.getAttribute("namespace");
+        var min = e.getAttribute("minOccurs");
+        var max = e.getAttribute("maxOccurs");
+        var ap = new AnyProperty();
+        if (!max.isBlank()) {
+            ap.setMaxOccurs(max);
+        }
+        if (!min.isBlank()) {
+            ap.setMinOccurs(min);
+        }
+        ap.setProcessCode(proc);
+        ap.setNsConstraint(ncon);
+        ap.setIsAttribute("anyAttribute".equals(e.getLocalName()));
+        ct.addAnyProperty(ap);      
+    }
+    
+    // Returns the Property object described by an xs:element reference.
+    // Returns null for augmentation points.
+    // Returns null for properties not in a model or external namespace.
+    // Logs an error and returns null for a @ref that can't be resolved.
+    private Property propFromElementRef (ClassType ct, NIEMSchemaDocument sd, Element e) {
+        Property prop = null;
+        var ref  = e.getAttribute("ref");       // QName from @ref attribute
+        var refU = sd.qnToURI(e, ref);          // URI for that QName in this document
+        if (ref.startsWith("xml:")) {
+            prop = getXMLproperty(ref);
+        } 
+        // Add external property to the model, now that we know it's used
+        else if (uri2externalProp.containsKey(refU)) {
+            prop = uri2externalProp.get(refU);
+            m.addProperty(prop);
+        }
+        else if (refU.isEmpty()) {
+            LOG.error("can't find QName {} in complex type {}", ref, ct.uri());
+            return null;
+        }
+        else {
+            var refnsU = m.uriToNSU(refU);
+            if (refU.endsWith("AugmentationPoint")) return null;
+            if (!sch.isModelNamespace(refnsU)) return null;
+            prop = m.uriToProperty(refU);
+        }
+        return prop;
     }
     
     // Turn augmentation elements and augmentation types into AugmentRecord objects
@@ -930,7 +1023,7 @@ public class ModelFromXSD {
     // (FooAugmentation, FooAugmentationPoint, FooAugmentationType) from the model.
     private static Set VALID_CODES = Set.of("ASSOCIATION", "OBJECT", "LITERAL");
     private void createAugmentRecords () {
-        for (var aprop : augPropL) {
+        for (var aprop : augPropL) {                    // augmentation properties
             ClassType atype = null;
             String gcode = null;          
             var augt   = aprop.classType();             // augmentation type; eg. j:EducationAugmentationType
@@ -941,38 +1034,43 @@ public class ModelFromXSD {
                 if (name.startsWith("Association")) gcode = "ASSOCIATION";
             }
             else {
-                var augp = aprop.subPropertyOf();       // augmentation point property
+                var subS = aprop.subPropertyOfS();
+                if (subS.size() != 1) {
+                    LOG.error(aprop.qname() + "must have exactly one @substitutionGroup value");
+                    continue;
+                }
+                var augp = subS.iterator().next();      // augmentation point Property
                 var augU = augp.uri();                  // augmentation point URI; eg. nc:EducationAugmentationPoint
                 var augmtU = replaceSuffix(augU, "AugmentationPoint", "Type"); // augmented class URI
                 atype  = m.uriToClassType(augmtU);      // augmented ClassType object                
             }
             var index  = 0;
-            for (var cpa : augt.propL()) {
+            for (var cpa : augt.propAssocL()) {
                 var pname = cpa.property().qname();
                 var arec = new AugmentRecord(cpa);
                 arec.setClassType(atype);
                 arec.addCode(gcode);
-                if (cpa.property().isAttribute()) arec.setIndex("-1");
-                else arec.setIndex(Integer.toString(index++));
+                arec.setIndex(index++);
                 augns.addAugmentRecord(arec);
             }
             m.removeObjectProperty(aprop);
         }
         // Handle elements with augmentation point substitutionGroup
         for (var p : m.propertyL()) {
-            var apoint = p.subPropertyOf();
-            if (null == apoint) continue;
-            if (!apoint.name().endsWith("AugmentationPoint")) continue;
-            var augmtU = replaceSuffix(apoint.uri(), "AugmentationPoint", "Type");
-            var atype  = m.uriToClassType(augmtU);
-            var augns = p.namespace();
-            var arec = new AugmentRecord();
-            arec.setClassType(atype);
-            arec.setProperty(p);
-            arec.setMinOccurs("0");
-            arec.setMaxOccurs("unbounded");
-            augns.addAugmentRecord(arec);
-            p.setSubproperty(null);
+            for (var apoint : p.subPropertyOfS()) {
+                if (!apoint.name().endsWith("AugmentationPoint")) continue;
+                var augmtU = replaceSuffix(apoint.uri(), "AugmentationPoint", "Type");
+                var atype  = m.uriToClassType(augmtU);
+                var augns = p.namespace();
+                var arec = new AugmentRecord();
+                arec.setClassType(atype);
+                arec.setProperty(p);
+                arec.setMinOccurs("0");
+                arec.setMaxOccurs("unbounded");
+                arec.setNamespace(augns);
+                augns.addAugmentRecord(arec);
+                p.removeSubPropertyOf(apoint);
+            }
         }
         for (var op: augPointL) m.removeObjectProperty(op);
         for (var ct: m.classTypeL())
@@ -1013,17 +1111,19 @@ public class ModelFromXSD {
                     continue;
                 }
                 var arec   = new AugmentRecord();
+                arec.setNamespace(ns);
                 arec.setClassType(ct);
                 arec.setProperty(p);
                 arec.setMaxOccurs("1");
                 arec.setMinOccurs("required".equals(use) ? "1" : "0");
+                arec.setIndex(-1);
                 if (!codes.isEmpty())
                     for (int i = 0; i < codeL.length; i++) arec.addCode(codeL[i]);
                 ns.addAugmentRecord(arec);
             }
         }
     }
-
+    
     // Turns a datatype URI into a Datatype object.  Proxy URIs are turned into
     // the XSD equivalent.  XSD and XML datatype objects aren't created in the 
     // model until they are referenced. The XML namespace isn't added to the model
@@ -1067,7 +1167,7 @@ public class ModelFromXSD {
             var name = qnToName(qname);
             dp = new DataProperty(xmlns, name);
             dp.setIsAttribute(true);
-            m.addDataProperty(dp);
+            m.addProperty(dp);
         }
         return dp;
     }
@@ -1113,7 +1213,7 @@ public class ModelFromXSD {
             var xattu = (XSAttributeUse)xobjL.item(i);
             var xatt  = xattu.getAttrDeclaration();
             var nsuri = xatt.getNamespace();
-            if (NSK_STRUCTURES != NamespaceKind.namespaceToKind(nsuri)) return true;        
+            if (NSK_STRUCTURES != NamespaceKind.namespaceToKindValue(nsuri)) return true;        
         }
         return false;
     }
@@ -1182,7 +1282,10 @@ public class ModelFromXSD {
     // Accounts for namespace URIs that don't end in "/" (grrr.)
     private XSAttributeDeclaration uriToXSAttribute (String uri) {
         int indx = uri.lastIndexOf("/");
-        if (indx < 0 || indx >= uri.length()) return null;
+        if (indx < 0 || indx >= uri.length()) {
+            indx = uri.lastIndexOf(":");
+        }
+        if (indx < 0 || indx >= uri.length()) return null; //FIXME
         var nsuri = uri.substring(0, indx+1);
         var name  = uri.substring(indx+1);
         var xobj  = xs.getAttributeDeclaration(name, nsuri);
@@ -1191,7 +1294,10 @@ public class ModelFromXSD {
     }    
     private XSTypeDefinition uriToXSType (String uri) {
         int indx = uri.lastIndexOf("/");
-        if (indx < 0 || indx >= uri.length()) return null;
+        if (indx < 0 || indx >= uri.length()) {
+            indx = uri.lastIndexOf(":");
+        }
+        if (indx < 0 || indx >= uri.length()) return null; //FIXME
         var nsuri = uri.substring(0, indx+1);
         var name  = uri.substring(indx+1);
         var xobj  = xs.getTypeDefinition(name, nsuri);
@@ -1201,21 +1307,7 @@ public class ModelFromXSD {
     private XSComplexTypeDefinition uriToXSCType (String uri) {
         return (XSComplexTypeDefinition)uriToXSType(uri);
     }
-    
-    public static void addToStringSetMap (Map<String,Set<String>> map, String key, String val) {
-        var set = map.get(key);
-        if (null == set) {
-            set = new HashSet<>();
-            map.put(key, set);
-        }
-        set.add(val);        
-    }
-    
-    public static String replaceSuffix (String s, String oSuf, String nSuf) {
-        if (s.endsWith(oSuf))
-            return s.substring(0, s.length() - oSuf.length()) + nSuf;
-        return s;
-    }
+
     
     private void dumpXSD () {
         var nsmap = sch.namespaceMap();
@@ -1255,4 +1347,5 @@ public class ModelFromXSD {
             }        }
         System.exit(0);
     }
+    
 }

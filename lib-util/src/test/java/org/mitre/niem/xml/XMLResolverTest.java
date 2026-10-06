@@ -23,74 +23,226 @@
  */
 package org.mitre.niem.xml;
 
-import java.io.File;
-import java.util.ArrayList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mitre.niem.utility.URIfuncs.FileToCanonicalURI;
-import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
-import static org.mitre.niem.xml.XMLResolver.*;
+import org.junit.jupiter.api.io.TempDir;
+import org.w3c.dom.ls.LSInput;
 
-/**
- *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
- */
-public class XMLResolverTest {
-    private final static String resDN  = "src/test/resources/";
-    private final static File resDF  = new File(resDN);
-    private final static String resDUs = FileToCanonicalURI(resDF).toString();
-        
-    public XMLResolverTest() {
-    }
+class XMLResolverTest {
+
+    @TempDir
+    Path tempDir;
 
     @Test
-    public void testCat1() throws Exception {
-        var args = List.of(resDN + "cat/cat1.xml");
-        var r    = new XMLResolver(args);
-//        var msg  = r.allMessages();
-//        var cats = r.allCatalogs();
-//        var maps = r.allResolutions();
-        var res = r.resolveURI("http://example.com/goodXsTest/");
-        var rF  = URIStringToFile(res);
-//        assertTrue(msg.isEmpty());
-        assertTrue(rF.canRead());
-        assertEquals(REMOTE_MAP, r.resolveURI("http://example.com/remote-resource/"));
-        assertEquals(REMOTE_MAP, r.resolveURI("http://example.com/other-remote/"));
-        assertEquals(NO_MAP, r.resolveURI("boogla"));
-        assertEquals(resDUs + "xsd/niem/utility/structures.xsd", 
-            r.resolveURI("https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"));
-//        assertThat(cats).containsExactlyInAnyOrder(
-//                resDUs + "cat/cat1.xml",
-//                resDUs + "xsd/niem/xml-catalog.xml",
-//                resDUs + "xsd/niem/codes/genc/xml-catalog.xml" );
-//        assertEquals(maps.get("http://example.com/remote-resource/"), "REMOTE MAP");
-//        assertEquals(maps.get("http://example.com/other-remote/"), "REMOTE MAP");
-//        assertEquals(maps.get("boogla"), "NO MAP");
-//        assertEquals(5, maps.size());   
+    void resolveUriReturnsNoMapForUnknownNamespace() {
+        var resolver = new XMLResolver(List.of());
+
+        var result = resolver.resolveURI("http://example.com/ns/unknown");
+
+        assertEquals(XMLResolver.NO_MAP, result);
+        assertEquals(XMLResolver.NO_MAP,
+            resolver.allResolutions().get("http://example.com/ns/unknown"));
     }
-    
+
     @Test
-    public void testBad1 () throws Exception {
-//        String[] args = { resDN + "cat/bad1.xml" };
-//        var r   = new XMLResolver(args);
-//        var cm  = r.allMessages();
-//        assertEquals(0, r.allCatalogs().size());
-//        assertThat(cm).anySatisfy(s -> s.contains("Invalid content"));
+    void resolveUriReturnsLocalFileUriForMappedNamespace() throws Exception {
+        var schemaFile = writeFile(
+            "mapped.xsd",
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                       targetNamespace="http://example.com/ns/test"/>
+            """
+        );
+
+        var catalogFile = writeFile(
+            "catalog.xml",
+            catalogForLocalUri("http://example.com/ns/test", schemaFile.toUri().toString())
+        );
+
+        var resolver = new XMLResolver(List.of(catalogFile.toUri().toString()));
+
+        var result = resolver.resolveURI("http://example.com/ns/test");
+
+        assertEquals(schemaFile.toUri().toString(), result);
+        assertEquals(result, resolver.allResolutions().get("http://example.com/ns/test"));
     }
-    
+
     @Test
-    public void testBad2 () throws Exception {
-//        String[] args = { resDN + "cat/bad2.xml" };
-//        var r   = new XMLResolver(args);
-//        var cm  = r.allMessages();
-//        var ac  = new ArrayList<>(r.allCatalogs());
-//        var c   = ac.get(0);    
-//        assertEquals(1, ac.size());
-//        assertTrue(c.endsWith("bad2.xml"));
-//        assertThat(cm).anySatisfy(s -> s.contains("not found"));
+    void resolveUriReturnsRemoteMapForRemoteResolution() throws Exception {
+        var catalogFile = writeFile(
+            "catalog.xml",
+            catalogForLocalUri("http://example.com/ns/remote", "https://example.com/remote.xsd")
+        );
+
+        var resolver = new XMLResolver(List.of(catalogFile.toUri().toString()));
+
+        var result = resolver.resolveURI("http://example.com/ns/remote");
+
+        assertEquals(XMLResolver.REMOTE_MAP, result);
+        assertEquals(XMLResolver.REMOTE_MAP,
+            resolver.allResolutions().get("http://example.com/ns/remote"));
     }
-    
+
+    @Test
+    void resolveResourceReturnsNullForBlankOrUnknownNamespace() {
+        var resolver = new XMLResolver(List.of());
+
+        assertNull(resolver.resolveResource(null, null, null, null, null));
+        assertNull(resolver.resolveResource(null, " ", null, null, null));
+        assertNull(resolver.resolveResource(null, "http://example.com/ns/missing", null, null, null));
+    }
+
+    @Test
+    void resolveResourceReturnsLsInputForMappedNamespace() throws Exception {
+        var schemaFile = writeFile(
+            "mapped.xsd",
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                       targetNamespace="http://example.com/ns/test"/>
+            """
+        );
+
+        var catalogFile = writeFile(
+            "catalog.xml",
+            catalogForLocalUri("http://example.com/ns/test", schemaFile.toUri().toString())
+        );
+
+        var resolver = new XMLResolver(List.of(catalogFile.toUri().toString()));
+
+        LSInput input = resolver.resolveResource(
+            "http://www.w3.org/2001/XMLSchema",
+            "http://example.com/ns/test",
+            "pub-id",
+            "sys-id",
+            "file:/base/catalog.xml"
+        );
+
+        assertNotNull(input);
+        assertEquals("pub-id", input.getPublicId());
+        assertEquals(schemaFile.toUri().toString(), input.getSystemId());
+        assertEquals("file:/base/catalog.xml", input.getBaseURI());
+    }
+
+    @Test
+    void allCatalogsReturnsInitialCatalogs() throws Exception {
+        var catalog1 = writeFile(
+            "catalog1.xml",
+            catalogForLocalUri("http://example.com/ns/one", "file:/tmp/one.xsd")
+        );
+        var catalog2 = writeFile(
+            "catalog2.xml",
+            catalogForLocalUri("http://example.com/ns/two", "file:/tmp/two.xsd")
+        );
+
+        var resolver = new XMLResolver(List.of(
+            catalog1.toUri().toString(),
+            catalog2.toUri().toString()
+        ));
+
+        var catalogs = resolver.allCatalogs();
+
+        assertEquals(2, catalogs.size());
+        assertTrue(catalogs.contains(catalog1.toUri().toString()));
+        assertTrue(catalogs.contains(catalog2.toUri().toString()));
+    }
+
+    @Test
+    void allMessagesIsInitiallyEmpty() {
+        var resolver = new XMLResolver(List.of());
+
+        assertTrue(resolver.allMessages().isEmpty());
+    }
+
+    @Test
+    void allResolutionsReturnsImmutableMap() {
+        var resolver = new XMLResolver(List.of());
+        resolver.resolveURI("http://example.com/ns/unknown");
+
+        var map = resolver.allResolutions();
+
+        assertThrows(UnsupportedOperationException.class,
+            () -> map.put("http://example.com/ns/new", "file:/tmp/new.xsd"));
+    }
+
+    @Test
+    void allCatalogsReturnsImmutableSet() {
+        var resolver = new XMLResolver(List.of());
+
+        var catalogs = resolver.allCatalogs();
+
+        assertThrows(UnsupportedOperationException.class,
+            () -> catalogs.add("file:/tmp/catalog.xml"));
+    }
+
+    @Test
+    void allMessagesReturnsImmutableList() {
+        var resolver = new XMLResolver(List.of());
+
+        var messages = resolver.allMessages();
+
+        assertThrows(UnsupportedOperationException.class,
+            () -> messages.add("message"));
+    }
+
+    @Test
+    void repeatedResolutionUsesCachedValue() throws Exception {
+        var schemaFile = writeFile(
+            "mapped.xsd",
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                       targetNamespace="http://example.com/ns/test"/>
+            """
+        );
+
+        var catalogFile = writeFile(
+            "catalog.xml",
+            catalogForLocalUri("http://example.com/ns/test", schemaFile.toUri().toString())
+        );
+
+        var resolver = new XMLResolver(List.of(catalogFile.toUri().toString()));
+
+        var first = resolver.resolveURI("http://example.com/ns/test");
+        var second = resolver.resolveURI("http://example.com/ns/test");
+
+        assertEquals(first, second);
+        assertEquals(1, resolver.allResolutions().size());
+    }
+
+    @Test
+    void protectedNoArgConstructorWorksForSamePackageTests() {
+        var resolver = new XMLResolver();
+
+        assertNotNull(resolver);
+        assertTrue(resolver.allCatalogs().isEmpty());
+        assertTrue(resolver.allMessages().isEmpty());
+        assertFalse(resolver.allResolutions().containsKey("http://example.com/ns/test"));
+    }
+
+    private Path writeFile(String name, String content) throws Exception {
+        var path = tempDir.resolve(name);
+        Files.writeString(path, content, StandardCharsets.UTF_8);
+        return path;
+    }
+
+    private static String catalogForLocalUri(String namespaceUri, String resolvedUri) {
+        return """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+              <uri name="%s" uri="%s"/>
+            </catalog>
+            """.formatted(namespaceUri, resolvedUri);
+    }
 }

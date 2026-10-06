@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -57,10 +58,15 @@ public class CanonicalXSD {
         dbf.setNamespaceAware(true);
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document idom = db.parse(is);
-        Document odom = db.newDocument();
 
         Element iroot = idom.getDocumentElement();
         String ns = iroot.getNamespaceURI();
+        if (!W3C_XML_SCHEMA_NS_URI.equals(ns) || !"schema".equals(iroot.getLocalName())) {
+            XMLWriter.writeXML(idom, ow);
+            return;
+        }
+        
+        Document odom = db.newDocument();
         Element oroot = odom.createElementNS(iroot.getNamespaceURI(), iroot.getTagName());
         odom.appendChild(oroot);
 
@@ -128,9 +134,8 @@ public class CanonicalXSD {
         for (var e : attributes)  oroot.appendChild(e);
         for (var e : elements)    oroot.appendChild(e);
 
-        var xsdw = new XSDWriter();
-        xsdw.writeXML(odom, ow);
-        ow.close();
+        var xw = new XSDWriter();
+        xw.writeXML(odom, ow);
     }
 
 }

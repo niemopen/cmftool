@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,23 @@
  */
 package org.mitre.niem.cmftool;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameters;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import javax.xml.parsers.ParserConfigurationException;
+import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.rdf.ModelToRDF;
-import org.mitre.niem.utility.JCUsageFormatter;
+import org.mitre.niem.utility.AtomicPathWriter;
 import org.mitre.niem.xml.ParserBootstrap;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
 
 /**
@@ -44,98 +48,108 @@ import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_ALL;
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 
-@Parameters(commandDescription = "generate model RDF from CMF")
+@Command(
+    name = "m2m",
+    description = {
+        "generate model RDF from CMF",
+        "Use '--' before model filenames beginning with '-'.",
+        "Use '-o -' to write RDF to standard output."
+    },
+    mixinStandardHelpOptions = true,
+    sortOptions = false
+)
+public class CmdCMFtoRDF implements Callable<Integer> {
 
+    @Option(
+        names = {"-o", "--output"},
+        paramLabel = "<path>",
+        description = "output file, or '-' for stdout (the default)"
+    )
+    private Path outputPath = null;
 
-public class CmdCMFtoRDF implements JCCommand {
+    @Parameters(
+        arity = "1..*",
+        paramLabel = "modelFile.cmf...",
+        description = "one or more model files; use '--' before filenames beginning with '-'"
+    )
+    private List<Path> modelPaths;
 
-    @com.beust.jcommander.Parameter(order = 1, names = "-o", description = "name of output file")
-    private String modelFN = null;
-     
-    @com.beust.jcommander.Parameter(order = 2, names = {"-h","--help"}, description = "display this usage message", help = true)
-    boolean help = false;
-        
-    @com.beust.jcommander.Parameter(description = "modelFile.cmf...")
-    private List<String> mainArgs;
-    
-    CmdCMFtoRDF () { }
-    
-    CmdCMFtoRDF (JCommander jc) { }
-    
-    public static void main (String[] args) {       
-        var obj = new CmdCMFtoRDF();
-        obj.runMain(args);
-    }
-    
     @Override
-    public void runMain (String[] args) {
-        var jc = new JCommander(this);
-        var uf = new JCUsageFormatter(jc); 
-        jc.setUsageFormatter(uf);
-        jc.setProgramName("m2m");
-        jc.parse(args);
-        run(jc);
-    }
-    
-    @Override
-    public void runCommand (JCommander cob) {
-        cob.setProgramName("cmftool m2m");
-        run(cob);
-    }    
-    
-    private void run (JCommander cob)  {
-
-        if (help) {
-            cob.usage();
-            System.exit(0);
-        }
-        if (mainArgs == null || mainArgs.isEmpty()) {
-            cob.usage();
-            System.exit(1);
-        }
-        // Argument of "-" signals end of arguments, allows "-foo" filenames
-        String na = mainArgs.get(0);
-        if (na.startsWith("-")) {
-            if (na.length() == 1) {
-                mainArgs.remove(0);
-            } else {
-                System.err.println("Unknown option: " + na);
-                cob.usage();
-                System.exit(1);
-            }
-        }       
+    public Integer call() {
         // Make sure the Xerces parsers can be initialized
         try {
             ParserBootstrap.init(BOOTSTRAP_ALL);
         } catch (ParserConfigurationException ex) {
             System.err.println("Internal parser error: " + ex.getMessage());
-            System.exit(1);
+            return 1;
         }
-        // Make sure output model file is writable      
-        var ow = new OutputStreamWriter(System.out);
-        if (null != modelFN) try {
-            var os = new FileOutputStream(modelFN);
-            ow = new OutputStreamWriter(os, "UTF-8");
-        } catch (IOException ex) {
-            System.err.println(String.format("Can't write to output file %s: %s", modelFN, ex.getMessage()));
-            System.exit(1);            
-        } 
-        
+
+        // Validate model input paths before attempting to read them
+        int pathValidation = validateModelPaths(modelPaths);
+        if (pathValidation != 0) {
+            return pathValidation;
+        }
+
         // Read the model object from the model instance file
         // Read the model object from the model file(s)
-        var mr = new ModelXMLReader();  
-        var fileL = new ArrayList<File>();
-        for (var str : mainArgs) fileL.add(new File(str));
-        var model = mr.readFiles(fileL);
-        
+        final var mr = new ModelXMLReader();
+        final Model model;
+        try {
+            model = mr.readFiles(
+                modelPaths.stream()
+                    .map(Path::toFile)
+                    .collect(Collectors.toList())
+            );
+        } catch (Exception ex) {
+            System.err.println(
+                "Can't read model file(s) "
+                    + modelPaths.stream().map(Path::toString).collect(Collectors.joining(", "))
+                    + ": " + ex.getMessage()
+            );
+            return 1;
+        }
+
         // Generate model RDF
         try {
-            var js = new ModelToRDF(model);
-            js.writeRDF(ow);
-            ow.close();
+            var rdf = new ModelToRDF(model);
+            if (isStdout(outputPath)) {
+                // Write directly to stdout; do not close System.out.
+                var ow = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
+                rdf.writeRDF(ow);
+                ow.flush();
+            } else {
+                AtomicPathWriter.writeAtomically(outputPath, StandardCharsets.UTF_8, ow -> {
+                    rdf.writeRDF(ow);
+                });
+            }
+        } catch (Exception ex) {
+            System.err.println("Can't generate RDF: " + ex.getMessage());
+            return 1;
         }
-        catch (IOException ex) {}
 
-        System.exit(0);
-    }    
+        return 0;
+    }
+
+    private int validateModelPaths(List<Path> paths) {
+        for (var path : paths) {
+            if (!Files.exists(path)) {
+                System.err.println("Model file does not exist: " + path);
+                return 2;
+            }
+            if (!Files.isRegularFile(path)) {
+                System.err.println("Model path is not a regular file: " + path);
+                return 2;
+            }
+            if (!Files.isReadable(path)) {
+                System.err.println("Model file is not readable: " + path);
+                return 2;
+            }
+        }
+        return 0;
+    }
+
+    private boolean isStdout(Path path) {
+        return path == null || "-".equals(path.toString());
+    }
+
 }

@@ -36,19 +36,9 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="ObjType">
-    <xs:complexContent>
-      <xs:extension base="structures:ObjectType">
-        <xs:sequence>
-          <xs:element ref="test:DataProp"/>
-          <xs:element ref="test:ObjAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
   <xs:complexType name="ObjectAugmentationType">
     <xs:annotation>
-      <xs:documentation>A data type for additional information about an objectaugmentationtype.</xs:documentation>
+      <xs:documentation>A data type for additional information about all ordinary objects.</xs:documentation>
     </xs:annotation>
     <xs:complexContent>
       <xs:extension base="structures:AugmentationType">
@@ -59,15 +49,15 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:complexType name="SCOneType">
-    <xs:simpleContent>
-      <xs:restriction base="niem-xs:string"/>
-    </xs:simpleContent>
-  </xs:complexType>
-  <xs:complexType name="SCTwoType">
-    <xs:simpleContent>
-      <xs:restriction base="niem-xs:string"/>
-    </xs:simpleContent>
+  <xs:complexType name="ObjType">
+    <xs:complexContent>
+      <xs:extension base="structures:ObjectType">
+        <xs:sequence>
+          <xs:element ref="test:DataProp"/>
+          <xs:element ref="test:ObjAugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
   </xs:complexType>
   <xs:complexType name="TestAssociationType">
     <xs:complexContent>
@@ -80,6 +70,16 @@
     </xs:complexContent>
   </xs:complexType>
   <xs:attribute name="attProp" type="xs:token"/>
+  <xs:complexType name="SCOneType">
+    <xs:simpleContent>
+      <xs:restriction base="niem-xs:string"/>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="SCTwoType">
+    <xs:simpleContent>
+      <xs:restriction base="niem-xs:string"/>
+    </xs:simpleContent>
+  </xs:complexType>
   <xs:element name="CCOneAugmentationPoint" abstract="true">
     <xs:annotation>
       <xs:documentation>An augmentation point for CCOneType.</xs:documentation>
@@ -96,12 +96,12 @@
       <xs:documentation>An augmentation point for ObjType.</xs:documentation>
     </xs:annotation>
   </xs:element>
-  <xs:element name="ObjProp" type="test:ObjType" nillable="true"/>
   <xs:element name="ObjectAugmentation" type="test:ObjectAugmentationType" substitutionGroup="structures:ObjectAugmentationPoint">
     <xs:annotation>
-      <xs:documentation>Additional information about an objectaugmentationtype.</xs:documentation>
+      <xs:documentation>Additional information about all ordinary objects.</xs:documentation>
     </xs:annotation>
   </xs:element>
+  <xs:element name="ObjProp" type="test:ObjType" nillable="true"/>
   <xs:element name="TestAssociationAugmentationPoint" abstract="true">
     <xs:annotation>
       <xs:documentation>An augmentation point for TestAssociationType.</xs:documentation>

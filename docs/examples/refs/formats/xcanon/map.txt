@@ -1,0 +1,29 @@
+PREFIX msg          http://example.com/Refs/1.0/
+PREFIX nc           https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/
+PREFIX sj           http://example.com/Refs/1.0/xsimple
+PREFIX structures   https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/
+# FromQName                      ToQName
+msg:Message                      sj:Message
+msg:Metadata                     sj:Metadata
+msg:secrecyCode                  sj:secrecyCode
+nc:CommentText                   sj:CommentText
+nc:EducationDescriptionText      sj:EducationDescriptionText
+#nc:Person                        sj:Person
+nc:PersonFullName                sj:PersonFullName
+nc:PersonGivenName               sj:PersonGivenName
+nc:PersonMiddleName              sj:PersonMiddleName
+nc:PersonName                    sj:PersonName
+nc:PersonSurName                 sj:PersonSurName
+nc:SourceIDText                  sj:SourceIDText
+nc:personNameInitialIndicator    sj:personNameInitialIndicator
+msg:MessageType                  sj:MessageType
+msg:MetadataType                 sj:MetadataType
+nc:CommentType                   sj:CommentType
+nc:PersonNameTextType            sj:PersonNameTextType
+nc:PersonNameType                sj:PersonNameType
+nc:PersonType                    sj:PersonType
+nc:ProperNameTextType            sj:ProperNameTextType
+nc:TextType                      sj:TextType
+structures:id                    id
+structures:ref                   ref
+structures:uri                   uri

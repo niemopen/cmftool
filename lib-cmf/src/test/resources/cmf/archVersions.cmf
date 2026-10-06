@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Model 
+<Model
   xmlns="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
   xmlns:cmf="https://docs.oasis-open.org/niemopen/ns/specification/cmf/1.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
@@ -365,6 +365,7 @@
   <Class structures:id="test.OneTestType">
     <Name>OneTestType</Name>
     <Namespace structures:ref="test" xsi:nil="true"/>
+    <ReferenceCode>INTERNAL</ReferenceCode>
     <ChildPropertyAssociation>
       <ObjectProperty structures:ref="nc.PersonName" xsi:nil="true"/>
       <MinOccursQuantity>1</MinOccursQuantity>

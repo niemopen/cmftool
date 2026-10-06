@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.mitre.niem.utility.MapToSet;
 import static org.mitre.niem.xml.XMLSchemaDocument.makeQN;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeURI;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToName;
 import static org.mitre.niem.xml.XMLSchemaDocument.qnToPrefix;
 import org.mitre.niem.xsd.NamespaceKind;
-import org.mitre.niem.xsd.NamespaceMap;
 
 /**
  * A class for a Model object in a CMF model.
@@ -69,14 +71,24 @@ public class Model extends CMFObject {
     private final Map<String,Datatype> dtypeMap         = new HashMap<>();  // uri -> Datatype
     private final Map<String,ObjectProperty>opropMap    = new HashMap<>();  // uri -> ObjectProperty
     private final Map<String,Property> propMap          = new HashMap<>();  // uri -> Property
-    private List<Component> ordComp      = null;
-    private List<Namespace> ordNS        = null;
+    private List<Component> ordComp                     = null;             // sorted list of components
+    private List<Namespace> ordNS                       = null;             // sorted list of namespaces
+    private MapToSet<Property,Property> dirSubS         = null;             // all direct subproperties
+    private MapToSet<Property,Property> allSubS         = null;             // all direct and indirect subproperties
     
+    public NamespaceMap nsmap()                         { return nsmap; }
+    
+    // Returns a list of model objects.
+    // In general you must not modify collections returned by CMF objects,
+    // or the objects in those collections.
     public List<ClassType> classTypeL ()                { return new ArrayList<>(classMap.values()); }
     public List<Datatype> datatypeL ()                  { return new ArrayList<>(dtypeMap.values()); }
     public List<Property> propertyL ()                  { return new ArrayList<>(propMap.values()); }
     public List<DataProperty> dataPropertyL ()          { return new ArrayList<>(dpropMap.values()); }
-    
+    public Set<Namespace> namespaceSet ()               { return Collections.unmodifiableSet(nsS); }
+     
+    // Get a model object from its QName
+    // Returns null if no such object in model
     public Component qnToComponent (String qn)          { return compMap.get(qnToURI(qn)); }
     public ClassType qnToClassType (String qn)          { return classMap.get(qnToURI(qn)); }
     public DataProperty qnToDataProperty (String qn)    { return dpropMap.get(qnToURI(qn)); }
@@ -84,6 +96,8 @@ public class Model extends CMFObject {
     public ObjectProperty qnToObjectProperty (String qn){ return opropMap.get(qnToURI(qn)); }
     public Property qnToProperty (String qn)            { return propMap.get(qnToURI(qn)); } 
     
+    // Get a model object from its URI
+    // Returns null if no such object in model
     public Component uriToComponent (String uri)        { return compMap.get(uri); }
     public ClassType uriToClassType (String uri)        { return classMap.get(uri); }
     public DataProperty uriToDataProperty (String uri)  { return dpropMap.get(uri); }
@@ -91,38 +105,20 @@ public class Model extends CMFObject {
     public ObjectProperty uriToObjectProperty (String uri){ return opropMap.get(uri); }
     public Property uriToProperty (String uri)          { return propMap.get(uri); }
     
-    public String nsUToPrefix (String p)                { return nsmap.getURI(p); }
-    public String prefixToNSU (String u)                { return nsmap.getPrefix(u); }
-    public Namespace nsUToNamespaceObj (String u)       { return uri2ns.get(u); }
-    public Namespace prefixToNamespaceObj (String p) {
-        var uri = nsmap.getURI(p);
+    // Convenience functions for namespace prefixes and URIs.
+    public String nsUToPrefix (String p)                { return nsmap.getPrefix(p); }
+    public String prefixToNSU (String u)                { return nsmap.getURI(u); }
+
+    // Returns the namespace object corresponding to either the namespace
+    // prefix or the namespace URI.  Returns null if no such object.
+    public Namespace namespaceObj (String preOrURI) {
+        if (preOrURI.contains(":")) return uri2ns.get(preOrURI);
+        var uri = nsmap.getURI(preOrURI);
         if (null == uri) return null;
         return uri2ns.get(uri);
     }
-    public Namespace namespaceObj (String preOrURI) {
-        if (preOrURI.contains(":")) return nsUToNamespaceObj(preOrURI);
-        return prefixToNamespaceObj(preOrURI);
-    }
-    public Set<Namespace> namespaceSet ()               { return nsS; }
     
-    
-    /**
-     * Constructs a component URI from a namespace URI and local name.
-     * @param nsU
-     * @param lname
-     * @return 
-     */
-    public static String makeURI (String nsU, String lname) {
-        if (nsU.startsWith("urn:")) return nsU + ":" + lname;   // urn:some:NS:lname
-        if (nsU.endsWith("/"))      return nsU + lname;         // http://someNS/lname
-        return nsU + "/" + lname;
-    }
-    
-    /**
-     * Returns the component URI corresponding to a QName.
-     * @param qname
-     * @return 
-     */
+    // Conversions between component URI and QName
     public String qnToURI (String qname) {
         var pre = qnToPrefix(qname);
         var ln  = qnToName(qname);
@@ -130,13 +126,6 @@ public class Model extends CMFObject {
         if (null == nsU || nsU.isEmpty()) return "";
         return makeURI(nsU, ln);      
     }
-    
-    /**
-     * Returns the QName corresponding to a component URI.
-     * Returns the empty string if the component's namespace is not in the model.
-     * @param uri
-     * @return 
-     */
     public String uriToQN (String uri) {
         if (null == uri || uri.isEmpty()) return "";
         var nsU = uriToNSU(uri);
@@ -145,6 +134,9 @@ public class Model extends CMFObject {
         if (null == pre || pre.isEmpty()) return "";
         return makeQN(pre, ln);
     }
+    
+    // Routines to extract namespace URI from component URI.
+    // URNs and namespace URIs that don't end in a slash make this hard.
     
     /**
      * Returns the namespace object given a component URI in the model.
@@ -175,7 +167,7 @@ public class Model extends CMFObject {
         int indx = 0;
         if (uri.startsWith("urn:")) indx = uri.lastIndexOf(":");
         else indx = uri.lastIndexOf("/");
-        if (indx < 0 || indx >= uri.length()) return "";
+        if (indx < 0 || indx >= uri.length()) return "";    // not a component URI
         var nsU  = uri.substring(0, indx+1);
         var nsU2 = nsU.substring(0, nsU.length()-1);
         if (nsmap.hasURI(nsU)) return nsU;              // http://someNS/
@@ -200,11 +192,14 @@ public class Model extends CMFObject {
         return uri.substring(indx+1);
     }
 
+    // Routines to add and remove objects from the model.
+    // The cached ordered lists of namespaces and components is recomputed
+    // after any change.
    
     public void addNamespace (Namespace n) throws CMFException {
         if (null == n) return;
         if (uri2ns.containsKey(n.uri())) return;
-        var cnsuri = nsmap.getPrefix(n.prefix());
+        var cnsuri = nsmap.getURI(n.prefix());
         if (null != cnsuri && !n.uri().equals(cnsuri)) {
             throw new CMFException(String.format(
                 "Can't add namespace %s=%s (prefix already assigned to %s)",
@@ -217,6 +212,14 @@ public class Model extends CMFObject {
         n.setModel(this);
     }
     
+    public void addComponent (Component c) {
+        if (c instanceof ClassType ct)           addClassType(ct);
+        else if (c instanceof Datatype dt)       addDatatype(dt);
+        else if (c instanceof DataProperty dp)   addProperty(dp);
+        else if (c instanceof ObjectProperty op) addProperty(op);
+        else if (c instanceof Property p)        addProperty(p);
+    }
+    
     public void addClassType (ClassType c) {
         if (null == c) return;
         compMap.put(c.uri(), c); 
@@ -225,13 +228,13 @@ public class Model extends CMFObject {
         c.setModel(this);
     }
     
-    public void addDataProperty (DataProperty c) {
-        if (null == c) return;
-        compMap.put(c.uri(), c); 
-        propMap.put(c.uri(), c);
-        dpropMap.put(c.uri(), c);
+    public void addProperty (DataProperty p) {
+        if (null == p) return;
+        compMap.put(p.uri(), p); 
+        propMap.put(p.uri(), p);
+        dpropMap.put(p.uri(), p);
         ordComp = null;       
-        c.setModel(this);
+        p.setModel(this);
     }
     
     public void addDatatype (Datatype c) {
@@ -242,18 +245,20 @@ public class Model extends CMFObject {
         c.setModel(this);
     }
     
-    public void addObjectProperty (ObjectProperty c) {
-        if (null == c) return;
-        compMap.put(c.uri(), c); 
-        propMap.put(c.uri(), c);
-        opropMap.put(c.uri(), c);
+    public void addProperty (ObjectProperty p) {
+        if (null == p) return;
+        compMap.put(p.uri(), p); 
+        propMap.put(p.uri(), p);
+        opropMap.put(p.uri(), p);
         ordComp = null;        
-        c.setModel(this);
+        p.setModel(this);
     }
     
     public void addProperty (Property p) {
-        if (p.isDataProperty()) addDataProperty((DataProperty) p);
-        else addObjectProperty((ObjectProperty)p);
+        compMap.put(p.uri(), p);
+        propMap.put(p.uri(), p);
+        ordComp = null;
+        p.setModel(this);
     }
     
     public void removeClassType (ClassType ct) {
@@ -276,11 +281,12 @@ public class Model extends CMFObject {
         opropMap.remove(c.uri());
         ordComp = null;
     }
-  
-    public void componentUpdate () {
-        ordComp = null;
-    }
     
+    // Called by namespace or component objects when a change invalidates the sorted list
+    public void changeNamespace ()      { ordNS = null; }
+    public void changeComponent ()      { ordComp = null; }
+
+    // Returns the cached sorted list of namespace objects
     public List<Namespace> namespaceList () {
         if (null != ordNS) return ordNS;
         ordNS = new ArrayList<>(nsS);
@@ -288,6 +294,9 @@ public class Model extends CMFObject {
         return ordNS;
     }
     
+    // Returns the cached sorted list of model components.
+    // Components are ordered first by namespace prefix, then by case-insensitive
+    // natural order; eg. "Foo7Type" comes before "Foo11Type".
     public List<Component> componentList () {
         if (null != ordComp) return ordComp;
         ordComp = new ArrayList<>();
@@ -298,7 +307,129 @@ public class Model extends CMFObject {
         Collections.sort(ordComp);
         return ordComp;
     }
+    
+    public Set<Component> componentSet () {
+        return new HashSet<>(compMap.values());
+    }
+    
+    // CMF records subproperties from child to parent; ie. subPropertyOf.
+    // These routines compute subproperties in the other direction, from
+    // parent to children.  This has to be done at the model level.
+    // Augmentation points and augmentation elements are not model objects
+    // and are not included here.
 
+    /**
+     * Returns the set of Property objects that are a subproperty of the
+     * argument.  Set doesn't include the argument object.
+     * @param p
+     * @return set of direct subproperties
+     */
+    public Set<Property> directSubProps (Property p) {
+        if (null == dirSubS) {
+            dirSubS = new MapToSet<>();
+            for (var pp : propMap.values()) {
+                for (var spof : pp.subPropertyOfS()) {
+                    dirSubS.add(spof, pp);              // pp is a direct subprop of spof
+                }
+            }
+        }
+        return dirSubS.get(p);
+    }
+    
+    /**
+     * Returns the set including the argument Property, all of its 
+     * subproperties, and their subproperties, to infinity and beyond!
+     * @param p
+     * @return set of all subproperties
+     */
+    public Set<Property> allSubProps (Property p) {
+        if (null == allSubS) allSubS = new MapToSet<>();
+        if (allSubS.containsKey(p)) return allSubS.get(p);
+        var res  = allSubS.get(p);
+        var seen = new HashSet<Property>();
+        var todo = new Stack<Property>();
+        todo.add(p);
+        while (!todo.empty()) {
+            var np = todo.removeFirst();
+            if (seen.contains(np)) continue;
+            res.add(np);
+            seen.add(np);
+            todo.addAll(directSubProps(np));
+        }
+        return res;
+    }
+    
+    // Call this to invalidate the subproperty cache.
+    public void subPropChange () { 
+        dirSubS = null;
+        allSubS = null;
+    }
+    
+    
+    /**
+     * Returns the set of model components required for the specified
+     * message property.  That is the message property, its class, all of
+     * the properties of that class, the class or datatype of those properties,
+     * and so forth.
+     * @param msgProp message property
+     * @return set of model components
+     */
+    public Set<Component> messageComponents (ObjectProperty msgProp) {
+        return messageComponents(Set.of(msgProp));
+    }
+    
+    /**
+     * Returns the set of model components required for the specified
+     * message properties.  That is the message property, its class, all of
+     * the properties of that class, the class or datatype of those properties,
+     * and so forth.  Also includes any augmentations to those classes.
+     * @param msgPropS set of message properties
+     * @return set of model components
+     */
+    public Set<Component> messageComponents (Set<ObjectProperty> msgPropS) {
+        var todo = new Stack<Component>();
+        var res  = new HashSet<Component>();
+        var wlkF = true;
+        for (var p : msgPropS) todo.push(p);
+        while (wlkF) {
+            wlkF = false;
+            walkComponents(todo, res);
+            for (var ns : namespaceSet()) {
+                for (var arec : ns.augL()) {
+                    if (res.contains(arec.classType()) || !arec.codeS().isEmpty()) {
+                        if (!res.contains(arec.property())) {
+                            todo.add(arec.property());
+                            wlkF = true;
+                        }
+                    }
+                }
+            }
+        }
+        return res;
+    }
+    
+    private void walkComponents (Stack<Component> todo, Set<Component> res) {
+        while (!todo.isEmpty()) {
+            var c  = todo.pop();
+            if (null == c) continue;
+            if (res.contains(c)) continue;
+            var cU = c.uri();
+            res.add(c);
+            if (c instanceof DataProperty dp)        todo.push(dp.datatype());
+            else if (c instanceof ObjectProperty op) todo.push(op.classType());
+            else if (c instanceof ListType lt)       todo.push(lt.itemType());
+            else if (c instanceof Union u)           for (var mt : u.memberL()) todo.push(mt);
+            else if (c instanceof Restriction r)     todo.push(r.base());
+            else if (c instanceof ClassType ct) {
+                todo.push(ct.subClassOf());
+                for (var pa : ct.propAssocL()) {
+                    todo.push(pa.property());
+                }
+            }
+        }         
+    }
+    
+    // Routines for reading model objects from CMF-XML.
 
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {

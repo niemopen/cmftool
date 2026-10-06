@@ -25,6 +25,7 @@ package org.mitre.niem.rdf;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import org.mitre.niem.cmf.Component;
 import org.mitre.niem.cmf.Datatype;
@@ -48,14 +49,14 @@ public class ModelToRDF {
         this.m = m;
     }
     
-    public void writeRDF (OutputStreamWriter ow) throws IOException {
+    public void writeRDF (Writer ow) throws IOException {
         writeNamespaces(ow);
         writeProperties(ow);
         writeClasses(ow);
         writeDatatypes(ow);
     }
     
-    private void writeNamespaces (OutputStreamWriter ow) throws IOException {
+    private void writeNamespaces (Writer ow) throws IOException {
         for (Namespace ns : m.namespaceList()) {
             ow.write(String.format("@prefix %-15s <%s> .\n", 
                     ns.prefix()+":", 
@@ -73,21 +74,21 @@ public class ModelToRDF {
         String rv = null;
         if (null != p.classType()) rv = "owl:ObjectProperty";
         else if (null != p.datatype()) rv = "owl:DataProperty";
-        else {
-            for (var op : m.propertyL()) {
-                if (op.subPropertyOf() == p) {
-                    String rv2 = propertyKind(op);
-                    if (null != rv2) {
-                        rv = rv2;
-                        break;
-                    }
-                }
-            }
+        else { // TODO
+//            for (var op : m.propertyL()) {
+//                if (op.subPropertyOf() == p) {
+//                    String rv2 = propertyKind(op);
+//                    if (null != rv2) {
+//                        rv = rv2;
+//                        break;
+//                    }
+//                }
+//            }
         }
         return rv;
     }
     
-    private void writeProperties (OutputStreamWriter ow) throws IOException {
+    private void writeProperties (Writer ow) throws IOException {
         for (var p : m.propertyL()) {
 
             // What kind of property? For abstracts, subproperties decide
@@ -99,9 +100,10 @@ public class ModelToRDF {
             ow.write(p.qname());            
             if (null != p.classType()) {
                 ow.write("\n    a owl:ObjectProperty");
-                if (null != p.subPropertyOf()) {
-                    ow.write(" ;\n    rdfs:subPropertyOf " + p.subPropertyOf().qname());
-                }
+// TODO
+//                if (null != p.subPropertyOf()) {
+//                    ow.write(" ;\n    rdfs:subPropertyOf " + p.subPropertyOf().qname());
+//                }
                 ow.write(" ;\n    rdfs:range " + componentQName(p.classType()));
             }
             else if (null != p.datatype()) {
@@ -118,7 +120,7 @@ public class ModelToRDF {
         }
     }
     
-    private void writeClasses (OutputStreamWriter ow) throws IOException {
+    private void writeClasses (Writer ow) throws IOException {
         for (var ct : m.classTypeL()) {
             ow.write("\n");
             ow.write(ct.qname());
@@ -129,7 +131,7 @@ public class ModelToRDF {
             if (null != ct.definition()) {
                 ow.write(" ;\n    rdfs:comment \"" + ct.definition() + "\"");               
             }
-            for (PropertyAssociation hp : ct.propL()) {
+            for (PropertyAssociation hp : ct.propAssocL()) {
                 if (0 < hp.minOccursVal()) {
                     ow.write(" ;\n    owl:subclassOf [");
                     ow.write("\n        a owl:Restriction");
@@ -148,7 +150,7 @@ public class ModelToRDF {
         }
     }
     
-    private void writeDatatypes (OutputStreamWriter ow) {
+    private void writeDatatypes (Writer ow) {
         for (var dt : m.datatypeL()) {
             if (W3C_XML_SCHEMA_NS_URI.equals(dt.namespace().uri())) continue;
 //            if (null != dt.getListOf()) writeListOfDatatype(dt, ow);

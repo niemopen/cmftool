@@ -1,0 +1,21 @@
+{
+  "@context": "http://example.com/Request/1.0/jsimple",
+  "request": {
+    "id": "R012",
+    "item": [
+      {
+        "xxname": "Wrench",
+        "quantity": {
+          "number": 1
+        }
+      },
+      {
+        "name": "Screw",
+        "quantity": {
+          "number": 5,
+          "units": "dozen" 
+        } 
+      }
+    ]
+  }
+}

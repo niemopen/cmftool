@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2025 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,26 +27,27 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
+import java.util.regex.Pattern;
 import javax.xml.parsers.ParserConfigurationException;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import static org.mitre.niem.cmf.CMFObject.CMF_UNION;
 import org.mitre.niem.cmf.ClassType;
 import org.mitre.niem.cmf.Datatype;
+import org.mitre.niem.cmf.ListType;
 import org.mitre.niem.cmf.Model;
+import org.mitre.niem.cmf.Union;
 import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
 import org.mitre.niem.xml.ParserBootstrap;
+import static org.mitre.niem.xml.XMLSchemaDocument.makeURI;
 import static org.mitre.niem.xsd.NamespaceKind.NSK_STRUCTURES;
-import static org.mitre.niem.xsd.NamespaceKind.namespaceToKind;
+import static org.mitre.niem.xsd.NamespaceKind.namespaceToKindValue;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
@@ -55,15 +56,15 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- *
+ * A class for transforming NIEM XML to NIEM JSON messages.
+ * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class XMLMsgToJSON {
     static final Logger LOG = LogManager.getLogger(XMLMsgToJSON.class);
     
-    private Model model;
-    private int status = CONVERT_OK;
+    private final Model model;
  
     /**
      * Constructs a new NIEM XML to NIEM JSON message transformer.
@@ -71,7 +72,7 @@ public class XMLMsgToJSON {
      * by the Model object.  You need a separate transformer object for each 
      * NIEM message type.  You can reuse a transformer object on any number of
      * messages of that type.
-     * @param m - NIEM message type model
+     * @param m - NIEM message model
      */
     public XMLMsgToJSON (Model m) {
         model = m;
@@ -82,8 +83,14 @@ public class XMLMsgToJSON {
     
     /**
      * Creates a NIEM JSON message from a NIEM XML message, provided as an InputStream.
-     * The JSON message is written into the provided (usually empty) JsonObject.
-     * The XML message must conform to the NIEM model in this converter object.
+     * The JSON message is written into the provided (usually empty) JsonObject.  Doesn't
+     * add a @context pair; do that yourself later if you need it.  Returns CONVERT_WARN
+     * if any warning messages generated; capture those with a custom appender if you 
+     * want them.
+     * 
+     * The XML message must conform to the NIEM model in this converter object;
+     * if it doesn't, the JSON output may be invalid or incorrect.
+     * 
      * This converter object may be reused to transform any number of XML messages
      * of the specified message format.
      * 
@@ -98,30 +105,38 @@ public class XMLMsgToJSON {
         var h   = new SAXHandler(json);
         var p   = ParserBootstrap.sax2Parser();
         p.parse(xmlIS, h);
-        return(status);
+        return h.status();
     }
     
     private class SAXHandler extends DefaultHandler {
         
         private Locator loc;
-        private String base = "";
         private StringBuilder chars = new StringBuilder();
-        private final Stack<String> langS = new Stack<>();                // current in-scope value of xml:lang
-        private final Stack<ClassType> ctypeS = new Stack<>();            // class type of CCC element in model
-        private final Stack<Boolean> adapterS = new Stack<>();            // are we within an adapter property?
-        private final Stack<JsonObject> objS = new Stack<>();             // json object for XML element
+        private String base = "";                                   // @xml:base of message
+        private final Stack<String> langS = new Stack<>();          // current in-scope value of xml:lang
+        private final Stack<ClassType> ctypeS = new Stack<>();      // class type of CCC element in model
+        private final Stack<Boolean> adapterS = new Stack<>();      // are we within an adapter property?
+        private final Stack<Boolean> ignoreS  = new Stack<>();      // within an ignored not-in-model element?
+        private final Stack<JsonObject> objS = new Stack<>();       // json object for XML element
+        private int status = CONVERT_OK;
         
         SAXHandler(JsonObject m) {   
             objS.push(m);
             adapterS.push(false);
+            ignoreS.push(false);
             ctypeS.push(null);
             langS.push("en-US");
         }
+        
+        public int status () { return status; }
+        
+        private static final Pattern NAME_PAT = Pattern.compile("[:A-Za-z_][:A-Za-z0-9_.-]*");
         
         @Override
         public void startElement(String nsuri, String lname, String qName, Attributes atts) {
             
             // Handle xml:base in the message element; reject it elsewhere
+            // If set, all reference URIs become absolute; otherwise are relative
             var baseAtt = atts.getValue("xml:base");
             if (null != baseAtt) {
                 if (1 == objS.size()) base = baseAtt;
@@ -135,36 +150,48 @@ public class XMLMsgToJSON {
             if (null == langAtt) langS.push(langS.peek());
             else langS.push(langAtt);
             
-            var pU = model.makeURI(nsuri, lname);
-            var p  = model.uriToProperty(pU);
-            var ns = model.namespaceObj(nsuri);
+            // Get URI, property, and namespace for current element
+            var pU = makeURI(nsuri, lname);             // eg. https://Some/Namespace/PropName
+            var p  = model.uriToProperty(pU);           // Property object
+            var ns = model.namespaceObj(nsuri);         // Namespace object
             
+            // See if current element is an adapter property
             var adaptF = adapterS.peek();
             if (null != p && null != p.classType() && p.classType().isAdapterClass()) adaptF = true;
             adapterS.push(adaptF);
             
+            // Get the class of the current object property,
+            // It's null for data properties, augmentation elements, and unknown elements.
+            var ignoreF = ignoreS.peek();
             if (null != ns && ns.isAugmentation(lname)) {
                 ctypeS.push(null);
             }
-            else if (!adaptF && (null == p || null == ns)) {
+            else if (!ignoreF && !adaptF && (null == p || null == ns)) {
                 LOG.warn("unknown element {} at {} (ignored)", qName, locstr());
                 ctypeS.push(null);
                 status = CONVERT_WARN;
+                ignoreF = true;
             }
             else if (null == p) ctypeS.push(null);  // unknown property inside adapter element
             else ctypeS.push(p.classType());        // will be null if p is a data property
+            ignoreS.push(ignoreF);
             
+            // Create the JSON object to be populated from current property
+            // (even if we know it's going to be ignored).
             var obj = new JsonObject();            
             objS.push(obj);
             
+            // Process attributes in current element
             for (int i = 0; i < atts.getLength(); i++) {
                 var ansU = atts.getURI(i);              // namespace URI for this attribute
                 var aQ   = atts.getQName(i);            // QName of this attribute in message
                 var anam = atts.getLocalName(i);
                 var aval = atts.getValue(i);
-                var aU   = model.makeURI(ansU, anam);   // model URI for this component
-                var aP   = model.uriToProperty(aU);
-                if (NSK_STRUCTURES == namespaceToKind(ansU)) {
+                var aU   = makeURI(ansU, anam);         // model URI for this component
+                var aP   = model.uriToProperty(aU);     // attribute property
+                
+                // Handle @id, @ref, @uri from a structures namespace
+                if (NSK_STRUCTURES == namespaceToKindValue(ansU)) {
                     switch (anam) {
                         case "id":
                         case "ref":
@@ -179,12 +206,20 @@ public class XMLMsgToJSON {
                             status = CONVERT_WARN;
                     }
                 }
+                // Handle a reference attribute; eg. @ns:fooRef
+                // Creates an array of @id objects for the key "ns:Foo"
                 else if (anam.endsWith("Ref")) {
-                    var rpnam = capitalize(anam.substring(0, anam.length()-3));
-                    var rpQ   = model.makeURI(ansU, rpnam);
-                    var rP    = model.uriToProperty(rpQ);
+                    var rpln = capitalize(anam.substring(0, anam.length()-3)); // Foo from fooRef
+                    var rpU  = makeURI(ansU, rpln);
+                    var rpQ  = model.uriToQN(rpU);
+                    var rP   = model.uriToProperty(rpU);
                     if (null == rP) {
                         LOG.warn("unknown reference attribute {} at {} (ignored)", aQ, locstr());
+                        status = CONVERT_WARN;
+                        continue;
+                    }
+                    if (null != aP && !aP.isRefAttribute()) {
+                        LOG.warn("attribute {} at {} is not a reference attribute (ignored)", aQ, locstr());
                         status = CONVERT_WARN;
                         continue;
                     }
@@ -197,12 +232,22 @@ public class XMLMsgToJSON {
                     var refs = aval.split("\\s+");
                     for (int ri = 0; ri < refs.length; ri++) {
                         var ref = refs[ri];
+                        if (!NAME_PAT.matcher(ref).matches()) {
+                            LOG.warn("invalid value {} in reference attribute {} at {} (ignored)", ref, rpQ, locstr());
+                            status = CONVERT_WARN;
+                            continue;
+                        }
                         var rO  = new JsonObject();
                         rO.addProperty("@id", base + "#" + ref);
                         refA.add(rO);
                     }
                     obj.add(rpQ, refA);                    
                 }
+                // Ignore xml:base at this point
+                else if ("xml:base".equals(aQ)) {
+                    
+                }
+                // Unknown attribute, or it's an object property (how??)
                 else if (null == aP || !aP.isAttribute()) {
                     if (adaptF)
                         obj.addProperty(aQ, aval);
@@ -211,28 +256,33 @@ public class XMLMsgToJSON {
                         status = CONVERT_WARN;
                     }
                 }
+                // Add pair of attribute QName and its string value
                 else {
                     obj.addProperty(aQ, aval);
                 }
             }
-            
             chars = new StringBuilder();
-            
         }
 
         @Override
         public void endElement(String nsuri, String lname, String qName) throws SAXException {
+//            System.err.println("endElement: " + qName);
             var obj    = objS.pop();
             var parent = objS.peek();
             var otype  = ctypeS.pop();
             var ptype  = ctypeS.peek();
             var adaptF = adapterS.pop();
+            var ignorF = ignoreS.pop();
             var lang   = langS.pop();
-            var pU     = model.makeURI(nsuri, lname);
+            var pU     = makeURI(nsuri, lname);
             var p      = model.uriToProperty(pU);
             var ns     = model.namespaceObj(nsuri);
             var key    = qName;
-            var cval   = chars.toString().trim();
+            var cval   = chars.toString().strip();
+            
+            // An unknown element outside of an adapter is ignored, along with all
+            // its descendents.
+            if (ignorF) return;
             
             // For an augmentation element, just copy all the pairs into the parent.
             // But ignore any pairs from reference attributes.
@@ -242,9 +292,9 @@ public class XMLMsgToJSON {
                         parent.add(ks, obj.get(ks));
                 }
                 return;
-            }
-            
-            // Use model prefix for key when element is defined in model
+            }  
+            // Use model prefix for key when element is defined in model; ie. use
+            // "nc:PersonName" even if message uses "funkyPrefix:PersonName".
             if (null != p) key = p.qname();
             
             // Object of literal class always has a literal property, possibly
@@ -255,7 +305,7 @@ public class XMLMsgToJSON {
                 while (null != ct.subClassOf()) ct = ct.subClassOf();
                 var lp = ct.literalDataProperty();
                 if (null != lp) {
-                    var valE = valuePrimitive(lp.datatype(), cval);
+                    var valE = valueElement(lp.datatype(), cval);
                     obj.add(lp.qname(), valE);
                     isPrim = true;
                 }
@@ -269,18 +319,25 @@ public class XMLMsgToJSON {
             if (isPrim && null != otype && otype.hasXmlLang() && !"en-US".equals(lang)) {
                 obj.addProperty("@language", lang);
             }
-            // If obj is empty at this point, then this element is a number, string, or boolean.
+            // If obj is empty at this point, then this element is a number, string, boolean,
+            // or an object with no content.
             // Create a primitive if this is a data property (or an unknown element)
             // Create an object with a FooLiteral pair if this is an object property.
+            // Do nothing for an empty object (eg. <biom:DNALaboratoryProcessingCountry/>)
             JsonElement value = obj;
             if (obj.entrySet().isEmpty()) {
-                if (null == p) value = valuePrimitive(null, cval);
-                else if (p.isDataProperty()) value = valuePrimitive(p.datatype(), cval);
+                if (null == p) value = new JsonPrimitive(cval); // unknown property; it's a string
+                else if (p.isDataProperty()) 
+                    value = valueElement(p.datatype(), cval); // decide from property base type
+                
+                // Check for a literal data property
                 else {
                     var ct = p.classType();
-                    while (null != ct.subClassOf()) ct = ct.subClassOf();
+                    while (null != ct.subClassOf()) 
+                        ct = ct.subClassOf();
                     var lp = ct.literalDataProperty();
-                    var lv = valuePrimitive(lp.datatype(), cval);
+                    if (null == lp) return;                         // empty element; do nothing
+                    var lv = valueElement(lp.datatype(), cval);   // add literal data property
                     obj.add(lp.qname(), lv);
                 }            
             }
@@ -353,7 +410,10 @@ public class XMLMsgToJSON {
         private String locstr () {
             var res = "";
             var sid = loc.getSystemId();
-            if (null != sid) res = URIStringToFile(sid).getName() + ", ";
+            if (null != sid) {
+                var sf = URIStringToFile(sid);
+                if (null != sf) res = sf.getName() + ", ";
+            }
             res = res + "line " + loc.getLineNumber();
             return res;
         }
@@ -364,23 +424,94 @@ public class XMLMsgToJSON {
                     "unsignedLong", "unsignedInt", "unsignedShort", "unsignedByte", "positiveInteger"));
 
         // Returns the appropriate primitive for the datatype XS base type.
+        // * string for all code types
         // * boolean for xs:boolean
         // * number for xs:double, xs:float, xs:decimal and derived types
+        // * array for a list type
         // * string for everything else
-        public JsonPrimitive valuePrimitive (Datatype dt, String val) {
-            var bname = "string";
-            if (null != dt) { 
-                var xsbase = dt.baseXS();
-                bname = xsbase.name();
+        public JsonElement valueElement (Datatype dt, String val) {
+            
+            // If we don't know the datatype, then the value is the character content
+            if (null == dt) return new JsonPrimitive(val);
+                
+            // String values are always collapsed unless there is a whitespace
+            // facet directing a different normalization
+            var whiteSpace = "collapse";
+            if (dt.facetL() != null) {
+                for (var f : dt.facetL()) {
+                    if ("whiteSpace".equals(f.category())) {
+                        whiteSpace = f.value();
+                        break;
+                    }
+                }
             }
+            var sval = switch (whiteSpace) {
+                case "preserve" -> val;
+                case "replace"  -> val.replaceAll("[\\t\\n\\r]+", " ");
+                default         -> val.replaceAll("[ \\t\\n\\r]+", " ").strip();
+            };
+            
+            // A code is always a string
+            if (dt.name().endsWith("CodeType")) return new JsonPrimitive(sval);
+
+            // Unions are funky
+            if (CMF_UNION == dt.getType()) return unionPrimitive((Union)dt, sval);
+            
+            // List type creates an array of values
+            if (dt instanceof ListType lt) {
+                var rval  = new JsonArray();
+                var itype = lt.itemType();
+                var vals  = sval.split("\\s+");
+                for (var v : vals) {
+                    var iv = valueElement(itype, v);
+                    rval.add(iv);
+                }
+                return rval;
+            }
+                
+            // Get name of XSD base type
+            var bname = "string";
+            var xbase = dt.baseXS();
+            if (null != xbase) bname = xbase.name();                        
             if (numbers.contains(bname)) {
-                var number = new BigDecimal(val);
+                var number = new BigDecimal(sval);
                 return new JsonPrimitive(number);
             }
-            else if ("boolean".equals(bname))
-                return new JsonPrimitive("true".equals(val));
+            else if ("boolean".equals(bname)) {
+                switch (sval) {
+                    case "true":  return new JsonPrimitive(true);
+                    case "false": return new JsonPrimitive(false);
+                    case "1":     return new JsonPrimitive(true);
+                    case "0":     return new JsonPrimitive(false);
+                    default:
+                        LOG.warn("\"{}\" is not a valid xs:boolean at {}", sval, locstr());
+                        status = CONVERT_WARN;
+                        return new JsonPrimitive(false);
+                }
+            }
             else 
-                return new JsonPrimitive(val);
-        }        
+                return new JsonPrimitive(sval);
+        }
+
+        // Should the value be a number or a string?  We aren't going to 
+        // reproduce XSD facet checking here.  Instead, the heuristic is:
+        // if the string value is a number, and there is a numeric type in
+        // the union, return a number; otherwise a string.
+        
+        private static final Pattern NUMBER = Pattern.compile(
+            "[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?");        
+        
+        public JsonPrimitive unionPrimitive (Union dt, String sval) {
+            var dtQ = dt.qname();
+            var hasNumber = false;
+            for (var ut : dt.memberL()) {
+                var bname = ut.baseXS().name();
+                if (numbers.contains(bname)) hasNumber = true;                
+            }
+            if (!hasNumber) return new JsonPrimitive(sval);
+            if (NUMBER.matcher(sval).matches()) return new JsonPrimitive(new BigDecimal(sval));
+            return new JsonPrimitive(sval);
+        }
     } 
+    
 }

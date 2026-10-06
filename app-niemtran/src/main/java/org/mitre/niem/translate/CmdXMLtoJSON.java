@@ -23,173 +23,298 @@
  */
 package org.mitre.niem.translate;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.Callable;
 import javax.xml.parsers.ParserConfigurationException;
-import static org.apache.commons.io.FilenameUtils.removeExtension;
+import org.mitre.niem.cmf.CMFException;
+import org.mitre.niem.cmf.Model;
 import org.mitre.niem.cmf.ModelXMLReader;
 import org.mitre.niem.json.Context;
-import org.mitre.niem.utility.JCUsageFormatter;
-import static org.mitre.niem.utility.URIfuncs.FileToCanonicalURI;
+import org.mitre.niem.json.JSONWriter;
+import org.mitre.niem.utility.AtomicPathWriter;
 import org.mitre.niem.xml.ParserBootstrap;
 import static org.mitre.niem.xml.ParserBootstrap.BOOTSTRAP_SAX2;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 /**
  *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-        
-@Parameters(commandDescription = "convert NIEM XML message to NIEM JSON")
-    
-public class CmdXMLtoJSON implements JCCommand {
-    
-    @Parameter(names = {"-c", "--context"}, description = "generate complete @context in result")
-    boolean contextF = false;
-    
-    @Parameter(names = {"--curi"}, description = "include \"@context\": URI in result")
-    String contextU = "";
-    
-    @Parameter(names = {"-f","--force"}, description = "overwrite existing .json files")
+@Command(
+    name = "x2j",
+    description = {
+        "convert NIEM XML message to NIEM JSON",
+        "With one msg.xml and no -o/--output, writes JSON to standard output.",
+        "With multiple msg.xml files, writes multiple msg.json output files"
+    },
+    mixinStandardHelpOptions = true,
+    sortOptions = false
+)
+public class CmdXMLtoJSON implements Callable<Integer> {
+
+    static class ContextOptions {
+        @Option(
+            names = {"-c", "--context"},
+            description = "generate complete @context in result"
+        )
+        boolean contextF;
+
+        @Option(
+            names = {"--curi"},
+            paramLabel = "uri",
+            description = "include \"@context\": URI in result"
+        )
+        String contextU;
+    }
+
+    @ArgGroup(exclusive = true, multiplicity = "0..1")
+    ContextOptions contextOptions;
+
+    @Option(
+        names = {"-f", "--force"},
+        description = "overwrite existing output files"
+    )
     boolean force = false;
-    
-    @Parameter(names = {"-h","--help"}, description = "display this usage message", help = true)
-    boolean help = false;
 
-    @Parameter(description = "model.cmf msg.xml ...")
-    private List<String> mainArgs;
-    
-    CmdXMLtoJSON () {
-    }
-  
-    CmdXMLtoJSON (JCommander jc) {
+    @Option(
+        names = {"-o", "--output"},
+        paramLabel = "out.json",
+        description = "write output to out.json; only valid when there is a single msg.xml argument"
+    )
+    Path outputPath;
+
+    @Parameters(
+        index = "0",
+        paramLabel = "model.cmf",
+        description = "NIEM model file"
+    )
+    private Path modelPath;
+
+    @Parameters(
+        index = "1..*",
+        arity = "1..*",
+        paramLabel = "msg.xml",
+        description = "one or more NIEM XML message files"
+    )
+    private List<Path> xmlPaths;
+
+    CmdXMLtoJSON() {
     }
 
-    public static void main (String[] args) {       
-        var obj = new CmdXMLtoJSON();
-        obj.runMain(args);
+    public static void main(String[] args) {
+        int rc = new CommandLine(new CmdXMLtoJSON()).execute(args);
+        System.exit(rc);
     }
-    
+
     @Override
-    public void runMain (String[] args) {
-        var jc = new JCommander(this);
-        var uf = new JCUsageFormatter(jc); 
-        jc.setUsageFormatter(uf);
-        jc.setProgramName("compile");
-        jc.parse(args);
-        run(jc);
-    }
-    
-    @Override
-    public void runCommand (JCommander cob) {
-        cob.setProgramName("niemtran x2j");
-        run(cob);
-    }        
-    
-    private void run (JCommander cob) {
-        if (help) {
-            cob.usage();
-            System.exit(0);
-        }
-        if (mainArgs == null || mainArgs.size() < 2) {
-            cob.usage();
-            System.exit(1);
-        }
-        
-        // Check for parser config errors now
+    public Integer call() {
         try {
             ParserBootstrap.init(BOOTSTRAP_SAX2);
         } catch (ParserConfigurationException ex) {
             System.err.println("Parser configuration error: " + ex.getMessage());
-            System.exit(1);
+            return 1;
         }
-        // Read the model object from the model instance file
-        // Read the model object from the model file(s)
-        var mr = new ModelXMLReader();  
-        var mF = new File(mainArgs.get(0));
-        var model = mr.readFiles(mF);    
-        if (null == model) {
-            System.err.println("Can't read model from " + mF.toString());
-            System.exit(1);
+
+        if (outputPath != null && xmlPaths.size() != 1) {
+            System.err.println("Option -o/--output may only be used with a single msg.xml argument");
+            return 2;
         }
-        
+
+        boolean writeToStdout = (xmlPaths.size() == 1 && outputPath == null);
+
+        int rc = validateReadableFile(modelPath, "model file");
+        if (rc != 0) {
+            return rc;
+        }
+
+        if (outputPath != null) {
+            rc = validateWritableOutputPath(outputPath);
+            if (rc != 0) {
+                return rc;
+            }
+        }
+
+        final Model model;
+        try {
+            var mr = new ModelXMLReader();
+            model = mr.readFiles(modelPath.toFile());
+        } catch (Exception ex) {
+            System.err.println("Can't read model from " + modelPath + ": " + ex.getMessage());
+            return 1;
+        }
+        if (model == null) {
+            System.err.println("Can't read model from " + modelPath);
+            return 1;
+        }
+
+        JsonObject fullContext = null;
+        String contextUri = null;
+        if (contextOptions != null) {
+            if (contextOptions.contextF) {
+                try {
+                    fullContext = new Context(model).jsonObject();
+                } catch (CMFException ex) {
+                    System.err.println("Can't create context: " + ex.getMessage());
+                    return 1;
+                }
+            } else if (contextOptions.contextU != null && !contextOptions.contextU.isBlank()) {
+                contextUri = contextOptions.contextU;
+            }
+        }
+
         var tran = new XMLMsgToJSON(model);
-        var gson = new GsonBuilder().setPrettyPrinting().create();
-            
-        for (int i = 1; i < mainArgs.size(); i++) {
-            var xmlFN  = mainArgs.get(i);
-            var jsonFN = removeExtension(xmlFN) + ".json";
-            var jsonF  = new File(jsonFN);
-            if (jsonF.exists() && !force) {
-                System.err.println(jsonFN + ": file exists");
+        boolean hadError = false;
+
+        for (var xmlPath : xmlPaths) {
+            rc = validateReadableFile(xmlPath, "XML file");
+            if (rc != 0) {
+                hadError = true;
                 continue;
             }
-            InputSource xmlIS = null;          
-            try {
-                var xmlF = new File(xmlFN);
-                var fis  = new FileInputStream(xmlF);
-                xmlIS =    new InputSource(fis);
-                xmlIS.setSystemId(xmlF.toURI().toString());
-            } catch (FileNotFoundException ex) {
-                System.err.println(String.format("Can't open XML file %s: %s", xmlFN, ex.getMessage()));
-                continue;
+
+            Path jsonPath = null;
+            if (!writeToStdout) {
+                jsonPath = (outputPath != null) ? outputPath : toJsonPath(xmlPath);
+                if (outputPath == null) {
+                    rc = validateWritableOutputPath(jsonPath);
+                    if (rc != 0) {
+                        hadError = true;
+                        continue;
+                    }
+                }
             }
-            Writer jsonW = null;
-            try {
-                var jsonOS = new FileOutputStream(jsonFN);
-                var jsonSW = new OutputStreamWriter(jsonOS, "UTF-8");
-                jsonW = new BufferedWriter(jsonSW);
-            } catch (FileNotFoundException ex) {
-                System.err.println(String.format("Can't open JSON file %s: %s", jsonFN, ex.getMessage()));
-                continue;
-            } catch (UnsupportedEncodingException ex) {
-                System.err.println("Can't write UTF-8??: " + ex.getMessage());
-                System.exit(1);
-            }
+
             var jobj = new JsonObject();
-            try {
-                var status = tran.convert(xmlIS, jobj);
+            try (InputStream xmlIn = Files.newInputStream(xmlPath)) {
+                var xmlIS = new InputSource(xmlIn);
+                xmlIS.setSystemId(xmlPath.toUri().toString());
+                tran.convert(xmlIS, jobj);
             } catch (ParserConfigurationException ex) {
                 System.err.println("Parser configuration error: " + ex.getMessage());
-                System.exit(1);
+                return 1;
             } catch (SAXException ex) {
-                System.err.println(String.format("Error parsing %s: %s", xmlFN, ex.getMessage()));
+                System.err.println(String.format("Error parsing %s: %s", xmlPath, ex.getMessage()));
+                hadError = true;
+                continue;
             } catch (IOException ex) {
-                System.err.println(String.format("Error reading %s: %s", xmlFN, ex.getMessage()));
-            }     
-            if (contextF) {
-                var cobj = Context.create(model);
-                jobj.add("@context", cobj);
+                System.err.println(String.format("Error reading %s: %s", xmlPath, ex.getMessage()));
+                hadError = true;
+                continue;
             }
-            else if (!contextU.isBlank()) {
-                jobj.addProperty("@context", contextU);
+
+            if (fullContext != null) {
+                jobj.add("@context", fullContext.deepCopy());
+            } else if (contextUri != null) {
+                jobj.addProperty("@context", contextUri);
             }
-            
-            var jmsg = gson.toJson(jobj);
-            try {
-                jsonW.write(jmsg);
-                jsonW.close();
-            } catch (IOException ex) {
-                System.err.println(String.format("Error writing %s: %s", jsonFN, ex.getMessage()));
+
+            if (writeToStdout) {
+                try {
+                    writeJsonToStdout(jobj);
+                } catch (IOException ex) {
+                    System.err.println(String.format("Error writing stdout for %s: %s", xmlPath, ex.getMessage()));
+                    hadError = true;
+                }
+            } else {
+                try {
+                    AtomicPathWriter.writeAtomically(jsonPath, StandardCharsets.UTF_8, jsonW -> {
+                        JSONWriter.write(jobj, jsonW);
+                    });
+                } catch (IOException ex) {
+                    System.err.println(String.format("Error writing %s: %s", jsonPath, ex.getMessage()));
+                    hadError = true;
+                }
             }
-           
         }
+
+        return hadError ? 1 : 0;
     }
-    
+
+    private int validateReadableFile(Path path, String label) {
+        if (!Files.exists(path)) {
+            System.err.println(label + " does not exist: " + path);
+            return 2;
+        }
+        if (!Files.isRegularFile(path)) {
+            System.err.println(label + " is not a regular file: " + path);
+            return 2;
+        }
+        if (!Files.isReadable(path)) {
+            System.err.println(label + " is not readable: " + path);
+            return 2;
+        }
+        return 0;
+    }
+
+    private int validateWritableOutputPath(Path path) {
+        if (Files.exists(path)) {
+            if (Files.isDirectory(path)) {
+                System.err.println("Output path is a directory: " + path);
+                return 2;
+            }
+            if (!Files.isRegularFile(path)) {
+                System.err.println("Output path is not a regular file: " + path);
+                return 2;
+            }
+            if (!force) {
+                System.err.println(path + ": file exists");
+                return 2;
+            }
+            if (!Files.isWritable(path)) {
+                System.err.println("Output file is not writable: " + path);
+                return 2;
+            }
+            return 0;
+        }
+
+        Path parent = path.toAbsolutePath().getParent();
+        if (parent != null) {
+            if (!Files.exists(parent)) {
+                System.err.println("Output directory does not exist: " + parent);
+                return 2;
+            }
+            if (!Files.isDirectory(parent)) {
+                System.err.println("Output parent is not a directory: " + parent);
+                return 2;
+            }
+            if (!Files.isWritable(parent)) {
+                System.err.println("Output directory is not writable: " + parent);
+                return 2;
+            }
+        }
+        return 0;
+    }
+
+    private void writeJsonToStdout(JsonObject jobj) throws IOException {
+        var out = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
+        JSONWriter.write(jobj, out);
+        out.flush();
+    }
+
+    private Path toJsonPath(Path xmlPath) {
+        Path fileName = xmlPath.getFileName();
+        String name = fileName == null ? xmlPath.toString() : fileName.toString();
+
+        int dot = name.lastIndexOf('.');
+        String base = dot > 0 ? name.substring(0, dot) : name;
+        String jsonName = base + ".json";
+
+        Path parent = xmlPath.getParent();
+        return parent == null ? Path.of(jsonName) : parent.resolve(jsonName);
+    }
 }
+

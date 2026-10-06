@@ -1,0 +1,28 @@
+PREFIX j            https://docs.oasis-open.org/niemopen/ns/model/domains/justice/6.0/
+PREFIX nc           https://docs.oasis-open.org/niemopen/ns/model/niem-core/6.0/
+PREFIX structures   https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/
+PREFIX sx           http://example.com/xsimple/
+PREFIX t            http://example.com/test/
+# FromQName                     ToName
+j:EducationAugmentation         sx:EducationAugmentation
+j:EducationAugmentationType     sx:EducationAugmentationType
+j:EducationTotalYearsText       sx:EducationTotalYearsText
+nc:EducationDescriptionText     sx:EducationDescriptionText
+nc:PersonEducation              sx:PersonEducation
+nc:PersonFullName               sx:PersonFullName
+nc:PersonNameTextLiteral        sx:PersonNameTextLiteral
+t:AccessCode                    sx:AccessCode
+t:Message                       sx:Message
+t:Metadata                      sx:Metadata
+t:PersonNameTextAugmentation    sx:PersonNameTextAugmentation
+nc:EducationType                sx:EducationType
+nc:PersonNameTextType           sx:PersonNameTextType
+nc:ProperNameTextType           sx:ProperNameTextType
+nc:TextType                     sx:TextType
+t:metadataRef                   sx:metadataRef
+t:MessageType                   sx:MessageType
+t:MetadataType                  sx:MetadataType
+structures:appliesToParent      sx:appliesToParent
+structures:id                   sx:id
+structures:ref                  sx:ref
+structures:uri                  sx:uri

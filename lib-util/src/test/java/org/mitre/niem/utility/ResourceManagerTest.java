@@ -7,7 +7,7 @@
  * and Noncommercial Computer Software Documentation
  * Clause 252.227-7014 (FEB 2012)
  *
- * Copyright 2020-2023 The MITRE Corporation.
+ * Copyright 2020-2026 The MITRE Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,67 +21,153 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.mitre.niem.utility;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+class ResourceManagerTest {
 
-/**
- *
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
- */
-public class ResourceManagerTest {
-    
-    public ResourceManagerTest() {
+    private static final String TEXT_RESOURCE =
+        "/org/mitre/niem/utility/testdata/sample.txt";
+    private static final String BINARY_RESOURCE =
+        "/org/mitre/niem/utility/testdata/sample.bin";
+    private static final String MISSING_RESOURCE =
+        "/org/mitre/niem/utility/testdata/does-not-exist.txt";
+
+    private ResourceManager newManager() {
+        return new ResourceManager(ResourceManagerTest.class);
     }
 
     @Test
-    public void testGetResourceFile () {
-        try {
-            var rm = new ResourceManager();
-            File r = rm.getResourceFile("xsd/XMLCatalogSchema.xsd");
-            assertNotNull(r);
-            //r = rm.getResourceFile("foo");
-            //assertNull(r);
-        } catch (IOException e) {
-            fail("IOException thrown while getting resource file: " + e.getMessage());
-        }
+    void constructorRejectsNullAnchorClass() {
+        assertThrows(NullPointerException.class, () -> new ResourceManager(null));
     }
-   
+
     @Test
-    public void testGetResourceStream () {
-        try {
-            var rm = new ResourceManager();
-            InputStream r = rm.getResourceStream("xsd/XMLCatalogSchema.xsd");
-            assertNotNull(r);
-            r = rm.getResourceStream("foo");
-            assertNull(r);
-        } catch (IOException e) {
-            fail("IOException thrown while getting resource file: " + e.getMessage());
+    void getResourceStreamReadsTextResourceWithLeadingSlash() throws Exception {
+        var rm = newManager();
+
+        try (var in = rm.getResourceStream(TEXT_RESOURCE)) {
+            var text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            assertEquals("hello resource\n", text);
         }
     }
-    
+
     @Test
-    public void testGetResourceURI () {
-        try {
-            var rm = new ResourceManager();
-            URI u = rm.getResourceURI("xsd/XMLCatalogSchema.xsd");
-            assertNotNull(u);
-            assertEquals("file", u.getScheme());
-        } catch (Exception e) {
-            fail("Exception thrown while getting resource file: " + e.getMessage());
+    void getResourceStreamReadsTextResourceWithoutLeadingSlash() throws Exception {
+        var rm = newManager();
+
+        try (var in = rm.getResourceStream(TEXT_RESOURCE.substring(1))) {
+            var text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            assertEquals("hello resource\n", text);
         }
     }
-     
+
+    @Test
+    void getResourceStreamReadsBinaryResource() throws Exception {
+        var rm = newManager();
+
+        try (var in = rm.getResourceStream(BINARY_RESOURCE)) {
+            var bytes = in.readAllBytes();
+            assertArrayEquals(new byte[] {0x00, 0x01, 0x02, 0x7F, (byte) 0x80, (byte) 0xFF}, bytes);
+        }
+    }
+
+    @Test
+    void getResourceStreamThrowsForMissingResource() {
+        var rm = newManager();
+
+        assertThrows(FileNotFoundException.class, () -> rm.getResourceStream(MISSING_RESOURCE));
+    }
+
+    @Test
+    void copyResourceToFileCopiesTextResource(@TempDir Path tempDir) throws Exception {
+        var rm = newManager();
+        var out = tempDir.resolve("nested/out.txt").toFile();
+
+        rm.copyResourceToFile(TEXT_RESOURCE, out);
+
+        assertTrue(out.isFile());
+        var text = Files.readString(out.toPath(), StandardCharsets.UTF_8);
+        assertEquals("hello resource\n", text);
+    }
+
+    @Test
+    void copyResourceToFileCopiesBinaryResource(@TempDir Path tempDir) throws Exception {
+        var rm = newManager();
+        var out = tempDir.resolve("sample-copy.bin").toFile();
+
+        rm.copyResourceToFile(BINARY_RESOURCE, out);
+
+        assertTrue(out.isFile());
+        var bytes = Files.readAllBytes(out.toPath());
+        assertArrayEquals(new byte[] {0x00, 0x01, 0x02, 0x7F, (byte) 0x80, (byte) 0xFF}, bytes);
+    }
+
+    @Test
+    void copyResourceToFileCreatesParentDirectories(@TempDir Path tempDir) throws Exception {
+        var rm = newManager();
+        var out = tempDir.resolve("a/b/c/sample.txt").toFile();
+
+        rm.copyResourceToFile(TEXT_RESOURCE, out);
+
+        assertTrue(out.isFile());
+        assertEquals("hello resource\n", Files.readString(out.toPath(), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void copyResourceToFileThrowsForMissingResource(@TempDir Path tempDir) {
+        var rm = newManager();
+        var out = tempDir.resolve("missing.txt").toFile();
+
+        assertThrows(FileNotFoundException.class, () -> rm.copyResourceToFile(MISSING_RESOURCE, out));
+    }
+
+    @Test
+    void copyResourceToFileRejectsNullOutputFile() {
+        var rm = newManager();
+
+        assertThrows(NullPointerException.class, () -> rm.copyResourceToFile(TEXT_RESOURCE, null));
+    }
+
+    @Test
+    void getResourceUriReturnsUriForExistingResource() {
+        var rm = newManager();
+
+        var uri = rm.getResourceURI(TEXT_RESOURCE);
+
+        assertNotNull(uri);
+        assertNotNull(uri.getScheme());
+    }
+
+    @Test
+    void getResourceUriReturnsNullForMissingResource() {
+        var rm = newManager();
+
+        var uri = rm.getResourceURI(MISSING_RESOURCE);
+
+        assertNull(uri);
+    }
+
+    @Test
+    void methodsRejectBlankResourceNames(@TempDir Path tempDir) {
+        var rm = newManager();
+
+        assertThrows(IllegalArgumentException.class, () -> rm.getResourceURI(" "));
+        assertThrows(IllegalArgumentException.class, () -> rm.getResourceStream(" "));
+        assertThrows(IllegalArgumentException.class,
+            () -> rm.copyResourceToFile(" ", tempDir.resolve("x.txt").toFile()));
+    }
 }

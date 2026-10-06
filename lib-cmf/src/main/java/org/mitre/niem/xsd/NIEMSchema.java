@@ -24,6 +24,7 @@
  */
 package org.mitre.niem.xsd;
 
+import org.mitre.niem.cmf.NamespaceMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -140,7 +141,7 @@ public class NIEMSchema extends XMLSchema {
      */
     public int namespaceKind (String nsuri) {
         if (nsKind.containsKey(nsuri)) return nsKind.get(nsuri);    // cached result
-        var kind = NamespaceKind.namespaceToKind(nsuri);            // utility or model NS?
+        var kind = NamespaceKind.namespaceToKindValue(nsuri);            // utility or model NS?
         if (NSK_UNKNOWN == kind) {
             var sd = nsdocs.get(nsuri);
             if (extNSs.contains(nsuri)) kind = NSK_EXTERNAL;

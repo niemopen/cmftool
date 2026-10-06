@@ -5,7 +5,7 @@
   xmlns:ct="https://docs.oasis-open.org/niemopen/ns/specification/conformanceTargets/6.0/"
   xmlns:niem-xs="https://docs.oasis-open.org/niemopen/ns/model/adapters/niem-xs/6.0/"
   xmlns:structures="https://docs.oasis-open.org/niemopen/ns/model/structures/6.0/"
-  xmlns:test="http://example.com/test/"
+  xmlns:t="http://example.com/test/"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   ct:conformanceTargets="https://docs.oasis-open.org/niemopen/ns/specification/NDR/6.0/#SubsetSchemaDocument"
   version="1"
@@ -23,12 +23,12 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="test:AnElement" minOccurs="0" appinfo:orderedPropertyIndicator="true">
+          <xs:element ref="t:AnElement" minOccurs="0" appinfo:orderedPropertyIndicator="true">
             <xs:annotation>
               <xs:documentation>AnElement property of Test1Type</xs:documentation>
             </xs:annotation>
           </xs:element>
-          <xs:element ref="test:Test1AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="t:Test1AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
           <xs:any processContents="lax" namespace="http://someNS/ http://otherNS/"/>
         </xs:sequence>
       </xs:extension>
@@ -41,8 +41,8 @@
     <xs:complexContent>
       <xs:extension base="structures:ObjectType">
         <xs:sequence>
-          <xs:element ref="test:AnElement"/>
-          <xs:element ref="test:Test2AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="t:AnElement"/>
+          <xs:element ref="t:Test2AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:anyAttribute processContents="strict"/>
       </xs:extension>
@@ -53,30 +53,30 @@
       <xs:documentation>Test3Type extends Test1Type</xs:documentation>
     </xs:annotation>
     <xs:complexContent>
-      <xs:extension base="test:Test1Type">
+      <xs:extension base="t:Test1Type">
         <xs:sequence>
-          <xs:element ref="test:AnotherElement"/>
-          <xs:element ref="test:Test3AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="t:AnotherElement"/>
+          <xs:element ref="t:Test3AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
   <xs:complexType name="Test4Type">
     <xs:complexContent>
-      <xs:extension base="test:Test1Type">
+      <xs:extension base="t:Test1Type">
         <xs:sequence>
-          <xs:element ref="test:AnotherElement"/>
-          <xs:element ref="test:Test4AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="t:AnotherElement"/>
+          <xs:element ref="t:Test4AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
   <xs:complexType name="Test5Type">
     <xs:complexContent>
-      <xs:extension base="test:Test1Type">
+      <xs:extension base="t:Test1Type">
         <xs:sequence>
-          <xs:element ref="test:AnotherElement"/>
-          <xs:element ref="test:Test5AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
+          <xs:element ref="t:AnotherElement"/>
+          <xs:element ref="t:Test5AugmentationPoint" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>

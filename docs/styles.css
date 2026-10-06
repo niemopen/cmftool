@@ -1,0 +1,10 @@
+h1 { font-size: 14pt; }
+h2,h3,h4 { font-size: 12pt;  }
+h3,h4 { font-style: italic; font-weight: normal }
+h1,h2 { margin-top: 1em; }
+h3 { margin-top: 0.5em; }
+code { font-family: "Source Code Pro", "Liberation Mono", monospace; font-size: 11pt; }
+pre { background-color:#f0f0f0; padding: 6px; page-break-after: avoid; }
+figcaption { text-align:center; font-style:italic; margin-top: 10pt; margin-bottom:10pt;  page-break-before: avoid;  }
+figcaption > a { color: #000 }
+body { font-family: LiberationSans, Arial, Helvetica, sans-serif; font-size: 12pt; line-height: 1.2; }

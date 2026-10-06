@@ -26,6 +26,7 @@ package org.mitre.niem.cmf;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.mitre.niem.xml.LanguageString;
 
 /**
@@ -34,14 +35,23 @@ import org.mitre.niem.xml.LanguageString;
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
-public class PropertyAssociation extends CMFObject implements Comparable<PropertyAssociation> {
+public class PropertyAssociation extends CMFObject  {
     
-    public PropertyAssociation () { }
+    public PropertyAssociation () { 
+        docL = new ArrayList<>();
+    }
+    
+    public PropertyAssociation (PropertyAssociation pa) {
+        property = pa.property;
+        minOccurs = pa.minOccurs;
+        maxOccurs = pa.maxOccurs;
+        docL = new ArrayList<>(pa.docL);
+    }
     
     private Property property = null;                               // cmf:Property
     private String minOccurs = "1";                                 // cmf:MinOccursQuantity
     private String maxOccurs = "1";                                 // cmf:MaxOccursQuantity
-    private final List<LanguageString> docL = new ArrayList<>();    // cmf:DocumentationText
+    private final List<LanguageString> docL;                        // cmf:DocumentationText
     
     public Property property ()         { return property; }
     public String minOccurs ()          { return minOccurs; }
@@ -49,33 +59,28 @@ public class PropertyAssociation extends CMFObject implements Comparable<Propert
     public List<LanguageString> docL () { return docL; }
     
     public boolean isMaxUnbounded ()    { return "unbounded".equals(maxOccurs); }
-    public int minOccursVal ()          { return stringToInt(minOccurs); }
+    public int minOccursVal ()          { return NumberUtils.toInt(minOccurs); }
     public int maxOccursVal () { 
-        return "unbounded".equals(maxOccurs) ? -1 : stringToInt(maxOccurs);
+        return "unbounded".equals(maxOccurs) ? -1 : NumberUtils.toInt(maxOccurs);
     }
+    public boolean isRepeatable ()      { return isMaxUnbounded() ? true : maxOccursVal() > 1; }
     
     public ClassType classType ()       { return null; }
-    public String index ()              { return ""; }
+    public int index ()                 { return -2; }
     public Set<String> codeS ()         { return Set.of(); }    
     
     public void setProperty (Property p)    { property = p; }
     public void setMinOccurs (String s)     { minOccurs = s; }
     public void setMaxOccurs (String s)     { maxOccurs = s; }
     
+    public String definition ()             { return docL.isEmpty() ? null : docL.get(0).text(); }    
     public void addDocumentation (String doc, String lang) {
-        docL.add(new LanguageString(doc, lang));
+        if (null != doc) docL.add(new LanguageString(doc, lang));
     }
     public void setDocumentation (List<LanguageString> dL) {
         docL.clear();
         docL.addAll(dL);
     }   
-    
-    public int stringToInt (String s) {
-        int res = 0;
-        try { res = Integer.parseInt(s); }
-        catch (Exception ex) { }
-        return res;
-    }
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {
@@ -88,20 +93,20 @@ public class PropertyAssociation extends CMFObject implements Comparable<Propert
         return true;
     }
     
-    @Override
-    public int compareTo(PropertyAssociation o) {
-        int rv = 0;
-        if (null != this.classType() && null != o.classType()) rv = this.classType().compareTo(o.classType());
-        if (0 == rv) {
-            var tx = "0" + this.index();
-            var ox = "0" + o.index();
-            try {
-                var ti = Integer.parseInt(tx);
-                var oi = Integer.parseInt(ox);
-                rv = ti - oi;
-            }
-            catch(NumberFormatException ex) { } // IGNORE
-        }
-        if (0 == rv) rv = this.property().compareTo(o.property());
-        return rv;}    
+//    @Override
+//    public int compareTo(PropertyAssociation o) {
+//        int rv = 0;
+//        if (null != this.classType() && null != o.classType()) rv = this.classType().compareTo(o.classType());
+//        if (0 == rv) {
+//            var tx = "0" + this.index();
+//            var ox = "0" + o.index();
+//            try {
+//                var ti = Integer.parseInt(tx);
+//                var oi = Integer.parseInt(ox);
+//                rv = ti - oi;
+//            }
+//            catch(NumberFormatException ex) { } // IGNORE
+//        }
+//        if (0 == rv) rv = this.property().compareTo(o.property());
+//        return rv;}    
 }

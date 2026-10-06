@@ -23,12 +23,13 @@
  */
 package org.mitre.niem.cmf;
 
+import java.util.HashSet;
 import java.util.Set;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * An abstract class for a Property object in a CMF model.
+ * A class for a Property object in a CMF model.
  * 
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
@@ -38,16 +39,22 @@ public class Property extends Component {
     public Property () { super(); }
     public Property (String outsideURI) { super(outsideURI); }
     public Property (Namespace ns, String name) { super(ns, name); }
+
+    @Override
+    public int getType ()               { return CMF_PROPERTY; }
+    @Override
+    public String cmfElement ()         { return "Property"; }
     
     @Override
     public boolean isProperty ()                { return true; }
     public boolean isDataProperty ()            { return false; }
     public boolean isObjectProperty ()          { return false; }
    
-    private boolean isAbstract = false;         // cmf:AbstractIndicator
-    private boolean isOrdered = false;          // cmf:OrderedPropertyIndicator
-    private boolean isRelationship = false;     // cmf:RelationshipIndicator
-    private Property subprop = null;            // cmf:SubPropertyOf
+    private boolean isAbstract = false;                         // cmf:AbstractIndicator
+    private boolean isOrdered = false;                          // cmf:OrderedPropertyIndicator
+    private boolean isRelationship = false;                     // cmf:RelationshipIndicator
+    private boolean isChoice = false;                           // cmf:XSDChoiceIndicator   
+    private final Set<Property> subpropOfS = new HashSet<>();   // cmf:SubPropertyOf
     
     public ClassType classType ()               { return null; }
     public Datatype datatype ()                 { return null; }
@@ -61,12 +68,43 @@ public class Property extends Component {
     @Override
     public boolean isOrdered ()                 { return isOrdered; }
     public boolean isRelationship ()            { return isRelationship; }
-    public Property subPropertyOf ()            { return subprop; }
+    public boolean isChoice ()                  { return isChoice; }
     
     public void setIsAbstract (boolean f)       { isAbstract = f; }
     public void setIsOrdered (boolean f)        { isOrdered = f; }
     public void setIsRelationship (boolean f)   { isRelationship = f; }
-    public void setSubproperty (Property p)     { subprop = p; }
+    public void setIsChoice (boolean f)         { isChoice = f; }
+    
+    
+    // Subproperties are complicated, because CMF only records SubPropertyOf
+    // (which we get from @substitutionGroup in XSD).  So a Property object
+    // knows that Y is subproperty of X.  But often we instead want to know 
+    // all of the subproperties of X.  We can only get that from the complete model.
+
+    // This property is a subProperty of zero or more other properties.
+    // Returns that set.  Doesn't include augmentation points (because those
+    // aren't model objects).  Substitution for other components is possible 
+    // but unusual in NIEM XSD.  So these are usually the result of xs:choice
+    // elements in an extension schema document.
+    public Set<Property> subPropertyOfS ()     { return subpropOfS; }
+    
+    public void addSubPropertyOf (Property p) {
+        if (subpropOfS.contains(p)) return;
+        subpropOfS.add(p);
+        model().subPropChange();
+    }
+    
+    public void removeSubPropertyOf (Property p) {
+        if (subpropOfS.remove(p)) model().subPropChange();
+    }
+    
+    // Returns a set of all direct and indirect subproperties of this object.
+    public Set<Property> allSubProps () {
+        return model().allSubProps(this);
+    }
+    
+    
+    // Routines for creating model objects from CMF-XML
     
     @Override
     public boolean addChild (String eln, String loc, CMFObject child) throws CMFException {
@@ -80,10 +118,16 @@ public class Property extends Component {
         ar.setProperty(this);
         return true;
     }
-        
+    
+    @Override
+    public boolean addToModel (String eln, String loc, Model m) {
+        m.addProperty(this);
+        return true;
+    }
+    
     @Override
     public boolean addToProperty (String eln, String loc, Property p) {
-        p.setSubproperty(this);
+        p.addSubPropertyOf(this);
         return true;           
     }
     
@@ -99,5 +143,4 @@ public class Property extends Component {
         w.addPropertyChildren(doc, c, this, nsS);
     }
            
-    
 }

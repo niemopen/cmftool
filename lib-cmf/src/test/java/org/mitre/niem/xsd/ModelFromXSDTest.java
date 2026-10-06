@@ -86,14 +86,23 @@ public class ModelFromXSDTest {
     }
   
     @Test
+    public void testChoice () throws Exception {
+        var mb  = new ModelFromXSD();
+        var sch = new NIEMSchema(resDN + "xsd6/choice.xsd");
+        var model = mb.createModel(sch);  
+        checkChoice(model);
+        assertEmptyLogs();
+    }
+  
+    @Test
     public void testClass () throws Exception {
         var mb  = new ModelFromXSD();
         var sch = new NIEMSchema(resDN + "xsd6/class.xsd");
         var model = mb.createModel(sch);  
         checkClass(model);
         assertEmptyLogs();
-    }
-
+    }  
+    
     @Test
     public void testCodeListBindings () throws Exception {
         var mb  = new ModelFromXSD();
