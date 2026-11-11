@@ -29,15 +29,19 @@ import org.mitre.niem.utility.BuildInfo;
 import org.mitre.niem.utility.HelpOnEmptyCommandExecutionStrategy;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.IVersionProvider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
 
 @Command(
     name = "cmftool",
-    mixinStandardHelpOptions = true
+    mixinStandardHelpOptions = true,
+    versionProvider = CMFTool.ToolVersionProvider.class
 )
 public class CMFTool implements Runnable {
+
+    private static final String BANNER_SECTION_KEY = "banner";
 
     @Spec
     CommandSpec spec;
@@ -50,7 +54,6 @@ public class CMFTool implements Runnable {
     private static CommandLine newCommandLine() {
         CommandLine cmd = new CommandLine(new CMFTool());
 
-        // Help command lists subcommands in this order
         cmd.addSubcommand("x2m", new CmdXSDtoCMF());
         cmd.addSubcommand("m2x", new CmdCMFtoXSDModel());
         cmd.addSubcommand("m2xmsg", new CmdCMFtoXMLSchema());
@@ -60,40 +63,65 @@ public class CMFTool implements Runnable {
         cmd.addSubcommand("m2map", new CmdCMFtoMapping());
         cmd.addSubcommand("m2context", new CmdCMFtoContext());
         cmd.addSubcommand("mval", new CmdCMFValidate());
-//        cmd.addSubcommand("xval", new CmdXSDValidate());
+//      cmd.addSubcommand("xval", new CmdXSDValidate());
         cmd.addSubcommand("xcanon", new CmdXSDCanonicalize());
         cmd.addSubcommand("help", new CommandHelp());
 
-        setUsageWidth(cmd, 100);
+        configureCommandTree(cmd, 100);
         cmd.setExecutionStrategy(new HelpOnEmptyCommandExecutionStrategy());
 
         return cmd;
     }
 
-    private static void setUsageWidth(CommandLine cmd, int width) {
+    private static void configureCommandTree(CommandLine cmd, int width) {
         cmd.getCommandSpec().usageMessage().width(width);
+        cmd.getCommandSpec().versionProvider(new ToolVersionProvider());
+        installBannerSection(cmd);
+
         for (CommandLine sub : cmd.getSubcommands().values()) {
-            setUsageWidth(sub, width);
+            configureCommandTree(sub, width);
         }
+    }
+
+    private static void installBannerSection(CommandLine cmd) {
+        var usage = cmd.getCommandSpec().usageMessage();
+        usage.sectionMap().put(BANNER_SECTION_KEY, help -> bannerText());
+
+        var keys = new ArrayList<>(usage.sectionKeys());
+        keys.remove(BANNER_SECTION_KEY);
+        keys.add(0, BANNER_SECTION_KEY);
+        usage.sectionKeys(keys);
+    }
+
+    private static String bannerText() {
+        BuildInfo info = BuildInfo.forClass(CMFTool.class);
+        return String.format(
+            "Version: %s (%s)%n" +
+            "Suggestions and bug reports: https://github.com/niemopen/cmftool/issues%n%n",
+            info.getImplementationVersion(),
+            info.getBuildDate()
+        );
     }
 
     @Override
     public void run() {
-        printBanner();
         spec.commandLine().usage(spec.commandLine().getOut());
     }
 
-    static void printBanner() {
-        BuildInfo info = BuildInfo.forClass(CMFTool.class);
-        String version = String.format(
-            "Version: %s (%s)", info.getImplementationVersion(), info.getBuildDate());
-        System.out.println("Version: " + version);
-        System.out.println("Suggestions and bug reports: https://github.com/niemopen/cmftool/issues");
+    public static class ToolVersionProvider implements IVersionProvider {
+        @Override
+        public String[] getVersion() {
+            BuildInfo info = BuildInfo.forClass(CMFTool.class);
+            return new String[] {
+                String.format("%s (%s)", info.getImplementationVersion(), info.getBuildDate())
+            };
+        }
     }
 
     @Command(
         name = "help",
-        description = "this list of cmftool commands"
+        description = "this list of cmftool commands",
+        mixinStandardHelpOptions = true
     )
     static class CommandHelp implements java.util.concurrent.Callable<Integer> {
 
@@ -109,8 +137,6 @@ public class CMFTool implements Runnable {
         @Override
         public Integer call() {
             CommandLine root = spec.root().commandLine();
-
-            printBanner();
 
             if (helpArgs != null && !helpArgs.isEmpty()) {
                 String cmdName = helpArgs.get(0);
