@@ -23,22 +23,33 @@
  */
 package org.mitre.niem.xml;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 import javax.xml.transform.stream.StreamSource;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.XsltCompiler;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mitre.niem.utility.ClasspathResources;
 import org.xml.sax.InputSource;
 
 class SchematronTest {
+
+    private static final Class<?> ANCHOR = Schematron.class;
 
     private static final String SIMPLE_SCHEMATRON = """
         <?xml version="1.0" encoding="UTF-8"?>
@@ -61,6 +72,35 @@ class SchematronTest {
         </root>
         """;
 
+    private static final String MAIN_SCHEMATRON_WITH_INCLUDE = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <schema xmlns="http://purl.oclc.org/dsdl/schematron" queryBinding="xslt2">
+          <title>Include test</title>
+          <include href="included-pattern.sch"/>
+        </schema>
+        """;
+
+    private static final String INCLUDED_PATTERN = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <pattern xmlns="http://purl.oclc.org/dsdl/schematron" id="included-pattern">
+          <rule context="/root">
+            <assert test="@ok='true'">root must have ok='true'</assert>
+          </rule>
+          <rule context="/root/item">
+            <report test="true()">item encountered from include</report>
+          </rule>
+        </pattern>
+        """;
+
+    static Stream<Named<String>> bundledStylesheets() {
+        return Stream.of(
+            Named.of(Schematron.ISO_DSDL, "/sch/" + Schematron.ISO_DSDL),
+            Named.of(Schematron.ISO_ABSTRACT, "/sch/" + Schematron.ISO_ABSTRACT),
+            Named.of(Schematron.ISO_SVRL, "/sch/" + Schematron.ISO_SVRL),
+            Named.of(Schematron.XSLT_PP, "/sch/" + Schematron.XSLT_PP)
+        );
+    }
+
     @Test
     void compileSchematronRejectsMissingSystemId() throws Exception {
         var sch = new Schematron();
@@ -71,17 +111,29 @@ class SchematronTest {
     }
 
     @Test
-    void compileSchematronToWriterProducesXslt(@TempDir Path tempDir) throws Exception {
-        var schFile = writeFile(tempDir, "simple.sch", SIMPLE_SCHEMATRON);
+    void compileSchematronExecutableFromInMemorySourceUsesBundledClasspathXslt() throws Exception {
         var sch = new Schematron();
-        var src = new StreamSource(schFile.toFile());
-        src.setSystemId(schFile.toUri().toString());
+        var src = schematronSource(SIMPLE_SCHEMATRON, "file:/virtual/simple.sch");
+
+        var exec = sch.compileSchematronExecutable(src);
+
+        assertNotNull(exec);
+    }
+
+    @Test
+    void compileSchematronToWriterProducesXslt() throws Exception {
+        var sch = new Schematron();
+        var src = schematronSource(SIMPLE_SCHEMATRON, "file:/virtual/simple.sch");
 
         var out = new StringWriter();
         sch.compileSchematron(src, out);
 
         var xslt = out.toString();
-        assertTrue(xslt.contains("xsl:stylesheet") || xslt.contains("xsl:transform"));
+        assertAll(
+            () -> assertTrue(xslt.contains("xsl:stylesheet") || xslt.contains("xsl:transform")),
+            () -> assertTrue(xslt.contains("root must have ok='true'")),
+            () -> assertTrue(xslt.contains("item encountered"))
+        );
     }
 
     @Test
@@ -95,23 +147,22 @@ class SchematronTest {
         assertNotNull(root);
 
         var loc = root.getAttributeNS(Schematron.SCHEVAL_NS, "location");
-        assertTrue(loc.matches("sample\\.xml:\\d+:\\d+"), "location was: " + loc);
-
         var child = (org.w3c.dom.Element) root.getElementsByTagName("item").item(0);
         var childLoc = child.getAttributeNS(Schematron.SCHEVAL_NS, "location");
-        assertTrue(childLoc.matches("sample\\.xml:\\d+:\\d+"), "child location was: " + childLoc);
+
+        assertAll(
+            () -> assertTrue(loc.matches("sample\\.xml:\\d+:\\d+"), "location was: " + loc),
+            () -> assertTrue(childLoc.matches("sample\\.xml:\\d+:\\d+"), "child location was: " + childLoc)
+        );
     }
 
     @Test
     void endToEndCompileApplyAndFormatMessages(@TempDir Path tempDir) throws Exception {
-        var schFile = writeFile(tempDir, "simple.sch", SIMPLE_SCHEMATRON);
         var xmlFile = writeFile(tempDir, "sample.xml", FAILING_XML);
 
         var schematron = new Schematron();
 
-        var schSrc = new StreamSource(schFile.toFile());
-        schSrc.setSystemId(schFile.toUri().toString());
-
+        var schSrc = schematronSource(SIMPLE_SCHEMATRON, "file:/virtual/simple.sch");
         var compiled = schematron.compileSchematron(schSrc);
         assertNotNull(compiled);
 
@@ -119,13 +170,15 @@ class SchematronTest {
         xmlSrc.setSystemId(xmlFile.toUri().toString());
 
         var svrlOut = new StringWriter();
-        assertDoesNotThrow(() -> schematron.applyXslt(xmlSrc, compiled, svrlOut));
+        schematron.applyXslt(xmlSrc, compiled, svrlOut);
 
         var svrl = svrlOut.toString();
-        assertTrue(svrl.contains("failed-assert"));
-        assertTrue(svrl.contains("successful-report"));
-        assertTrue(svrl.contains("root must have ok='true'"));
-        assertTrue(svrl.contains("item encountered"));
+        assertAll(
+            () -> assertTrue(svrl.contains("failed-assert")),
+            () -> assertTrue(svrl.contains("successful-report")),
+            () -> assertTrue(svrl.contains("root must have ok='true'")),
+            () -> assertTrue(svrl.contains("item encountered"))
+        );
 
         var msgOut = new StringWriter();
         var svrlInput = new InputSource(new StringReader(svrl));
@@ -134,11 +187,72 @@ class SchematronTest {
         schematron.SVRLtoMessages(svrlInput, xmlInput, msgOut);
 
         var msgs = msgOut.toString();
-        assertTrue(msgs.contains("ERROR"));
-        assertTrue(msgs.contains("WARN "));
-        assertTrue(msgs.contains("sample.xml:"));
-        assertTrue(msgs.contains("root must have ok='true'"));
-        assertTrue(msgs.contains("item encountered"));
+        assertAll(
+            () -> assertTrue(msgs.contains("ERROR")),
+            () -> assertTrue(msgs.contains("WARN ")),
+            () -> assertTrue(msgs.contains("sample.xml:")),
+            () -> assertTrue(msgs.contains("root must have ok='true'")),
+            () -> assertTrue(msgs.contains("item encountered"))
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("bundledStylesheets")
+    @DisplayName("Bundled Schematron XSLT resources exist on the classpath")
+    void bundledStylesheetExists(String resourceName) {
+        assertTrue(ClasspathResources.exists(ANCHOR, resourceName));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("bundledStylesheets")
+    @DisplayName("Bundled Schematron XSLT resources compile from the classpath")
+    void bundledStylesheetCompilesFromClasspath(String resourceName) throws Exception {
+        Processor processor = new Processor(false);
+        XsltCompiler compiler = processor.newXsltCompiler();
+
+        var url = ClasspathResources.requireUrl(ANCHOR, resourceName);
+        assertNotNull(url);
+
+        try (InputStream in = ClasspathResources.openStream(ANCHOR, resourceName)) {
+            var source = new StreamSource(in, url.toExternalForm());
+            var executable = compiler.compile(source);
+            assertNotNull(executable);
+        }
+    }
+
+    @Test
+    void compileSchematronResolvesRelativeIncludeFromSystemId(@TempDir Path tempDir) throws Exception {
+        Path mainFile = writeFile(tempDir, "main.sch", MAIN_SCHEMATRON_WITH_INCLUDE);
+        writeFile(tempDir, "included-pattern.sch", INCLUDED_PATTERN);
+        Path xmlFile = writeFile(tempDir, "sample.xml", FAILING_XML);
+
+        var schematron = new Schematron();
+
+        var schSrc = new StreamSource(mainFile.toFile());
+        schSrc.setSystemId(mainFile.toUri().toString());
+
+        var compiled = schematron.compileSchematron(schSrc);
+        assertNotNull(compiled);
+
+        var xmlSrc = new StreamSource(xmlFile.toFile());
+        xmlSrc.setSystemId(xmlFile.toUri().toString());
+
+        var svrlOut = new StringWriter();
+        schematron.applyXslt(xmlSrc, compiled, svrlOut);
+
+        var svrl = svrlOut.toString();
+        assertAll(
+            () -> assertTrue(svrl.contains("failed-assert")),
+            () -> assertTrue(svrl.contains("successful-report")),
+            () -> assertTrue(svrl.contains("root must have ok='true'")),
+            () -> assertTrue(svrl.contains("item encountered from include"))
+        );
+    }
+
+    private static StreamSource schematronSource(String text, String systemId) {
+        var src = new StreamSource(new StringReader(text));
+        src.setSystemId(systemId);
+        return src;
     }
 
     private static Path writeFile(Path dir, String name, String content) throws Exception {

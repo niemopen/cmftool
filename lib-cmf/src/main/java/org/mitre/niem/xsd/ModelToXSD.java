@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +63,7 @@ import org.mitre.niem.cmf.Union;
 import static org.mitre.niem.utility.IndefiniteArticle.articalize;
 import org.mitre.niem.utility.MapToList;
 import org.mitre.niem.utility.NaturalOrderIgnoreCaseComparator;
-import org.mitre.niem.utility.ResourceManager;
+import org.mitre.niem.utility.ClasspathResources;
 import static org.mitre.niem.utility.StringUtils.replaceSuffix;
 import org.mitre.niem.utility.UniquePathSet;
 import org.mitre.niem.xml.LanguageString;
@@ -76,14 +77,14 @@ import org.w3c.dom.Element;
 /**
  * A class for code common to writing the XSD representation of a model
  * and writing an XSD message schema.
- * 
+ *
  * @author Scott Renner
  * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public abstract class ModelToXSD {
     private static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
-    
-    // These object globals are computed once and used for every 
+
+    // These object globals are computed once and used for every
     // schema document in the pile.
     protected Model m;
     protected String catalogPath = null;        // write XML catalog here
@@ -91,37 +92,36 @@ public abstract class ModelToXSD {
     protected Map<String,String> pathSpec;      // user specified nsU -> file path in outD
     protected String useArchVersion = null;     // ignore versions in model, use this one
     protected Set<String> archVersions;         // all versions found in model
-    protected Map<String,Integer> nsU2KindVal;  // namespace URI -> namespace kind value      
+    protected Map<String,Integer> nsU2KindVal;  // namespace URI -> namespace kind value
     protected Map<String,String> nsU2Path;      // namespace URI -> relative path in document pile
     protected Set<Datatype> simpleTypes;        // need xs:simpleType for these datatypes
     protected Set<String> externalNSUs;         // URIs of all external namespaces
     protected Set<String> allRefNSUs;           // URIs of namespaces referenced in the model
-        
+
     // All augmentation records, indexed by augmenting namespace URI, then class URI.
     // Global augmentations have a fake class URI:  "Association", "Literal", or "Object".
-    protected Map<String,MapToList<String,AugmentRecord>> nsU2classU2augL;   
+    protected Map<String,MapToList<String,AugmentRecord>> nsU2classU2augL;
 
     // Augmentations that are not part of an augmentation type are tracked here.
-    // They are turned into augmentation point QName values in xs:element @substitutionGroup 
-    protected HashMap<String,String> pU2augPU = new HashMap<>();    
-    
-    
+    // They are turned into augmentation point QName values in xs:element @substitutionGroup
+    protected HashMap<String,String> pU2augPU = new HashMap<>();
+
+
     // The following object globals are initialized anew for each schema document
     // generated for a model namespace.
     protected List<Element> defEL;              // type definition elements in the document
     protected List<Element> decEL;              // attribute and element declarations
     protected Set<String> refnsUS;              // URIs of referenced namespaces
     protected Map<String,String> bc2pre;        // prefixes for builtin namespaces
-    protected Map<String,String> bc2U;          // URIs for builtin namespaces    
-    
-    
+    protected Map<String,String> bc2U;          // URIs for builtin namespaces
+
     protected ModelToXSD () { }
-    
-    public ModelToXSD (Model m)     { 
-        this.m = m; 
+
+    public ModelToXSD (Model m) {
+        this.m = m;
         pathSpec = new HashMap<>();
     }
-    
+
     // Call this to use a single architecture version in the generated schema
     // documents instead of the version in the namespace objects.  This controls
     // the utility schema documents (eg. structures.xsd) in the pile.  It doesn't
@@ -129,13 +129,13 @@ public abstract class ModelToXSD {
     public void setArchVersion (String vers) {
         useArchVersion = vers;
     }
-    
+
     // Call this to generate an XML Catalog file at this relative path from
     // the schema document pile root.
     public void setCatalogPath (String path) {
         catalogPath = path;
-    }   
-    
+    }
+
     // Call this to specify the "root namespace".  The schema document for that
     // namespace will include extra xs:import elements as needed to ensure that
     // the entire schema can be assembled from this document alone.
@@ -145,30 +145,30 @@ public abstract class ModelToXSD {
         if (null == rootNS)
             LOG.error("Can't make '{}' the root namespace; not in model", nsPrefixOrURI);
     }
-    
+
     // Call this to provide a relative path for schema documents in the pile,
     // in case you don't like the paths recorded in the model namespace objects
-    // (or the default paths, if the model has none).  The map is from namespace URI 
+    // (or the default paths, if the model has none).  The map is from namespace URI
     // to relative file path in the pile.
     public void setNamespacePaths (Map<String,String> paths) {
         pathSpec = new HashMap<>(paths);
     }
-      
-    
+
+
     /**
-     * Writes the model to an XSD pile in the specified directory.  The schema 
+     * Writes the model to an XSD pile in the specified directory.  The schema
      * document for each model namespace gets the NIEM version specified in each
      * model namespace object.
-     * @param outD 
+     * @param outD
      */
-    public void writeModelXSD (File outD) throws ParserConfigurationException, IOException {        
+    public void writeModelXSD (File outD) throws ParserConfigurationException, IOException {
         collectArchVersions();
         collectNamespaceKinds();
         establishFilePaths();
         identifySimpleTypes();
         collectExternalNamespaces();
         indexAugmentations();
-        
+
         allRefNSUs = new HashSet<>();
         for (var ns : m.namespaceSet()) {
             if (ns.isModelNS()) writeModelDocument(ns, outD);
@@ -176,21 +176,21 @@ public abstract class ModelToXSD {
         writeBuiltinDocuments(outD);
         writeCatalog(outD);
     }
-    
+
     // Internal methods below this point
-    
+
     // Examine all the namespaces to collect all the NIEM versions.  If the version
     // was specified in the call to writeModelXSD, then there will only be one.
     protected void collectArchVersions () {
         archVersions = new HashSet<>();
         if (null != useArchVersion) archVersions.add(useArchVersion);
-        else 
+        else
             for (var ns : m.namespaceSet()) {
                 var nver = ns.archVersion();
                 if (!nver.isEmpty()) archVersions.add(ns.archVersion());
         }
     }
-    
+
     // Collect the namespace kind value for each namespace, including the utilities.
     // Only looking at namespace URI, so extension and external will show as unknown.
     // Use these when creating file paths and import elements.
@@ -242,8 +242,8 @@ public abstract class ModelToXSD {
                 nsU2Path.put(nsU, "./" + path);
             }
         }
-    }    
-    
+    }
+
     // We must create a simple type definition for each Datatype object that is
     // a list, a list item, a union, a union member, or an attribute property type.
     // Also sometimes for the datatype of a literal property.
@@ -277,7 +277,7 @@ public abstract class ModelToXSD {
             var dtnsU = dt.namespaceURI();
             if (W3C_XML_SCHEMA_NS_URI.equals(dtnsU)) continue;
             if (!dt.isModelComponent()) continue;
-            simpleTypes.add(dt);  
+            simpleTypes.add(dt);
         }
     }
 
@@ -286,14 +286,14 @@ public abstract class ModelToXSD {
     protected void collectExternalNamespaces () {
         externalNSUs = new HashSet<>();
         for (var ns : m.namespaceSet())
-            if (ns.isExternal()) externalNSUs.add(ns.uri());        
+            if (ns.isExternal()) externalNSUs.add(ns.uri());
     }
-    
+
     // Create an index into all the augmentation records in the model.
     //
     // Augmentations that are recorded in XSD as part of an augmentation
     // type (including attributes) will have a non-negative index value.
-    // 
+    //
     // Augmentations that are recorded in XSD as an element substitutable
     // for an augmentation point will have an index value of -1.  The URI
     // of these properties are mapped to the augmentation point URI in
@@ -320,7 +320,7 @@ public abstract class ModelToXSD {
                 var p    = arec.property();
                 var pU   = p.uri();
                 var ct   = arec.classType();        // augmented class, or null
-                
+
                 // Decide if aug belongs to augmentation type, or directly
                 // substitutes augmentation point, or is appinfo:Augmentation
                 if (arec.index() < 0) {                                 // >=0 means augmentation type
@@ -349,15 +349,15 @@ public abstract class ModelToXSD {
     // Write the schema document for a model namespace.  There are abstract
     // functions for things that are different in a model XSD versus a message
     // XML schema.
-    protected void writeModelDocument (Namespace ns, File outD) 
-        throws ParserConfigurationException, IOException {       
-        
+    protected void writeModelDocument (Namespace ns, File outD)
+        throws ParserConfigurationException, IOException {
+
         // Initialize the document and xs:schema root element
         var db   = ParserBootstrap.docBuilder();
         var doc  = db.newDocument();
         var root = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:schema");
         doc.appendChild(root);
-        
+
         // Get namespace URI and NIEM version; set the xs:schema attributes that
         // don't need a namespace prefix. (We don't know what the prefixes are yet.)
         var nsU  = ns.uri();
@@ -368,16 +368,16 @@ public abstract class ModelToXSD {
         setAttribute(root, "xml:lang", ns.language());
 
         // Initialize global variables for creating this schema document
-        defEL   = new ArrayList<>(); 
+        defEL   = new ArrayList<>();
         decEL   = new ArrayList<>();
-        refnsUS = new HashSet<>(); 
+        refnsUS = new HashSet<>();
         bc2pre  = new HashMap<>();
         bc2U    = new HashMap<>();
-        
-        // Given the NIEM version, we can get builtin namespace URIs and 
+
+        // Given the NIEM version, we can get builtin namespace URIs and
         // assign builtin prefixes for this schema document.  Why all this bother?
         // Well, if the model has more than one NIEM version, then only one version
-        // gets the "appinfo" prefix.  Also, nothing stops a model designer from 
+        // gets the "appinfo" prefix.  Also, nothing stops a model designer from
         // using "appinfo" as a model namespace prefix.  Grrr.
         var nsmap  = new NamespaceMap(m.nsmap());
         for (var bcode : NamespaceKind.builtins()) {
@@ -390,31 +390,31 @@ public abstract class ModelToXSD {
             }
         }
         var appinfoPre = bc2pre.get("APPINFO");
-        var appinfoU   = bc2U.get("APPINFO");       
+        var appinfoU   = bc2U.get("APPINFO");
         var clsaU      = bc2U.get("CLSA");
-     
+
         // Create xs:annotation element; add namespace documentation
         var appE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:appinfo");
         addDocumentation(root, ns.docL());
-        
+
         // Add conformance target assertions, augment records, local terms if needed
         addConformanceAssertions(root, ns, nsmap);
         addAugmentAppinfo(root, ns);
         addLocalTerms(root, ns);
-        
+
         // Create augmentation components for this namespace
         createAugmentationComponents(doc, ns);
-        
+
         // Create complex types.  For an XSD model, make some CSC typedefs for
         // datatype objects.  For an XML message schema, every datatype is a simple typedef
         createComplexTypes(doc, ns);
-        
+
         // Create simple types and attribute/element declarations.
         for (var dt : simpleTypes) if (dt.namespace() == ns) createSimpleType(doc, dt);
-        for (var p : m.propertyL())  if (p.namespace() == ns)  createDeclaration(doc, p); 
-        
+        for (var p : m.propertyL())  if (p.namespace() == ns)  createDeclaration(doc, p);
+
         // Construct list of namespaces to be imported.
-        // If this is the root namespace, ensure that schema constructed from 
+        // If this is the root namespace, ensure that schema constructed from
         // this schema document will include every namespace in the model.
         var impnsUs = new HashSet<>(refnsUS);
         if (ns == rootNS) {
@@ -464,16 +464,16 @@ public abstract class ModelToXSD {
         }
         // Update the set of all namespaces referenced in the model
         allRefNSUs.addAll(refnsUS);
-        
+
         // Sort declarations and definitions, append to document, write XSD
         processDeclarations();
         Collections.sort(defEL, definitionComparator);
         Collections.sort(decEL, declarationComparator);
         for (var e : defEL) root.appendChild(e);
-        for (var e : decEL) root.appendChild(e);        
-        writeXSD(doc, outF, appinfoPre);        
+        for (var e : decEL) root.appendChild(e);
+        writeXSD(doc, outF, appinfoPre);
     }
-    
+
     // Write schema documents for builtin namespaces as needed.
     // Model representations will reference some or all of the builtins.
     // Message schemas won't reference the builtins, so this will do nothing there.
@@ -486,9 +486,7 @@ public abstract class ModelToXSD {
             }
         }
     }
-    
-    protected static final ResourceManager rmgr = new ResourceManager(ModelToXSD.class);    
-    
+
     // Write a builtin schema document
     protected void writeBuiltinDocument (File outD, String bnsU, String vers, String kcode) {
         var bpath = NamespaceKind.builtinPath().get(kcode);     // eg. utility/appinfo.xsd
@@ -497,38 +495,39 @@ public abstract class ModelToXSD {
         var fpath = nsU2Path.get(bnsU);                         // relative location in pile
         var outF  = new File(outD, fpath);                      // absolute file location
         var outP  = outF.toPath().getParent();                  // parent directory of file location
-            try {
-                Files.createDirectories(outP);
-                if ("NIEM-XS".equals(kcode)) {
-                    writeProxyDocument(vers, bnsU, rname, outF);
-                }                    
-                else rmgr.copyResourceToFile(rname, outF);
-            } catch (IOException ex) {
-                LOG.error("Can't create builtin schema documents for {}: {}", vers, ex.getMessage());
-            }        
+        try {
+            Files.createDirectories(outP);
+            if ("NIEM-XS".equals(kcode)) {
+                writeProxyDocument(vers, bnsU, rname, outF);
+            } else {
+                ClasspathResources.copyTo(ModelToXSD.class, rname, outF.toPath());
+            }
+        } catch (IOException ex) {
+            LOG.error("Can't create builtin schema documents for {}: {}", vers, ex.getMessage());
+        }
     }
-       
+
     // Write an XML Catalog file for schema documents in the pile
     protected void writeCatalog (File outD) throws IOException, ParserConfigurationException {
         if (null == catalogPath) return;
         var catF = new File(outD, catalogPath);
-        var outS = new FileOutputStream(catF);
-        var outW = new OutputStreamWriter(outS, "UTF-8");
         var catW = new XMLCatalogCreator();
         var catP = new File(catalogPath).toPath();
         if (null == catP.getParent()) catP = new File(".").toPath();
         else catP = catP.getParent();
-        catW.writeCatalog(nsU2Path, catP, outW);
-        outW.close();        
+        try (var outS = new FileOutputStream(catF);
+             var outW = new OutputStreamWriter(outS, StandardCharsets.UTF_8)) {
+            catW.writeCatalog(nsU2Path, catP, outW);
+        }
     }
-    
+
     // Creates schema components for augmentation types and augmentation elements
     // in this namespace.
     protected void createAugmentationComponents (Document doc, Namespace ns) {
         var nsU   = ns.uri();
         var cU2aL = nsU2classU2augL.get(nsU);       // classU in this namespace -> list of aug recs
         var augCL = new ArrayList<>(cU2aL.keySet());// list of augmented classes in this namespace
-        
+
         // Iterate over all the globals and class URIs that are augmented by this namespace.
         // Skip augmentation records for object properties substituting for an augmentation point.
         // Skip augmentation records for appinfo:Augmentation elements.
@@ -542,7 +541,7 @@ public abstract class ModelToXSD {
             case "Object":      ctN = "ObjectType"; break;
             default:            ctN = uriToName(cU); break; // BarType
             }
-            var baseN = replaceSuffix(ctN, "Type", "");     // Bar or Object 
+            var baseN = replaceSuffix(ctN, "Type", "");     // Bar or Object
             var aeN   = baseN + "Augmentation";             // BarAugmentation or ObjectAugmentation
             var atN   = aeN + "Type";                       // BarAugmentationType ...
             var bphrs = "";                                 // base type documentation phrase
@@ -553,13 +552,13 @@ public abstract class ModelToXSD {
             }
             var aeDoc = "Additional information about " + bphrs + ".";
             var atDoc = "A data type for additional information about " + bphrs + ".";
-            
+
             // Determine augmentation point QName
             var apQ = "";
             if (null == ctns) apQ = bc2pre.get("STRUCTURES") + ":" + baseN;
             else apQ = ctns.prefix() + ":" + baseN;
-            apQ = apQ + "AugmentationPoint";         
-            
+            apQ = apQ + "AugmentationPoint";
+
             // Create a class object for the augmentation type, then create
             // a CCC type definition in the current schema document.
             // Don't add object properties substituting for an augmentation point,
@@ -571,12 +570,12 @@ public abstract class ModelToXSD {
             }
             // Don't create empty augmentation type or useless augmentation element
             if (propL.isEmpty()) continue;
-            
+
             Collections.sort(propL);                // OK to sort this list by index
             act.propAssocL().addAll(propL);
             act.addDocumentation(atDoc, "en-US");
             createCCCType(doc, act);
-            
+
             // Create an augmentation property with the augmentation type
             var apE = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:element");
             apE.setAttribute("name", aeN);
@@ -584,12 +583,12 @@ public abstract class ModelToXSD {
             apE.setAttribute("substitutionGroup", apQ);
             addDocumentation(apE, aeDoc);
             if (!ctnsU.isEmpty()) refnsUS.add(ctnsU);
-            decEL.add(apE);         
+            decEL.add(apE);
         }
-    }  
-    
+    }
+
     // Populates an xs:simpleType element with schema children for a list datatype.
-    protected void populateList (Document doc, 
+    protected void populateList (Document doc,
         Element e,                              // append xs:list to this element
         Datatype dt) {                          // create typedefs from this class
 
@@ -601,32 +600,32 @@ public abstract class ModelToXSD {
         e.appendChild(iE);
         refnsUS.add(idt.namespaceURI());
     }
-    
+
     // Populates an xs:simpleType element with schema children for a restriction datatype.
     // Restriction base type is taken from the datatype object.
-    protected void populateRestriction (Document doc, 
+    protected void populateRestriction (Document doc,
         Element e,                          // append xs:list to this element
         Datatype dt) {                      // create typedefs from this class
-        
+
         var r = (Restriction)dt;
         var bdt = r.base();
         var bdtQ = datatypeQName(bdt);
         populateRestriction(doc, e, dt, bdtQ);
     }
-    
+
     // Populates an xs:simpleType element with schema children for a restriction datatype.
     // Restriction base type is provided.
-    protected void populateRestriction (Document doc, 
+    protected void populateRestriction (Document doc,
         Element e,                          // append xs:list to this element
         Datatype dt,                        // create typedefs from this class
         String baseQ) {                     // QName of restriction base
-        
+
         var r   = (Restriction)dt;
         var rE  = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:restriction");
         var bdt = r.base();
         setAttribute(rE, "base", baseQ);
         refnsUS.add(bdt.namespaceURI());
-        
+
         var fL = new ArrayList<>(r.facetL());
         Collections.sort(fL);
         for (var f : fL) {
@@ -635,13 +634,13 @@ public abstract class ModelToXSD {
             var fE    = doc.createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:" + fname);
             fE.setAttribute("value", fval);
             addDocumentation(fE, f.docL());
-            rE.appendChild(fE);        
+            rE.appendChild(fE);
         }
         e.appendChild(rE);
     }
-    
+
     // Populates an xs:simpleType element with schema children for a union datatype.
-    protected void populateUnion (Document doc, 
+    protected void populateUnion (Document doc,
         Element e,                          // append xs:list to this element
         Datatype dt) {                      // create typedefs from this class
 
@@ -659,54 +658,54 @@ public abstract class ModelToXSD {
     }
 
 
-    // Empty functions, possibly overriden by derived class to write model XSD 
+    // Empty functions, possibly overriden by derived class to write model XSD
     // and class to write message schemas
-    
+
     protected void addConformanceAssertions (Element root, Namespace ns, NamespaceMap nsmap) {}
-    
+
     protected void addAugmentAppinfo (Element root, Namespace ns) {}
-    
+
     protected void addLocalTerms (Element root, Namespace ns) {}
-    
+
     protected abstract void createComplexTypes (Document doc, Namespace ns) ;
-    
+
     protected abstract void createCCCType (Document doc, ClassType ct) ;
-    
+
     protected abstract void createCSCType (Document doc, ClassType ct) ;
-    
+
     protected abstract void createCSCType (Document doc, Datatype dt) ;
-    
+
     protected abstract void createSimpleType (Document doc, Datatype dt) ;
-    
+
     protected abstract void createDeclaration (Document doc, Property p) ;
-  
+
     protected void processDeclarations() {}
-        
+
     protected void writeProxyDocument (String vers, String pnsU, String rname, File outF) {};
 
-    
+
     // Various utility functions below
-    
+
     // The schema QName corresponding to a datatype object depends on whether
     // we have created an xs:simpleType or xs:complexType element for it.
     protected String datatypeQName (Datatype dt) {
         if (!simpleTypes.contains(dt)) return dt.qname();
         else return replaceSuffix(dt.qname(), "Type", "SimpleType");
     }
-    
+
     // Returns the first xs:annotation child, creating that element if necessary.
     protected Element getAnnotationElement (Element e) {
         return getFirstSchemaChild(e, "annotation");
     }
-    
+
     // Returns the first xs:appinfo child of the first xs:annotation child of
     // the specified element, creating elements as necessary.
     protected Element getAppinfoElement (Element e) {
         var annE = getAnnotationElement(e);
         var appE = getFirstSchemaChild(annE, "appinfo");
-        return appE;        
+        return appE;
     }
-    
+
     // Returns the first child element with the given local name.
     // Creates and appends that child if necessary.
     protected Element getFirstSchemaChild (Element e, String lname) {
@@ -714,15 +713,15 @@ public abstract class ModelToXSD {
         if (nL.getLength() > 0) return (Element)nL.item(0);
         var aE = e.getOwnerDocument().createElementNS(W3C_XML_SCHEMA_NS_URI, "xs:" + lname);
         e.appendChild(aE);
-        return aE;        
+        return aE;
     }
-    
+
     // Appends a single English-language string as an xs:documentation child
     // to the first xs:annotation child of the specified element.
     protected void addDocumentation (Element e, String s) {
         var ls = new LanguageString(s, "en-US");
         addDocumentation(e, List.of(ls));
-    }    
+    }
 
     // Appends each language-annotated string as an xs:documentation child to the
     // first xs:annotation child of the specified element.
@@ -735,8 +734,8 @@ public abstract class ModelToXSD {
             if (!"en-US".equals(ls.lang())) dE.setAttribute("xml:lang", ls.lang());
             aE.appendChild(dE);
         }
-    }    
-    
+    }
+
     // Sets an attribute with a namespace in an element.
     // Does nothing if the value is missing or empty.
     protected void setAttribute (Element e, String nsU, String qname, String value) {
@@ -745,26 +744,26 @@ public abstract class ModelToXSD {
     }
 
     // Sets an attribute with no namespace in an element.
-    // Does nothing if the value is missing or empty.    
+    // Does nothing if the value is missing or empty.
     protected void setAttribute (Element e, String name, String value) {
         if (null != value && !value.isEmpty())
             e.setAttribute(name, value);
-    }    
-    
-    // Write a NIEM schema document to a file, with attributes reordered  
+    }
+
+    // Write a NIEM schema document to a file, with attributes reordered
     // in a pleasing way.
     protected void writeXSD (Document doc, File outF, String appinfoPre) throws IOException {
-        var pF   = outF.getParentFile();
+        var pF = outF.getParentFile();
         pF.mkdirs();
-        var os = new FileOutputStream(outF);
-        var ow = new OutputStreamWriter(os, "UTF-8");
         var xsdW = new NIEMXSDWriter(appinfoPre);
-        xsdW.writeXML(doc, ow);
-        ow.close();
+        try (var os = new FileOutputStream(outF);
+             var ow = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {
+            xsdW.writeXML(doc, ow);
+        }
     }
 
     // Comparison classes for declarations, definitions, import statements
-    
+
     protected final DeclarationComparator declarationComparator = new DeclarationComparator();
     protected class DeclarationComparator implements Comparator<Element> {
         @Override
@@ -776,7 +775,7 @@ public abstract class ModelToXSD {
             return NaturalOrderIgnoreCaseComparator.comp(n1, n2);
         }
     }
-    
+
     protected final DefinitionComparator definitionComparator = new DefinitionComparator();
     protected class DefinitionComparator implements Comparator<Element> {
         @Override
@@ -795,5 +794,5 @@ public abstract class ModelToXSD {
             var twoK = two.getValue0();
             return oneK.compareToIgnoreCase(twoK);
         }
-    }    
+    }
 }

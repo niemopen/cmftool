@@ -23,15 +23,12 @@
  */
 package org.mitre.niem.xml;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.Objects;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -56,7 +53,7 @@ import net.sf.saxon.s9api.XsltExecutable;
 import net.sf.saxon.s9api.XsltTransformer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.mitre.niem.utility.ResourceManager;
+import org.mitre.niem.utility.ClasspathResources;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -250,44 +247,32 @@ public class Schematron {
     }
 
     private synchronized void prepareSCHTransforms() throws SaxonApiException {
-        if (dsdlExec != null) {
+        if (dsdlExec != null && abstractExec != null && svrlExec != null && xsltPpExec != null) {
             return;
         }
 
-        Path tmpDir = null;
         try {
-            tmpDir = Files.createTempDirectory("Schematron");
-            var rmgr = new ResourceManager(getClass());
+            var dsdl = compileClasspathXslt("/sch/" + ISO_DSDL);
+            var abs = compileClasspathXslt("/sch/" + ISO_ABSTRACT);
+            var svrl = compileClasspathXslt("/sch/" + ISO_SVRL);
+            var xsltpp = compileClasspathXslt("/sch/" + XSLT_PP);
 
-            var dsdlF = copySchResource(rmgr, ISO_DSDL, tmpDir);
-            var absF = copySchResource(rmgr, ISO_ABSTRACT, tmpDir);
-            var svrlF = copySchResource(rmgr, ISO_SVRL, tmpDir);
-            var skelF = copySchResource(rmgr, ISO_SKEL, tmpDir);
-            var xsltF = copySchResource(rmgr, XSLT_PP, tmpDir);
-
-            dsdlExec = saxonComp.compile(dsdlF);
-            abstractExec = saxonComp.compile(absF);
-            svrlExec = saxonComp.compile(svrlF);
-            xsltPpExec = saxonComp.compile(xsltF);
-
-            // skelF is copied intentionally because the ISO stylesheets may include it.
-            if (skelF == null) {
-                throw new IOException("Failed to prepare " + ISO_SKEL);
-            }
+            dsdlExec = dsdl;
+            abstractExec = abs;
+            svrlExec = svrl;
+            xsltPpExec = xsltpp;
         } catch (IOException ex) {
             LOG.error("Unable to prepare Schematron transforms: {}", ex.getMessage());
             throw new SaxonApiException(ex);
-        } finally {
-            if (tmpDir != null) {
-                deleteRecursively(tmpDir);
-            }
         }
     }
 
-    private File copySchResource(ResourceManager rmgr, String resourceName, Path tmpDir) throws IOException {
-        var out = tmpDir.resolve(resourceName).toFile();
-        rmgr.copyResourceToFile("/sch/" + resourceName, out);
-        return out;
+    private XsltExecutable compileClasspathXslt(String resourceName) throws IOException, SaxonApiException {
+        var url = ClasspathResources.requireUrl(getClass(), resourceName);
+        try (var in = ClasspathResources.openStream(getClass(), resourceName)) {
+            var src = new StreamSource(in, url.toExternalForm());
+            return saxonComp.compile(src);
+        }
     }
 
     private String transformToString(StreamSource src, XsltExecutable exec) throws SaxonApiException {
@@ -386,7 +371,6 @@ public class Schematron {
         setTransformerFeature(transFact, XMLConstants.FEATURE_SECURE_PROCESSING, true);
     }
 
-
     private void setFeature(SAXParserFactory fact, String feature, boolean value) {
         try {
             fact.setFeature(feature, value);
@@ -408,29 +392,6 @@ public class Schematron {
             fact.setFeature(feature, value);
         } catch (Exception ex) {
             LOG.debug("Unable to set TransformerFactory feature {}={} : {}", feature, value, ex.getMessage());
-        }
-    }
-
-    private void setAttribute(TransformerFactory fact, String name, String value) {
-        try {
-            fact.setAttribute(name, value);
-        } catch (Exception ex) {
-            LOG.debug("Unable to set TransformerFactory attribute {}={} : {}", name, value, ex.getMessage());
-        }
-    }
-
-    private void deleteRecursively(Path root) {
-        try (var walk = Files.walk(root)) {
-            walk.sorted(Comparator.reverseOrder())
-                .forEach(p -> {
-                    try {
-                        Files.deleteIfExists(p);
-                    } catch (IOException ex) {
-                        LOG.warn("Could not delete temporary file {}: {}", p, ex.getMessage());
-                    }
-                });
-        } catch (IOException ex) {
-            LOG.warn("Could not walk temporary directory {}: {}", root, ex.getMessage());
         }
     }
 
@@ -477,3 +438,4 @@ public class Schematron {
         }
     }
 }
+

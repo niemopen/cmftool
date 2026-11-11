@@ -9,6 +9,8 @@ import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
@@ -16,6 +18,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.application.tasks.CreateStartScripts
@@ -427,13 +430,26 @@ subprojects {
             }
         }
     }
+
+    pluginManager.withPlugin("java-library") {
+        pluginManager.apply("maven-publish")
+
+        extensions.configure<PublishingExtension> {
+            publications {
+                create<MavenPublication>("mavenJava") {
+                    from(components["java"])
+                    artifactId = project.name
+                }
+            }
+        }
+    }
 }
 
 val docsSourceDir = layout.projectDirectory.dir("docs")
 val renderedDocsRoot = layout.buildDirectory.dir("generated-docs/rendered")
 val stagedDocsRoot = layout.buildDirectory.dir("generated-docs/staged")
 
-val test by tasks.registering {
+val test = tasks.register("test") {
     group = "verification"
     description = "Runs tests for all subprojects"
 }
@@ -446,7 +462,7 @@ subprojects {
     }
 }
 
-val verifyReleaseVersions by tasks.registering(VerifyReleaseVersions::class) {
+val verifyReleaseVersions = tasks.register<VerifyReleaseVersions>("verifyReleaseVersions") {
     group = "verification"
     description = "Fails if any release artifact would use a SNAPSHOT version"
 
@@ -458,7 +474,7 @@ val verifyReleaseVersions by tasks.registering(VerifyReleaseVersions::class) {
     versionsByPath.put(":app-scheval", project(":app-scheval").version.toString())
 }
 
-val renderDocs by tasks.registering(RenderPandocDocs::class) {
+val renderDocs = tasks.register<RenderPandocDocs>("renderDocs") {
     group = "documentation"
     description = "Render shared and app-specific markdown to HTML with pandoc"
 
@@ -488,7 +504,7 @@ val stageDocsTasks: Map<String, TaskProvider<Sync>> =
         }
     }
 
-val stageAllDocs by tasks.registering(Sync::class) {
+val stageAllDocs = tasks.register<Sync>("stageAllDocs") {
     group = "documentation"
     description = "Stage shared docs, all app docs, and examples"
 
@@ -543,7 +559,7 @@ subprojects {
     }
 }
 
-val generateBundleReadme by tasks.registering(GenerateBundleReadme::class) {
+val generateBundleReadme = tasks.register<GenerateBundleReadme>("generateBundleReadme") {
     group = "distribution"
     description = "Generate a bundle readme listing included component versions"
 
@@ -558,7 +574,7 @@ val generateBundleReadme by tasks.registering(GenerateBundleReadme::class) {
     outputFile.set(layout.buildDirectory.file("generated-release-metadata/README-BUNDLE.md"))
 }
 
-val allAppsImage by tasks.registering(Sync::class) {
+val allAppsImage = tasks.register<Sync>("allAppsImage") {
     group = "distribution"
     description = "Assemble merged install image for all applications at build/install/allApps"
 
@@ -594,14 +610,14 @@ appSpecs.forEach { spec ->
     }
 }
 
-val sbomSubprojects by tasks.registering {
+val sbomSubprojects = tasks.register("sbomSubprojects") {
     group = "reporting"
     description = "Generate CycloneDX SBOMs for all Java subprojects"
 
     dependsOn(sbomProjectPaths.map { "$it:cyclonedxBom" })
 }
 
-val collectSubprojectSboms by tasks.registering(Sync::class) {
+val collectSubprojectSboms = tasks.register<Sync>("collectSubprojectSboms") {
     group = "reporting"
     description = "Collect subproject SBOMs into one directory"
 
@@ -627,7 +643,7 @@ val collectSubprojectSboms by tasks.registering(Sync::class) {
     }
 }
 
-val bundleSbom by tasks.registering(GenerateBundleSbom::class) {
+val bundleSbom = tasks.register<GenerateBundleSbom>("bundleSbom") {
     group = "reporting"
     description = "Generate a CycloneDX SBOM for the assembled allApps bundle"
 
@@ -639,7 +655,7 @@ val bundleSbom by tasks.registering(GenerateBundleSbom::class) {
     outputFile.set(layout.buildDirectory.file("reports/sbom/allApps-bundle.cdx.json"))
 }
 
-val sbom by tasks.registering {
+val sbom = tasks.register("sbom") {
     group = "reporting"
     description = "Generate subproject SBOMs and a bundle SBOM"
 
@@ -647,7 +663,7 @@ val sbom by tasks.registering {
     dependsOn(bundleSbom)
 }
 
-val sbomMarkdown by tasks.registering(GenerateSbomMarkdownReports::class) {
+val sbomMarkdown = tasks.register<GenerateSbomMarkdownReports>("sbomMarkdown") {
     group = "reporting"
     description = "Generate Markdown reports from all generated SBOM JSON files"
 
@@ -657,7 +673,7 @@ val sbomMarkdown by tasks.registering(GenerateSbomMarkdownReports::class) {
     outputRoot.set(layout.buildDirectory.dir("reports/sbom-markdown"))
 }
 
-val releaseZips by tasks.registering {
+val releaseZips = tasks.register("releaseZips") {
     group = "distribution"
     description = "Build application and allApps release zip files"
 }
@@ -690,7 +706,7 @@ appSpecs.forEach { spec ->
     }
 }
 
-val allAppsZip by tasks.registering(Zip::class) {
+val allAppsZip = tasks.register<Zip>("allAppsZip") {
     group = "distribution"
     description = "Build allApps.zip"
 

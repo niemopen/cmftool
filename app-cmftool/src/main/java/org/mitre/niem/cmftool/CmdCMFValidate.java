@@ -36,7 +36,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import static org.apache.commons.io.FilenameUtils.normalize;
 import org.mitre.niem.cmf.Model;
-import org.mitre.niem.utility.ResourceManager;
+import org.mitre.niem.utility.ClasspathResources;
 import static org.mitre.niem.utility.URIfuncs.URIStringToFile;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.DOMImplementationLS;
@@ -56,7 +56,8 @@ import picocli.CommandLine.Parameters;
 )
 public class CmdCMFValidate implements Callable<Integer> {
 
-    private final ResourceManager rmgr = new ResourceManager(Model.class);
+    private static final Class<?> RESOURCE_ANCHOR = Model.class;
+    private static final String CMF_SCHEMA_RESOURCE = "/xsd/cmf/cmf.xsd";
 
     @Parameters(
         arity = "1..*",
@@ -122,11 +123,11 @@ public class CmdCMFValidate implements Callable<Integer> {
 
         Handler schemaHandler = new Handler();
         sfact.setErrorHandler(schemaHandler);
-        sfact.setResourceResolver(new ResourceResolver(rmgr));
+        sfact.setResourceResolver(new ResourceResolver());
 
-        try (InputStream cmfIS = rmgr.getResourceStream("/xsd/cmf/cmf.xsd")) {
+        try (InputStream cmfIS = ClasspathResources.openStream(RESOURCE_ANCHOR, CMF_SCHEMA_RESOURCE)) {
             StreamSource cmfSS = new StreamSource(cmfIS);
-            cmfSS.setSystemId("/xsd/cmf/cmf.xsd");
+            cmfSS.setSystemId(CMF_SCHEMA_RESOURCE);
 
             Schema schema = sfact.newSchema(cmfSS);
 
@@ -165,7 +166,7 @@ public class CmdCMFValidate implements Callable<Integer> {
     }
 
     private static class Handler extends DefaultHandler {
-        private StringBuilder msgs = new StringBuilder();
+        private final StringBuilder msgs = new StringBuilder();
 
         @Override
         public void error(SAXParseException e) {
@@ -211,11 +212,6 @@ public class CmdCMFValidate implements Callable<Integer> {
     private static class ResourceResolver implements LSResourceResolver {
 
         private static DOMImplementationLS domLSI;
-        private final ResourceManager rmgr;
-
-        ResourceResolver(ResourceManager rmgr) {
-            this.rmgr = rmgr;
-        }
 
         @Override
         public LSInput resolveResource(
@@ -226,14 +222,14 @@ public class CmdCMFValidate implements Callable<Integer> {
             String baseURI
         ) {
             try {
-                String nsid = resolveResourcePath(systemId, baseURI);
-                InputStream is = rmgr.getResourceStream(nsid);
+                String resourcePath = resolveResourcePath(systemId, baseURI);
+                InputStream is = ClasspathResources.openStream(RESOURCE_ANCHOR, resourcePath);
 
                 LSInput lsi = createLSInput();
                 lsi.setByteStream(is);
                 lsi.setPublicId(publicId);
-                lsi.setSystemId(nsid);
-                lsi.setBaseURI(baseURI);
+                lsi.setSystemId(resourcePath);
+                lsi.setBaseURI(resourcePath);
                 return lsi;
             } catch (Exception ex) {
                 System.err.println("Can't get " + systemId + ": " + ex.getMessage());
@@ -253,6 +249,9 @@ public class CmdCMFValidate implements Callable<Integer> {
                 URI base = URI.create(baseURI);
                 URI resolved = base.resolve(systemId);
                 path = resolved.getPath();
+                if (path == null || path.isBlank()) {
+                    path = resolved.toString();
+                }
             }
 
             String normalized = normalize(path, true);
