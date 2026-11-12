@@ -35,14 +35,28 @@ plugins {
     id("org.cyclonedx.bom") version "3.4.1" apply false
 }
 
+// app-cmftool, app-niemtran, and lib-cmf subprojects always change version together
+// app-scheval changes independently, less frequently
+// lib-util changes independently, less frequently
+// bundle version probably always the same as app-cmftool
+// these versions stated in gradle.properties
+
 group = providers.gradleProperty("projectGroup").get()
 version = providers.gradleProperty("bundleVersion").get()
 
 val bundleName = providers.gradleProperty("bundleName").get()
 val javaVersion = providers.gradleProperty("javaVersion").get().toInt()
-val cmfVersion = providers.gradleProperty("cmfVersion").get()
+val cmfAppVersion = providers.gradleProperty("cmfAppVersion").get()
 val utilVersion = providers.gradleProperty("utilVersion").get()
 val schevalVersion = providers.gradleProperty("schevalVersion").get()
+
+val projectVersions = mapOf(
+    ":lib-cmf" to cmfAppVersion,
+    ":app-cmftool" to cmfAppVersion,
+    ":app-niemtran" to cmfAppVersion,
+    ":lib-util" to utilVersion,
+    ":app-scheval" to schevalVersion
+)
 
 abstract class RenderPandocDocs @Inject constructor(
     private val execOperations: ExecOperations
@@ -359,14 +373,6 @@ val appSpecs = listOf(
 )
 
 val appSpecByPath = appSpecs.associateBy { it.projectPath }
-
-val projectVersions = mapOf(
-    ":lib-cmf" to cmfVersion,
-    ":app-cmftool" to cmfVersion,
-    ":app-niemtran" to cmfVersion,
-    ":lib-util" to utilVersion,
-    ":app-scheval" to schevalVersion
-)
 
 val sbomProjectPaths = listOf(
     ":lib-util",

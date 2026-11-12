@@ -84,7 +84,9 @@ import org.w3c.dom.Element;
 public abstract class ModelToXSD {
     private static final Logger LOG = LogManager.getLogger(ModelToXSD.class);
 
-    // These object globals are computed once and used for every
+    public static final String XSD_VERSIONING_NS_URI = "http://www.w3.org/2007/XMLSchema-versioning";
+
+// These object globals are computed once and used for every
     // schema document in the pile.
     protected Model m;
     protected String catalogPath = null;        // write XML catalog here
@@ -462,6 +464,25 @@ public abstract class ModelToXSD {
             var pre  = nsmap.getPrefix(rnsU);
             root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:"+pre, rnsU);
         }
+        // Check for properties in this namespace with >1 subPropertyOf values.
+        // Add namespace and attribute for XSD 1.1 if found
+        var xsd11 = false;
+        for (var p : m.propertyL()) {
+            if (p.namespace() != ns) continue;
+            var count = p.subPropertyOfS().stream()
+                .filter(x -> !x.name().startsWith("ChoiceAbstract_"))
+                .count();
+            if (count > 1) {
+                xsd11 = true;
+                break;
+            }
+        }
+        if (xsd11) {
+            var prefix = m.nsmap().assignPrefix("vc", XSD_VERSIONING_NS_URI);
+            root.setAttributeNS(XMLNS_ATTRIBUTE_NS_URI, "xmlns:"+prefix, XSD_VERSIONING_NS_URI);
+            root.setAttributeNS(XSD_VERSIONING_NS_URI, prefix + ":minVersion", "1.1");
+        }
+        
         // Update the set of all namespaces referenced in the model
         allRefNSUs.addAll(refnsUS);
 

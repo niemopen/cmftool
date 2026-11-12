@@ -1,6 +1,6 @@
 <img src="https://github.com/niemopen/oasis-open-project/blob/main/artwork/NIEM-NO-Logo-v5.png" width="200">
 
-# Common Model Format Tool (CMFTool)
+# Common Model Format Tool (CMFTool) project
 
 This repository is part of the OASIS Open Project named [NIEMOpen](https://github.com/niemopen).  NIEMOpen is a community-driven, standards-based approach to defining information exchange packages for multiple business domains.
 
@@ -19,6 +19,10 @@ There are five subprojects in this repository:
 * [*lib-cmf*](lib-cmf/README.md) is a Java library project providing classes for working with NIEM models in XSD and CMF.  Both *cmftool* and *niemtran* depend on *lib-cmf*.  Other tool developers may find useful functionality here.
 
 * [*lib-util*](lib-util/README.md) is a Java library project providing classes that are used in all subprojects, and which may be useful in other projects.
+
+## What's New
+
+Look at [CHANGELOG.md](./CHANGELOG.md).
 
 ## Building CMFTool 
 

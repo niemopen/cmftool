@@ -1,4 +1,4 @@
-# Common Model Format Tool (CMFTool)
+# Common Model Format Tool (CMFTool) application
 
 The NIEM [*Common Model Format (CMF)*](https://github.com/niemopen/common-model-format) is a data modeling formalism for NIEM-conforming data exchange specifications.  CMFTool is a multi-level command-line tool for the designers of those specifications. CMFTool subcommands are:
 
