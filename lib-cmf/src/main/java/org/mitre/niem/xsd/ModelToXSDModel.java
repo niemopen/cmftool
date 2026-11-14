@@ -129,8 +129,10 @@ public class ModelToXSDModel extends ModelToXSD {
         if (ns.locTermL().isEmpty()) return;
         var appinfoPre = bc2pre.get("APPINFO");
         var appinfoU   = bc2U.get("APPINFO");
-        var appE = getAppinfoElement(root);
-        for (var lt : ns.locTermL()) {
+        var appE  = getAppinfoElement(root);
+        var termL = new ArrayList<>(ns.locTermL());
+        Collections.sort(termL);
+        for (var lt : termL) {
             var doc = root.getOwnerDocument();
             var ltE = doc.createElementNS(appinfoU, appinfoPre + ":" + "LocalTerm");
             setAttribute(ltE, "term", lt.term());

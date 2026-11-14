@@ -27,48 +27,81 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * A class to create an OASIS XML Catalog file from a mapping of namespace URIs
  * to the relative paths of the schema documents.
- * 
- * @author Scott Renner
- * <a href="mailto:sar@mitre.org">sar@mitre.org</a>
  */
 public class XMLCatalogCreator {
     
-    private final static String XML_CATALOG_NS_URI = "urn:oasis:names:tc:entity:xmlns:xml:catalog";
+    static final String XML_CATALOG_NS_URI = "urn:oasis:names:tc:entity:xmlns:xml:catalog";
+    
+    public XMLCatalogCreator() { }
     
     /**
-     * Constructs a XMLCatalogCreator object for the specified map.
+     * Writes an XML Catalog with the specified mappings to the writer.
+     *
+     * @param map namespace URI to schema document path
+     * @param catP path to the catalog file being written
+     * @param w destination writer
      */
-    public XMLCatalogCreator () { }
-    
-    /**
-     * Writes an XML Catalog with the specified mappings to the File
-     */
-    public void writeCatalog (Map<String,String> map, Path catP, Writer w) throws IOException, ParserConfigurationException {        
-        var db   = ParserBootstrap.docBuilder();
-        var dom  = db.newDocument();
+    public void writeCatalog(Map<String, String> map, Path catP, Writer w)
+            throws IOException, ParserConfigurationException {
+        
+        Objects.requireNonNull(map, "map must not be null");
+        Objects.requireNonNull(catP, "catP must not be null");
+        Objects.requireNonNull(w, "writer must not be null");
+
+        Path catalogFile = catP.toAbsolutePath().normalize();
+        Path catalogDir = catalogFile.getParent();
+        if (catalogDir == null) {
+            catalogDir = Path.of(".").toAbsolutePath().normalize();
+        }
+
+        var db = ParserBootstrap.docBuilder();
+        var dom = db.newDocument();
+
         var root = dom.createElementNS(XML_CATALOG_NS_URI, "catalog");
+        root.setAttribute("prefer", "public");
+        root.setAttributeNS(XMLConstants.XMLNS_ATTRIBUTE_NS_URI, "xmlns", XML_CATALOG_NS_URI);
         dom.appendChild(root);
 
-        for (var nsuri : map.keySet()) {
-            var sfn = map.get(nsuri);             // name of schema document
-            var sff = new File(sfn);
-            var sfp = sff.toPath();
-            var relp = catP.relativize(sfp);         // path relative to catalog's directory
-            var uris = relp.toString();
-            uris = uris.replace('\\', '/');
-            
+        var entries = new ArrayList<>(map.entrySet());
+        entries.sort(Map.Entry.comparingByKey());
+
+        for (var me : entries) {
+            String nsuri = Objects.requireNonNull(me.getKey(), "namespace URI must not be null");
+            String schemaPathString = Objects.requireNonNull(me.getValue(), "schema path must not be null");
+
+            String catalogUri = toCatalogRelativeUri(catalogDir, schemaPathString);
+
             var entry = dom.createElementNS(XML_CATALOG_NS_URI, "uri");
             entry.setAttribute("name", nsuri);
-            entry.setAttribute("uri", uris);
+            entry.setAttribute("uri", catalogUri);
             root.appendChild(entry);
         }
+
         XMLWriter.writeXML(dom, w);
-        
+    }
+
+    private static String toCatalogRelativeUri(Path catalogDir, String schemaPathString) {
+        Path schemaPath = Path.of(schemaPathString).normalize();
+
+        if (!schemaPath.isAbsolute()) {
+            return schemaPath.toString().replace(File.separatorChar, '/');
+        }
+
+        Path absoluteSchemaPath = schemaPath.toAbsolutePath().normalize();
+        try {
+            Path relPath = catalogDir.relativize(absoluteSchemaPath);
+            return relPath.toString().replace(File.separatorChar, '/');
+        } catch (IllegalArgumentException ex) {
+            return absoluteSchemaPath.toUri().toString();
+        }
     }
 }
